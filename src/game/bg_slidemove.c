@@ -43,7 +43,7 @@ Returns qtrue if the velocity was clipped in some way
 ==================
 */
 #define MAX_CLIP_PLANES 5
-qboolean  PM_SlideMove( qboolean gravity )
+qbool  PM_SlideMove( qbool gravity )
 {
   int     bumpcount, numbumps;
   vec3_t  dir;
@@ -287,7 +287,7 @@ void PM_StepEvent( vec3_t from, vec3_t to, vec3_t normal )
 PM_StepSlideMove
 ==================
 */
-qboolean PM_StepSlideMove( qboolean gravity, qboolean predictive )
+qbool PM_StepSlideMove( qbool gravity, qbool predictive )
 {
   vec3_t    start_o, start_v;
   vec3_t    down_o, down_v;
@@ -296,7 +296,7 @@ qboolean PM_StepSlideMove( qboolean gravity, qboolean predictive )
   vec3_t    step_v, step_vNormal;
   vec3_t    up, down;
   float     stepSize;
-  qboolean  stepped = qfalse;
+  qbool  stepped = qfalse;
 
   BG_GetClientNormal( pm->ps, normal );
 
@@ -387,11 +387,11 @@ qboolean PM_StepSlideMove( qboolean gravity, qboolean predictive )
 PM_PredictStepMove
 ==================
 */
-qboolean PM_PredictStepMove( void )
+qbool PM_PredictStepMove( void )
 {
   vec3_t  velocity, origin;
   float   impactSpeed;
-  qboolean  stepped = qfalse;
+  qbool  stepped = qfalse;
 
   VectorCopy( pm->ps->velocity, velocity );
   VectorCopy( pm->ps->origin, origin );

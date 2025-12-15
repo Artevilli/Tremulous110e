@@ -554,7 +554,7 @@ void SP_trigger_win( gentity_t *self )
 trigger_buildable_match
 ===============
 */
-qboolean trigger_buildable_match( gentity_t *self, gentity_t *activator )
+qbool trigger_buildable_match( gentity_t *self, gentity_t *activator )
 {
   int i = 0;
 
@@ -682,7 +682,7 @@ void SP_trigger_buildable( gentity_t *self )
 trigger_class_match
 ===============
 */
-qboolean trigger_class_match( gentity_t *self, gentity_t *activator )
+qbool trigger_class_match( gentity_t *self, gentity_t *activator )
 {
   int i = 0;
 
@@ -816,7 +816,7 @@ void SP_trigger_class( gentity_t *self )
 trigger_equipment_match
 ===============
 */
-qboolean trigger_equipment_match( gentity_t *self, gentity_t *activator )
+qbool trigger_equipment_match( gentity_t *self, gentity_t *activator )
 {
   int i = 0;
 

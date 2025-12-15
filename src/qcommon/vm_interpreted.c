@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 //#define	DEBUG_VM
 #ifdef DEBUG_VM
-static char	*opnames[256] = {
+static qchar	*opnames[256] = {
 	"OP_UNDEF", 
 
 	"OP_IGNORE", 
@@ -117,16 +117,16 @@ static char	*opnames[256] = {
 
 //FIXME: these, um... look the same to me
 #if defined(__GNUC__)
-static ID_INLINE unsigned int loadWord(void *addr) {
-	unsigned int word;
+static ID_INLINE unsigned qint loadWord(void *addr) {
+	unsigned qint word;
 
 	asm("lwbrx %0,0,%1" : "=r" (word) : "r" (addr));
 	return word;
 }
 #else
-static ID_INLINE unsigned int __lwbrx(register void *addr,
-		register int offset) {
-	register unsigned int word;
+static ID_INLINE unsigned qint __lwbrx(register void *addr,
+		register qint offset) {
+	register unsigned qint word;
 
 	asm("lwbrx %0,%2,%1" : "=r" (word) : "r" (addr), "b" (offset));
 	return word;
@@ -135,29 +135,29 @@ static ID_INLINE unsigned int __lwbrx(register void *addr,
 #endif
 
 #else
-    static ID_INLINE int loadWord(void *addr) {
-	int word;
+    static ID_INLINE qint loadWord(void *addr) {
+	qint word;
 	memcpy(&word, addr, 4);
 	return LittleLong(word);
     }
 #endif
 
-char *VM_Indent( vm_t *vm ) {
-	static char	*string = "                                        ";
+qchar *VM_Indent( vm_t *vm ) {
+	static qchar	*string = "                                        ";
 	if ( vm->callLevel > 20 ) {
 		return string;
 	}
 	return string + 2 * ( 20 - vm->callLevel );
 }
 
-void VM_StackTrace( vm_t *vm, int programCounter, int programStack ) {
-	int		count;
+void VM_StackTrace( vm_t *vm, qint programCounter, qint programStack ) {
+	qint		count;
 
 	count = 0;
 	do {
 		Com_Printf( "%s\n", VM_ValueToSymbol( vm, programCounter ) );
-		programStack =  *(int *)&vm->dataBase[programStack+4];
-		programCounter = *(int *)&vm->dataBase[programStack];
+		programStack =  *(qint *)&vm->dataBase[programStack+4];
+		programCounter = *(qint *)&vm->dataBase[programStack];
 	} while ( programCounter != -1 && ++count < 32 );
 
 }
@@ -169,33 +169,36 @@ VM_PrepareInterpreter
 ====================
 */
 void VM_PrepareInterpreter( vm_t *vm, vmHeader_t *header ) {
-	int		op;
-	int		pc;
+	qint		op;
+	qint byte_pc;
+	qint int_pc;
 	byte	*code;
-	int		instruction;
-	int		*codeBase;
+	qint		instruction;
+	qint		*codeBase;
 
-	vm->codeBase = Hunk_Alloc( vm->codeLength*4, h_high );			// we're now int aligned
+	vm->codeBase = Hunk_Alloc( vm->codeLength*4, h_high );			// we're now qint aligned
 //	memcpy( vm->codeBase, (byte *)header + header->codeOffset, vm->codeLength );
 
 	// we don't need to translate the instructions, but we still need
 	// to find each instructions starting point for jumps
-	pc = 0;
+	int_pc = byte_pc = 0;
 	instruction = 0;
 	code = (byte *)header + header->codeOffset;
-	codeBase = (int *)vm->codeBase;
+	codeBase = (qint *)vm->codeBase;
 
+        //copy and expand instructions to words while building instruction table
 	while ( instruction < header->instructionCount ) {
-		vm->instructionPointers[ instruction ] = pc;
+		vm->instructionPointers[ instruction ] = int_pc;
 		instruction++;
 
-		op = code[ pc ];
-		codeBase[pc] = op;
-		if ( pc > header->codeLength ) {
+		op = (qint)code[ byte_pc ];
+		codeBase[int_pc] = op;
+		if ( byte_pc > header->codeLength ) {
 			Com_Error( ERR_FATAL, "VM_PrepareInterpreter: pc > header->codeLength" );
 		}
 
-		pc++;
+		byte_pc++;
+		int_pc++;
 
 		// these are the only opcodes that aren't a single byte
 		switch ( op ) {
@@ -220,32 +223,32 @@ void VM_PrepareInterpreter( vm_t *vm, vmHeader_t *header ) {
 		case OP_GTF:
 		case OP_GEF:
 		case OP_BLOCK_COPY:
-			codeBase[pc+0] = loadWord(&code[pc]);
-			pc += 4;
+			codeBase[int_pc] = loadWord(&code[byte_pc]);
+			byte_pc += 4;
+			int_pc++;
 			break;
 		case OP_ARG:
-			codeBase[pc+0] = code[pc];
-			pc += 1;
+			codeBase[int_pc] = (qint)code[byte_pc];
+			byte_pc++;
+			int_pc++;
 			break;
 		default:
 			break;
 		}
 
 	}
-	pc = 0;
+	int_pc = 0;
 	instruction = 0;
 	code = (byte *)header + header->codeOffset;
-	codeBase = (int *)vm->codeBase;
 
+        //now that the code has been expanded to int-sized opcodes, we'll translate instruction index
+        //int an index into codeBase[], which contains opcodes and operands
 	while ( instruction < header->instructionCount ) {
-		op = code[ pc ];
+		op = codeBase[ int_pc ];
 		instruction++;
-		pc++;
+		int_pc++;
 		switch ( op ) {
-		case OP_ENTER:
-		case OP_CONST:
-		case OP_LOCAL:
-		case OP_LEAVE:
+		//these ops need to translate addresses in jumps from instruction index to int index
 		case OP_EQ:
 		case OP_NE:
 		case OP_LTI:
@@ -262,33 +265,29 @@ void VM_PrepareInterpreter( vm_t *vm, vmHeader_t *header ) {
 		case OP_LEF:
 		case OP_GTF:
 		case OP_GEF:
-		case OP_BLOCK_COPY:
-			switch(op) {
-				case OP_EQ:
-				case OP_NE:
-				case OP_LTI:
-				case OP_LEI:
-				case OP_GTI:
-				case OP_GEI:
-				case OP_LTU:
-				case OP_LEU:
-				case OP_GTU:
-				case OP_GEU:
-				case OP_EQF:
-				case OP_NEF:
-				case OP_LTF:
-				case OP_LEF:
-				case OP_GTF:
-				case OP_GEF:
-				codeBase[pc] = vm->instructionPointers[codeBase[pc]];
-				break;
-			default:
-				break;
-			}
-			pc += 4;
+		        //codeBase[pc] is the instruction index, convert that into an offset into
+		        //the int-aligned codeBase[] by the lookup table
+		        codeBase[int_pc] = vm->instructionPointers[codeBase[int_pc]];
+		        int_pc++;
 			break;
+		//these opcodes have an operand that isn't an instruction index
+		case
+		OP_ENTER:
+
+                case
+                OP_CONST:
+
+                case
+                OP_LOCAL:
+
+                case
+                OP_LEAVE:
+
+                case
+                OP_BLOCK_COPY:
+
 		case OP_ARG:
-			pc += 1;
+			int_pc++;
 			break;
 		default:
 			break;
@@ -320,21 +319,18 @@ an OP_ENTER instruction, which will subtract space for
 locals from sp
 ==============
 */
-#define	MAX_STACK	256
-#define	STACK_MASK	(MAX_STACK-1)
+#define	DEBUGSTR va(NULL, "%s%i", VM_Indent(vm), opStack-stack )
 
-#define	DEBUGSTR va("%s%i", VM_Indent(vm), opStack-stack )
-
-int	VM_CallInterpreted( vm_t *vm, int *args ) {
-	int		stack[MAX_STACK];
-	int		*opStack;
-	int		programCounter;
-	int		programStack;
-	int		stackOnEntry;
+qint	VM_CallInterpreted( vm_t *vm, qint *args ) {
+	qint		stack[OPSTACK_SIZE];
+	qint		*opStack;
+	qint		programCounter;
+	qint		programStack;
+	qint		stackOnEntry;
 	byte	*image;
-	int		*codeImage;
-	int		v1;
-	int		dataMask;
+	qint		*codeImage;
+	qint		v1;
+	qint		dataMask;
 #ifdef DEBUG_VM
 	vmSymbol_t	*profileSymbol;
 #endif
@@ -353,7 +349,7 @@ int	VM_CallInterpreted( vm_t *vm, int *args ) {
 	// set up the stack frame 
 
 	image = vm->dataBase;
-	codeImage = (int *)vm->codeBase;
+	codeImage = (qint *)vm->codeBase;
 	dataMask = vm->dataMask;
 	
 	// leave a free spot at start of stack so
@@ -364,18 +360,18 @@ int	VM_CallInterpreted( vm_t *vm, int *args ) {
 
 	programStack -= 48;
 
-	*(int *)&image[ programStack + 44] = args[9];
-	*(int *)&image[ programStack + 40] = args[8];
-	*(int *)&image[ programStack + 36] = args[7];
-	*(int *)&image[ programStack + 32] = args[6];
-	*(int *)&image[ programStack + 28] = args[5];
-	*(int *)&image[ programStack + 24] = args[4];
-	*(int *)&image[ programStack + 20] = args[3];
-	*(int *)&image[ programStack + 16] = args[2];
-	*(int *)&image[ programStack + 12] = args[1];
-	*(int *)&image[ programStack + 8 ] = args[0];
-	*(int *)&image[ programStack + 4 ] = 0;	// return stack
-	*(int *)&image[ programStack ] = -1;	// will terminate the loop on return
+	*(qint *)&image[ programStack + 44] = args[9];
+	*(qint *)&image[ programStack + 40] = args[8];
+	*(qint *)&image[ programStack + 36] = args[7];
+	*(qint *)&image[ programStack + 32] = args[6];
+	*(qint *)&image[ programStack + 28] = args[5];
+	*(qint *)&image[ programStack + 24] = args[4];
+	*(qint *)&image[ programStack + 20] = args[3];
+	*(qint *)&image[ programStack + 16] = args[2];
+	*(qint *)&image[ programStack + 12] = args[1];
+	*(qint *)&image[ programStack + 8 ] = args[0];
+	*(qint *)&image[ programStack + 4 ] = 0;	// return stack
+	*(qint *)&image[ programStack ] = -1;	// will terminate the loop on return
 
 	VM_Debug(0);
 
@@ -386,12 +382,12 @@ int	VM_CallInterpreted( vm_t *vm, int *args ) {
 #define r2 codeImage[programCounter]
 
 	while ( 1 ) {
-		int		opcode,	r0, r1;
-//		unsigned int	r2;
+		qint		opcode,	r0, r1;
+//		unsigned qint	r2;
 
 nextInstruction:
-		r0 = ((int *)opStack)[0];
-		r1 = ((int *)opStack)[-1];
+		r0 = ((qint *)opStack)[0];
+		r1 = ((qint *)opStack)[-1];
 nextInstruction2:
 #ifdef DEBUG_VM
 		if ( (unsigned)programCounter >= vm->codeLength ) {
@@ -401,7 +397,7 @@ nextInstruction2:
 		if ( opStack < stack ) {
 			Com_Error( ERR_DROP, "VM opStack underflow" );
 		}
-		if ( opStack >= stack+MAX_STACK ) {
+		if ( opStack >= stack + OPSTACK_SIZE ) {
 			Com_Error( ERR_DROP, "VM opStack overflow" );
 		}
 
@@ -433,14 +429,14 @@ nextInstruction2:
 			r1 = r0;
 			r0 = *opStack = r2;
 			
-			programCounter += 4;
+			programCounter += 1;
 			goto nextInstruction2;
 		case OP_LOCAL:
 			opStack++;
 			r1 = r0;
 			r0 = *opStack = r2+programStack;
 
-			programCounter += 4;
+			programCounter += 1;
 			goto nextInstruction2;
 
 		case OP_LOAD4:
@@ -449,17 +445,17 @@ nextInstruction2:
 				Com_Error( ERR_DROP, "OP_LOAD4 misaligned" );
 			}
 #endif
-			r0 = *opStack = *(int *)&image[ r0&dataMask ];
+			r0 = *opStack = *(qint *)&image[ r0&dataMask ];
 			goto nextInstruction2;
 		case OP_LOAD2:
-			r0 = *opStack = *(unsigned short *)&image[ r0&dataMask ];
+			r0 = *opStack = *(unsigned short *)&image[ r0&dataMask&~1 ];
 			goto nextInstruction2;
 		case OP_LOAD1:
 			r0 = *opStack = image[ r0&dataMask ];
 			goto nextInstruction2;
 
 		case OP_STORE4:
-			*(int *)&image[ r1&(dataMask & ~3) ] = r0;
+			*(qint *)&image[ r1&(dataMask & ~3) ] = r0;
 			opStack -= 2;
 			goto nextInstruction;
 		case OP_STORE2:
@@ -473,15 +469,15 @@ nextInstruction2:
 
 		case OP_ARG:
 			// single byte offset from programStack
-			*(int *)&image[ codeImage[programCounter] + programStack ] = r0;
+			*(qint *)&image[ (codeImage[programCounter] + programStack) & dataMask&~3 ] = r0;
 			opStack--;
 			programCounter += 1;
 			goto nextInstruction;
 
 		case OP_BLOCK_COPY:
 			{
-				int		*src, *dest;
-				int		count, srci, desti;
+				qint		*src, *dest;
+				qint		count, srci, desti;
 
 				count = r2;
 				// MrE: copy range check
@@ -490,28 +486,28 @@ nextInstruction2:
 				count = ((srci + count) & dataMask) - srci;
 				count = ((desti + count) & dataMask) - desti;
 
-				src = (int *)&image[ srci ];
-				dest = (int *)&image[ desti ];
+				src = (qint *)&image[ srci ];
+				dest = (qint *)&image[ desti ];
 				
 				memcpy(dest, src, count);
-				programCounter += 4;
+				programCounter += 1;
 				opStack -= 2;
 			}
 			goto nextInstruction;
 
 		case OP_CALL:
 			// save current program counter
-			*(int *)&image[ programStack ] = programCounter;
+			*(qint *)&image[ programStack ] = programCounter;
 			
 			// jump to the location on the stack
 			programCounter = r0;
 			opStack--;
 			if ( programCounter < 0 ) {
 				// system call
-				int		r;
-//				int		temp;
+				qint		r;
+//				qint		temp;
 #ifdef DEBUG_VM
-				int		stomped;
+				qint		stomped;
 
 				if ( vm_debugLevel ) {
 					Com_Printf( "%s---> systemcall(%i)\n", DEBUGSTR, -1 - programCounter );
@@ -521,43 +517,51 @@ nextInstruction2:
 //				temp = vm->callLevel;
 				vm->programStack = programStack - 4;
 #ifdef DEBUG_VM
-				stomped = *(int *)&image[ programStack + 4 ];
+				stomped = *(qint *)&image[ programStack + 4 ];
 #endif
-				*(int *)&image[ programStack + 4 ] = -1 - programCounter;
+				*(qint *)&image[ programStack + 4 ] = -1 - programCounter;
 
-//VM_LogSyscalls( (int *)&image[ programStack + 4 ] );
+//VM_LogSyscalls( (qint *)&image[ programStack + 4 ] );
 				{
-					intptr_t* argptr = (intptr_t *)&image[ programStack + 4 ];
-				#if __WORDSIZE == 64
-				// the vm has ints on the stack, we expect
-				// longs so we have to convert it
-					intptr_t argarr[16];
-					int i;
-					for (i = 0; i < 16; ++i) {
-						argarr[i] = *(int*)&image[ programStack + 4 + 4*i ];
+					//the vm has ints on the stack, we expect
+					//pointers so we might have to convert it
+					if (sizeof(intptr_t) != sizeof(qint))
+					{
+					  intptr_t argarr[16];
+					  qint *imagePtr = (qint *)&image[programStack];
+					  qint i;
+
+                                          for(i = 0;i < 16;++i)
+                                          {
+                                            argarr[i] = *(++imagePtr);
+                                          }
+
+                                          r = vm->systemCall(argarr);
+                                        }
+                                        else
+                                        {
+                                          intptr_t *argptr = (intptr_t *)&image[programStack + 4];
+                                          r = vm->systemCall(argptr);
 					}
-					argptr = argarr;
-				#endif
-					r = vm->systemCall( argptr );
 				}
 
 #ifdef DEBUG_VM
 				// this is just our stack frame pointer, only needed
 				// for debugging
-				*(int *)&image[ programStack + 4 ] = stomped;
+				*(qint *)&image[ programStack + 4 ] = stomped;
 #endif
 
 				// save return value
 				opStack++;
 				*opStack = r;
-				programCounter = *(int *)&image[ programStack ];
+				programCounter = *(qint *)&image[ programStack ];
 //				vm->callLevel = temp;
 #ifdef DEBUG_VM
 				if ( vm_debugLevel ) {
 					Com_Printf( "%s<--- %s\n", DEBUGSTR, VM_ValueToSymbol( vm, programCounter ) );
 				}
 #endif
-			} else if ( (unsigned)programCounter >= vm->codeLength ) {
+			} else if ( (unsigned)programCounter >= vm->instructionCount ) {
 				Com_Error( ERR_DROP, "VM program counter out of range in OP_CALL" );
 			} else {
 				programCounter = vm->instructionPointers[ programCounter ];
@@ -579,11 +583,11 @@ nextInstruction2:
 			// get size of stack frame
 			v1 = r2;
 
-			programCounter += 4;
+			programCounter += 1;
 			programStack -= v1;
 #ifdef DEBUG_VM
 			// save old stack frame for debugging traces
-			*(int *)&image[programStack+4] = programStack + v1;
+			*(qint *)&image[programStack+4] = programStack + v1;
 			if ( vm_debugLevel ) {
 				Com_Printf( "%s---> %s\n", DEBUGSTR, VM_ValueToSymbol( vm, programCounter - 5 ) );
 				if ( vm->breakFunction && programCounter - 5 == vm->breakFunction ) {
@@ -603,7 +607,7 @@ nextInstruction2:
 			programStack += v1;
 
 			// grab the saved program counter
-			programCounter = *(int *)&image[ programStack ];
+			programCounter = *(qint *)&image[ programStack ];
 #ifdef DEBUG_VM
 			profileSymbol = VM_ValueToFunctionSymbol( vm, programCounter );
 			if ( vm_debugLevel ) {
@@ -626,8 +630,12 @@ nextInstruction2:
 		*/
 
 		case OP_JUMP:
-			programCounter = r0;
-			programCounter = vm->instructionPointers[ programCounter ];
+			if ((unsigned)r0 >= vm->instructionCount)
+			{
+			  Com_Error(ERR_DROP, "VM program counter out of range in OP_JUMP");
+			}
+
+                        programCounter = vm->instructionPointers[r0];
 			opStack--;
 			goto nextInstruction;
 
@@ -637,7 +645,7 @@ nextInstruction2:
 				programCounter = r2;	//vm->instructionPointers[r2];
 				goto nextInstruction;
 			} else {
-				programCounter += 4;
+				programCounter += 1;
 				goto nextInstruction;
 			}
 
@@ -647,7 +655,7 @@ nextInstruction2:
 				programCounter = r2;	//vm->instructionPointers[r2];
 				goto nextInstruction;
 			} else {
-				programCounter += 4;
+				programCounter += 1;
 				goto nextInstruction;
 			}
 
@@ -657,7 +665,7 @@ nextInstruction2:
 				programCounter = r2;	//vm->instructionPointers[r2];
 				goto nextInstruction;
 			} else {
-				programCounter += 4;
+				programCounter += 1;
 				goto nextInstruction;
 			}
 
@@ -667,7 +675,7 @@ nextInstruction2:
 				programCounter = r2;	//vm->instructionPointers[r2];
 				goto nextInstruction;
 			} else {
-				programCounter += 4;
+				programCounter += 1;
 				goto nextInstruction;
 			}
 
@@ -677,7 +685,7 @@ nextInstruction2:
 				programCounter = r2;	//vm->instructionPointers[r2];
 				goto nextInstruction;
 			} else {
-				programCounter += 4;
+				programCounter += 1;
 				goto nextInstruction;
 			}
 
@@ -687,7 +695,7 @@ nextInstruction2:
 				programCounter = r2;	//vm->instructionPointers[r2];
 				goto nextInstruction;
 			} else {
-				programCounter += 4;
+				programCounter += 1;
 				goto nextInstruction;
 			}
 
@@ -697,7 +705,7 @@ nextInstruction2:
 				programCounter = r2;	//vm->instructionPointers[r2];
 				goto nextInstruction;
 			} else {
-				programCounter += 4;
+				programCounter += 1;
 				goto nextInstruction;
 			}
 
@@ -707,7 +715,7 @@ nextInstruction2:
 				programCounter = r2;	//vm->instructionPointers[r2];
 				goto nextInstruction;
 			} else {
-				programCounter += 4;
+				programCounter += 1;
 				goto nextInstruction;
 			}
 
@@ -717,7 +725,7 @@ nextInstruction2:
 				programCounter = r2;	//vm->instructionPointers[r2];
 				goto nextInstruction;
 			} else {
-				programCounter += 4;
+				programCounter += 1;
 				goto nextInstruction;
 			}
 
@@ -727,7 +735,7 @@ nextInstruction2:
 				programCounter = r2;	//vm->instructionPointers[r2];
 				goto nextInstruction;
 			} else {
-				programCounter += 4;
+				programCounter += 1;
 				goto nextInstruction;
 			}
 
@@ -737,7 +745,7 @@ nextInstruction2:
 				opStack -= 2;
 				goto nextInstruction;
 			} else {
-				programCounter += 4;
+				programCounter += 1;
 				opStack -= 2;
 				goto nextInstruction;
 			}
@@ -748,7 +756,7 @@ nextInstruction2:
 				opStack -= 2;
 				goto nextInstruction;
 			} else {
-				programCounter += 4;
+				programCounter += 1;
 				opStack -= 2;
 				goto nextInstruction;
 			}
@@ -759,7 +767,7 @@ nextInstruction2:
 				opStack -= 2;
 				goto nextInstruction;
 			} else {
-				programCounter += 4;
+				programCounter += 1;
 				opStack -= 2;
 				goto nextInstruction;
 			}
@@ -770,7 +778,7 @@ nextInstruction2:
 				opStack -= 2;
 				goto nextInstruction;
 			} else {
-				programCounter += 4;
+				programCounter += 1;
 				opStack -= 2;
 				goto nextInstruction;
 			}
@@ -781,7 +789,7 @@ nextInstruction2:
 				opStack -= 2;
 				goto nextInstruction;
 			} else {
-				programCounter += 4;
+				programCounter += 1;
 				opStack -= 2;
 				goto nextInstruction;
 			}
@@ -792,7 +800,7 @@ nextInstruction2:
 				opStack -= 2;
 				goto nextInstruction;
 			} else {
-				programCounter += 4;
+				programCounter += 1;
 				opStack -= 2;
 				goto nextInstruction;
 			}
@@ -889,10 +897,10 @@ nextInstruction2:
 			*(float *)opStack =  (float)*opStack;
 			goto nextInstruction;
 		case OP_CVFI:
-			*opStack = (int) *(float *)opStack;
+			*opStack = (qint) *(float *)opStack;
 			goto nextInstruction;
 		case OP_SEX8:
-			*opStack = (signed char)*opStack;
+			*opStack = (signed qchar)*opStack;
 			goto nextInstruction;
 		case OP_SEX16:
 			*opStack = (short)*opStack;
@@ -904,7 +912,7 @@ done:
 	vm->currentlyInterpreting = qfalse;
 
 	if ( opStack != &stack[1] ) {
-		Com_Error( ERR_DROP, "Interpreter error: opStack = %ld", (long int) (opStack - stack) );
+		Com_Error( ERR_DROP, "Interpreter error: opStack = %ld", (long qint) (opStack - stack) );
 	}
 
 	vm->programStack = stackOnEntry;

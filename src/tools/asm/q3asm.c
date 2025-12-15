@@ -175,9 +175,9 @@ int		numSymbols;
 int		errorCount;
 
 typedef struct options_s {
-	qboolean verbose;
-	qboolean writeMapFile;
-	qboolean vanillaQ3Compatibility;
+	qbool verbose;
+	qbool writeMapFile;
+	qbool vanillaQ3Compatibility;
 } options_t;
 
 options_t options = { 0 };
@@ -490,10 +490,10 @@ static void CodeError( char *fmt, ... ) {
 
 	errorCount++;
 
-	report( "%s:%i ", currentFileName, currentFileLine );
+	fprintf(stderr, "%s:%i ", currentFileName, currentFileLine );
 
 	va_start( argptr,fmt );
-	vprintf( fmt,argptr );
+	vfprintf(stderr, fmt,argptr );
 	va_end( argptr );
 }
 
@@ -679,7 +679,7 @@ Parse
 Parse a token out of linebuffer
 ==============
 */
-static qboolean Parse( void ) {
+static qbool Parse( void ) {
 	/* Hand-optimized by PhaethonH */
 	const char 	*p, *q;
 

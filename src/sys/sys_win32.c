@@ -28,6 +28,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <lmerr.h>
 #include <lmcons.h>
 #include <lmwksta.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -36,16 +38,34 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <conio.h>
 #include <wincrypt.h>
 #include <shlobj.h>
+#include <psapi.h>
 
 // Used to determine where to store user-specific files
 static char homePath[ MAX_OSPATH ] = { 0 };
+
+#if !defined(DEDICATED)
+static UINT timerResolution = 0;
+#endif
+
+#if defined(__WIN64__)
+void
+Sys_SnapVector(float *v)
+{
+  int i;
+
+  for(i = 0;i < 2;i++)
+  {
+    v[i] = rint(v[i]);
+  }
+}
+#endif
 
 /*
 ================
 Sys_DefaultHomePath
 ================
 */
-char *Sys_DefaultHomePath( void )
+const qchar *Sys_DefaultHomePath( void )
 {
 	TCHAR szPath[MAX_PATH];
 	FARPROC qSHGetFolderPath;
@@ -77,17 +97,32 @@ char *Sys_DefaultHomePath( void )
 		Q_strncpyz( homePath, szPath, sizeof( homePath ) );
 		Q_strcat( homePath, sizeof( homePath ), "\\Tremulous" );
 		FreeLibrary(shfolder);
-		if( !CreateDirectory( homePath, NULL ) )
-		{
-			if( GetLastError() != ERROR_ALREADY_EXISTS )
-			{
-				Com_Printf("Unable to create directory \"%s\"\n", homePath );
-				return NULL;
-			}
-		}
 	}
 
 	return homePath;
+}
+
+/*
+================
+Sys_TempPath
+================
+*/
+const char *
+Sys_TempPath(void)
+{
+  static TCHAR path[MAX_PATH];
+  DWORD length;
+
+  length = GetTempPath(sizeof(path), path);
+
+  if (length > sizeof(path) || !length)
+  {
+    return Sys_DefaultHomePath();
+  }
+  else
+  {
+    return path;
+  }
 }
 
 /*
@@ -99,7 +134,7 @@ int sys_timeBase;
 int Sys_Milliseconds (void)
 {
 	int             sys_curtime;
-	static qboolean initialized = qfalse;
+	static qbool initialized = qfalse;
 
 	if (!initialized) {
 		sys_timeBase = timeGetTime();
@@ -143,7 +178,7 @@ void Sys_SnapVector( float *v )
 Sys_RandomBytes
 ================
 */
-qboolean Sys_RandomBytes( byte *string, int len )
+qbool Sys_RandomBytes( byte *string, int len )
 {
 	HCRYPTPROV  prov;
 
@@ -209,18 +244,23 @@ char *Sys_GetClipboardData( void )
 	return data;
 }
 
-#define MEM_THRESHOLD 96*1024*1024
-
 /*
 ==================
 Sys_LowPhysicalMemory
 ==================
 */
-qboolean Sys_LowPhysicalMemory( void )
+qbool
+Sys_LowPhysicalMemory(void)
 {
-	MEMORYSTATUS stat;
-	GlobalMemoryStatus (&stat);
-	return (stat.dwTotalPhys <= MEM_THRESHOLD) ? qtrue : qfalse;
+  MEMORYSTATUS stat;
+
+  stat.dwLength = sizeof(stat);
+  if (!GlobalMemoryStatus(&stat))
+  {
+    return qfalse;
+  }
+
+  return stat.ullAvailPhys <= DWORDLONG(96 << 20);
 }
 
 /*
@@ -279,9 +319,73 @@ const char *Sys_Dirname( char *path )
 Sys_Mkdir
 ==============
 */
-void Sys_Mkdir( const char *path )
+qbool
+Sys_Mkdir(const qchar *path)
 {
-	_mkdir (path);
+  if (!CreateDirectory(path, NULL))
+  {
+    if (GetLastError() != ERROR_ALREADY_EXISTS)
+    {
+      return qfalse;
+    }
+  }
+
+  return qtrue;
+}
+
+/*
+==============
+Sys_FOpen
+==============
+*/
+FILE *
+Sys_FOpen(const qchar *ospath, const qchar *mode)
+{
+  return fopen(ospath, mode);
+}
+
+/*
+==============
+Sys_ResetReadOnlyAttribute
+==============
+*/
+qbool
+Sys_ResetReadOnlyAttribute(const qchar *ospath)
+{
+  DWORD dwAttr;
+
+  dwAttr = GetFileAttributesA(ospath);
+
+  if (dwAttr & FILE_ATTRIBUTE_READONLY)
+  {
+    dwAttr &= ~FILE_ATTRIBUTE_READONLY;
+
+    if (SetFileAttributesA(ospath, dwAttr))
+    {
+      return qtrue;
+    }
+    else
+    {
+      return qfalse;
+    }
+  }
+  else
+  {
+    return qfalse;
+  }
+}
+
+/*
+==============
+Sys_Mkfifo
+
+Noop on windows because named pipes do not function the same way
+==============
+*/
+FILE *
+Sys_Mkfifo(const qchar *ospath)
+{
+  return NULL;
 }
 
 /*
@@ -289,13 +393,28 @@ void Sys_Mkdir( const char *path )
 Sys_Cwd
 ==============
 */
-char *Sys_Cwd( void ) {
-	static char cwd[MAX_OSPATH];
+const qchar *
+Sys_Cwd(void)
+{
+  static char cwd[MAX_OSPATH];
 
-	_getcwd( cwd, sizeof( cwd ) - 1 );
-	cwd[MAX_OSPATH-1] = 0;
+  if (getcwd(cwd, sizeof(cwd) - 1) == NULL)
+  {
+    return "";
+  }
 
-	return cwd;
+  return cwd;
+}
+
+/*
+==============
+Sys_DefaultBasePath
+==============
+*/
+const qchar *
+Sys_DefaultBasePath(void)
+{
+  return Sys_Cwd();
 }
 
 /*
@@ -305,19 +424,16 @@ DIRECTORY SCANNING
 
 ==============================================================
 */
-
-#define MAX_FOUND_FILES 0x1000
-
 /*
 ==============
 Sys_ListFilteredFiles
 ==============
 */
-void Sys_ListFilteredFiles( const char *basedir, char *subdirs, char *filter, char **list, int *numfiles )
+void Sys_ListFilteredFiles( const char *basedir, char *subdirs, const char *filter, char **list, int *numfiles )
 {
 	char		search[MAX_OSPATH], newsubdirs[MAX_OSPATH];
 	char		filename[MAX_OSPATH];
-	int			findhandle;
+	intptr_t			findhandle;
 	struct _finddata_t findinfo;
 
 	if ( *numfiles >= MAX_FOUND_FILES - 1 ) {
@@ -352,9 +468,9 @@ void Sys_ListFilteredFiles( const char *basedir, char *subdirs, char *filter, ch
 			break;
 		}
 		Com_sprintf( filename, sizeof(filename), "%s\\%s", subdirs, findinfo.name );
-		if (!Com_FilterPath( filter, filename, qfalse ))
+		if (!Com_FilterPath(filter, filename))
 			continue;
-		list[ *numfiles ] = CopyString( filename );
+		list[ *numfiles ] = FS_CopyString( filename );
 		(*numfiles)++;
 	} while ( _findnext (findhandle, &findinfo) != -1 );
 
@@ -366,7 +482,8 @@ void Sys_ListFilteredFiles( const char *basedir, char *subdirs, char *filter, ch
 strgtr
 ==============
 */
-static qboolean strgtr(const char *s0, const char *s1)
+#if 0
+static qbool strgtr(const char *s0, const char *s1)
 {
 	int l0, l1, i;
 
@@ -387,35 +504,40 @@ static qboolean strgtr(const char *s0, const char *s1)
 	}
 	return qfalse;
 }
+#endif
 
 /*
 ==============
 Sys_ListFiles
 ==============
 */
-char **Sys_ListFiles( const char *directory, const char *extension, char *filter, int *numfiles, qboolean wantsubs )
+char **Sys_ListFiles( const char *directory, const char *extension, const char *filter, int *numfiles, qbool wantsubs )
 {
 	char		search[MAX_OSPATH];
 	int			nfiles;
 	char		**listCopy;
 	char		*list[MAX_FOUND_FILES];
 	struct _finddata_t findinfo;
-	int			findhandle;
+	intptr_t			findhandle;
 	int			flag;
+	qint extLen;
+	qint length;
 	int			i;
+	const qchar *x;
+	qbool hasPatterns;
 
 	if (filter) {
 
 		nfiles = 0;
 		Sys_ListFilteredFiles( directory, "", filter, list, &nfiles );
 
-		list[ nfiles ] = 0;
+		list[ nfiles ] = NULL;
 		*numfiles = nfiles;
 
 		if (!nfiles)
 			return NULL;
 
-		listCopy = Z_Malloc( ( nfiles + 1 ) * sizeof( *listCopy ) );
+		listCopy = Z_Malloc( ( nfiles + 1 ) * sizeof( listCopy[0] ) );
 		for ( i = 0 ; i < nfiles ; i++ ) {
 			listCopy[i] = list[i];
 		}
@@ -438,26 +560,59 @@ char **Sys_ListFiles( const char *directory, const char *extension, char *filter
 
 	Com_sprintf( search, sizeof(search), "%s\\*%s", directory, extension );
 
+	findhandle = _findfirst(search, &findinfo);
+
+	if (findhandle == -1)
+	{
+          *numfiles = 0;
+          return NULL;
+	}
+
+	extLen = (qint)strlen(extension);
+	hasPatterns = Com_HasPatterns(extension);
+
+	if (hasPatterns && extension[0] == '.' && extension[1] != '\0')
+        {
+          extension++;
+        }
+
 	// search
 	nfiles = 0;
-
-	findhandle = _findfirst (search, &findinfo);
-	if (findhandle == -1) {
-		*numfiles = 0;
-		return NULL;
-	}
 
 	do {
 		if ( (!wantsubs && flag ^ ( findinfo.attrib & _A_SUBDIR )) || (wantsubs && findinfo.attrib & _A_SUBDIR) ) {
 			if ( nfiles == MAX_FOUND_FILES - 1 ) {
 				break;
 			}
-			list[ nfiles ] = CopyString( findinfo.name );
+
+			if (*extension)
+			{
+                          if (hasPatterns)
+                          {
+                            x = Q_strrchr(findinfo.name, '.');
+
+                            if (!x || !Com_FilterExt(extension, x + 1))
+                            {
+                              continue;
+                            }
+                          }
+                          else
+                          {
+                            length = strlen(findinfo.name);
+
+                            if (length < extLen || Q_stricmp(findinfo.name + length - extLen, extension))
+                            {
+                              continue;
+                            }
+                          }
+			}
+
+			list[ nfiles ] = FS_CopyString( findinfo.name );
 			nfiles++;
 		}
 	} while ( _findnext (findhandle, &findinfo) != -1 );
 
-	list[ nfiles ] = 0;
+	list[ nfiles ] = NULL;
 
 	_findclose (findhandle);
 
@@ -468,23 +623,13 @@ char **Sys_ListFiles( const char *directory, const char *extension, char *filter
 		return NULL;
 	}
 
-	listCopy = Z_Malloc( ( nfiles + 1 ) * sizeof( *listCopy ) );
+	listCopy = Z_Malloc( ( nfiles + 1 ) * sizeof( listCopy[0] ) );
 	for ( i = 0 ; i < nfiles ; i++ ) {
 		listCopy[i] = list[i];
 	}
 	listCopy[i] = NULL;
 
-	do {
-		flag = 0;
-		for(i=1; i<nfiles; i++) {
-			if (strgtr(listCopy[i-1], listCopy[i])) {
-				char *temp = listCopy[i];
-				listCopy[i] = listCopy[i-1];
-				listCopy[i-1] = temp;
-				flag = 1;
-			}
-		}
-	} while(flag);
+        Com_SortFileList(listCopy, nfiles, extension[0] != '\0');
 
 	return listCopy;
 }
@@ -509,6 +654,26 @@ void Sys_FreeFileList( char **list )
 	Z_Free( list );
 }
 
+/*
+=============
+Sys_GetFileStats
+=============
+*/
+qbool
+Sys_GetFileStats(const qchar *filename, fileOffset_t *size, fileTime_t *mtime, fileTime_t *ctime)
+{
+  struct _stat s;
+
+  if (!_stat(filename, &s))
+  {
+    *size = (fileOffset_t)s.st_size;
+    *mtime = (fileTime_t)s.st_mtime;
+    *ctime = (fileTime_t)s.st_ctime;
+    return qtrue;
+  }
+
+  return qfalse;
+}
 
 /*
 ==============
@@ -545,8 +710,8 @@ Display an error message
 */
 void Sys_ErrorDialog( const char *error )
 {
-	if( MessageBox( NULL, va( "%s. Copy console log to clipboard?", error ),
-			NULL, MB_YESNO|MB_ICONERROR ) == IDYES )
+	if( Sys_Dialog(DT_YES_NO, va(NULL, "%s. Copy console log to clipboard?", error),
+			"Error" ) == DR_YES )
 	{
 		HGLOBAL memoryHandle;
 		char *clipMemory;
@@ -577,9 +742,92 @@ void Sys_ErrorDialog( const char *error )
 	}
 }
 
+/*
+================
+Sys_Dialog
+
+Display a win32 dialog box
+================
+*/
+dialogResult_t
+Sys_Dialog(dialogType_t type, const qchar *message, const qchar *title)
+{
+  UINT uType;
+
+  switch(type)
+  {
+    default:
+
+    case
+    DT_INFO:
+      uType = MB_ICONINFORMATION|MB_OK;
+      break;
+
+    case
+    DT_WARNING:
+      uType = MB_ICONWARNING|MB_OK;
+      break;
+
+    case
+    DT_ERROR:
+      uType = MB_ICONERROR|MB_OK;
+      break;
+
+    case
+    DT_YES_NO:
+      uType = MB_ICONQUESTION|MB_YESNO;
+      break;
+
+    case
+    DT_OK_CANCEL:
+      uType = MB_ICONWARNING|MB_OKCANCEL;
+      break;
+  }
+
+  switch(MessageBox(NULL, message, title, uType))
+  {
+    default:
+
+    case
+    IDOK:
+      return DR_OK;
+
+    case
+    IDCANCEL:
+      return DR_CANCEL;
+
+    case
+    IDYES:
+      return DR_YES:
+
+    case
+    IDNO:
+      return DR_NO;
+  }
+}
+
 #ifndef DEDICATED
-static qboolean SDL_VIDEODRIVER_externallySet = qfalse;
+static qbool SDL_VIDEODRIVER_externallySet = qfalse;
 #endif
+
+/*
+==============
+Sys_GLimpSafeInit
+
+Windows specific "safe" GL implementation initialization
+==============
+*/
+void
+Sys_GLimpSafeInit(void)
+{
+#if !defined(DEDICATED)
+  if (!SDL_VIDEODRIVER_externallySet)
+  {
+    //here we want to let sdl decide what to do unless explicitly stated otherwise
+    _putenv("SDL_VIDEODRIVER=");
+  }
+#endif
+}
 
 /*
 ==============
@@ -621,6 +869,8 @@ Windows specific initialisation
 void Sys_PlatformInit( void )
 {
 #ifndef DEDICATED
+        TIMECAPS ptc;
+
 	const char *SDL_VIDEODRIVER = getenv( "SDL_VIDEODRIVER" );
 
 	if( SDL_VIDEODRIVER )
@@ -631,5 +881,103 @@ void Sys_PlatformInit( void )
 	}
 	else
 		SDL_VIDEODRIVER_externallySet = qfalse;
+
+        if (timeGetDevCaps(&ptc, sizeof(ptc)) == MMSYSERR_NOERROR)
+        {
+          timerResolution = ptc.wPeriodMin;
+
+          if (timerResolution > 1)
+          {
+            Com_Printf("Warning: Minimum supported timer resolution is %ums on this system, recommended resolution 1ms\n", timerResolution);
+          }
+
+          timeBeginPeriod(timerResolution);
+        }
+        else
+        {
+          timerResolution = 0;
+        }
 #endif
+}
+
+/*
+==============
+Sys_PlatformExit
+
+Windows specific deinitialization
+==============
+*/
+void
+Sys_PlatformExit(void)
+{
+#if !defined(DEDICATED)
+  if (timerResolution)
+  {
+    timeEndPeriod(timerResolution);
+  }
+#endif
+}
+
+
+/*
+==============
+Sys_SetEnv
+
+set/unset environment variables (empty value removes it)
+==============
+*/
+void
+Sys_SetEnv(const char *name, const char *value)
+{
+  if (value)
+  {
+    _putenv(va(NULL, "%s=%s", name, value));
+  }
+  else
+  {
+    _putenv(va(NULL, "%s=", name));
+  }
+}
+
+/*
+================
+Sys_PID
+================
+*/
+qint
+Sys_PID(void)
+{
+  return GetCurrentProcessId();
+}
+
+/*
+================
+Sys_PIDIsRunning
+================
+*/
+qbool
+Sys_PIDIsRunning(qint pid)
+{
+  DWORD process[1024];
+  DWORD numBytes;
+  DWORD numProcesses;
+  qint i;
+
+  if (!EnumProcesses(processes, sizeof(processes), &numBytes))
+  {
+    return qfalse; //assume it's not running
+  }
+
+  numProcesses = numBytes / sizeof(DWORD);
+
+  //search for the pid
+  for(i = 0;i < numProcesses;i++)
+  {
+    if (processes[i] == pid)
+    {
+      return qtrue;
+    }
+  }
+
+  return qfalse;
 }

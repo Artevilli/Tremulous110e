@@ -62,11 +62,11 @@ void G_ForceWeaponChange( gentity_t *ent, weapon_t weapon )
 G_GiveClientMaxAmmo
 =================
 */
-void G_GiveClientMaxAmmo( gentity_t *ent, qboolean buyingEnergyAmmo )
+void G_GiveClientMaxAmmo( gentity_t *ent, qbool buyingEnergyAmmo )
 {
   int       i;
   int       maxAmmo, maxClips;
-  qboolean  weaponType, restoredAmmo = qfalse;
+  qbool  weaponType, restoredAmmo = qfalse;
 
   for( i = WP_NONE + 1; i < WP_NUM_WEAPONS; i++ )
   {
@@ -620,7 +620,7 @@ LUCIFER CANNON
 LCChargeFire
 ===============
 */
-void LCChargeFire( gentity_t *ent, qboolean secondary )
+void LCChargeFire( gentity_t *ent, qbool secondary )
 {
   gentity_t *m;
 
@@ -832,7 +832,7 @@ LEVEL0
 CheckVenomAttack
 ===============
 */
-qboolean CheckVenomAttack( gentity_t *ent )
+qbool CheckVenomAttack( gentity_t *ent )
 {
   trace_t   tr;
   gentity_t *tent;
@@ -1044,7 +1044,7 @@ static gentity_t *G_FindNewZapTarget( gentity_t *ent )
         ( enemy->s.eType == ET_BUILDABLE &&
           BG_Buildable( enemy->s.modelindex )->team == TEAM_HUMANS ) ) && enemy->health > 0 )
     {
-      qboolean foundOldTarget = qfalse;
+      qbool foundOldTarget = qfalse;
 
       trap_Trace( &tr, muzzle, NULL, NULL, enemy->s.origin, ent->s.number, MASK_SHOT );
 
@@ -1280,7 +1280,7 @@ LEVEL3
 CheckPounceAttack
 ===============
 */
-qboolean CheckPounceAttack( gentity_t *ent )
+qbool CheckPounceAttack( gentity_t *ent )
 {
   trace_t   tr;
   gentity_t *tent;

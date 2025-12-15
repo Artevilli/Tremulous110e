@@ -1,2 +1,7 @@
-int xglobal_load_c(char * path);
-unsigned char xglobal_flags(char * ip);
+#pragma once
+
+#include "../qcommon/q_shared.h"
+qint
+xglobal_load_c(qchar *path);
+unsigned qchar
+xglobal_flags(qchar *ip);

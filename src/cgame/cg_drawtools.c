@@ -319,7 +319,7 @@ float *CG_FadeColor( int startMsec, int totalMsec )
 CG_WorldToScreen
 ================
 */
-qboolean CG_WorldToScreen( vec3_t point, float *x, float *y )
+qbool CG_WorldToScreen( vec3_t point, float *x, float *y )
 {
 	vec3_t  trans;
 	float   xc, yc;

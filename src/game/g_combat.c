@@ -750,7 +750,7 @@ static float G_CalcDamageModifier( vec3_t point, gentity_t *targ, gentity_t *att
   {
     for( i = 0; i < g_numDamageRegions[ class ]; i++ )
     {
-      qboolean rotationBound;
+      qbool rotationBound;
 
       if( g_damageRegions[ class ][ i ].minAngle >
           g_damageRegions[ class ][ i ].maxAngle )
@@ -779,7 +779,7 @@ static float G_CalcDamageModifier( vec3_t point, gentity_t *targ, gentity_t *att
       {
         for( j = 0; j < g_numArmourRegions[ i ]; j++ )
         {
-          qboolean rotationBound;
+          qbool rotationBound;
 
           if( g_armourRegions[ i ][ j ].minAngle >
               g_armourRegions[ i ][ j ].maxAngle )
@@ -1154,7 +1154,7 @@ Returns qtrue if the inflictor can directly damage the target.  Used for
 explosions and melee attacks.
 ============
 */
-qboolean CanDamage( gentity_t *targ, vec3_t origin )
+qbool CanDamage( gentity_t *targ, vec3_t origin )
 {
   vec3_t  dest;
   trace_t tr;
@@ -1208,7 +1208,7 @@ qboolean CanDamage( gentity_t *targ, vec3_t origin )
 G_SelectiveRadiusDamage
 ============
 */
-qboolean G_SelectiveRadiusDamage( vec3_t origin, gentity_t *attacker, float damage,
+qbool G_SelectiveRadiusDamage( vec3_t origin, gentity_t *attacker, float damage,
                                   float radius, gentity_t *ignore, int mod, int team )
 {
   float     points, dist;
@@ -1219,7 +1219,7 @@ qboolean G_SelectiveRadiusDamage( vec3_t origin, gentity_t *attacker, float dama
   vec3_t    v;
   vec3_t    dir;
   int       i, e;
-  qboolean  hitClient = qfalse;
+  qbool  hitClient = qfalse;
 
   if( radius < 1 )
     radius = 1;
@@ -1281,7 +1281,7 @@ qboolean G_SelectiveRadiusDamage( vec3_t origin, gentity_t *attacker, float dama
 G_RadiusDamage
 ============
 */
-qboolean G_RadiusDamage( vec3_t origin, gentity_t *attacker, float damage,
+qbool G_RadiusDamage( vec3_t origin, gentity_t *attacker, float damage,
                          float radius, gentity_t *ignore, int mod )
 {
   float     points, dist;
@@ -1292,7 +1292,7 @@ qboolean G_RadiusDamage( vec3_t origin, gentity_t *attacker, float damage,
   vec3_t    v;
   vec3_t    dir;
   int       i, e;
-  qboolean  hitClient = qfalse;
+  qbool  hitClient = qfalse;
 
   if( radius < 1 )
     radius = 1;

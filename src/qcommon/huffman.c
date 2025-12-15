@@ -28,9 +28,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "q_shared.h"
 #include "qcommon.h"
 
-static int			bloc = 0;
+static qint			bloc = 0;
 
-void	Huff_putBit( int bit, byte *fout, int *offset) {
+void	Huff_putBit( qint bit, byte *fout, qint *offset) {
 	bloc = *offset;
 	if ((bloc&7) == 0) {
 		fout[(bloc>>3)] = 0;
@@ -40,18 +40,18 @@ void	Huff_putBit( int bit, byte *fout, int *offset) {
 	*offset = bloc;
 }
 
-int		Huff_getBloc(void)
+qint		Huff_getBloc(void)
 {
 	return bloc;
 }
 
-void	Huff_setBloc(int _bloc)
+void	Huff_setBloc(qint _bloc)
 {
 	bloc = _bloc;
 }
 
-int		Huff_getBit( byte *fin, int *offset) {
-	int t;
+qint		Huff_getBit( byte *fin, qint *offset) {
+	qint t;
 	bloc = *offset;
 	t = (fin[(bloc>>3)] >> (bloc&7)) & 0x1;
 	bloc++;
@@ -60,7 +60,7 @@ int		Huff_getBit( byte *fin, int *offset) {
 }
 
 /* Add a bit to the output file (buffered) */
-static void add_bit (char bit, byte *fout) {
+static void add_bit (qchar bit, byte *fout) {
 	if ((bloc&7) == 0) {
 		fout[(bloc>>3)] = 0;
 	}
@@ -69,8 +69,8 @@ static void add_bit (char bit, byte *fout) {
 }
 
 /* Receive one bit from the input file (buffered) */
-static int get_bit (byte *fin) {
-	int t;
+static qint get_bit (byte *fin) {
+	qint t;
 	t = (fin[(bloc>>3)] >> (bloc&7)) & 0x1;
 	bloc++;
 	return t;
@@ -264,7 +264,7 @@ void Huff_addRef(huff_t* huff, byte ch) {
 }
 
 /* Get a symbol */
-int Huff_Receive (node_t *node, int *ch, byte *fin) {
+qint Huff_Receive (node_t *node, qint *ch, byte *fin) {
 	while (node && node->symbol == INTERNAL_NODE) {
 		if (get_bit(fin)) {
 			node = node->right;
@@ -274,13 +274,13 @@ int Huff_Receive (node_t *node, int *ch, byte *fin) {
 	}
 	if (!node) {
 		return 0;
-//		Com_Error(ERR_DROP, "Illegal tree!\n");
+//		Com_Error(ERR_DROP, "Illegal tree!");
 	}
 	return (*ch = node->symbol);
 }
 
 /* Get a symbol */
-void Huff_offsetReceive (node_t *node, int *ch, byte *fin, int *offset) {
+void Huff_offsetReceive (node_t *node, qint *ch, byte *fin, qint *offset) {
 	bloc = *offset;
 	while (node && node->symbol == INTERNAL_NODE) {
 		if (get_bit(fin)) {
@@ -292,7 +292,7 @@ void Huff_offsetReceive (node_t *node, int *ch, byte *fin, int *offset) {
 	if (!node) {
 		*ch = 0;
 		return;
-//		Com_Error(ERR_DROP, "Illegal tree!\n");
+//		Com_Error(ERR_DROP, "Illegal tree!");
 	}
 	*ch = node->symbol;
 	*offset = bloc;
@@ -313,27 +313,27 @@ static void send(node_t *node, node_t *child, byte *fout) {
 }
 
 /* Send a symbol */
-void Huff_transmit (huff_t *huff, int ch, byte *fout) {
-	int i;
+void Huff_transmit (huff_t *huff, qint ch, byte *fout) {
+	qint i;
 	if (huff->loc[ch] == NULL) { 
 		/* node_t hasn't been transmitted, send a NYT, then the symbol */
 		Huff_transmit(huff, NYT, fout);
 		for (i = 7; i >= 0; i--) {
-			add_bit((char)((ch >> i) & 0x1), fout);
+			add_bit((qchar)((ch >> i) & 0x1), fout);
 		}
 	} else {
 		send(huff->loc[ch], NULL, fout);
 	}
 }
 
-void Huff_offsetTransmit (huff_t *huff, int ch, byte *fout, int *offset) {
+void Huff_offsetTransmit (huff_t *huff, qint ch, byte *fout, qint *offset) {
 	bloc = *offset;
 	send(huff->loc[ch], NULL, fout);
 	*offset = bloc;
 }
 
-void Huff_Decompress(msg_t *mbuf, int offset) {
-	int			ch, cch, i, j, size;
+void Huff_Decompress(msg_t *mbuf, qint offset) {
+	qint			ch, cch, i, j, size;
 	byte		seq[65536];
 	byte*		buffer;
 	huff_t		huff;
@@ -363,7 +363,7 @@ void Huff_Decompress(msg_t *mbuf, int offset) {
 	for ( j = 0; j < cch; j++ ) {
 		ch = 0;
 		// don't overflow reading from the messages
-		// FIXME: would it be better to have a overflow check in get_bit ?
+		// FIXME: would it be better to have an overflow check in get_bit ?
 		if ( (bloc >> 3) > size ) {
 			seq[j] = 0;
 			break;
@@ -384,10 +384,8 @@ void Huff_Decompress(msg_t *mbuf, int offset) {
 	Com_Memcpy(mbuf->data + offset, seq, cch);
 }
 
-extern 	int oldsize;
-
-void Huff_Compress(msg_t *mbuf, int offset) {
-	int			i, ch, size;
+void Huff_Compress(msg_t *mbuf, qint offset) {
+	qint			i, ch, size;
 	byte		seq[65536];
 	byte*		buffer;
 	huff_t		huff;

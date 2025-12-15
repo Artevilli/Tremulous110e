@@ -184,22 +184,22 @@ int trap_PointContents( const vec3_t point, int passEntityNum )
 }
 
 
-qboolean trap_InPVS( const vec3_t p1, const vec3_t p2 )
+qbool trap_InPVS( const vec3_t p1, const vec3_t p2 )
 {
   return syscall( G_IN_PVS, p1, p2 );
 }
 
-qboolean trap_InPVSIgnorePortals( const vec3_t p1, const vec3_t p2 )
+qbool trap_InPVSIgnorePortals( const vec3_t p1, const vec3_t p2 )
 {
   return syscall( G_IN_PVS_IGNORE_PORTALS, p1, p2 );
 }
 
-void trap_AdjustAreaPortalState( gentity_t *ent, qboolean open )
+void trap_AdjustAreaPortalState( gentity_t *ent, qbool open )
 {
   syscall( G_ADJUST_AREA_PORTAL_STATE, ent, open );
 }
 
-qboolean trap_AreasConnected( int area1, int area2 )
+qbool trap_AreasConnected( int area1, int area2 )
 {
   return syscall( G_AREAS_CONNECTED, area1, area2 );
 }
@@ -220,12 +220,12 @@ int trap_EntitiesInBox( const vec3_t mins, const vec3_t maxs, int *list, int max
   return syscall( G_ENTITIES_IN_BOX, mins, maxs, list, maxcount );
 }
 
-qboolean trap_EntityContact( const vec3_t mins, const vec3_t maxs, const gentity_t *ent )
+qbool trap_EntityContact( const vec3_t mins, const vec3_t maxs, const gentity_t *ent )
 {
   return syscall( G_ENTITY_CONTACT, mins, maxs, ent );
 }
 
-qboolean trap_EntityContactCapsule( const vec3_t mins, const vec3_t maxs, const gentity_t *ent )
+qbool trap_EntityContactCapsule( const vec3_t mins, const vec3_t maxs, const gentity_t *ent )
 {
   return syscall( G_ENTITY_CONTACTCAPSULE, mins, maxs, ent );
 }
@@ -235,7 +235,7 @@ void trap_GetUsercmd( int clientNum, usercmd_t *cmd )
   syscall( G_GET_USERCMD, clientNum, cmd );
 }
 
-qboolean trap_GetEntityToken( char *buffer, int bufferSize )
+qbool trap_GetEntityToken( char *buffer, int bufferSize )
 {
   return syscall( G_GET_ENTITY_TOKEN, buffer, bufferSize );
 }
@@ -282,7 +282,7 @@ int trap_Parse_SourceFileAndLine( int handle, char *filename, int *line )
   return syscall( G_PARSE_SOURCE_FILE_AND_LINE, handle, filename, line );
 }
 
-qboolean trap_mysql_runquery( char *query ) {
+qbool trap_mysql_runquery( char *query ) {
   return syscall( G_SQL_RUNQUERY, query );
 }
 
@@ -290,7 +290,7 @@ void trap_mysql_finishquery( void ) {
   syscall( G_SQL_FINISHQUERY );
 }
 
-qboolean trap_mysql_fetchrow( void ) {
+qbool trap_mysql_fetchrow( void ) {
   return syscall( G_SQL_FETCHROW );
 }
 

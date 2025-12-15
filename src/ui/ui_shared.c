@@ -922,7 +922,7 @@ qboolean PC_Script_Parse( int handle, const char **out )
     }
 
     if( token.string[1] != '\0' )
-      Q_strcat( script, 1024, va( "\"%s\"", token.string ) );
+      Q_strcat( script, 1024, va(NULL, "\"%s\"", token.string ) );
     else
       Q_strcat( script, 1024, token.string );
 
@@ -1812,7 +1812,7 @@ void Script_Exec( itemDef_t *item, char **args )
   const char *val;
 
   if( String_Parse( args, &val ) )
-    DC->executeText( EXEC_APPEND, va( "%s ; ", val ) );
+    DC->executeText( EXEC_APPEND, va(NULL, "%s ; ", val ) );
 }
 
 void Script_Play( itemDef_t *item, char **args )
@@ -3351,7 +3351,7 @@ qboolean Item_YesNo_HandleKey( itemDef_t *item, int key )
   {
     if( key == K_MOUSE1 || key == K_ENTER || key == K_MOUSE2 || key == K_MOUSE3 )
     {
-      DC->setCVar( item->cvar, va( "%i", !DC->getCVarValue( item->cvar ) ) );
+      DC->setCVar( item->cvar, va(NULL, "%i", !DC->getCVarValue( item->cvar ) ) );
       return qtrue;
     }
   }
@@ -3505,9 +3505,9 @@ qboolean Item_Multi_HandleKey( itemDef_t *item, int key )
           float value = multiPtr->cvarValue[current];
 
           if( ( ( float )( ( int ) value ) ) == value )
-            DC->setCVar( item->cvar, va( "%i", ( int ) value ) );
+            DC->setCVar( item->cvar, va(NULL, "%i", ( int ) value ) );
           else
-            DC->setCVar( item->cvar, va( "%f", value ) );
+            DC->setCVar( item->cvar, va(NULL, "%f", value ) );
         }
 
         return qtrue;
@@ -3830,7 +3830,7 @@ static void Scroll_Slider_ThumbFunc( void *p )
   value /= SLIDER_WIDTH;
   value *= ( editDef->maxVal - editDef->minVal );
   value += editDef->minVal;
-  DC->setCVar( si->item->cvar, va( "%f", value ) );
+  DC->setCVar( si->item->cvar, va(NULL, "%f", value ) );
 }
 
 void Item_StartCapture( itemDef_t *item, int key )
@@ -3932,7 +3932,7 @@ qboolean Item_Slider_HandleKey( itemDef_t *item, int key, qboolean down )
           // vm fuckage
           // value = (((float)(DC->cursorx - x)/ SLIDER_WIDTH) * (editDef->maxVal - editDef->minVal));
           value += editDef->minVal;
-          DC->setCVar( item->cvar, va( "%f", value ) );
+          DC->setCVar( item->cvar, va(NULL, "%f", value ) );
           return qtrue;
         }
       }
@@ -8217,7 +8217,7 @@ void Menu_PaintAll( void )
   if( DC->getCVarValue( "ui_developer" ) )
   {
     vec4_t v = {1, 1, 1, 1};
-    UI_Text_Paint( 5, 25, .5, v, va( "fps: %f", DC->FPS ), 0, 0, 0 );
+    UI_Text_Paint( 5, 25, .5, v, va(NULL, "fps: %f", DC->FPS ), 0, 0, 0 );
   }
 }
 

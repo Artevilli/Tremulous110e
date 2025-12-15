@@ -87,7 +87,7 @@ Read a configuration file containing animation counts and rates
 models/weapons/rifle/animation.cfg, etc
 ======================
 */
-static qboolean CG_ParseWeaponAnimationFile( const char *filename, weaponInfo_t *weapon )
+static qbool CG_ParseWeaponAnimationFile( const char *filename, weaponInfo_t *weapon )
 {
   char          *text_p;
   int           len;
@@ -185,7 +185,7 @@ CG_ParseWeaponModeSection
 Parse a weapon mode section
 ===============
 */
-static qboolean CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p )
+static qbool CG_ParseWeaponModeSection( weaponInfoMode_t *wim, char **text_p )
 {
   char  *token;
   int   i;
@@ -517,7 +517,7 @@ CG_ParseWeaponFile
 Parses a configuration file describing a weapon
 ======================
 */
-static qboolean CG_ParseWeaponFile( const char *filename, weaponInfo_t *wi )
+static qbool CG_ParseWeaponFile( const char *filename, weaponInfo_t *wi )
 {
   char          *text_p;
   int           len;
@@ -924,7 +924,7 @@ CG_MachinegunSpinAngle
 */
 #define   SPIN_SPEED  0.9
 #define   COAST_TIME  1000
-static float CG_MachinegunSpinAngle( centity_t *cent, qboolean firing )
+static float CG_MachinegunSpinAngle( centity_t *cent, qbool firing )
 {
   int   delta;
   float angle;
@@ -971,8 +971,8 @@ void CG_AddPlayerWeapon( refEntity_t *parent, playerState_t *ps, centity_t *cent
   weapon_t      weaponNum;
   weaponMode_t  weaponMode;
   weaponInfo_t  *weapon;
-  qboolean      noGunModel;
-  qboolean      firing;
+  qbool      noGunModel;
+  qbool      firing;
 
   weaponNum = cent->currentState.weapon;
   weaponMode = cent->currentState.generic1;
@@ -1316,7 +1316,7 @@ WEAPON SELECTION
 CG_WeaponSelectable
 ===============
 */
-static qboolean CG_WeaponSelectable( weapon_t weapon )
+static qbool CG_WeaponSelectable( weapon_t weapon )
 {
   if( !BG_InventoryContainsWeapon( weapon, cg.snap->ps.stats ) )
     return qfalse;
@@ -1330,7 +1330,7 @@ static qboolean CG_WeaponSelectable( weapon_t weapon )
 CG_UpgradeSelectable
 ===============
 */
-static qboolean CG_UpgradeSelectable( upgrade_t upgrade )
+static qbool CG_UpgradeSelectable( upgrade_t upgrade )
 {
   if( !BG_InventoryContainsUpgrade( upgrade, cg.snap->ps.stats ) )
     return qfalse;
@@ -1359,7 +1359,7 @@ void CG_DrawItemSelect( rectDef_t *rect, vec4_t color )
   int           numItems = 0, selectedItem = 0;
   int           length;
   int           selectWindow;
-  qboolean      vertical;
+  qbool      vertical;
   centity_t     *cent;
   playerState_t *ps;
   
@@ -1902,7 +1902,7 @@ void CG_Tracer( vec3_t source, vec3_t dest )
 CG_CalcMuzzlePoint
 ======================
 */
-static qboolean CG_CalcMuzzlePoint( int entityNum, vec3_t muzzle )
+static qbool CG_CalcMuzzlePoint( int entityNum, vec3_t muzzle )
 {
   vec3_t    forward;
   centity_t *cent;
@@ -1946,7 +1946,7 @@ CG_Bullet
 Renders bullet effects.
 ======================
 */
-void CG_Bullet( vec3_t end, int sourceEntityNum, vec3_t normal, qboolean flesh, int fleshEntityNum )
+void CG_Bullet( vec3_t end, int sourceEntityNum, vec3_t normal, qbool flesh, int fleshEntityNum )
 {
   vec3_t  start;
 

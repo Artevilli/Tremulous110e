@@ -154,7 +154,7 @@ Read a configuration file containing animation counts and rates
 models/buildables/hivemind/animation.cfg, etc
 ======================
 */
-static qboolean CG_ParseBuildableAnimationFile( const char *filename, buildable_t buildable )
+static qbool CG_ParseBuildableAnimationFile( const char *filename, buildable_t buildable )
 {
   char          *text_p;
   int           len;
@@ -246,7 +246,7 @@ Read a configuration file containing sound properties
 sound/buildables/hivemind/sound.cfg, etc
 ======================
 */
-static qboolean CG_ParseBuildableSoundFile( const char *filename, buildable_t buildable )
+static qbool CG_ParseBuildableSoundFile( const char *filename, buildable_t buildable )
 {
   char          *text_p;
   int           len;
@@ -826,7 +826,7 @@ static void CG_BuildableStatusDisplay( centity_t *cent )
   int             health;
   float           x, y;
   vec4_t          color;
-  qboolean        powered, marked;
+  qbool        powered, marked;
   trace_t         tr;
   float           d;
   buildStat_t     *bs;
@@ -834,7 +834,7 @@ static void CG_BuildableStatusDisplay( centity_t *cent )
   int             entNum;
   vec3_t          trOrigin;
   vec3_t          right;
-  qboolean        visible = qfalse;
+  qbool        visible = qfalse;
   vec3_t          mins, maxs;
   entityState_t   *hit;
 
@@ -1103,7 +1103,7 @@ static int CG_SortDistance( const void *a, const void *b )
 CG_PlayerIsBuilder
 ==================
 */
-static qboolean CG_PlayerIsBuilder( buildable_t buildable )
+static qbool CG_PlayerIsBuilder( buildable_t buildable )
 {
   switch( cg.predictedPlayerState.weapon )
   {
@@ -1124,7 +1124,7 @@ static qboolean CG_PlayerIsBuilder( buildable_t buildable )
 CG_BuildableRemovalPending
 ==================
 */
-static qboolean CG_BuildableRemovalPending( int entityNum )
+static qbool CG_BuildableRemovalPending( int entityNum )
 {
   int           i;
   playerState_t *ps = &cg.snap->ps;

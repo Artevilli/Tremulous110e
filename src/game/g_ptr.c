@@ -34,7 +34,7 @@ G_CheckForUniquePTRC
 Callback to detect ptrc clashes
 ===============
 */
-static qboolean G_CheckForUniquePTRC( int code )
+static qbool G_CheckForUniquePTRC( int code )
 {
   int i;
 

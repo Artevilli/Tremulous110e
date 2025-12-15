@@ -31,7 +31,7 @@ CG_AttachmentPoint
 Return the attachment point
 ===============
 */
-qboolean CG_AttachmentPoint( attachment_t *a, vec3_t v )
+qbool CG_AttachmentPoint( attachment_t *a, vec3_t v )
 {
   centity_t   *cent;
 
@@ -109,7 +109,7 @@ CG_AttachmentDir
 Return the attachment direction
 ===============
 */
-qboolean CG_AttachmentDir( attachment_t *a, vec3_t v )
+qbool CG_AttachmentDir( attachment_t *a, vec3_t v )
 {
   vec3_t      forward;
   centity_t   *cent;
@@ -168,7 +168,7 @@ CG_AttachmentAxis
 Return the attachment axis
 ===============
 */
-qboolean CG_AttachmentAxis( attachment_t *a, vec3_t axis[ 3 ] )
+qbool CG_AttachmentAxis( attachment_t *a, vec3_t axis[ 3 ] )
 {
   centity_t   *cent;
 
@@ -215,7 +215,7 @@ CG_AttachmentVelocity
 If the attachment can have velocity, return it
 ===============
 */
-qboolean CG_AttachmentVelocity( attachment_t *a, vec3_t v )
+qbool CG_AttachmentVelocity( attachment_t *a, vec3_t v )
 {
   if( !a )
     return qfalse;
@@ -258,7 +258,7 @@ CG_Attached
 If the attachment is valid, return qtrue
 ===============
 */
-qboolean CG_Attached( attachment_t *a )
+qbool CG_Attached( attachment_t *a )
 {
   if( !a )
     return qfalse;

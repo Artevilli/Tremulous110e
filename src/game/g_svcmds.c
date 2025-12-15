@@ -79,7 +79,7 @@ static int        numIPFilters;
 StringToFilter
 =================
 */
-static qboolean StringToFilter( char *s, ipFilter_t *f )
+static qbool StringToFilter( char *s, ipFilter_t *f )
 {
   char  num[ 128 ];
   int   i, j;
@@ -183,7 +183,7 @@ static void UpdateIPBans( void )
 G_FilterPacket
 =================
 */
-qboolean G_FilterPacket( char *from )
+qbool G_FilterPacket( char *from )
 {
   int       i;
   unsigned  in;
@@ -582,7 +582,7 @@ ConsoleCommand
 
 =================
 */
-qboolean  ConsoleCommand( void )
+qbool  ConsoleCommand( void )
 {
   char cmd[ MAX_TOKEN_CHARS ];
 

@@ -124,7 +124,7 @@ G_TryPushingEntity
 Returns qfalse if the move is blocked
 ==================
 */
-qboolean G_TryPushingEntity( gentity_t *check, gentity_t *pusher, vec3_t move, vec3_t amove )
+qbool G_TryPushingEntity( gentity_t *check, gentity_t *pusher, vec3_t move, vec3_t amove )
 {
   vec3_t    matrix[ 3 ], transpose[ 3 ];
   vec3_t    org, org2, move2;
@@ -231,7 +231,7 @@ otherwise riders would continue to slide.
 If qfalse is returned, *obstacle will be the blocking entity
 ============
 */
-qboolean G_MoverPush( gentity_t *pusher, vec3_t move, vec3_t amove, gentity_t **obstacle )
+qbool G_MoverPush( gentity_t *pusher, vec3_t move, vec3_t amove, gentity_t **obstacle )
 {
   int       i, e;
   gentity_t *check;
@@ -633,7 +633,7 @@ void Think_CloseModelDoor( gentity_t *ent )
   int       numEntities, i;
   gentity_t *clipBrush = ent->clipBrush;
   gentity_t *check;
-  qboolean  canClose = qtrue;
+  qbool  canClose = qtrue;
 
   numEntities = trap_EntitiesInBox( clipBrush->r.absmin, clipBrush->r.absmax, entityList, MAX_GENTITIES );
 
@@ -957,7 +957,7 @@ void InitMover( gentity_t *ent )
   float     distance;
   float     light;
   vec3_t    color;
-  qboolean  lightSet, colorSet;
+  qbool  lightSet, colorSet;
   char      *sound;
 
   // if the "model2" key is set, use a seperate model
@@ -1037,7 +1037,7 @@ void InitRotator( gentity_t *ent )
   float     angle;
   float     light;
   vec3_t    color;
-  qboolean  lightSet, colorSet;
+  qbool  lightSet, colorSet;
   char      *sound;
 
   // if the "model2" key is set, use a seperate model
@@ -1612,7 +1612,7 @@ void SP_func_door_model( gentity_t *ent )
   char      *s;
   float     light;
   vec3_t    color;
-  qboolean  lightSet, colorSet;
+  qbool  lightSet, colorSet;
   char      *sound;
   gentity_t *clipBrush;
 

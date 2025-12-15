@@ -188,7 +188,7 @@ g_admin_ban_t *g_admin_bans[ MAX_ADMIN_BANS ];
 g_admin_command_t *g_admin_commands[ MAX_ADMIN_COMMANDS ];
 g_admin_namelog_t *g_admin_namelog[ MAX_ADMIN_NAMELOGS ];
 
-qboolean G_admin_permission( gentity_t *ent, char flag )
+qbool G_admin_permission( gentity_t *ent, char flag )
 {
   int i;
   int l = 0;
@@ -262,7 +262,7 @@ qboolean G_admin_permission( gentity_t *ent, char flag )
   return qfalse;
 }
 
-qboolean G_admin_name_check( gentity_t *ent, char *name, char *err, int len )
+qbool G_admin_name_check( gentity_t *ent, char *name, char *err, int len )
 {
   int i;
   gclient_t *client;
@@ -311,7 +311,7 @@ qboolean G_admin_name_check( gentity_t *ent, char *name, char *err, int len )
   return qtrue;
 }
 
-static qboolean admin_higher_guid( char *admin_guid, char *victim_guid )
+static qbool admin_higher_guid( char *admin_guid, char *victim_guid )
 {
   int i;
   int alevel = 0;
@@ -337,7 +337,7 @@ static qboolean admin_higher_guid( char *admin_guid, char *victim_guid )
   return qtrue;
 }
 
-static qboolean admin_higher( gentity_t *admin, gentity_t *victim )
+static qbool admin_higher( gentity_t *admin, gentity_t *victim )
 {
 
   // console always wins
@@ -574,7 +574,7 @@ static void admin_default_levels( void )
 int G_admin_level( gentity_t *ent )
 {
   int i;
-  qboolean found = qfalse;
+  qbool found = qfalse;
 
   if( !ent )
   {
@@ -599,7 +599,7 @@ int G_admin_level( gentity_t *ent )
   return 0;
 }
 
-static qboolean admin_command_permission( gentity_t *ent, char *command )
+static qbool admin_command_permission( gentity_t *ent, char *command )
 {
   int i, j;
   int level;
@@ -733,7 +733,7 @@ static int admin_listadmins( gentity_t *ent, int start, char *search )
   int i,j;
   gentity_t *vic;
   int l = 0;
-  qboolean dup = qfalse;
+  qbool dup = qfalse;
 
   ADMBP_begin();
 
@@ -862,7 +862,7 @@ void G_admin_duration( int secs, char *duration, int dursize )
     Com_sprintf( duration, dursize, "%i seconds", secs );
 }
 
-qboolean G_admin_ban_check( char *userinfo, char *reason, int rlen )
+qbool G_admin_ban_check( char *userinfo, char *reason, int rlen )
 {
   char *guid, *ip;
   int i;
@@ -918,7 +918,7 @@ qboolean G_admin_ban_check( char *userinfo, char *reason, int rlen )
   return qfalse;
 }
 
-qboolean G_admin_cmd_check( gentity_t *ent, qboolean say )
+qbool G_admin_cmd_check( gentity_t *ent, qbool say )
 {
   int i;
   char command[ MAX_ADMIN_CMD_LEN ];
@@ -995,7 +995,7 @@ void G_admin_namelog_cleanup( )
   }
 }
 
-void G_admin_namelog_update( gclient_t *client, qboolean disconnect )
+void G_admin_namelog_update( gclient_t *client, qbool disconnect )
 {
   int i, j;
   g_admin_namelog_t *namelog;
@@ -1055,7 +1055,7 @@ void G_admin_namelog_update( gclient_t *client, qboolean disconnect )
   g_admin_namelog[ i ] = namelog;
 }
 
-qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
+qbool G_admin_readconfig( gentity_t *ent, int skiparg )
 {
   g_admin_level_t *l = NULL;
   g_admin_admin_t *a = NULL;
@@ -1066,7 +1066,7 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
   int len;
   char *cnf, *cnf2;
   char *t;
-  qboolean level_open, admin_open, ban_open, command_open;
+  qbool level_open, admin_open, ban_open, command_open;
   char levels[ MAX_STRING_CHARS ] = {""};
   int i;
 
@@ -1325,7 +1325,7 @@ qboolean G_admin_readconfig( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_time( gentity_t *ent, int skiparg )
+qbool G_admin_time( gentity_t *ent, int skiparg )
 {
   qtime_t qt;
 
@@ -1335,7 +1335,7 @@ qboolean G_admin_time( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_setlevel( gentity_t *ent, int skiparg )
+qbool G_admin_setlevel( gentity_t *ent, int skiparg )
 {
   char name[ MAX_NAME_LENGTH ] = {""};
   char lstr[ 11 ]; // 10 is max strlen() for 32-bit int
@@ -1344,10 +1344,10 @@ qboolean G_admin_setlevel( gentity_t *ent, int skiparg )
   char guid[ 33 ];
   int l, i;
   gentity_t *vic = NULL;
-  qboolean updated = qfalse;
+  qbool updated = qfalse;
   g_admin_admin_t *a;
-  qboolean found = qfalse;
-  qboolean numeric = qtrue;
+  qbool found = qfalse;
+  qbool numeric = qtrue;
   int matches = 0;
   int id = -1;
 
@@ -1515,7 +1515,7 @@ qboolean G_admin_setlevel( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-static qboolean admin_create_ban( gentity_t *ent,
+static qbool admin_create_ban( gentity_t *ent,
   char *netname,
   char *guid,
   char *ip,
@@ -1567,7 +1567,7 @@ static qboolean admin_create_ban( gentity_t *ent,
 }
 
 
-qboolean G_admin_kick( gentity_t *ent, int skiparg )
+qbool G_admin_kick( gentity_t *ent, int skiparg )
 {
   int pids[ MAX_CLIENTS ], found;
   char name[ MAX_NAME_LENGTH ], *reason, err[ MAX_STRING_CHARS ];
@@ -1626,7 +1626,7 @@ qboolean G_admin_kick( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_ban( gentity_t *ent, int skiparg )
+qbool G_admin_ban( gentity_t *ent, int skiparg )
 {
   int seconds;
   char search[ MAX_NAME_LENGTH ];
@@ -1637,7 +1637,7 @@ qboolean G_admin_ban( gentity_t *ent, int skiparg )
   int modifier = 1;
   int logmatch = -1, logmatches = 0;
   int i, j;
-  qboolean exactmatch = qfalse;
+  qbool exactmatch = qfalse;
   char n2[ MAX_NAME_LENGTH ];
   char s2[ MAX_NAME_LENGTH ];
   char guid_stub[ 9 ];
@@ -1841,7 +1841,7 @@ qboolean G_admin_ban( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_unban( gentity_t *ent, int skiparg )
+qbool G_admin_unban( gentity_t *ent, int skiparg )
 {
   int bnum;
   char bs[ 4 ];
@@ -1873,7 +1873,7 @@ qboolean G_admin_unban( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_putteam( gentity_t *ent, int skiparg )
+qbool G_admin_putteam( gentity_t *ent, int skiparg )
 {
   int pids[ MAX_CLIENTS ], found;
   char name[ MAX_NAME_LENGTH ], team[ 7 ], err[ MAX_STRING_CHARS ];
@@ -1929,7 +1929,7 @@ qboolean G_admin_putteam( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_map( gentity_t *ent, int skiparg )
+qbool G_admin_map( gentity_t *ent, int skiparg )
 {
   char map[ MAX_QPATH ];
   char layout[ MAX_QPATH ] = { "" };
@@ -1972,7 +1972,7 @@ qboolean G_admin_map( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_mute( gentity_t *ent, int skiparg )
+qbool G_admin_mute( gentity_t *ent, int skiparg )
 {
   int pids[ MAX_CLIENTS ], found;
   char name[ MAX_NAME_LENGTH ], err[ MAX_STRING_CHARS ];
@@ -2031,7 +2031,7 @@ qboolean G_admin_mute( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_denybuild( gentity_t *ent, int skiparg )
+qbool G_admin_denybuild( gentity_t *ent, int skiparg )
 {
   int pids[ MAX_CLIENTS ], found;
   char name[ MAX_NAME_LENGTH ], err[ MAX_STRING_CHARS ];
@@ -2093,13 +2093,13 @@ qboolean G_admin_denybuild( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_listadmins( gentity_t *ent, int skiparg )
+qbool G_admin_listadmins( gentity_t *ent, int skiparg )
 {
   int i, found = 0;
   char search[ MAX_NAME_LENGTH ] = {""};
   char s[ MAX_NAME_LENGTH ] = {""};
   int start = 0;
-  qboolean numeric = qtrue;
+  qbool numeric = qtrue;
   int drawn = 0;
 
   for( i = 0; i < MAX_ADMIN_ADMINS && g_admin_admins[ i ]; i++ )
@@ -2170,7 +2170,7 @@ qboolean G_admin_listadmins( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_listlayouts( gentity_t *ent, int skiparg )
+qbool G_admin_listlayouts( gentity_t *ent, int skiparg )
 {
   char list[ MAX_CVAR_VALUE_STRING ];
   char map[ MAX_QPATH ];
@@ -2209,7 +2209,7 @@ qboolean G_admin_listlayouts( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_listplayers( gentity_t *ent, int skiparg )
+qbool G_admin_listplayers( gentity_t *ent, int skiparg )
 {
   int i, j;
   gclient_t *p;
@@ -2339,7 +2339,7 @@ qboolean G_admin_listplayers( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_showbans( gentity_t *ent, int skiparg )
+qbool G_admin_showbans( gentity_t *ent, int skiparg )
 {
   int i, found = 0;
   int t;
@@ -2460,7 +2460,7 @@ qboolean G_admin_showbans( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_help( gentity_t *ent, int skiparg )
+qbool G_admin_help( gentity_t *ent, int skiparg )
 {
   int i;
 
@@ -2562,11 +2562,11 @@ qboolean G_admin_help( gentity_t *ent, int skiparg )
   }
 }
 
-qboolean G_admin_admintest( gentity_t *ent, int skiparg )
+qbool G_admin_admintest( gentity_t *ent, int skiparg )
 {
   int i, l = 0;
-  qboolean found = qfalse;
-  qboolean lname = qfalse;
+  qbool found = qfalse;
+  qbool lname = qfalse;
 
   if( !ent )
   {
@@ -2605,7 +2605,7 @@ qboolean G_admin_admintest( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_allready( gentity_t *ent, int skiparg )
+qbool G_admin_allready( gentity_t *ent, int skiparg )
 {
   int i = 0;
   gclient_t *cl;
@@ -2632,7 +2632,7 @@ qboolean G_admin_allready( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_cancelvote( gentity_t *ent, int skiparg )
+qbool G_admin_cancelvote( gentity_t *ent, int skiparg )
 {
 
   if(!level.voteTime && !level.teamVoteTime[ 0 ] && !level.teamVoteTime[ 1 ] )
@@ -2654,7 +2654,7 @@ qboolean G_admin_cancelvote( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_passvote( gentity_t *ent, int skiparg )
+qbool G_admin_passvote( gentity_t *ent, int skiparg )
 {
   if(!level.voteTime && !level.teamVoteTime[ 0 ] && !level.teamVoteTime[ 1 ] )
   {
@@ -2675,7 +2675,7 @@ qboolean G_admin_passvote( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_spec999( gentity_t *ent, int skiparg )
+qbool G_admin_spec999( gentity_t *ent, int skiparg )
 {
   int i;
   gentity_t *vic;
@@ -2700,7 +2700,7 @@ qboolean G_admin_spec999( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_rename( gentity_t *ent, int skiparg )
+qbool G_admin_rename( gentity_t *ent, int skiparg )
 {
   int pids[ MAX_CLIENTS ], found;
   char name[ MAX_NAME_LENGTH ];
@@ -2752,7 +2752,7 @@ qboolean G_admin_rename( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_restart( gentity_t *ent, int skiparg )
+qbool G_admin_restart( gentity_t *ent, int skiparg )
 {
   char layout[ MAX_CVAR_VALUE_STRING ] = { "" };
 
@@ -2783,7 +2783,7 @@ qboolean G_admin_restart( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_nextmap( gentity_t *ent, int skiparg )
+qbool G_admin_nextmap( gentity_t *ent, int skiparg )
 {
   AP( va( "print \"^3!nextmap: ^7%s^7 decided to load the next map\n\"",
     ( ent ) ? ent->client->pers.netname : "console" ) );
@@ -2794,14 +2794,14 @@ qboolean G_admin_nextmap( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_namelog( gentity_t *ent, int skiparg )
+qbool G_admin_namelog( gentity_t *ent, int skiparg )
 {
   int i, j;
   char search[ MAX_NAME_LENGTH ] = {""};
   char s2[ MAX_NAME_LENGTH ] = {""};
   char n2[ MAX_NAME_LENGTH ] = {""};
   char guid_stub[ 9 ];
-  qboolean found = qfalse;
+  qbool found = qfalse;
   int printed = 0;
 
   if( G_SayArgc() > 1 + skiparg )
@@ -2850,7 +2850,7 @@ qboolean G_admin_namelog( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_lock( gentity_t *ent, int skiparg )
+qbool G_admin_lock( gentity_t *ent, int skiparg )
 {
   char teamName[2] = {""};
   team_t team;
@@ -2895,7 +2895,7 @@ qboolean G_admin_lock( gentity_t *ent, int skiparg )
   return qtrue;
 }
 
-qboolean G_admin_unlock( gentity_t *ent, int skiparg )
+qbool G_admin_unlock( gentity_t *ent, int skiparg )
 {
   char teamName[2] = {""};
   team_t team;

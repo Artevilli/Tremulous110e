@@ -84,7 +84,7 @@ void SP_info_human_intermission( gentity_t *ent )
 G_AddCreditToClient
 ===============
 */
-void G_AddCreditToClient( gclient_t *client, short credit, qboolean cap )
+void G_AddCreditToClient( gclient_t *client, short credit, qbool cap )
 {
   if( !client )
     return;
@@ -141,7 +141,7 @@ SpotWouldTelefrag
 
 ================
 */
-qboolean SpotWouldTelefrag( gentity_t *spot )
+qbool SpotWouldTelefrag( gentity_t *spot )
 {
   int       i, num;
   int       touch[ MAX_GENTITIES ];
@@ -766,12 +766,12 @@ void respawn( gentity_t *ent )
   ClientSpawn( ent, NULL, NULL, NULL );
 }
 
-static qboolean G_IsEmoticon( const char *s, qboolean *escaped )
+static qbool G_IsEmoticon( const char *s, qbool *escaped )
 {
   int i, j;
   const char *p = s;
   char emoticon[ MAX_EMOTICON_NAME_LEN ] = {""};
-  qboolean escape = qfalse;
+  qbool escape = qfalse;
 
   if( *p != '[' )
     return qfalse;
@@ -813,7 +813,7 @@ static void G_ClientCleanName( const char *in, char *out, int outSize )
   int   len, colorlessLen;
   char  *p;
   int   spaces;
-  qboolean escaped;
+  qbool escaped;
 
   //save room for trailing null byte
   outSize--;
@@ -895,7 +895,7 @@ G_NonSegModel
 Reads an animation.cfg to check for nonsegmentation
 ======================
 */
-static qboolean G_NonSegModel( const char *filename )
+static qbool G_NonSegModel( const char *filename )
 {
   char          *text_p;
   int           len;
@@ -966,7 +966,7 @@ void ClientUserinfoChanged( int clientNum )
   char      oldname[ MAX_NAME_LENGTH ];
   char      newname[ MAX_NAME_LENGTH ];
   char      err[ MAX_STRING_CHARS ];
-  qboolean  revertName = qfalse;
+  qbool  revertName = qfalse;
   gclient_t *client;
   char      c1[ MAX_INFO_STRING ];
   char      c2[ MAX_INFO_STRING ];
@@ -1148,7 +1148,7 @@ to the server machine, but qfalse on map changes and tournement
 restarts.
 ============
 */
-char *ClientConnect( int clientNum, qboolean firstTime )
+char *ClientConnect( int clientNum, qbool firstTime )
 {
   char      *value;
   gclient_t *client;

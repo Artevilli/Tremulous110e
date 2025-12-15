@@ -664,7 +664,7 @@ static void CG_UpdateBeam( trailBeam_t *tb )
 CG_ParseTrailBeamColor
 ===============
 */
-static qboolean CG_ParseTrailBeamColor( byte *c, char **text_p )
+static qbool CG_ParseTrailBeamColor( byte *c, char **text_p )
 {
   char  *token;
   int   i;
@@ -689,7 +689,7 @@ CG_ParseTrailBeam
 Parse a trail beam
 ===============
 */
-static qboolean CG_ParseTrailBeam( baseTrailBeam_t *btb, char **text_p )
+static qbool CG_ParseTrailBeam( baseTrailBeam_t *btb, char **text_p )
 {
   char  *token;
 
@@ -965,7 +965,7 @@ CG_ParseTrailSystem
 Parse a trail system section
 ===============
 */
-static qboolean CG_ParseTrailSystem( baseTrailSystem_t *bts, char **text_p, const char *name )
+static qbool CG_ParseTrailSystem( baseTrailSystem_t *bts, char **text_p, const char *name )
 {
   char *token;
 
@@ -1035,7 +1035,7 @@ CG_ParseTrailFile
 Load the trail systems from a trail file
 ===============
 */
-static qboolean CG_ParseTrailFile( const char *fileName )
+static qbool CG_ParseTrailFile( const char *fileName )
 {
   char          *text_p;
   int           i;
@@ -1043,7 +1043,7 @@ static qboolean CG_ParseTrailFile( const char *fileName )
   char          *token;
   char          text[ 32000 ];
   char          tsName[ MAX_QPATH ];
-  qboolean      tsNameSet = qfalse;
+  qbool      tsNameSet = qfalse;
   fileHandle_t  f;
 
   // load the file
@@ -1341,7 +1341,7 @@ CG_IsTrailSystemValid
 Test a trail system for validity
 ===============
 */
-qboolean CG_IsTrailSystemValid( trailSystem_t **ts )
+qbool CG_IsTrailSystemValid( trailSystem_t **ts )
 {
   if( *ts == NULL || ( *ts && !(*ts)->valid ) )
   {

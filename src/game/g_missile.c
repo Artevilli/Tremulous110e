@@ -107,7 +107,7 @@ G_MissileImpact
 void G_MissileImpact( gentity_t *ent, trace_t *trace )
 {
   gentity_t   *other, *attacker;
-  qboolean    returnAfterDamage = qfalse;
+  qbool    returnAfterDamage = qfalse;
   vec3_t      dir;
 
   other = &g_entities[ trace->entityNum ];

@@ -84,7 +84,7 @@ static void CG_Viewpos_f( void )
     (int)cg.refdefViewAngles[ YAW ] );
 }
 
-qboolean CG_RequestScores( void )
+qbool CG_RequestScores( void )
 {
   if( cg.scoresRequestTime + 2000 < cg.time )
   {
@@ -230,7 +230,7 @@ The string has been tokenized and can be retrieved with
 Cmd_Argc() / Cmd_Argv()
 =================
 */
-qboolean CG_ConsoleCommand( void )
+qbool CG_ConsoleCommand( void )
 {
   const char  *cmd;
   const char  *arg1;

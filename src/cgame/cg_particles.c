@@ -564,7 +564,7 @@ CG_ParseValueAndVariance
 Parse a value and its random variance
 ===============
 */
-static void CG_ParseValueAndVariance( char *token, float *value, float *variance, qboolean allowNegative )
+static void CG_ParseValueAndVariance( char *token, float *value, float *variance, qbool allowNegative )
 {
   char  valueBuffer[ 16 ];
   char  varianceBuffer[ 16 ];
@@ -615,7 +615,7 @@ static void CG_ParseValueAndVariance( char *token, float *value, float *variance
 CG_ParseColor
 ===============
 */
-static qboolean CG_ParseColor( byte *c, char **text_p )
+static qbool CG_ParseColor( byte *c, char **text_p )
 {
   char  *token;
   int   i;
@@ -640,7 +640,7 @@ CG_ParseParticle
 Parse a particle section
 ===============
 */
-static qboolean CG_ParseParticle( baseParticle_t *bp, char **text_p )
+static qbool CG_ParseParticle( baseParticle_t *bp, char **text_p )
 {
   char  *token;
   float number, randFrac;
@@ -1381,7 +1381,7 @@ CG_ParseParticleEjector
 Parse a particle ejector section
 ===============
 */
-static qboolean CG_ParseParticleEjector( baseParticleEjector_t *bpe, char **text_p )
+static qbool CG_ParseParticleEjector( baseParticleEjector_t *bpe, char **text_p )
 {
   char  *token;
   float number, randFrac;
@@ -1507,7 +1507,7 @@ CG_ParseParticleSystem
 Parse a particle system section
 ===============
 */
-static qboolean CG_ParseParticleSystem( baseParticleSystem_t *bps, char **text_p, const char *name )
+static qbool CG_ParseParticleSystem( baseParticleSystem_t *bps, char **text_p, const char *name )
 {
   char                  *token;
   baseParticleEjector_t *bpe;
@@ -1589,7 +1589,7 @@ CG_ParseParticleFile
 Load the particle systems from a particle file
 ===============
 */
-static qboolean CG_ParseParticleFile( const char *fileName )
+static qbool CG_ParseParticleFile( const char *fileName )
 {
   char          *text_p;
   int           i;
@@ -1597,7 +1597,7 @@ static qboolean CG_ParseParticleFile( const char *fileName )
   char          *token;
   char          text[ 32000 ];
   char          psName[ MAX_QPATH ];
-  qboolean      psNameSet = qfalse;
+  qbool      psNameSet = qfalse;
   fileHandle_t  f;
 
   // load the file
@@ -1860,7 +1860,7 @@ CG_IsParticleSystemInfinite
 Test a particle system for 'count infinite' ejectors
 ===============
 */
-qboolean CG_IsParticleSystemInfinite( particleSystem_t *ps )
+qbool CG_IsParticleSystemInfinite( particleSystem_t *ps )
 {
   int               i;
   particleEjector_t *pe;
@@ -1902,7 +1902,7 @@ CG_IsParticleSystemValid
 Test a particle system for validity
 ===============
 */
-qboolean CG_IsParticleSystemValid( particleSystem_t **ps )
+qbool CG_IsParticleSystemValid( particleSystem_t **ps )
 {
   if( *ps == NULL || ( *ps && !(*ps)->valid ) )
   {

@@ -64,11 +64,22 @@ setup(int argc, char **argv)
 		fp = (char*)newstring((uchar*)argv[optind], strlen(argv[optind]), 0);
 		if ((fd = open(fp, 0)) <= 0)
 			error(FATAL, "Can't open input file %s", fp);
+#ifdef WIN32
+                _setmode(fd, _O_BINARY);
+#endif
 	}
 	if (optind+1<argc) {
-		int fdo = creat(argv[optind+1], 0666);
+		int fdo;
+#ifdef WIN32
+		fdo = creat(argv[optind+1], _S_IREAD | _S_IWRITE);
+#else
+		fdo = creat(argv[optind+1], 0666);
+#endif
 		if (fdo<0)
 			error(FATAL, "Can't open output file %s", argv[optind+1]);
+#ifdef WIN32
+                _setmode(fdo, _O_BINARY);
+#endif
 		dup2(fdo, 1);
 	}
 	if(Mflag)
@@ -109,7 +120,7 @@ memmove(void *dp, const void *sp, size_t n)
 	unsigned char *cdp, *csp;
 
 	if (n<=0)
-		return 0;
+		return dp;
 	cdp = dp;
 	csp = (unsigned char *)sp;
 	if (cdp < csp) {
@@ -123,6 +134,6 @@ memmove(void *dp, const void *sp, size_t n)
 			*--cdp = *--csp;
 		} while (--n);
 	}
-	return 0;
+	return dp;
 }
 #endif

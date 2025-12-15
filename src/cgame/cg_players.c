@@ -91,7 +91,7 @@ Read a configuration file containing animation coutns and rates
 models/players/visor/animation.cfg, etc
 ======================
 */
-static qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci )
+static qbool CG_ParseAnimationFile( const char *filename, clientInfo_t *ci )
 {
   char          *text_p, *prev;
   int           len;
@@ -382,7 +382,7 @@ static qboolean CG_ParseAnimationFile( const char *filename, clientInfo_t *ci )
 CG_RegisterClientSkin
 ==========================
 */
-static qboolean CG_RegisterClientSkin( clientInfo_t *ci, const char *modelName, const char *skinName )
+static qbool CG_RegisterClientSkin( clientInfo_t *ci, const char *modelName, const char *skinName )
 {
   char filename[ MAX_QPATH ];
 
@@ -425,7 +425,7 @@ static qboolean CG_RegisterClientSkin( clientInfo_t *ci, const char *modelName, 
 CG_RegisterClientModelname
 ==========================
 */
-static qboolean CG_RegisterClientModelname( clientInfo_t *ci, const char *modelName, const char *skinName )
+static qbool CG_RegisterClientModelname( clientInfo_t *ci, const char *modelName, const char *skinName )
 {
   char filename[ MAX_QPATH * 2 ];
 
@@ -663,7 +663,7 @@ static int CG_GetCorpseNum( class_t class )
 CG_ScanForExistingClientInfo
 ======================
 */
-static qboolean CG_ScanForExistingClientInfo( clientInfo_t *ci )
+static qbool CG_ScanForExistingClientInfo( clientInfo_t *ci )
 {
   int   i;
   clientInfo_t  *match;
@@ -960,7 +960,7 @@ CG_SwingAngles
 ==================
 */
 static void CG_SwingAngles( float destination, float swingTolerance, float clampTolerance,
-                            float speed, float *angle, qboolean *swinging )
+                            float speed, float *angle, qbool *swinging )
 {
   float swing;
   float move;
@@ -1618,7 +1618,7 @@ Returns the Z component of the surface being shadowed
 ===============
 */
 #define SHADOW_DISTANCE   128
-static qboolean CG_PlayerShadow( centity_t *cent, float *shadowPlane, class_t class )
+static qbool CG_PlayerShadow( centity_t *cent, float *shadowPlane, class_t class )
 {
   vec3_t        end, mins, maxs;
   trace_t       trace;
@@ -1873,7 +1873,7 @@ void CG_Player( centity_t *cent )
   refEntity_t   head;
   int           clientNum;
   int           renderfx;
-  qboolean      shadow = qfalse;
+  qbool      shadow = qfalse;
   float         shadowPlane = 0.0f;
   entityState_t *es = &cent->currentState;
   class_t       class = ( es->misc >> 8 ) & 0xFF;
@@ -2139,7 +2139,7 @@ void CG_Corpse( centity_t *cent )
   entityState_t *es = &cent->currentState;
   int           corpseNum;
   int           renderfx;
-  qboolean      shadow = qfalse;
+  qbool      shadow = qfalse;
   float         shadowPlane;
   vec3_t        origin, liveZ, deadZ;
   float         scale;
@@ -2403,10 +2403,10 @@ CG_AtHighestClass
 Is the local client at the highest class possible?
 ===============
 */
-qboolean CG_AtHighestClass( void )
+qbool CG_AtHighestClass( void )
 {
   int       i;
-  qboolean  superiorClasses = qfalse;
+  qbool  superiorClasses = qfalse;
 
   for( i = PCL_NONE + 1; i < PCL_NUM_CLASSES; i++ )
   {

@@ -26,52 +26,52 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 cvar_t *cl_shownet;
 
-void CL_Shutdown( void ) {
+void CL_Shutdown( const qchar *finalmsg ) {
 }
 
 void CL_Init( void ) {
 	cl_shownet = Cvar_Get ("cl_shownet", "0", CVAR_TEMP );
 }
 
-void CL_MouseEvent( int dx, int dy, int time ) {
+void CL_MouseEvent( qint dx, qint dy, qint time ) {
 }
 
 void Key_WriteBindings( fileHandle_t f ) {
 }
 
-void CL_Frame ( int msec ) {
+void CL_Frame ( qint msec ) {
 }
 
-void CL_PacketEvent( netadr_t from, msg_t *msg ) {
+void CL_PacketEvent( const netadr_t *from, msg_t *msg ) {
 }
 
-void CL_CharEvent( int key ) {
+void CL_CharEvent( qint key ) {
 }
 
-void CL_Disconnect( qboolean showMainMenu ) {
+void CL_Disconnect( qbool showMainMenu ) {
 }
 
 void CL_MapLoading( void ) {
 }
 
-qboolean CL_GameCommand( void ) {
+qbool CL_GameCommand( void ) {
   return qfalse;
 }
 
-void CL_KeyEvent (int key, qboolean down, unsigned time) {
+void CL_KeyEvent (qint key, qbool down, unsigned time) {
 }
 
-qboolean UI_GameCommand( void ) {
+qbool UI_GameCommand( void ) {
 	return qfalse;
 }
 
-void CL_ForwardCommandToServer( const char *string ) {
+void CL_ForwardCommandToServer( const qchar *string ) {
 }
 
-void CL_ConsolePrint( char *txt ) {
+void CL_ConsolePrint( qchar *txt ) {
 }
 
-void CL_JoystickEvent( int axis, int value, int time ) {
+void CL_JoystickEvent( qint axis, qint value, qint time ) {
 }
 
 void CL_InitKeyCommands( void ) {
@@ -83,7 +83,12 @@ void CL_CDDialog( void ) {
 void CL_FlushMemory( void ) {
 }
 
-void CL_StartHunkUsers( qboolean rendererOnly ) {
+void CL_StartHunkUsers( qbool rendererOnly ) {
+}
+
+void
+CL_Snd_Restart(void)
+{
 }
 
 void CL_ShutdownAll(void) {}

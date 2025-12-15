@@ -2766,6 +2766,7 @@ void CL_InitRef( void ) {
 	ri.Cvar_Get = Cvar_Get;
 	ri.Cvar_Set = Cvar_Set;
 	ri.Cvar_CheckRange = Cvar_CheckRange;
+	ri.Cvar_SetDescription = Cvar_SetDescription;
 
 	// cinematic stuff
 

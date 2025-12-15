@@ -20,8 +20,7 @@ along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
-#ifndef __MATHLIB__
-#define __MATHLIB__
+#pragma once
 
 // mathlib.h
 
@@ -56,7 +55,7 @@ extern vec3_t vec3_origin;
 #define	PLANE_Z			2
 #define	PLANE_NON_AXIAL	3
 
-qboolean VectorCompare( const vec3_t v1, const vec3_t v2 );
+qbool VectorCompare( const vec3_t v1, const vec3_t v2 );
 
 #define DotProduct(x,y) (x[0]*y[0]+x[1]*y[1]+x[2]*y[2])
 #define VectorSubtract(a,b,c) {c[0]=a[0]-b[0];c[1]=a[1]-b[1];c[2]=a[2]-b[2];}
@@ -86,10 +85,8 @@ void VectorInverse (vec3_t v);
 void ClearBounds (vec3_t mins, vec3_t maxs);
 void AddPointToBounds( const vec3_t v, vec3_t mins, vec3_t maxs );
 
-qboolean PlaneFromPoints( vec4_t plane, const vec3_t a, const vec3_t b, const vec3_t c );
+qbool PlaneFromPoints( vec4_t plane, const vec3_t a, const vec3_t b, const vec3_t c );
 
 void NormalToLatLong( const vec3_t normal, byte bytes[2] );
 
 int	PlaneTypeForNormal (vec3_t normal);
-
-#endif

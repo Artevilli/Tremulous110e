@@ -50,7 +50,7 @@ void QDECL PrintMsg( gentity_t *ent, const char *fmt, ... )
 OnSameTeam
 ==============
 */
-qboolean OnSameTeam( gentity_t *ent1, gentity_t *ent2 )
+qbool OnSameTeam( gentity_t *ent1, gentity_t *ent2 )
 {
   if( !ent1->client || !ent2->client )
     return qfalse;
@@ -106,7 +106,7 @@ Team_GetLocationMsg
 Report a location message for the player. Uses placed nearby target_location entities
 ============
 */
-qboolean Team_GetLocationMsg( gentity_t *ent, char *loc, int loclen )
+qbool Team_GetLocationMsg( gentity_t *ent, char *loc, int loclen )
 {
   gentity_t *best;
 

@@ -37,7 +37,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 /* need this on NX enabled systems (i386 with PAE kernel or
  * noexec32=on x86_64) */
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD__)
 #define VM_X86_MMAP
 #endif
 
@@ -54,35 +54,36 @@ static void VM_Destroy_Compiled(vm_t* self);
 
 */
 
+#define VMFREE_BUFFERS() do {Z_Free(buf); Z_Free(jused);} while(0)
 static	byte	*buf = NULL;
 static	byte	*jused = NULL;
-static	int		compiledOfs = 0;
+static	qint		compiledOfs = 0;
 static	byte	*code = NULL;
-static	int		pc = 0;
+static	qint		pc = 0;
 
-static	int		*instructionPointers = NULL;
+static	qint		*instructionPointers = NULL;
 
 #define FTOL_PTR
 
 #ifdef _MSC_VER
 
 #if defined( FTOL_PTR )
-int _ftol( float );
-static	int		ftolPtr = (int)_ftol;
+qint _ftol( float );
+static	qint		ftolPtr = (qint)_ftol;
 #endif
 
 #else // _MSC_VER
 
 #if defined( FTOL_PTR )
 
-int qftol( void );
-int qftol027F( void );
-int qftol037F( void );
-int qftol0E7F( void );
-int qftol0F7F( void );
+qint qftol( void );
+qint qftol027F( void );
+qint qftol037F( void );
+qint qftol0E7F( void );
+qint qftol0F7F( void );
 
 
-static	int		ftolPtr = (int)qftol0F7F;
+static	qint		ftolPtr = (qint)qftol0F7F;
 #endif // FTOL_PTR
 
 #endif
@@ -91,11 +92,11 @@ void AsmCall(void);
 static void (*const asmCallPtr)(void) = AsmCall;
 
 
-static	int		callMask = 0;
+static	qint		callMask = 0;
 
-static	int	instruction, pass;
-static	int	lastConst = 0;
-static	int	oc0, oc1, pop0, pop1;
+static	qint	instruction, pass;
+static	qint	lastConst = 0;
+static	qint	oc0, oc1, pop0, pop1;
 
 typedef enum 
 {
@@ -114,9 +115,9 @@ AsmCall
 */
 #ifdef _MSC_VER
 __declspec( naked ) void AsmCall( void ) {
-int		programStack;
-int		*opStack;
-int		syscallNum;
+qint		programStack;
+qint		*opStack;
+qint		syscallNum;
 vm_t*	savedVM;
 
 __asm {
@@ -154,9 +155,9 @@ systemCall:
 
 	// save the stack to allow recursive VM entry
 	currentVM->programStack = programStack - 4;
-	*(int *)((byte *)currentVM->dataBase + programStack + 4) = syscallNum;
-//VM_LogSyscalls(  (int *)((byte *)currentVM->dataBase + programStack + 4) );
-	*(opStack+1) = currentVM->systemCall( (int *)((byte *)currentVM->dataBase + programStack + 4) );
+	*(qint *)((byte *)currentVM->dataBase + programStack + 4) = syscallNum;
+//VM_LogSyscalls(  (qint *)((byte *)currentVM->dataBase + programStack + 4) );
+	*(opStack+1) = currentVM->systemCall( (qint *)((byte *)currentVM->dataBase + programStack + 4) );
 
 	currentVM = savedVM;
 
@@ -177,13 +178,18 @@ _asm {
 #else //!_MSC_VER
 
 #if defined(__MINGW32__) || defined(MACOS_X) // _ is prepended to compiled symbols
-#	define CMANG(sym) "_"#sym
+#define CMANGVAR(sym) "_"#sym
+#define CMANGFUNC(sym) "_"#sym
+#elif defined(__ICC) && (__ICC >= 1000)
+#define CMANGVAR(sym) #sym".0"
+#define CMANGFUNC(sym) #sym
 #else
-#	define CMANG(sym) #sym
+#define CMANGVAR(sym) #sym
+#define CMANGFUNC(sym) #sym
 #endif
 
-static void __attribute__((cdecl, used)) CallAsmCall(int const syscallNum,
-		int const programStack, int* const opStack)
+static void __attribute__((cdecl, used)) CallAsmCall(qint const syscallNum,
+		qint const programStack, qint* const opStack)
 {
 	vm_t     *const vm   = currentVM;
 	intptr_t *const data = (intptr_t*)(vm->dataBase + programStack + 4);
@@ -200,54 +206,59 @@ __asm__(
 	".text\n\t"
 	".p2align 4,,15\n\t"
 #if defined __ELF__
-	".type " CMANG(AsmCall) ", @function\n"
+	".type " CMANGFUNC(AsmCall) ", @function\n"
 #endif
-	CMANG(AsmCall) ":\n\t"
+	CMANGFUNC(AsmCall) ":\n\t"
 	"movl  (%edi), %eax\n\t"
 	"subl  $4, %edi\n\t"
 	"testl %eax, %eax\n\t"
 	"jl    0f\n\t"
 	"shll  $2, %eax\n\t"
-	"addl  " CMANG(instructionPointers) ", %eax\n\t"
+	"addl  " CMANGVAR(instructionPointers) ", %eax\n\t"
 	"call  *(%eax)\n\t"
 	"movl  (%edi), %eax\n\t"
-	"andl  " CMANG(callMask) ", %eax\n\t"
+	"andl  " CMANGVAR(callMask) ", %eax\n\t"
 	"ret\n"
 	"0:\n\t" // system call
 	"notl  %eax\n\t"
+	"pushl %ebp\n\t"
+	"movl  %esp, %ebp\n\t"
+	"andl $-16, %esp\n\t" //align the stack so engine can use sse
 	"pushl %ecx\n\t"
 	"pushl %edi\n\t" // opStack
 	"pushl %esi\n\t" // programStack
 	"pushl %eax\n\t" // syscallNum
-	"call  " CMANG(CallAsmCall) "\n\t"
+	"call  " CMANGFUNC(CallAsmCall) "\n\t"
 	"addl  $12, %esp\n\t"
 	"popl  %ecx\n\t"
+	"movl  %ebp, %esp\n\t"
+	"popl  %ebp\n\t"
 	"addl  $4, %edi\n\t"
 	"ret\n\t"
 #if defined __ELF__
-	".size " CMANG(AsmCall)", .-" CMANG(AsmCall)
+	".size " CMANGFUNC(AsmCall)", .-" CMANGFUNC(AsmCall)
 #endif
 );
 
 #endif
 
-static int	Constant4( void ) {
-	int		v;
+static qint	Constant4( void ) {
+	qint		v;
 
 	v = code[pc] | (code[pc+1]<<8) | (code[pc+2]<<16) | (code[pc+3]<<24);
 	pc += 4;
 	return v;
 }
 
-static int	Constant1( void ) {
-	int		v;
+static qint	Constant1( void ) {
+	qint		v;
 
 	v = code[pc];
 	pc += 1;
 	return v;
 }
 
-static void Emit1( int v ) 
+static void Emit1( qint v ) 
 {
 	buf[ compiledOfs ] = v;
 	compiledOfs++;
@@ -256,20 +267,20 @@ static void Emit1( int v )
 }
 
 #if 0
-static void Emit2( int v ) {
+static void Emit2( qint v ) {
 	Emit1( v & 255 );
 	Emit1( ( v >> 8 ) & 255 );
 }
 #endif
 
-static void Emit4( int v ) {
+static void Emit4( qint v ) {
 	Emit1( v & 255 );
 	Emit1( ( v >> 8 ) & 255 );
 	Emit1( ( v >> 16 ) & 255 );
 	Emit1( ( v >> 24 ) & 255 );
 }
 
-static int Hex( int c ) {
+static qint Hex( qint c ) {
 	if ( c >= 'a' && c <= 'f' ) {
 		return 10 + c - 'a';
 	}
@@ -280,13 +291,14 @@ static int Hex( int c ) {
 		return c - '0';
 	}
 
-	Com_Error( ERR_DROP, "Hex: bad char '%c'", c );
+        VMFREE_BUFFERS();
+	Com_Error( ERR_DROP, "Hex: bad qchar '%c'", c );
 
 	return 0;
 }
-static void EmitString( const char *string ) {
-	int		c1, c2;
-	int		v;
+static void EmitString( const qchar *string ) {
+	qint		c1, c2;
+	qint		v;
 
 	while ( 1 ) {
 		c1 = string[0];
@@ -365,7 +377,7 @@ static void EmitMovEAXEDI(vm_t *vm) {
 	EmitString( "8B 07" );		// mov eax, dword ptr [edi]
 }
 
-qboolean EmitMovEBXEDI(vm_t *vm, int andit) {
+qbool EmitMovEBXEDI(vm_t *vm, qint andit) {
 	if (LastCommand == LAST_COMMAND_MOV_EDI_EAX) 
 	{	// mov [edi], eax
 		compiledOfs -= 2;
@@ -396,29 +408,40 @@ qboolean EmitMovEBXEDI(vm_t *vm, int andit) {
 	return qfalse;
 }
 
+#define JUSED(x) \
+    do { \
+        if (x < 0 || x >= jusedSize) { \
+                VMFREE_BUFFERS(); \
+            Com_Error(ERR_DROP, \
+                    "VM_CompileX86: jump target out of range at offset %d", pc); \
+        } \
+        jused[x] = 1; \
+    } while(0)
+
 /*
 =================
 VM_Compile
 =================
 */
 void VM_Compile( vm_t *vm, vmHeader_t *header ) {
-	int		op;
-	int		maxLength;
-	int		v;
-	int		i;
-	qboolean opt;
+	qint		op;
+	qint		maxLength;
+	qint		v;
+	qint		i;
+	qbool opt;
+	int jusedSize = header->instructionCount + 2;
 
 	// allocate a very large temp buffer, we will shrink it later
 	maxLength = header->codeLength * 8;
-	buf = Z_Malloc( maxLength );
-	jused = Z_Malloc(header->instructionCount + 2 );
+	buf = Z_Malloc(maxLength);
+	jused = Z_Malloc(jusedSize);
 	
-	Com_Memset(jused, 0, header->instructionCount+2);
+	Com_Memset(jused, 0, jusedSize);
 
 	// ensure that the optimisation pass knows about all the jump
 	// table targets
 	for( i = 0; i < vm->numJumpTableTargets; i++ ) {
-		jused[ *(int *)(vm->jumpTableTargets + ( i * sizeof( int ) ) ) ] = 1;
+		jused[ *(qint *)(vm->jumpTableTargets + ( i * sizeof( qint ) ) ) ] = 1;
 	}
 
 	for(pass=0;pass<2;pass++) {
@@ -435,16 +458,21 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 
 	LastCommand = LAST_COMMAND_NONE;
 
-	while ( instruction < header->instructionCount ) {
-		if ( compiledOfs > maxLength - 16 ) {
-			Com_Error( ERR_FATAL, "VM_CompileX86: maxLength exceeded" );
+	while(instruction < header->instructionCount)
+	{
+		if (compiledOfs > maxLength - 16)
+		{
+		        VMFREE_BUFFERS();
+			Com_Error(ERR_FATAL, "VM_CompileX86: maxLength exceeded");
 		}
 
 		vm->instructionPointers[ instruction ] = compiledOfs;
 		instruction++;
 
-		if ( pc > header->codeLength ) {
-			Com_Error( ERR_FATAL, "VM_CompileX86: pc > header->codeLength" );
+		if (pc > header->codeLength)
+		{
+		        VMFREE_BUFFERS();
+			Com_Error(ERR_FATAL, "VM_CompileX86: pc > header->codeLength");
 		}
 
 		op = code[ pc ];
@@ -453,7 +481,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 		case 0:
 			break;
 		case OP_BREAK:
-			EmitString( "CC" );			// int 3
+			EmitString( "CC" );			// qint 3
 			break;
 		case OP_ENTER:
 			EmitString( "81 EE" );		// sub	esi, 0x12345678
@@ -463,7 +491,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			if (code[pc+4] == OP_LOAD4) {
 				EmitAddEDI4(vm);
 				EmitString( "BB" );		// mov	ebx, 0x12345678
-				Emit4( (Constant4()&vm->dataMask) + (int)vm->dataBase);
+				Emit4( (Constant4()&vm->dataMask) + (qint)vm->dataBase);
 				EmitString( "8B 03" );		// mov	eax, dword ptr [ebx]
 				EmitCommand(LAST_COMMAND_MOV_EDI_EAX);		// mov dword ptr [edi], eax
 				pc++;						// OP_LOAD4
@@ -473,7 +501,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			if (code[pc+4] == OP_LOAD2) {
 				EmitAddEDI4(vm);
 				EmitString( "BB" );		// mov	ebx, 0x12345678
-				Emit4( (Constant4()&vm->dataMask) + (int)vm->dataBase);
+				Emit4( (Constant4()&vm->dataMask) + (qint)vm->dataBase);
 				EmitString( "0F B7 03" );	// movzx	eax, word ptr [ebx]
 				EmitCommand(LAST_COMMAND_MOV_EDI_EAX);		// mov dword ptr [edi], eax
 				pc++;						// OP_LOAD4
@@ -483,7 +511,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			if (code[pc+4] == OP_LOAD1) {
 				EmitAddEDI4(vm);
 				EmitString( "BB" );		// mov	ebx, 0x12345678
-				Emit4( (Constant4()&vm->dataMask) + (int)vm->dataBase);
+				Emit4( (Constant4()&vm->dataMask) + (qint)vm->dataBase);
 				EmitString( "0F B6 03" );	// movzx	eax, byte ptr [ebx]
 				EmitCommand(LAST_COMMAND_MOV_EDI_EAX);		// mov dword ptr [edi], eax
 				pc++;						// OP_LOAD4
@@ -499,7 +527,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 //					Emit4( vm->dataMask & ~3 );
 //				}
 				EmitString( "89 83" );		// mov dword ptr [ebx+0x12345678], eax
-				Emit4( (int)vm->dataBase );
+				Emit4( (qint)vm->dataBase );
 				EmitCommand(LAST_COMMAND_SUB_DI_4);		// sub edi, 4
 				pc++;						// OP_STORE4
 				instruction += 1;
@@ -514,7 +542,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 //					Emit4( vm->dataMask & ~1 );
 //				}
 				EmitString( "66 89 83" );	// mov word ptr [ebx+0x12345678], eax
-				Emit4( (int)vm->dataBase );
+				Emit4( (qint)vm->dataBase );
 				EmitCommand(LAST_COMMAND_SUB_DI_4);		// sub edi, 4
 				pc++;						// OP_STORE4
 				instruction += 1;
@@ -529,7 +557,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 //					Emit4( vm->dataMask );
 //				}
 				EmitString( "88 83" );		// mov byte ptr [ebx+0x12345678], eax
-				Emit4( (int)vm->dataBase );
+				Emit4( (qint)vm->dataBase );
 				EmitCommand(LAST_COMMAND_SUB_DI_4);		// sub edi, 4
 				pc++;						// OP_STORE4
 				instruction += 1;
@@ -554,7 +582,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			lastConst = Constant4();
 			Emit4( lastConst );
 			if (code[pc] == OP_JUMP) {
-				jused[lastConst] = 1;
+				JUSED(lastConst);
 			}
 			break;
 		case OP_LOCAL:
@@ -569,15 +597,15 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			EmitMovEAXEDI(vm);			// mov	eax,dword ptr [edi]
 			EmitString( "89 86" );		// mov	dword ptr [esi+database],eax
 			// FIXME: range check
-			Emit4( Constant1() + (int)vm->dataBase );
+			Emit4( Constant1() + (qint)vm->dataBase );
 			EmitCommand(LAST_COMMAND_SUB_DI_4);		// sub edi, 4
 			break;
 		case OP_CALL:
 			EmitString( "C7 86" );		// mov dword ptr [esi+database],0x12345678
-			Emit4( (int)vm->dataBase );
+			Emit4( (qint)vm->dataBase );
 			Emit4( pc );
 			EmitString( "FF 15" );		// call asmCallPtr
-			Emit4( (int)&asmCallPtr );
+			Emit4( (qint)&asmCallPtr );
 			break;
 		case OP_PUSH:
 			EmitAddEDI4(vm);
@@ -602,20 +630,20 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 				EmitMovEBXEDI(vm, vm->dataMask);
 				if (v == 1 && oc0 == oc1 && pop0 == OP_LOCAL && pop1 == OP_LOCAL) {
 					EmitString( "FF 83");		// inc dword ptr [ebx + 0x12345678]
-					Emit4( (int)vm->dataBase );
+					Emit4( (qint)vm->dataBase );
 				} else {
 					EmitString( "8B 83" );		// mov	eax, dword ptr [ebx + 0x12345678]
-					Emit4( (int)vm->dataBase );
+					Emit4( (qint)vm->dataBase );
 					EmitString( "05"  );		// add eax, const
 					Emit4( v );
 					if (oc0 == oc1 && pop0 == OP_LOCAL && pop1 == OP_LOCAL) {
 						EmitString( "89 83" );		// mov dword ptr [ebx+0x12345678], eax
-						Emit4( (int)vm->dataBase );
+						Emit4( (qint)vm->dataBase );
 					} else {
 						EmitCommand(LAST_COMMAND_SUB_DI_4);		// sub edi, 4
 						EmitString( "8B 1F" );		// mov	ebx, dword ptr [edi]
 						EmitString( "89 83" );		// mov dword ptr [ebx+0x12345678], eax
-						Emit4( (int)vm->dataBase );
+						Emit4( (qint)vm->dataBase );
 					}
 				}
 				EmitCommand(LAST_COMMAND_SUB_DI_4);		// sub edi, 4
@@ -632,23 +660,23 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 				}
 				EmitMovEBXEDI(vm, vm->dataMask);
 				EmitString( "8B 83" );		// mov	eax, dword ptr [ebx + 0x12345678]
-				Emit4( (int)vm->dataBase );
+				Emit4( (qint)vm->dataBase );
 				pc++;						// OP_CONST
 				v = Constant4();
 				if (v == 1 && oc0 == oc1 && pop0 == OP_LOCAL && pop1 == OP_LOCAL) {
 					EmitString( "FF 8B");		// dec dword ptr [ebx + 0x12345678]
-					Emit4( (int)vm->dataBase );
+					Emit4( (qint)vm->dataBase );
 				} else {
 					EmitString( "2D"  );		// sub eax, const
 					Emit4( v );
 					if (oc0 == oc1 && pop0 == OP_LOCAL && pop1 == OP_LOCAL) {
 						EmitString( "89 83" );		// mov dword ptr [ebx+0x12345678], eax
-						Emit4( (int)vm->dataBase );
+						Emit4( (qint)vm->dataBase );
 					} else {
 						EmitCommand(LAST_COMMAND_SUB_DI_4);		// sub edi, 4
 						EmitString( "8B 1F" );		// mov	ebx, dword ptr [edi]
 						EmitString( "89 83" );		// mov dword ptr [ebx+0x12345678], eax
-						Emit4( (int)vm->dataBase );
+						Emit4( (qint)vm->dataBase );
 					}
 				}
 				EmitCommand(LAST_COMMAND_SUB_DI_4);		// sub edi, 4
@@ -662,25 +690,25 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 				compiledOfs -= 2;
 				vm->instructionPointers[ instruction-1 ] = compiledOfs;
 				EmitString( "8B 80");	// mov eax, dword ptr [eax + 0x1234567]
-				Emit4( (int)vm->dataBase );
+				Emit4( (qint)vm->dataBase );
 				EmitCommand(LAST_COMMAND_MOV_EDI_EAX);		// mov dword ptr [edi], eax
 				break;
 			}
 			EmitMovEBXEDI(vm, vm->dataMask);
 			EmitString( "8B 83" );		// mov	eax, dword ptr [ebx + 0x12345678]
-			Emit4( (int)vm->dataBase );
+			Emit4( (qint)vm->dataBase );
 			EmitCommand(LAST_COMMAND_MOV_EDI_EAX);		// mov dword ptr [edi], eax
 			break;
 		case OP_LOAD2:
 			EmitMovEBXEDI(vm, vm->dataMask);
 			EmitString( "0F B7 83" );	// movzx	eax, word ptr [ebx + 0x12345678]
-			Emit4( (int)vm->dataBase );
+			Emit4( (qint)vm->dataBase );
 			EmitCommand(LAST_COMMAND_MOV_EDI_EAX);		// mov dword ptr [edi], eax
 			break;
 		case OP_LOAD1:
 			EmitMovEBXEDI(vm, vm->dataMask);
 			EmitString( "0F B6 83" );	// movzx eax, byte ptr [ebx + 0x12345678]
-			Emit4( (int)vm->dataBase );
+			Emit4( (qint)vm->dataBase );
 			EmitCommand(LAST_COMMAND_MOV_EDI_EAX);		// mov dword ptr [edi], eax
 			break;
 		case OP_STORE4:
@@ -691,7 +719,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 //				Emit4( vm->dataMask & ~3 );
 //			}
 			EmitString( "89 83" );		// mov dword ptr [ebx+0x12345678], eax
-			Emit4( (int)vm->dataBase );
+			Emit4( (qint)vm->dataBase );
 			EmitCommand(LAST_COMMAND_SUB_DI_8);		// sub edi, 8
 			break;
 		case OP_STORE2:
@@ -700,7 +728,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 //			EmitString( "81 E3" );		// and ebx, 0x12345678
 //			Emit4( vm->dataMask & ~1 );
 			EmitString( "66 89 83" );	// mov word ptr [ebx+0x12345678], eax
-			Emit4( (int)vm->dataBase );
+			Emit4( (qint)vm->dataBase );
 			EmitCommand(LAST_COMMAND_SUB_DI_8);		// sub edi, 8
 			break;
 		case OP_STORE1:
@@ -709,7 +737,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 //			EmitString( "81 E3" );		// and ebx, 0x12345678
 //			Emit4( vm->dataMask );
 			EmitString( "88 83" );		// mov byte ptr [ebx+0x12345678], eax
-			Emit4( (int)vm->dataBase );
+			Emit4( (qint)vm->dataBase );
 			EmitCommand(LAST_COMMAND_SUB_DI_8);		// sub edi, 8
 			break;
 
@@ -720,8 +748,8 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			EmitString( "75 06" );		// jne +6
 			EmitString( "FF 25" );		// jmp	[0x12345678]
 			v = Constant4();
-			jused[v] = 1;
-			Emit4( (int)vm->instructionPointers + v*4 );
+			JUSED(v);
+			Emit4( (qint)vm->instructionPointers + v*4 );
 			break;
 		case OP_NE:
 			EmitCommand(LAST_COMMAND_SUB_DI_8);		// sub edi, 8
@@ -730,8 +758,8 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			EmitString( "74 06" );		// je +6
 			EmitString( "FF 25" );		// jmp	[0x12345678]
 			v = Constant4();
-			jused[v] = 1;
-			Emit4( (int)vm->instructionPointers + v*4 );
+			JUSED(v);
+			Emit4( (qint)vm->instructionPointers + v*4 );
 			break;
 		case OP_LTI:
 			EmitCommand(LAST_COMMAND_SUB_DI_8);		// sub edi, 8
@@ -740,8 +768,8 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			EmitString( "7D 06" );		// jnl +6
 			EmitString( "FF 25" );		// jmp	[0x12345678]
 			v = Constant4();
-			jused[v] = 1;
-			Emit4( (int)vm->instructionPointers + v*4 );
+			JUSED(v);
+			Emit4( (qint)vm->instructionPointers + v*4 );
 			break;
 		case OP_LEI:
 			EmitCommand(LAST_COMMAND_SUB_DI_8);		// sub edi, 8
@@ -750,8 +778,8 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			EmitString( "7F 06" );		// jnle +6
 			EmitString( "FF 25" );		// jmp	[0x12345678]
 			v = Constant4();
-			jused[v] = 1;
-			Emit4( (int)vm->instructionPointers + v*4 );
+			JUSED(v);
+			Emit4( (qint)vm->instructionPointers + v*4 );
 			break;
 		case OP_GTI:
 			EmitCommand(LAST_COMMAND_SUB_DI_8);		// sub edi, 8
@@ -760,8 +788,8 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			EmitString( "7E 06" );		// jng +6
 			EmitString( "FF 25" );		// jmp	[0x12345678]
 			v = Constant4();
-			jused[v] = 1;
-			Emit4( (int)vm->instructionPointers + v*4 );
+			JUSED(v);
+			Emit4( (qint)vm->instructionPointers + v*4 );
 			break;
 		case OP_GEI:
 			EmitCommand(LAST_COMMAND_SUB_DI_8);		// sub edi, 8
@@ -770,8 +798,8 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			EmitString( "7C 06" );		// jnge +6
 			EmitString( "FF 25" );		// jmp	[0x12345678]
 			v = Constant4();
-			jused[v] = 1;
-			Emit4( (int)vm->instructionPointers + v*4 );
+			JUSED(v);
+			Emit4( (qint)vm->instructionPointers + v*4 );
 			break;
 		case OP_LTU:
 			EmitCommand(LAST_COMMAND_SUB_DI_8);		// sub edi, 8
@@ -780,8 +808,8 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			EmitString( "73 06" );		// jnb +6
 			EmitString( "FF 25" );		// jmp	[0x12345678]
 			v = Constant4();
-			jused[v] = 1;
-			Emit4( (int)vm->instructionPointers + v*4 );
+			JUSED(v);
+			Emit4( (qint)vm->instructionPointers + v*4 );
 			break;
 		case OP_LEU:
 			EmitCommand(LAST_COMMAND_SUB_DI_8);		// sub edi, 8
@@ -790,8 +818,8 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			EmitString( "77 06" );		// jnbe +6
 			EmitString( "FF 25" );		// jmp	[0x12345678]
 			v = Constant4();
-			jused[v] = 1;
-			Emit4( (int)vm->instructionPointers + v*4 );
+			JUSED(v);
+			Emit4( (qint)vm->instructionPointers + v*4 );
 			break;
 		case OP_GTU:
 			EmitCommand(LAST_COMMAND_SUB_DI_8);		// sub edi, 8
@@ -800,8 +828,8 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			EmitString( "76 06" );		// jna +6
 			EmitString( "FF 25" );		// jmp	[0x12345678]
 			v = Constant4();
-			jused[v] = 1;
-			Emit4( (int)vm->instructionPointers + v*4 );
+			JUSED(v);
+			Emit4( (qint)vm->instructionPointers + v*4 );
 			break;
 		case OP_GEU:
 			EmitCommand(LAST_COMMAND_SUB_DI_8);		// sub edi, 8
@@ -810,8 +838,8 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			EmitString( "72 06" );		// jnae +6
 			EmitString( "FF 25" );		// jmp	[0x12345678]
 			v = Constant4();
-			jused[v] = 1;
-			Emit4( (int)vm->instructionPointers + v*4 );
+			JUSED(v);
+			Emit4( (qint)vm->instructionPointers + v*4 );
 			break;
 		case OP_EQF:
 			EmitCommand(LAST_COMMAND_SUB_DI_8);		// sub edi, 8
@@ -822,8 +850,8 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			EmitString( "74 06" );		// je +6
 			EmitString( "FF 25" );		// jmp	[0x12345678]
 			v = Constant4();
-			jused[v] = 1;
-			Emit4( (int)vm->instructionPointers + v*4 );
+			JUSED(v);
+			Emit4( (qint)vm->instructionPointers + v*4 );
 			break;			
 		case OP_NEF:
 			EmitCommand(LAST_COMMAND_SUB_DI_8);		// sub edi, 8
@@ -834,8 +862,8 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			EmitString( "75 06" );		// jne +6
 			EmitString( "FF 25" );		// jmp	[0x12345678]
 			v = Constant4();
-			jused[v] = 1;
-			Emit4( (int)vm->instructionPointers + v*4 );
+			JUSED(v);
+			Emit4( (qint)vm->instructionPointers + v*4 );
 			break;			
 		case OP_LTF:
 			EmitCommand(LAST_COMMAND_SUB_DI_8);		// sub edi, 8
@@ -846,8 +874,8 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			EmitString( "74 06" );		// je +6
 			EmitString( "FF 25" );		// jmp	[0x12345678]
 			v = Constant4();
-			jused[v] = 1;
-			Emit4( (int)vm->instructionPointers + v*4 );
+			JUSED(v);
+			Emit4( (qint)vm->instructionPointers + v*4 );
 			break;			
 		case OP_LEF:
 			EmitCommand(LAST_COMMAND_SUB_DI_8);		// sub edi, 8
@@ -858,8 +886,8 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			EmitString( "74 06" );		// je +6
 			EmitString( "FF 25" );		// jmp	[0x12345678]
 			v = Constant4();
-			jused[v] = 1;
-			Emit4( (int)vm->instructionPointers + v*4 );
+			JUSED(v);
+			Emit4( (qint)vm->instructionPointers + v*4 );
 			break;			
 		case OP_GTF:
 			EmitCommand(LAST_COMMAND_SUB_DI_8);		// sub edi, 8
@@ -870,8 +898,8 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			EmitString( "75 06" );		// jne +6
 			EmitString( "FF 25" );		// jmp	[0x12345678]
 			v = Constant4();
-			jused[v] = 1;
-			Emit4( (int)vm->instructionPointers + v*4 );
+			JUSED(v);
+			Emit4( (qint)vm->instructionPointers + v*4 );
 			break;			
 		case OP_GEF:
 			EmitCommand(LAST_COMMAND_SUB_DI_8);		// sub edi, 8
@@ -882,8 +910,8 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			EmitString( "75 06" );		// jne +6
 			EmitString( "FF 25" );		// jmp	[0x12345678]
 			v = Constant4();
-			jused[v] = 1;
-			Emit4( (int)vm->instructionPointers + v*4 );
+			JUSED(v);
+			Emit4( (qint)vm->instructionPointers + v*4 );
 			break;			
 		case OP_NEGI:
 			EmitString( "F7 1F" );		// neg dword ptr [edi]
@@ -1013,7 +1041,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			// call the library conversion function
 			EmitString( "D9 07" );		// fld dword ptr [edi]
 			EmitString( "FF 15" );		// call ftolPtr
-			Emit4( (int)&ftolPtr );
+			Emit4( (qint)&ftolPtr );
 			EmitCommand(LAST_COMMAND_MOV_EDI_EAX);		// mov dword ptr [edi], eax
 #endif
 			break;
@@ -1037,7 +1065,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			EmitString( "B8" );			// mov eax, datamask
 			Emit4( vm->dataMask );
 			EmitString( "BB" );			// mov ebx, database
-			Emit4( (int)vm->dataBase );
+			Emit4( (qint)vm->dataBase );
 			EmitString( "23 F0" );		// and esi, eax
 			EmitString( "03 F3" );		// add esi, ebx
 			EmitString( "23 F8" );		// and edi, eax
@@ -1053,10 +1081,11 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 			EmitString( "8B 47 04" );	// mov eax,dword ptr [edi+4]
 			// FIXME: range check
 			EmitString( "FF 24 85" );	// jmp dword ptr [instructionPointers + eax * 4]
-			Emit4( (int)vm->instructionPointers );
+			Emit4( (qint)vm->instructionPointers );
 			break;
 		default:
-			Com_Error( ERR_DROP, "VM_CompileX86: bad opcode %i at offset %i", op, pc );
+		        VMFREE_BUFFERS();
+			Com_Error(ERR_DROP, "VM_CompileX86: bad opcode %i at offset %i", op, pc);
 		}
 		pop0 = pop1;
 		pop1 = op;
@@ -1067,29 +1096,34 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 	vm->codeLength = compiledOfs;
 #ifdef VM_X86_MMAP
 	vm->codeBase = mmap(NULL, compiledOfs, PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
-	if(vm->codeBase == (void*)-1)
-		Com_Error(ERR_DROP, "VM_CompileX86: can't mmap memory");
+	if(vm->codeBase == MAP_FAILED)
+		Com_Error(ERR_FATAL, "VM_CompileX86: can't mmap memory");
 #elif _WIN32
 	// allocate memory with EXECUTE permissions under windows.
 	vm->codeBase = VirtualAlloc(NULL, compiledOfs, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	if(!vm->codeBase)
-		Com_Error(ERR_DROP, "VM_CompileX86: VirtualAlloc failed");
+		Com_Error(ERR_FATAL, "VM_CompileX86: VirtualAlloc failed");
 #else
 	vm->codeBase = malloc(compiledOfs);
+
+        if (!vm->codeBase)
+        {
+          Com_Error(ERR_FATAL, "VM_CompileX86: malloc failed");
+        }
 #endif
 
 	Com_Memcpy( vm->codeBase, buf, compiledOfs );
 
 #ifdef VM_X86_MMAP
 	if(mprotect(vm->codeBase, compiledOfs, PROT_READ|PROT_EXEC))
-		Com_Error(ERR_DROP, "VM_CompileX86: mprotect failed");
+		Com_Error(ERR_FATAL, "VM_CompileX86: mprotect failed");
 #elif _WIN32
 	{
 		DWORD oldProtect = 0;
 		
 		// remove write permissions.
 		if(!VirtualProtect(vm->codeBase, compiledOfs, PAGE_EXECUTE_READ, &oldProtect))
-			Com_Error(ERR_DROP, "VM_CompileX86: VirtualProtect failed");
+			Com_Error(ERR_FATAL, "VM_CompileX86: VirtualProtect failed");
 	}
 #endif
 
@@ -1101,7 +1135,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 
 	// offset all the instruction pointers for the new location
 	for ( i = 0 ; i < header->instructionCount ; i++ ) {
-		vm->instructionPointers[i] += (int)vm->codeBase;
+		vm->instructionPointers[i] += (qint)vm->codeBase;
 	}
 }
 
@@ -1123,14 +1157,14 @@ VM_CallCompiled
 This function is called directly by the generated code
 ==============
 */
-int	VM_CallCompiled( vm_t *vm, int *args ) {
-	int		stack[1024];
-	int		programCounter;
-	int		programStack;
-	int		stackOnEntry;
+qint	VM_CallCompiled( vm_t *vm, qint *args ) {
+	qint		stack[1024];
+	qint		programCounter;
+	qint		programStack;
+	qint		stackOnEntry;
 	byte	*image;
 	void	*opStack;
-	int		*oldInstructionPointers;
+	qint		*oldInstructionPointers;
 
 	oldInstructionPointers = instructionPointers;
 
@@ -1153,18 +1187,18 @@ int	VM_CallCompiled( vm_t *vm, int *args ) {
 
 	programStack -= 48;
 
-	*(int *)&image[ programStack + 44] = args[9];
-	*(int *)&image[ programStack + 40] = args[8];
-	*(int *)&image[ programStack + 36] = args[7];
-	*(int *)&image[ programStack + 32] = args[6];
-	*(int *)&image[ programStack + 28] = args[5];
-	*(int *)&image[ programStack + 24] = args[4];
-	*(int *)&image[ programStack + 20] = args[3];
-	*(int *)&image[ programStack + 16] = args[2];
-	*(int *)&image[ programStack + 12] = args[1];
-	*(int *)&image[ programStack + 8 ] = args[0];
-	*(int *)&image[ programStack + 4 ] = 0;	// return stack
-	*(int *)&image[ programStack ] = -1;	// will terminate the loop on return
+	*(qint *)&image[ programStack + 44] = args[9];
+	*(qint *)&image[ programStack + 40] = args[8];
+	*(qint *)&image[ programStack + 36] = args[7];
+	*(qint *)&image[ programStack + 32] = args[6];
+	*(qint *)&image[ programStack + 28] = args[5];
+	*(qint *)&image[ programStack + 24] = args[4];
+	*(qint *)&image[ programStack + 20] = args[3];
+	*(qint *)&image[ programStack + 16] = args[2];
+	*(qint *)&image[ programStack + 12] = args[1];
+	*(qint *)&image[ programStack + 8 ] = args[0];
+	*(qint *)&image[ programStack + 4 ] = 0;	// return stack
+	*(qint *)&image[ programStack ] = -1;	// will terminate the loop on return
 
 	// off we go into generated code...
 	opStack = &stack;
@@ -1212,5 +1246,5 @@ int	VM_CallCompiled( vm_t *vm, int *args ) {
 	// in case we were recursively called by another vm
 	instructionPointers = oldInstructionPointers;
 
-	return *(int *)opStack;
+	return *(qint *)opStack;
 }

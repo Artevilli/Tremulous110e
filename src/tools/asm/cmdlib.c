@@ -43,9 +43,9 @@ int myargc;
 char **myargv;
 
 char		com_token[1024];
-qboolean	com_eof;
+qbool	com_eof;
 
-qboolean		archive;
+qbool		archive;
 char			archivedir[1024];
 
 
@@ -64,7 +64,7 @@ char	*ex_argv[MAX_EX_ARGC];
 void ExpandWildcards( int *argc, char ***argv )
 {
 	struct _finddata_t fileinfo;
-	int		handle;
+	intptr_t		handle;
 	int		i;
 	char	filename[1024];
 	char	filebase[1024];
@@ -157,7 +157,7 @@ void Error( const char *error, ...)
 #endif
 
 // only printf if in verbose mode
-qboolean verbose = qfalse;
+qbool verbose = qfalse;
 void qprintf( const char *format, ... ) {
 	va_list argptr;
 
@@ -172,7 +172,7 @@ void qprintf( const char *format, ... ) {
 
 #ifdef WIN32
 HWND hwndOut = NULL;
-qboolean lookedForServer = qfalse;
+qbool lookedForServer = qfalse;
 UINT wm_BroadcastCommand = -1;
 #endif
 
@@ -186,7 +186,7 @@ void _printf( const char *format, ... ) {
 	vsprintf (text, format, argptr);
 	va_end (argptr);
 
-  printf(text);
+  printf("%s", text);
 
 #ifdef WIN32
   if (!lookedForServer) {
@@ -397,10 +397,18 @@ void Q_getwd (char *out)
 	int i = 0;
 
 #ifdef WIN32
-   _getcwd (out, 256);
+   if (_getcwd (out, 256) == NULL)
+   {
+    strcpy(out, "."); /*shrug*/
+  }
+
    strcat (out, "\\");
 #else
-   getcwd (out, 256);
+   if (getcwd (out, 256) == NULL)
+   {
+    strcpy(out, "."); /*shrug*/
+  }
+
    strcat (out, "/");
 #endif
 
@@ -695,7 +703,7 @@ void SafeWrite (FILE *f, const void *buffer, int count)
 FileExists
 ==============
 */
-qboolean	FileExists (const char *filename)
+qbool	FileExists (const char *filename)
 {
 	FILE	*f;
 

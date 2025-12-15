@@ -29,7 +29,7 @@ CM_PointLeafnum_r
 
 ==================
 */
-int CM_PointLeafnum_r( const vec3_t p, int num ) {
+qint CM_PointLeafnum_r( const vec3_t p, qint num ) {
 	float		d;
 	cNode_t		*node;
 	cplane_t	*plane;
@@ -54,7 +54,7 @@ int CM_PointLeafnum_r( const vec3_t p, int num ) {
 	return -1 - num;
 }
 
-int CM_PointLeafnum( const vec3_t p ) {
+qint CM_PointLeafnum( const vec3_t p ) {
 	if ( !cm.numNodes ) {	// map not loaded
 		return 0;
 	}
@@ -71,8 +71,8 @@ LEAF LISTING
 */
 
 
-void CM_StoreLeafs( leafList_t *ll, int nodenum ) {
-	int		leafNum;
+void CM_StoreLeafs( leafList_t *ll, qint nodenum ) {
+	qint		leafNum;
 
 	leafNum = -1 - nodenum;
 
@@ -88,10 +88,10 @@ void CM_StoreLeafs( leafList_t *ll, int nodenum ) {
 	ll->list[ ll->count++ ] = leafNum;
 }
 
-void CM_StoreBrushes( leafList_t *ll, int nodenum ) {
-	int			i, k;
-	int			leafnum;
-	int			brushnum;
+void CM_StoreBrushes( leafList_t *ll, qint nodenum ) {
+	qint			i, k;
+	qint			leafnum;
+	qint			brushnum;
 	cLeaf_t		*leaf;
 	cbrush_t	*b;
 
@@ -138,10 +138,10 @@ CM_BoxLeafnums
 Fills in a list of all the leafs touched
 =============
 */
-void CM_BoxLeafnums_r( leafList_t *ll, int nodenum ) {
+void CM_BoxLeafnums_r( leafList_t *ll, qint nodenum ) {
 	cplane_t	*plane;
 	cNode_t		*node;
-	int			s;
+	qint			s;
 
 	while (1) {
 		if (nodenum < 0) {
@@ -170,7 +170,7 @@ void CM_BoxLeafnums_r( leafList_t *ll, int nodenum ) {
 CM_BoxLeafnums
 ==================
 */
-int	CM_BoxLeafnums( const vec3_t mins, const vec3_t maxs, int *list, int listsize, int *lastLeaf) {
+qint	CM_BoxLeafnums( const vec3_t mins, const vec3_t maxs, qint *list, qint listsize, qint *lastLeaf) {
 	leafList_t	ll;
 
 	cm.checkcount++;
@@ -195,7 +195,7 @@ int	CM_BoxLeafnums( const vec3_t mins, const vec3_t maxs, int *list, int listsiz
 CM_BoxBrushes
 ==================
 */
-int CM_BoxBrushes( const vec3_t mins, const vec3_t maxs, cbrush_t **list, int listsize ) {
+qint CM_BoxBrushes( const vec3_t mins, const vec3_t maxs, cbrush_t **list, qint listsize ) {
 	leafList_t	ll;
 
 	cm.checkcount++;
@@ -224,13 +224,13 @@ CM_PointContents
 
 ==================
 */
-int CM_PointContents( const vec3_t p, clipHandle_t model ) {
-	int			leafnum;
-	int			i, k;
-	int			brushnum;
+qint CM_PointContents( const vec3_t p, clipHandle_t model ) {
+	qint			leafnum;
+	qint			i, k;
+	qint			brushnum;
 	cLeaf_t		*leaf;
 	cbrush_t	*b;
-	int			contents;
+	qint			contents;
 	float		d;
 	cmodel_t	*clipm;
 
@@ -281,7 +281,7 @@ Handles offseting and rotation of the end points for moving and
 rotating entities
 ==================
 */
-int	CM_TransformedPointContents( const vec3_t p, clipHandle_t model, const vec3_t origin, const vec3_t angles) {
+qint	CM_TransformedPointContents( const vec3_t p, clipHandle_t model, const vec3_t origin, const vec3_t angles) {
 	vec3_t		p_l;
 	vec3_t		temp;
 	vec3_t		forward, right, up;
@@ -314,7 +314,7 @@ PVS
 ===============================================================================
 */
 
-byte	*CM_ClusterPVS (int cluster) {
+byte	*CM_ClusterPVS (qint cluster) {
 	if (cluster < 0 || cluster >= cm.numClusters || !cm.vised ) {
 		return cm.visibility;
 	}
@@ -332,10 +332,10 @@ AREAPORTALS
 ===============================================================================
 */
 
-void CM_FloodArea_r( int areaNum, int floodnum) {
-	int		i;
+void CM_FloodArea_r( qint areaNum, qint floodnum) {
+	qint		i;
 	cArea_t *area;
-	int		*con;
+	qint		*con;
 
 	area = &cm.areas[ areaNum ];
 
@@ -362,9 +362,9 @@ CM_FloodAreaConnections
 ====================
 */
 void	CM_FloodAreaConnections( void ) {
-	int		i;
+	qint		i;
 	cArea_t	*area;
-	int		floodnum;
+	qint		floodnum;
 
 	// all current floods are now invalid
 	cm.floodvalid++;
@@ -387,7 +387,7 @@ CM_AdjustAreaPortalState
 
 ====================
 */
-void	CM_AdjustAreaPortalState( int area1, int area2, qboolean open ) {
+void	CM_AdjustAreaPortalState( qint area1, qint area2, qbool open ) {
 	if ( area1 < 0 || area2 < 0 ) {
 		return;
 	}
@@ -416,7 +416,7 @@ CM_AreasConnected
 
 ====================
 */
-qboolean	CM_AreasConnected( int area1, int area2 ) {
+qbool	CM_AreasConnected( qint area1, qint area2 ) {
 #ifndef BSPC
 	if ( cm_noAreas->integer ) {
 		return qtrue;
@@ -452,18 +452,18 @@ viewpoints and get the union of all visible areas.
 This is used to cull non-visible entities from snapshots
 =================
 */
-int CM_WriteAreaBits (byte *buffer, int area)
+qint CM_WriteAreaBits (byte *buffer, qint area)
 {
-	int		i;
-	int		floodnum;
-	int		bytes;
+	qint		i;
+	qint		floodnum;
+	qint		bytes;
 
 	bytes = (cm.numAreas+7)>>3;
 
 #ifndef BSPC
 	if (cm_noAreas->integer || area == -1)
 #else
-	if ( area == -1)
+	if (area == -1)
 #endif
 	{	// for debugging, send everything
 		Com_Memset (buffer, 255, bytes);
@@ -473,7 +473,7 @@ int CM_WriteAreaBits (byte *buffer, int area)
 		floodnum = cm.areas[area].floodnum;
 		for (i=0 ; i<cm.numAreas ; i++)
 		{
-			if (cm.areas[i].floodnum == floodnum || area == -1)
+			if (cm.areas[i].floodnum == floodnum)
 				buffer[i>>3] |= 1<<(i&7);
 		}
 	}
@@ -486,7 +486,7 @@ int CM_WriteAreaBits (byte *buffer, int area)
 CM_BoundsIntersect
 ====================
 */
-qboolean CM_BoundsIntersect( const vec3_t mins, const vec3_t maxs, const vec3_t mins2, const vec3_t maxs2 )
+qbool CM_BoundsIntersect( const vec3_t mins, const vec3_t maxs, const vec3_t mins2, const vec3_t maxs2 )
 {
 	if (maxs[0] < mins2[0] - SURFACE_CLIP_EPSILON ||
 		maxs[1] < mins2[1] - SURFACE_CLIP_EPSILON ||
@@ -506,7 +506,7 @@ qboolean CM_BoundsIntersect( const vec3_t mins, const vec3_t maxs, const vec3_t 
 CM_BoundsIntersectPoint
 ====================
 */
-qboolean CM_BoundsIntersectPoint( const vec3_t mins, const vec3_t maxs, const vec3_t point )
+qbool CM_BoundsIntersectPoint( const vec3_t mins, const vec3_t maxs, const vec3_t point )
 {
 	if (maxs[0] < point[0] - SURFACE_CLIP_EPSILON ||
 		maxs[1] < point[1] - SURFACE_CLIP_EPSILON ||

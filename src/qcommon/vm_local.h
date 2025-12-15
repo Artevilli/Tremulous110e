@@ -20,8 +20,18 @@ along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
+#pragma once
+
 #include "q_shared.h"
 #include "qcommon.h"
+
+#define OPSTACK_SIZE 1024
+#define OPSTACK_MASK (OPSTACK_SIZE - 1)
+
+//dont change
+//hardcoded in q3asm and reserved at end of bss
+#define PROGRAM_STACK_SIZE 0x10000
+#define PROGRAM_STACK_MASK (PROGRAM_STACK_SIZE - 1)
 
 typedef enum {
 	OP_UNDEF, 
@@ -112,73 +122,73 @@ typedef enum {
 
 
 
-typedef int	vmptr_t;
+typedef qint	vmptr_t;
 
 typedef struct vmSymbol_s {
 	struct vmSymbol_s	*next;
-	int		symValue;
-	int		profileCount;
-	char	symName[1];		// variable sized
+	qint		symValue;
+	qint		profileCount;
+	qchar	symName[1];		// variable sized
 } vmSymbol_t;
 
 #define	VM_OFFSET_PROGRAM_STACK		0
 #define	VM_OFFSET_SYSTEM_CALL		4
 
+#define VM_SYSCALL_ARGS 16
+
 struct vm_s {
     // DO NOT MOVE OR CHANGE THESE WITHOUT CHANGING THE VM_OFFSET_* DEFINES
     // USED BY THE ASM CODE
-    int			programStack;		// the vm may be recursively entered
+    qint			programStack;		// the vm may be recursively entered
     intptr_t			(*systemCall)( intptr_t *parms );
 
 	//------------------------------------
    
-    char		name[MAX_QPATH];
+    qchar		name[MAX_QPATH];
 
 	// for dynamic linked modules
 	void		*dllHandle;
-	intptr_t			(QDECL *entryPoint)( int callNum, ... );
+	intptr_t			(QDECL *entryPoint)( qint callNum, ... );
 	void (*destroy)(vm_t* self);
 
 	// for interpreted modules
-	qboolean	currentlyInterpreting;
+	qbool	currentlyInterpreting;
 
-	qboolean	compiled;
+	qbool	compiled;
 	byte		*codeBase;
-	int			codeLength;
+	qint			codeLength;
 
-	int			*instructionPointers;
-	int			instructionPointersLength;
+	qint			*instructionPointers;
+	qint			instructionCount;
 
 	byte		*dataBase;
-	int			dataMask;
+	qint			dataMask;
+	qint dataAlloc; //actually allocated
 
-	int			stackBottom;		// if programStack < stackBottom, error
+	qint			stackBottom;		// if programStack < stackBottom, error
 
-	int			numSymbols;
+	qint			numSymbols;
 	struct vmSymbol_s	*symbols;
 
-	int			callLevel;		// counts recursive VM_Call
-	int			breakFunction;		// increment breakCount on function entry to this
-	int			breakCount;
-
-	char		fqpath[MAX_QPATH+1] ;
+	qint			callLevel;		// counts recursive VM_Call
+	qint			breakFunction;		// increment breakCount on function entry to this
+	qint			breakCount;
 
 	byte		*jumpTableTargets;
-	int			numJumpTableTargets;
+	qint			numJumpTableTargets;
 };
 
 
 extern	vm_t	*currentVM;
-extern	int		vm_debugLevel;
+extern	qint		vm_debugLevel;
 
 void VM_Compile( vm_t *vm, vmHeader_t *header );
-int	VM_CallCompiled( vm_t *vm, int *args );
+qint	VM_CallCompiled( vm_t *vm, qint *args );
 
 void VM_PrepareInterpreter( vm_t *vm, vmHeader_t *header );
-int	VM_CallInterpreted( vm_t *vm, int *args );
+qint	VM_CallInterpreted( vm_t *vm, qint *args );
 
-vmSymbol_t *VM_ValueToFunctionSymbol( vm_t *vm, int value );
-int VM_SymbolToValue( vm_t *vm, const char *symbol );
-const char *VM_ValueToSymbol( vm_t *vm, int value );
-void VM_LogSyscalls( int *args );
-
+vmSymbol_t *VM_ValueToFunctionSymbol( vm_t *vm, qint value );
+qint VM_SymbolToValue( vm_t *vm, const qchar *symbol );
+const qchar *VM_ValueToSymbol( vm_t *vm, qint value );
+void VM_LogSyscalls( qint *args );

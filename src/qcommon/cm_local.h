@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
+#pragma once
+
 #include "q_shared.h"
 #include "qcommon.h"
 #include "cm_polylib.h"
@@ -32,18 +34,18 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 typedef struct {
 	cplane_t	*plane;
-	int			children[2];		// negative numbers are leafs
+	qint			children[2];		// negative numbers are leafs
 } cNode_t;
 
 typedef struct {
-	int			cluster;
-	int			area;
+	qint			cluster;
+	qint			area;
 
-	int			firstLeafBrush;
-	int			numLeafBrushes;
+	qint			firstLeafBrush;
+	qint			numLeafBrushes;
 
-	int			firstLeafSurface;
-	int			numLeafSurfaces;
+	qint			firstLeafSurface;
+	qint			numLeafSurfaces;
 } cLeaf_t;
 
 typedef struct cmodel_s {
@@ -59,95 +61,95 @@ typedef struct cbrushedge_s
 
 typedef struct {
 	cplane_t			*plane;
-	int						planeNum;
-	int						surfaceFlags;
-	int						shaderNum;
+	qint						planeNum;
+	qint						surfaceFlags;
+	qint						shaderNum;
 	winding_t			*winding;
 } cbrushside_t;
 
 typedef struct {
-	int			shaderNum;		// the shader that determined the contents
-	int			contents;
+	qint			shaderNum;		// the shader that determined the contents
+	qint			contents;
 	vec3_t		bounds[2];
-	int			numsides;
+	qint			numsides;
 	cbrushside_t	*sides;
-	int			checkcount;		// to avoid repeated testings
-	qboolean	collided; // marker for optimisation
+	qint			checkcount;		// to avoid repeated testings
+	qbool	collided; // marker for optimisation
 	cbrushedge_t	*edges;
-	int						numEdges;
+	qint						numEdges;
 } cbrush_t;
 
 
 typedef struct {
-	int			checkcount;				// to avoid repeated testings
-	int			surfaceFlags;
-	int			contents;
+	qint			checkcount;				// to avoid repeated testings
+	qint			surfaceFlags;
+	qint			contents;
 	struct patchCollide_s	*pc;
 } cPatch_t;
 
 
 typedef struct {
-	int			floodnum;
-	int			floodvalid;
+	qint			floodnum;
+	qint			floodvalid;
 } cArea_t;
 
 typedef struct {
-	char		name[MAX_QPATH];
+	qchar		name[MAX_QPATH];
 
-	int			numShaders;
+	qint			numShaders;
 	dshader_t	*shaders;
 
-	int			numBrushSides;
+	qint			numBrushSides;
 	cbrushside_t *brushsides;
 
-	int			numPlanes;
+	qint			numPlanes;
 	cplane_t	*planes;
 
-	int			numNodes;
+	qint			numNodes;
 	cNode_t		*nodes;
 
-	int			numLeafs;
+	qint			numLeafs;
 	cLeaf_t		*leafs;
 
-	int			numLeafBrushes;
-	int			*leafbrushes;
+	qint			numLeafBrushes;
+	qint			*leafbrushes;
 
-	int			numLeafSurfaces;
-	int			*leafsurfaces;
+	qint			numLeafSurfaces;
+	qint			*leafsurfaces;
 
-	int			numSubModels;
+	qint			numSubModels;
 	cmodel_t	*cmodels;
 
-	int			numBrushes;
+	qint			numBrushes;
 	cbrush_t	*brushes;
 
-	int			numClusters;
-	int			clusterBytes;
+	qint			numClusters;
+	qint			clusterBytes;
 	byte		*visibility;
-	qboolean	vised;			// if false, visibility is just a single cluster of ffs
+	qbool	vised;			// if false, visibility is just a single cluster of ffs
 
-	int			numEntityChars;
-	char		*entityString;
+	qint			numEntityChars;
+	qchar		*entityString;
 
-	int			numAreas;
+	qint			numAreas;
 	cArea_t		*areas;
-	int			*areaPortals;	// [ numAreas*numAreas ] reference counts
+	qint			*areaPortals;	// [ numAreas*numAreas ] reference counts
 
-	int			numSurfaces;
+	qint			numSurfaces;
 	cPatch_t	**surfaces;			// non-patches will be NULL
 
-	int			floodvalid;
-	int			checkcount;					// incremented on each trace
+	qint			floodvalid;
+	qint			checkcount;					// incremented on each trace
 } clipMap_t;
 
 
 // keep 1/8 unit away to keep the position valid before network snapping
 // and to avoid various numeric issues
-#define	SURFACE_CLIP_EPSILON	(0.125)
+#define	SURFACE_CLIP_EPSILON	0.125f
 
 extern	clipMap_t	cm;
-extern	int			c_pointcontents;
-extern	int			c_traces, c_brush_traces, c_patch_traces;
+extern	qint			c_pointcontents;
+extern	uint64_t			c_traces, c_brush_traces, c_patch_traces;
 extern	cvar_t		*cm_noAreas;
 extern	cvar_t		*cm_noCurves;
 extern	cvar_t		*cm_playerCurveClip;
@@ -178,39 +180,39 @@ typedef struct {
 	vec3_t			extents;	// greatest of abs(size[0]) and abs(size[1])
 	vec3_t			bounds[2];	// enclosing box of start and end surrounding by size
 	vec3_t			modelOrigin;// origin of the model tracing through
-	int					contents;	// ored contents of the model tracing through
-	qboolean		isPoint;	// optimized case
+	qint					contents;	// ored contents of the model tracing through
+	qbool		isPoint;	// optimized case
 	trace_t			trace;		// returned from trace call
 	sphere_t		sphere;		// sphere for oriendted capsule collision
 	biSphere_t	biSphere;
-	qboolean		testLateralCollision; // whether or not to test for lateral collision
+	qbool		testLateralCollision; // whether or not to test for lateral collision
 } traceWork_t;
 
 typedef struct leafList_s {
-	int		count;
-	int		maxcount;
-	qboolean	overflowed;
-	int		*list;
+	qint		count;
+	qint		maxcount;
+	qbool	overflowed;
+	qint		*list;
 	vec3_t	bounds[2];
-	int		lastLeaf;		// for overflows where each leaf can't be stored individually
-	void	(*storeLeafs)( struct leafList_s *ll, int nodenum );
+	qint		lastLeaf;		// for overflows where each leaf can't be stored individually
+	void	(*storeLeafs)( struct leafList_s *ll, qint nodenum );
 } leafList_t;
 
 
-int CM_BoxBrushes( const vec3_t mins, const vec3_t maxs, cbrush_t **list, int listsize );
+qint CM_BoxBrushes( const vec3_t mins, const vec3_t maxs, cbrush_t **list, qint listsize );
 
-void CM_StoreLeafs( leafList_t *ll, int nodenum );
-void CM_StoreBrushes( leafList_t *ll, int nodenum );
+void CM_StoreLeafs( leafList_t *ll, qint nodenum );
+void CM_StoreBrushes( leafList_t *ll, qint nodenum );
 
-void CM_BoxLeafnums_r( leafList_t *ll, int nodenum );
+void CM_BoxLeafnums_r( leafList_t *ll, qint nodenum );
 
 cmodel_t	*CM_ClipHandleToModel( clipHandle_t handle );
-qboolean CM_BoundsIntersect( const vec3_t mins, const vec3_t maxs, const vec3_t mins2, const vec3_t maxs2 );
-qboolean CM_BoundsIntersectPoint( const vec3_t mins, const vec3_t maxs, const vec3_t point );
+qbool CM_BoundsIntersect( const vec3_t mins, const vec3_t maxs, const vec3_t mins2, const vec3_t maxs2 );
+qbool CM_BoundsIntersectPoint( const vec3_t mins, const vec3_t maxs, const vec3_t point );
 
 // cm_patch.c
 
-struct patchCollide_s	*CM_GeneratePatchCollide( int width, int height, vec3_t *points );
+struct patchCollide_s	*CM_GeneratePatchCollide( qint width, qint height, vec3_t *points );
 void CM_TraceThroughPatchCollide( traceWork_t *tw, const struct patchCollide_s *pc );
-qboolean CM_PositionTestInPatchCollide( traceWork_t *tw, const struct patchCollide_s *pc );
+qbool CM_PositionTestInPatchCollide( traceWork_t *tw, const struct patchCollide_s *pc );
 void CM_ClearLevelPatches( void );

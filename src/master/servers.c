@@ -106,7 +106,7 @@ Resolve an internet address
 name may include a port number, after a ':'
 ====================
 */
-static qboolean Sv_ResolveAddr (const char* name, struct sockaddr_in* addr)
+static qbool Sv_ResolveAddr (const char* name, struct sockaddr_in* addr)
 {
 	char *namecpy, *port;
 	struct hostent* host;
@@ -253,7 +253,7 @@ Sv_ResolveAddrmap
 Resolve an addrmap structure and check the parameters validity
 ====================
 */
-static qboolean Sv_ResolveAddrmap (addrmap_t* addrmap)
+static qbool Sv_ResolveAddrmap (addrmap_t* addrmap)
 {
 	// Resolve the addresses
 	if (!Sv_ResolveAddr (addrmap->from_string, &addrmap->from) ||
@@ -289,7 +289,7 @@ Return qtrue if a server is active.
 Test if the server has timed out and remove it if it's the case.
 ====================
 */
-static qboolean Sv_IsActive (server_t* server)
+static qbool Sv_IsActive (server_t* server)
 {
 
 	// If the entry isn't even used
@@ -329,7 +329,7 @@ Sv_SetHashSize
 Set a new hash size value
 ====================
 */
-qboolean Sv_SetHashSize (unsigned int size)
+qbool Sv_SetHashSize (unsigned int size)
 {
 	// Too late?
 	if (hash_table != NULL)
@@ -351,7 +351,7 @@ Sv_SetMaxNbServers
 Set a new hash size value
 ====================
 */
-qboolean Sv_SetMaxNbServers (unsigned int nb)
+qbool Sv_SetMaxNbServers (unsigned int nb)
 {
 	// Too late?
 	if (servers != NULL)
@@ -369,7 +369,7 @@ Sv_Init
 Initialize the server list and hash table
 ====================
 */
-qboolean Sv_Init (void)
+qbool Sv_Init (void)
 {
 	size_t array_size;
 
@@ -412,7 +412,7 @@ Sv_GetByAddr
 Search for a particular server in the list; add it if necessary
 ====================
 */
-server_t* Sv_GetByAddr (const struct sockaddr_in* address, qboolean add_it)
+server_t* Sv_GetByAddr (const struct sockaddr_in* address, qbool add_it)
 {
 	server_t **prev, *sv;
 	unsigned int hash;
@@ -574,7 +574,7 @@ Add an unresolved address mapping to the list
 mapping must be of the form "addr1:port1=addr2:port2", ":portX" are optional
 ====================
 */
-qboolean Sv_AddAddressMapping (const char* mapping)
+qbool Sv_AddAddressMapping (const char* mapping)
 {
 	char *map_string, *to_ip; 
 	addrmap_t* addrmap;
@@ -636,11 +636,11 @@ Sv_ResolveAddressMappings
 Resolve the address mapping list
 ====================
 */
-qboolean Sv_ResolveAddressMappings (void)
+qbool Sv_ResolveAddressMappings (void)
 {
 	addrmap_t* unresolved = addrmaps;
 	addrmap_t* addrmap;
-	qboolean succeeded = qtrue;
+	qbool succeeded = qtrue;
 
 	addrmaps = NULL;
 

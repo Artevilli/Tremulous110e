@@ -34,7 +34,7 @@ G_MapExists
 Check if a map exists
 ===============
 */
-static qboolean G_MapExists( char *name )
+static qbool G_MapExists( char *name )
 {
   return trap_FS_FOpenFile( va( "maps/%s.bsp", name ), NULL, FS_READ );
 }
@@ -46,7 +46,7 @@ G_RotationExists
 Check if a rotation exists
 ===============
 */
-static qboolean G_RotationExists( char *name )
+static qbool G_RotationExists( char *name )
 {
   int i;
 
@@ -66,7 +66,7 @@ G_ParseCommandSection
 Parse a map rotation command section
 ===============
 */
-static qboolean G_ParseMapCommandSection( mapRotationEntry_t *mre, char **text_p )
+static qbool G_ParseMapCommandSection( mapRotationEntry_t *mre, char **text_p )
 {
   char *token;
 
@@ -129,10 +129,10 @@ G_ParseMapRotation
 Parse a map rotation section
 ===============
 */
-static qboolean G_ParseMapRotation( mapRotation_t *mr, char **text_p )
+static qbool G_ParseMapRotation( mapRotation_t *mr, char **text_p )
 {
   char                    *token;
-  qboolean                mnSet = qfalse;
+  qbool                mnSet = qfalse;
   mapRotationEntry_t      *mre = NULL;
   mapRotationCondition_t  *mrc;
 
@@ -297,7 +297,7 @@ G_ParseMapRotationFile
 Load the map rotations from a map rotation file
 ===============
 */
-static qboolean G_ParseMapRotationFile( const char *fileName )
+static qbool G_ParseMapRotationFile( const char *fileName )
 {
   char          *text_p;
   int           i, j, k;
@@ -305,7 +305,7 @@ static qboolean G_ParseMapRotationFile( const char *fileName )
   char          *token;
   char          text[ 20000 ];
   char          mrName[ MAX_QPATH ];
-  qboolean      mrNameSet = qfalse;
+  qbool      mrNameSet = qfalse;
   fileHandle_t  f;
 
   // load the file
@@ -613,7 +613,7 @@ G_EvaluateMapCondition
 Evaluate a map condition
 ===============
 */
-static qboolean G_EvaluateMapCondition( mapRotationCondition_t *mrc )
+static qbool G_EvaluateMapCondition( mapRotationCondition_t *mrc )
 {
   switch( mrc->lhs )
   {
@@ -658,7 +658,7 @@ G_AdvanceMapRotation
 Increment the current map rotation
 ===============
 */
-qboolean G_AdvanceMapRotation( void )
+qbool G_AdvanceMapRotation( void )
 {
   mapRotation_t           *mr;
   mapRotationEntry_t      *mre;
@@ -717,7 +717,7 @@ G_StartMapRotation
 Switch to a new map rotation
 ===============
 */
-qboolean G_StartMapRotation( char *name, qboolean changeMap )
+qbool G_StartMapRotation( char *name, qbool changeMap )
 {
   int i;
 
@@ -760,7 +760,7 @@ G_MapRotationActive
 Test if any map rotation is currently active
 ===============
 */
-qboolean G_MapRotationActive( void )
+qbool G_MapRotationActive( void )
 {
   return ( g_currentMapRotation.integer != NOT_ROTATING );
 }

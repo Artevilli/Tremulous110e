@@ -98,6 +98,14 @@ typedef struct {
 	void *xt;
 } Xtype;
 
+typedef union
+{
+  float f;
+  int i;
+  unsigned ui;
+}
+floatint_t;
+
 #include "config.h"
 typedef struct metrics {
 	unsigned char size, align, outofline;
@@ -638,7 +646,7 @@ extern int process(char *);
 extern int findfunc(char *, char *);
 extern int findcount(char *, int, int);
 
-extern Tree constexpr(int);
+extern Tree constantexpr(int);
 extern int intexpr(int, int);
 extern Tree simplify(int, Type, Tree, Tree);
 extern int ispow2(unsigned long u);

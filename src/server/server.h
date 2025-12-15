@@ -22,422 +22,866 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 // server.h
 
+#pragma once
+
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
+#include "../qcommon/md5.h"
 #include "../game/g_public.h"
 #include "../game/bg_public.h"
 #include "globalv2loader.h"
+#include "sv_cvars.h"
 
 //=============================================================================
 
-#define	PERS_SCORE				0		// !!! MUST NOT CHANGE, SERVER AND
-										// GAME BOTH REFERENCE !!!
+#define	PERS_SCORE 0 //!!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
 
-#define	MAX_ENT_CLUSTERS	16
+//server attack protection
+#define SVP_XREAL 0x0001 //1 xreal
+#define SVP_OWOLF 0x0002 //2 openwolf
+#define SVP_CONSOLE 0x0004 //4 console print
 
-#ifdef USE_VOIP
-typedef struct voipServerPacket_s
+#define	MAX_ENT_CLUSTERS 16
+
+//use an alternative dropped gamestate, simplifying code and fixing potential udp download issues
+#define GAMESTATE_RETRANSMIT_VERSION_TWO
+
+//avoid a potential issue where clients load the map twice after a download completes
+#if defined(GAMESTATE_RETRANSMIT_VERSION_TWO)
+#define UDP_DOWNLOAD_NO_DOUBLE_LOAD
+#endif
+
+//improve udp download rate control for better performance, especially on slower or less stable connections
+//supports larger downloads
+#define UDP_DOWNLOAD_OPTIMIZE
+
+//avoid sending reliable commands to loading clients, testing needed
+#define SKIP_PRE_ACTIVE_COMMANDS
+
+//fix for certain cases of delta parseentitiesnum too old errors in certain cases, such as 40+ sv_fps values with high client ping or bad connection
+#define SNAPSHOT_DELTA_BUFFER_FIX
+
+//prevent gamestate overflows by dropping entity baselines, fixes errors on certain maps under certain conditions
+#define GAMESTATE_OVERFLOW_FIX
+
+//allow mods to set custom player scores that are sent in response to status queries rather than using the playerstate score field
+#define SUPPORT_STATUS_SCORES_OVERRIDE
+
+#if defined(USE_VOIP)
+typedef struct
+voipServerPacket_s
 {
-	int generation;
-	int sequence;
-	int frames;
-	int len;
-	int sender;
-	byte data[1024];
-} voipServerPacket_t;
+  qint generation;
+  qint sequence;
+  qint frames;
+  qint len;
+  qint sender;
+  byte data[1024];
+}
+voipServerPacket_t;
 #endif
 
-typedef struct svEntity_s {
-	struct worldSector_s *worldSector;
-	struct svEntity_s *nextEntityInWorldSector;
+typedef struct
+svEntity_s
+{
+  struct worldSector_s *worldSector;
+  struct svEntity_s *nextEntityInWorldSector;
 	
-	entityState_t	baseline;		// for delta compression of initial sighting
-	int			numClusters;		// if -1, use headnode instead
-	int			clusternums[MAX_ENT_CLUSTERS];
-	int			lastCluster;		// if all the clusters don't fit in clusternums
-	int			areanum, areanum2;
-	int			snapshotCounter;	// used to prevent double adding from portal views
-} svEntity_t;
+  entityState_t	baseline; //for delta compression of initial sighting
+  qint numClusters; //if -1, use headnode instead
+  qint clusternums[MAX_ENT_CLUSTERS];
+  qint lastCluster; //if all the clusters don't fit in clusternums
+  qint areanum, areanum2;
+  qint snapshotCounter; //used to prevent double adding from portal views
+}
+svEntity_t;
 
-typedef enum {
-	SS_DEAD,			// no map loaded
-	SS_LOADING,			// spawning level entities
-	SS_GAME				// actively running
-} serverState_t;
+typedef enum
+{
+  SS_DEAD, //no map loaded
+  SS_LOADING, //spawning level entities
+  SS_GAME //actively running
+}
+serverState_t;
 
-typedef struct {
-	serverState_t	state;
-	qboolean		restarting;			// if true, send configstring changes during SS_LOADING
-	int				serverId;			// changes each server start
-	int				restartedServerId;	// serverId before a map_restart
-	int				checksumFeed;		// the feed key that we use to compute the pure checksum strings
-	// https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=475
-	// the serverId associated with the current checksumFeed (always <= serverId)
-	int       checksumFeedServerId;	
-	int				snapshotCounter;	// incremented for each snapshot built
-	int				timeResidual;		// <= 1000 / sv_frame->value
-	int				nextFrameTime;		// when time > nextFrameTime, process world
-	struct cmodel_s	*models[MAX_MODELS];
-	char			*configstrings[MAX_CONFIGSTRINGS];
-	svEntity_t		svEntities[MAX_GENTITIES];
+//we might not use all MAX_GENTITIES every frame
+//so leave more room for slow snaps clients etc.
+#define NUM_SNAPSHOT_FRAMES (PACKET_BACKUP * 4)
 
-	char			*entityParsePoint;	// used during game VM init
+typedef struct
+snapshotFrame_s
+{
+  entityState_t *ents[MAX_GENTITIES];
+  qint frameNum;
+  qint start;
+  qint count;
+}
+snapshotFrame_t;
 
-	// the game virtual machine will update these on init and changes
-	sharedEntity_t	*gentities;
-	int				gentitySize;
-	int				num_entities;		// current number, <= MAX_GENTITIES
+typedef struct
+{
+  serverState_t	state;
+  qbool restarting; //if true, send configstring changes during SS_LOADING
+  qint pure; //fixed at level spawn
+  qint maxclients; //fixed at level spawn
+  qint serverId; //changes each server start
+  qint restartedServerId;
+  qint checksumFeed; //the feed key that we use to compute the pure checksum strings
+  qint snapshotCounter; //incremented for each snapshot built
+  qint timeResidual; //<= 1000 / sv_frame->value
+  //struct cmodel_s *models[MAX_MODELS];
+  qchar *configstrings[MAX_CONFIGSTRINGS];
+  svEntity_t svEntities[MAX_GENTITIES];
 
-	playerState_t	*gameClients;
-	int				gameClientSize;		// will be > sizeof(playerState_t) due to game private data
+  //parsed by the game.qvm to spawn map entities
+  const qchar *entityParsePoint; //used during game VM init
 
-	int				restartTime;
-	int				time;
-} server_t;
+  //the game virtual machine will update these on init and changes
+#if !defined(USE_JAVA)
+  sharedEntity_t *gentities;
+  qint gentitySize;
+#endif
+  qint num_entities; //current number, <= MAX_GENTITIES
+  
+  //demo recording
+  fileHandle_t demoFile;
+  demoState_t demoState;
+  qchar demoName[MAX_QPATH];
+  
+  //previous frame for delta compression
+  sharedEntity_t demoEntities[MAX_GENTITIES];
+  playerState_t demoPlayerStates[MAX_CLIENTS];
 
-
-
-
-
-typedef struct {
-	int				areabytes;
-	byte			areabits[MAX_MAP_AREA_BYTES];		// portalarea visibility bits
-	playerState_t	ps;
-	int				num_entities;
-	int				first_entity;		// into the circular sv_packet_entities[]
-										// the entities MUST be in increasing state number
-										// order, otherwise the delta compression will fail
-	int				messageSent;		// time the message was transmitted
-	int				messageAcked;		// time the message was acked
-	int				messageSize;		// used to rate drop packets
-} clientSnapshot_t;
-
-typedef enum {
-	CS_FREE,		// can be reused for a new connection
-	CS_ZOMBIE,		// client has been disconnected, but don't reuse
-					// connection for a couple seconds
-	CS_CONNECTED,	// has been assigned to a client_t, but no gamestate yet
-	CS_PRIMED,		// gamestate has been sent, but client hasn't sent a usercmd
-	CS_ACTIVE		// client is fully in game
-} clientState_t;
-
-typedef struct netchan_buffer_s {
-	msg_t           msg;
-	byte            msgBuffer[MAX_MSGLEN];
-	struct netchan_buffer_s *next;
-} netchan_buffer_t;
-
-typedef struct client_s {
-	clientState_t	state;
-	char			userinfo[MAX_INFO_STRING];		// name, etc
-
-	char			reliableCommands[MAX_RELIABLE_COMMANDS][MAX_STRING_CHARS];
-	int				reliableSequence;		// last added reliable message, not necesarily sent or acknowledged yet
-	int				reliableAcknowledge;	// last acknowledged reliable message
-	int				reliableSent;			// last sent reliable message, not necesarily acknowledged yet
-	int				messageAcknowledge;
-
-	int				gamestateMessageNum;	// netchan->outgoingSequence of gamestate
-	int				challenge;
-
-	usercmd_t		lastUsercmd;
-	int				lastMessageNum;		// for delta compression
-	int				lastClientCommand;	// reliable client message sequence
-	char			lastClientCommandString[MAX_STRING_CHARS];
-	sharedEntity_t	*gentity;			// SV_GentityNum(clientnum)
-	char			name[MAX_NAME_LENGTH];			// extracted from userinfo, high bits masked
-
-	// downloading
-	char			downloadName[MAX_QPATH]; // if not empty string, we are downloading
-	fileHandle_t	download;			// file being downloaded
- 	int				downloadSize;		// total bytes (can't use EOF because of paks)
- 	int				downloadCount;		// bytes sent
-	int				downloadClientBlock;	// last block we sent to the client, awaiting ack
-	int				downloadCurrentBlock;	// current block number
-	int				downloadXmitBlock;	// last block we xmited
-	unsigned char	*downloadBlocks[MAX_DOWNLOAD_WINDOW];	// the buffers for the download blocks
-	int				downloadBlockSize[MAX_DOWNLOAD_WINDOW];
-	qboolean		downloadEOF;		// We have sent the EOF block
-	int				downloadSendTime;	// time we last got an ack from the client
-
-	int				deltaMessage;		// frame last client usercmd message
-	int				nextReliableTime;	// svs.time when another reliable command will be allowed
-	int				lastPacketTime;		// svs.time when packet was last received
-	int				lastConnectTime;	// svs.time when connection started
-	int				nextSnapshotTime;	// send another snapshot when svs.time >= nextSnapshotTime
-	qboolean		rateDelayed;		// true if nextSnapshotTime was set based on rate instead of snapshotMsec
-	int				timeoutCount;		// must timeout a few frames in a row so debugging doesn't break
-	clientSnapshot_t	frames[PACKET_BACKUP];	// updates can be delta'd from here
-	int				ping;
-	int				rate;				// bytes / second
-	int				snapshotMsec;		// requests a snapshot every snapshotMsec unless rate choked
-	int				pureAuthentic;
-	qboolean  gotCP; // TTimo - additional flag to distinguish between a bad pure checksum, and no cp command at all
-	netchan_t		netchan;
-	// TTimo
-	// queuing outgoing fragmented messages to send them properly, without udp packet bursts
-	// in case large fragmented messages are stacking up
-	// buffer them into this queue, and hand them out to netchan as needed
-	netchan_buffer_t *netchan_start_queue;
-	netchan_buffer_t **netchan_end_queue;
-
-#ifdef USE_VOIP
-	qboolean hasVoip;
-	qboolean muteAllVoip;
-	qboolean ignoreVoipFromClient[MAX_CLIENTS];
-	voipServerPacket_t voipPacket[64]; // !!! FIXME: WAY too much memory!
-	int queuedVoipPackets;
+#if !defined(USE_JAVA)
+  playerState_t	*gameClients;
+  qint gameClientSize; //will be > sizeof(playerState_t) due to game private data
 #endif
 
-	int				oldServerTime;
-	qboolean			csUpdated[MAX_CONFIGSTRINGS+1];	
-} client_t;
+  qint restartTime;
+  qint time;
+
+  byte baselineUsed[MAX_GENTITIES];
+
+#if !defined(USE_JAVA)
+  vm_t *gvm; //game virtual machine
+#endif
+}
+server_t;
+
+typedef enum
+{
+  SVC_INVALID,
+  SVC_CONNECT,
+  SVC_GETSTATUS,
+  SVC_FIRST = SVC_GETSTATUS,
+  SVC_GETINFO,
+  SVC_GETCHALLENGE,
+  SVC_RCON,
+  SVC_PING,
+  SVC_DISCONNECT,
+  SVC_MAX
+}
+svcType_t;
+
+typedef struct
+{
+  qint areabytes;
+  byte areabits[MAX_MAP_AREA_BYTES]; //portalarea visibility bits
+  playerState_t	ps;
+  qint num_entities;
+#if 0
+  qint first_entity; //into the circular sv_packet_entities[]
+  //the entities MUST be in increasing state number order, otherwise the delta compression will fail
+#endif
+  qint messageSent; //time the message was transmitted
+  qint messageAcked; //time the message was acked
+  qint messageSize; //used to rate drop packets
+
+  qint frameNum; //from snapshot storage to compare with last valid
+  entityState_t *ents[MAX_SNAPSHOT_ENTITIES];
+}
+clientSnapshot_t;
+
+typedef enum
+{
+  CS_FREE, //can be reused for a new connection
+  CS_ZOMBIE, //client has been disconnected, but don't reuse connection for a couple seconds
+  CS_CONNECTED, //has been assigned to a client_t, but no gamestate yet or downloading
+  CS_PRIMED, //gamestate has been sent, but client hasn't sent a usercmd
+  CS_ACTIVE //client is fully in game
+}
+clientState_t;
+
+typedef struct netchan_buffer_s
+{
+  msg_t msg;
+  byte *msgBuffer;
+  qchar *lastClientCommandString;
+  struct netchan_buffer_s *next;
+}
+netchan_buffer_t;
+
+typedef struct
+rateLimit_s
+{
+  unsigned lastTime;
+  unsigned burst;
+}
+rateLimit_t;
+
+typedef struct
+leakyBucket_s
+leakyBucket_t;
+
+struct
+leakyBucket_s
+{
+  netadrtype_t type;
+
+  union
+  {
+    byte _4[4];
+    byte _6[16];
+  }
+  ipv;
+
+  rateLimit_t rate;
+
+  unsigned hash;
+  unsigned toxic;
+
+  leakyBucket_t *prev;
+  leakyBucket_t *next;
+};
+
+#if !defined(GAMESTATE_RETRANSMIT_VERSION_TWO)
+typedef enum
+{
+  GSA_INIT = 0, //gamestate never sent with current sv.serverId
+  GSA_SENT_ONCE, //gamestate sent once, client can reply with any (messageAcknowledge - gamestateMessageNum) >= 0 and correct serverId
+  GSA_SENT_MANY, //gamestate sent many times, client must reply with exact gamestateMessageNum == gamestateMessageNum and correct serverId
+  GSA_ACKED //gamestate acknowledged, no retransmissions needed
+}
+gameStateAck_t;
+#endif
+
+#if defined(UDP_DOWNLOAD_OPTIMIZE)
+#define MAX_DOWNLOAD_MESSAGE_HISTORY 64
+
+typedef struct
+{
+  qint blockNumber;
+  qint msgNumber;
+  qint size;
+}
+downloadMessageRecord_t;
+#endif
+
+typedef enum
+checkedNumberType_s
+{
+  CHECKEDTYPE_RATE,
+  CHECKEDTYPE_SNAPS,
+  CHECKEDTYPE_TYPECOUNT,
+}
+checkedNumberType_t;
+
+typedef struct
+client_s
+{
+  clientState_t	state;
+  qchar userinfo[MAX_INFO_STRING]; //name, etc
+  qchar userinfobuffer[MAX_INFO_STRING]; //used for buffering of user info
+  qchar userinfoPostponed[MAX_INFO_STRING];
+
+  qchar reliableCommands[MAX_RELIABLE_COMMANDS][MAX_STRING_CHARS];
+  qint reliableSequence; //last added reliable message, not necesarily sent or acknowledged yet
+  qint reliableAcknowledge; //last acknowledged reliable message
+  qint reliableSent; //last sent reliable message, not necesarily acknowledged yet
+  qint messageAcknowledge;
+  qint numCommands; //number of commands before flood protection triggers, set by sv_floodLimit
+
+  qint gamestateMessageNum; //netchan->outgoingSequence of gamestate
+  qint challenge;
+
+  usercmd_t lastUsercmd;
+  qint lastMessageNum; //for delta compression
+  qint lastClientCommand; //reliable client message sequence
+  qchar lastClientCommandString[MAX_STRING_CHARS];
+  sharedEntity_t *gentity; //SV_GentityNum(clientnum)
+  qchar name[MAX_NAME_LENGTH]; //extracted from userinfo, high bits masked
+#if defined(GAMESTATE_RETRANSMIT_VERSION_TWO)
+  qbool downloadGamestateDropCheck; //perform extra dropped gamestate check after downloads
+#else
+  gameStateAck_t gamestateAck;
+#endif
+  qbool downloading; //set at "download", reset at gamestate retransmission
+  //qint serverId; //last acknowledged server id
+
+  //downloading
+#if defined(UDP_DOWNLOAD_OPTIMIZE)
+  qchar downloadName[MAX_QPATH]; //if not empty string, we are downloading
+
+  //source file
+  fileHandle_t download; //file being downloaded
+  qint downloadSize; //total bytes in pk3
+  unsigned downloadSrcFileRemaining; //number of bytes left to read from file
+
+  //file read buffer
+  qchar *downloadSrcChunk; //current chunk buffer
+  unsigned downloadSrcChunkPos; //number of bytes read from current chunk
+  unsigned downloadSrcChunkSize; //total bytes in current chunk
+
+  //download blocks
+  unsigned qchar *downloadBlocks[MAX_DOWNLOAD_WINDOW];
+  qint downloadBlockSize[MAX_DOWNLOAD_WINDOW];
+  qint downloadClientBlock; //one more than last block acknowledged by client
+  qint downloadXmitBlock; //one more than last block sent (may go backwards for retransmit)
+  qint downloadCurrentBlock; //one more than last block generated on server
+
+  //download messages
+  downloadMessageRecord_t downloadMsgTable[MAX_DOWNLOAD_MESSAGE_HISTORY];
+  qint downloadClientMsg; //one more than last msg (table index) acknowledged by client
+  qint downloadRetransmitMsg; //first message (table index) since xmit block was reset for retransmit
+  qint downloadCurrentMsg; //one more than last msg (table index) generated on server
+  qint downloadLastSentTime; //time in Sys_Milliseconds() of last outgoing packet
+
+  //rate limiting
+  double downloadCurrentRate; //rate in KB/s
+  qint downloadRatePool; //bytes available to send
+
+  //dropping dead connections
+  qint downloadAckTime; //time we last got an ack from the client
+#else
+  qchar downloadName[MAX_QPATH]; //if not empty string, we are downloading
+  fileHandle_t download; //file being downloaded
+  qint downloadSize; //total bytes (can't use EOF because of paks)
+  qint downloadCount; //bytes sent
+  qint downloadClientBlock; //last block we sent to the client, awaiting ack
+  qint downloadCurrentBlock; //current block number
+  qint downloadXmitBlock; //last block we xmited
+  unsigned qchar	*downloadBlocks[MAX_DOWNLOAD_WINDOW]; //the buffers for the download blocks
+  qint downloadBlockSize[MAX_DOWNLOAD_WINDOW];
+  qbool downloadEOF; //We have sent the EOF block
+  qint downloadSendTime;	//time we last sent a package
+  unsigned downloadAckTime; //time we last got an ack from the client
+#endif
+
+  qint deltaMessage; //frame last client usercmd message
+  qint nextReliableTime; //svs.time when another reliable command will be allowed
+  qint nextReliableUserTime; //svs.time when another useinfo change will be allowed
+  qint lastPacketTime; //svs.time when packet was last received
+  qint lastConnectTime; //svs.time when connection started
+  qint lastDisconnectTime;
+  qint lastSnapshotTime; //svs.time of last sent snapshot
+  //qint nextSnapshotTime; //send another snapshot when svs.time >= nextSnapshotTime
+  qbool rateDelayed; //true if nextSnapshotTime was set based on rate instead of snapshotMsec
+  qint timeoutCount; //must timeout a few frames in a row so debugging doesn't break
+  clientSnapshot_t frames[PACKET_BACKUP]; //updates can be delta'd from here
+  qint ping;
+  qint rate; //bytes / second
+  qint snaps;
+  qint snapshotMsec; //requests a snapshot every snapshotMsec unless rate choked
+  qbool pureAuthentic;
+  qbool gotCP; //TTimo - additional flag to distinguish between a bad pure checksum, and no cp command at all
+  netchan_t netchan;
+  //TTimo - queuing outgoing fragmented messages to send them properly, without udp packet bursts in case large fragmented messages are stacking up buffer them into this queue, and hand them out to netchan as needed
+  netchan_buffer_t *netchan_start_queue;
+  netchan_buffer_t **netchan_end_queue;
+
+#if defined(USE_VOIP)
+  qbool hasVoip;
+  qbool muteAllVoip;
+  qbool ignoreVoipFromClient[MAX_CLIENTS];
+  voipServerPacket_t voipPacket[64]; //!!! FIXME: WAY too much memory!
+  qint queuedVoipPackets;
+#endif
+
+  qint oldServerTime;
+  qbool csUpdated[MAX_CONFIGSTRINGS];
+  qint lastUserinfoChange;
+  qint lastUserinfoCount;
+
+  qint invalidValues; //checkedNumberType_t
+  qint lastInvalidValuesWarning;
+
+  qbool justConnected;
+
+  //flood protection
+  rateLimit_t cmd_rate;
+  rateLimit_t info_rate;
+  rateLimit_t gamestate_rate;
+
+#if defined(GAMESTATE_OVERFLOW_FIX)
+  qint maxEntityBaseline;
+#endif
+}
+client_t;
 
 //=============================================================================
 
+#define STATFRAMES (sv_fps->integer * 5) //FIXME: i think this is actually FRAMETIME / @sv_fps //5 seconds, assume running at sv_fps
 
-// MAX_CHALLENGES is made large to prevent a denial
-// of service attack that could cycle all of them
-// out before legitimate users connected
-#define	MAX_CHALLENGES	1024
+typedef struct
+{
+  double active;
+  double idle;
+  qint count;
+  double latched_active;
+  double latched_idle;
+  float cpu;
+  float avg;
+}
+svstats_t;
 
-#define	AUTHORIZE_TIMEOUT	5000
+#if defined(INCLUDE_LEGACY_CHALLENGE)
+//MAX_CHALLENGES is made large to prevent a denial of service attack that could cycle all of them out before legitimate users connected
+#define	MAX_CHALLENGES 2048
 
-typedef struct {
-	netadr_t	adr;
-	int			challenge;
-	int			time;				// time the last packet was sent to the autherize server
-	int			pingTime;			// time the challenge response was sent to client
-	int			firstTime;			// time the adr was first used, for authorize timeout checks
-	qboolean	connected;
-} challenge_t;
+//Allow a certain amount of challenges to have the same IP address to make it a bit harder to DRDOS a single IP address from connecting while not allowing one IP to grab all of the challenges
+#define MAX_CHALLENGES_MULTI (MAX_CHALLENGES / 2)
 
+#define	AUTHORIZE_TIMEOUT 8000
 
-#define	MAX_MASTERS	8				// max recipients for heartbeat packets
+typedef struct
+{
+  netadr_t adr;
+  qint challenge;
+  qint clientChallenge; //challenge number from client
+  qint time; //time the last packet was sent to the autherize server
+  qint pingTime; //time the challenge response was sent to client
+  qint firstTime; //time the adr was first used, for authorize timeout checks
+  qint firstPing; //used for min and max ping checks
+  qbool wasrefused;
+  qbool connected;
+}
+challenge_t;
+#endif
 
+typedef struct
+{
+  netadr_t adr;
+  qint time;
+}
+receipt_t;
 
-// this structure will be cleared only when the game dll changes
-typedef struct {
-	qboolean	initialized;				// sv_init has completed
+typedef struct
+{
+  netadr_t adr;
+  qint time;
+  qint count;
+  qbool flood;
+}
+floodBan_t;
 
-	int			time;						// will be strictly increasing across level changes
+#define MAX_QUEUE 10
+extern netadr_t queue[MAX_QUEUE];
+extern unsigned lastQueue[MAX_QUEUE];
+extern unsigned queueCount;
 
-	int			snapFlagServerBit;			// ^= SNAPFLAG_SERVERCOUNT every SV_SpawnServer()
+#define MAX_INFO_RECEIPTS 48 //max number of getstatus and getinfo responses sent in two second time period
 
-	client_t	*clients;					// [sv_maxclients->integer];
-	int			numSnapshotEntities;		// sv_maxclients->integer*PACKET_BACKUP*MAX_PACKET_ENTITIES
-	int			nextSnapshotEntities;		// next snapshotEntities to use
-	entityState_t	*snapshotEntities;		// [numSnapshotEntities]
-	int			nextHeartbeatTime;
-	challenge_t	challenges[MAX_CHALLENGES];	// to prevent invalid IPs from connecting
-	netadr_t	redirectAddress;			// for rcon return messages
+#define MAX_INFO_FLOOD_BANS 36
 
-	netadr_t	authorizeAddress;			// for rcon return messages
-} serverStatic_t;
+#define	MAX_MASTERS 8 // max recipients for heartbeat packets
+
+#define SERVER_PERFORMANCECOUNTER_FRAMES 600
+#define SERVER_PERFORMANCECOUNTER_SAMPLES 6
+
+#define MAX_CONNECTIONS 256
+
+typedef struct
+{
+  netadr_t adr;
+  qint time;
+}
+connections_t;
+
+//this structure will be cleared only when the game dll changes
+typedef struct
+{
+  qbool initialized; //sv_init has completed
+
+  qint time; //will be strictly increasing across level changes
+  qint msgTime; //will be used as precise sent time
+
+  qint snapFlagServerBit; //^= SNAPFLAG_SERVERCOUNT every SV_SpawnServer()
+
+  client_t *clients; //[sv_maxclients->integer];
+  qint numSnapshotEntities; //PACKET_BACKUP * MAX_SNAPSHOT_ENTITIES
+  entityState_t *snapshotEntities; //[numSnapshotEntities]
+  qint nextHeartbeatTime;
+#if defined(INCLUDE_LEGACY_CHALLENGE)
+  challenge_t challenges[MAX_CHALLENGES]; //to prevent invalid IPs from connecting
+#endif
+  receipt_t infoReceipts[MAX_INFO_RECEIPTS];
+  floodBan_t infoFloodBans[MAX_INFO_FLOOD_BANS];
+#if defined(INCLUDE_REMOTE_COMMANDS)
+  netadr_t redirectAddress; //for rcon return messages
+
+  netadr_t authorizeAddress; //for rcon return messages
+#endif
+
+  unsigned sampleTimes[SERVER_PERFORMANCECOUNTER_SAMPLES];
+  unsigned currentSampleIndex;
+  unsigned totalFrameTime;
+  unsigned currentFrameIndex;
+  unsigned serverLoad;
+  svstats_t stats;
+  connections_t connects[MAX_CONNECTIONS];
+
+  //common snapshot storage
+  qint freeStorageEntities;
+  qint currentStoragePosition; //next snapshotentities to use
+  qint snapshotFrame; //incremented with each common snapshot built
+  qint currentSnapshotFrame; //for initializing empty frames
+  qint lastValidFrame; //updated with each snapshot built
+  snapshotFrame_t snapFrames[NUM_SNAPSHOT_FRAMES];
+  snapshotFrame_t *currFrame; //current frame that clients can refer
+}
+serverStatic_t;
 
 //=============================================================================
 
-extern	serverStatic_t	svs;				// persistant server info across maps
-extern	server_t		sv;					// cleared each map
-extern	vm_t			*gvm;				// game virtual machine
+#if defined(INCLUDE_REMOTE_COMMANDS)
+#define MAXIMUM_RCON_WHITELIST 32
 
-#define	MAX_MASTER_SERVERS	5
+//Chey: struct for managing rcon password from file
+typedef struct
+{
+  netadr_t ip;
 
-extern	cvar_t	*sv_fps;
-extern	cvar_t	*sv_timeout;
-extern	cvar_t	*sv_zombietime;
-extern	cvar_t	*sv_rconPassword;
-extern	cvar_t	*sv_rconLog;
-extern	cvar_t	*sv_privatePassword;
-extern	cvar_t	*sv_allowDownload;
-extern	cvar_t	*sv_maxclients;
+  //for cidr notation type suffix
+  qint subNet;
+  qbool isException;
+}
+serverRconPassword_t;
 
-extern	cvar_t	*sv_privateClients;
-extern	cvar_t	*sv_hostname;
-extern	cvar_t	*sv_master[MAX_MASTER_SERVERS];
-extern	cvar_t	*sv_reconnectlimit;
-extern	cvar_t	*sv_showloss;
-extern	cvar_t	*sv_padPackets;
-extern	cvar_t	*sv_killserver;
-extern	cvar_t	*sv_mapname;
-extern	cvar_t	*sv_mapChecksum;
-extern	cvar_t	*sv_serverid;
-extern	cvar_t	*sv_minRate;
-extern	cvar_t	*sv_maxRate;
-extern	cvar_t	*sv_minPing;
-extern	cvar_t	*sv_maxPing;
-extern	cvar_t	*sv_pure;
-extern	cvar_t	*sv_lanForceRate;
-extern	cvar_t	*sv_dequeuePeriod;
-extern  cvar_t  *sv_semipurePrefix;
-extern  cvar_t  *sv_semipureOfferDownloads;
-extern  cvar_t  *sv_mysql;
-extern  cvar_t  *sv_mysqlhost;
-extern  cvar_t  *sv_mysqldatabase;
-extern  cvar_t  *sv_mysqlusername;
-extern  cvar_t  *sv_mysqlpassword;
-
-
-
-#ifdef USE_VOIP
-extern	cvar_t	*sv_voip;
+extern serverRconPassword_t rconWhitelist[MAXIMUM_RCON_WHITELIST];
+extern qint rconWhitelistCount;
 #endif
 
+//=============================================================================
+
+extern serverStatic_t svs; //persistant server info across maps
+extern server_t sv; //cleared each map
 
 //===========================================================
 
 //
-// sv_main.c
+//sv_main.c
 //
-void SV_FinalMessage (char *message);
-void QDECL SV_SendServerCommand( client_t *cl, const char *fmt, ...);
-
-
-void SV_AddOperatorCommands (void);
-void SV_RemoveOperatorCommands (void);
-
-
-void SV_MasterHeartbeat (void);
-void SV_MasterShutdown (void);
-void SV_MasterGameStat( const char *data );
-
+const qbool
+SVC_RateLimit(rateLimit_t *bucket, const unsigned burst, const unsigned period, const unsigned now);
+const void
+SVC_RateRestoreBurstAddress(const netadr_t *from, const unsigned burst, const unsigned period, const unsigned now);
+const void
+SVC_RateRestoreToxicAddress(const netadr_t *from, const unsigned burst, const unsigned period, const unsigned now);
+#if defined(SUPPORT_STATUS_SCORES_OVERRIDE)
+void
+SV_HandleGameInfoMessage(const qchar *info);
+void
+SV_StatusScoresOverride_Reset(void);
+qint
+SV_StatusScoresOverride_AdjustScore(qint defaultScore, qint clientNum);
+#endif
+#if defined(GAMESTATE_OVERFLOW_FIX)
+void
+SV_CalculateMaxBaselines(client_t *client, msg_t msg);
+#endif
+const void
+SV_FinalMessage(const qchar *message, qbool disconnect);
+void
+QDECL SV_SendServerCommand(client_t *cl, const qchar *fmt, ...);
+void
+SV_MasterShutdown(void);
+void
+SV_MasterGameStat(const qchar *data);
+qint
+SV_RateMsec(const client_t *client);
 
 //sv_mysql.c
-void sv_mysql_init( void );
-void sv_mysql_shutdown( void );
-qboolean sv_mysql_runquery( char *query );
-void sv_mysql_finishquery( void );
-qboolean sv_mysql_fetchrow( void );
-void sv_mysql_fetchfieldbyID( int id, char *buffer, int len );
-void sv_mysql_fetchfieldbyName( const char *name, char *buffer, int len );
-
-
-
-
-//
-// sv_init.c
-//
-void SV_SetConfigstring( int index, const char *val );
-void SV_GetConfigstring( int index, char *buffer, int bufferSize );
-void SV_UpdateConfigstrings( client_t *client );
-
-void SV_SetUserinfo( int index, const char *val );
-void SV_GetUserinfo( int index, char *buffer, int bufferSize );
-
-void SV_ChangeMaxClients( void );
-void SV_SpawnServer( char *server, qboolean killBots );
-
-
+void
+sv_mysql_init(void);
+void
+sv_mysql_shutdown(void);
+qbool
+sv_mysql_runquery(const qchar *query);
+void
+sv_mysql_finishquery(void);
+qbool
+sv_mysql_fetchrow(void);
+void
+sv_mysql_fetchfieldbyID(qint id, qchar *buffer, qint len);
+void
+sv_mysql_fetchfieldbyName(const qchar *name, qchar *buffer, qint len);
+void
+sv_mysql_reconnect(void);
 
 //
-// sv_client.c
+//sv_init.c
 //
-void SV_GetChallenge( netadr_t from );
+const void
+SV_SetConfigstring(qint index, const qchar *val);
+const void
+SV_GetConfigstring(const qint index, qchar *buffer, const qint bufferSize);
+const void
+SV_UpdateConfigstrings(client_t *client);
+const void
+SV_SetUserinfo(const qint index, const qchar *val);
+const void
+SV_GetUserinfo(const qint index, qchar *buffer, const qint bufferSize);
+const void
+SV_SpawnServer(const qchar *server, qbool killBots);
+const void
+SV_WriteAttackLog(const qchar *log);
+const void
+SV_WriteAttackLogUnrestricted(const qchar *log);
 
-void SV_DirectConnect( netadr_t from );
-
-void SV_ExecuteClientMessage( client_t *cl, msg_t *msg );
-void SV_UserinfoChanged( client_t *cl );
-
-void SV_ClientEnterWorld( client_t *client, usercmd_t *cmd );
-void SV_DropClient( client_t *drop, const char *reason );
-
-void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK );
-void SV_ClientThink (client_t *cl, usercmd_t *cmd);
-
-void SV_WriteDownloadToClient( client_t *cl , msg_t *msg );
-
-#ifdef USE_VOIP
-void SV_WriteVoipToClient( client_t *cl, msg_t *msg );
+#if defined(NDEBUG)
+#define SV_WriteAttackLogD(x)
+#define SV_WriteAttackLogUnrestrictedD(x)
+#else
+#define SV_WriteAttackLogD(x) SV_WriteAttackLog(x)
+#define SV_WriteAttackLogUnrestrictedD(x) SV_WriteAttackLogUnrestricted(x)
 #endif
 
+#if defined(STATELESS_CHALLENGES_VERSION_ONE)
+//
+//sv_challenge.c
+//
+const void
+SV_ChallengeInit(void);
+const void
+SV_ChallengeShutdown(void);
+const qint
+SV_CreateChallenge(const netadr_t *from);
+const qbool
+SV_VerifyChallenge(const qint receivedChallenge, const netadr_t *from);
+#endif
 
 //
-// sv_ccmds.c
+//sv_client.c
 //
-void SV_Heartbeat_f( void );
+void
+SV_GetChallenge(const netadr_t *from);
+const void
+SV_InitChallenger(void);
+#if defined(INCLUDE_LEGACY_CHALLENGE)
+qbool
+SV_CheckChallenge(const netadr_t *from);
+#endif
+void
+SV_DirectConnect(const netadr_t *from);
+void
+SV_SetClientState(client_t *cl, const clientState_t newState);
+void
+SV_ExecuteClientMessage(client_t *cl, msg_t *msg);
+void
+SV_UserinfoChanged(client_t *cl, const qbool updateUserinfo);
+void
+SV_UpdateUserinfo_f(client_t *cl);
+void
+SV_ClientEnterWorld(client_t *client);
+const void
+SV_FreeClient(client_t *client);
+void
+SV_DropClient(client_t *drop, const qchar *reason);
+void
+SV_SendClientGameState(client_t *client);
+void
+SV_ExecuteClientCommand(client_t *cl, const qchar *s, qbool clientOK);
+void
+SV_ClientThink(qint client, usercmd_t *cmd);
+#if !defined(UDP_DOWNLOAD_OPTIMIZE)
+const qbool
+SV_WriteDownloadToClient(client_t *cl , msg_t *msg);
+#endif
+const qint
+SV_SendDownloadMessages(void);
+const int64_t
+SV_SendQueuedMessages(void);
+
+#if defined(USE_VOIP)
+void
+SV_WriteVoipToClient(client_t *cl, msg_t *msg);
+#endif
 
 //
-// sv_snapshot.c
+//sv_cvars.c
 //
-void SV_AddServerCommand( client_t *client, const char *cmd );
-void SV_UpdateServerCommandsToClient( client_t *client, msg_t *msg );
-void SV_WriteFrameToClient (client_t *client, msg_t *msg);
-void SV_SendMessageToClient( msg_t *msg, client_t *client );
-void SV_SendClientMessages( void );
-void SV_SendClientSnapshot( client_t *client );
+const void
+SV_InitCvars(void);
+
+//
+//sv_ccmds.c
+//
+void
+SV_AddOperatorCommands(void);
+void
+SV_RemoveOperatorCommands(void);
+void
+SV_Heartbeat_f(void);
+const void
+SV_UptimeReset(void);
+
+//
+//sv_snapshot.c
+//
+void
+SV_AddServerCommand(client_t *client, const qchar *cmd);
+void
+SV_UpdateServerCommandsToClient(client_t *client, msg_t *msg);
+void
+SV_WriteFrameToClient (client_t *client, msg_t *msg);
+void
+SV_SendMessageToClient(msg_t *msg, client_t *client);
+void
+SV_SendClientMessages(void);
+void
+SV_SendClientSnapshot(client_t *client);
+void
+SV_CheckClientUserinfoTimer(void);
+qbool
+SV_IsValidClientSnapshot(const client_t *client);
+void
+SV_InitSnapshotStorage(void);
+void
+SV_IssueNewSnapshot(void);
+qint
+SV_RemainingGameState(void);
+
+//
+// sv_demo.c
+//
+void
+SV_DemoStartRecord(void);
+void
+SV_DemoStopRecord(void);
+void
+SV_DemoStartPlayback(void);
+void
+SV_DemoStopPlayback(void);
+void
+SV_DemoReadFrame(void);
+void
+SV_DemoWriteFrame(void);
+void
+SV_DemoWriteServerCommand(const qchar *str);
+void
+SV_DemoWriteGameCommand(qint cmd, const qchar *str);
 
 //
 // sv_game.c
 //
-int	SV_NumForGentity( sharedEntity_t *ent );
-sharedEntity_t *SV_GentityNum( int num );
-playerState_t *SV_GameClientNum( int num );
-svEntity_t	*SV_SvEntityForGentity( sharedEntity_t *gEnt );
-sharedEntity_t *SV_GEntityForSvEntity( svEntity_t *svEnt );
-void		SV_InitGameProgs ( void );
-void		SV_ShutdownGameProgs ( void );
-void		SV_RestartGameProgs( void );
-qboolean	SV_inPVS (const vec3_t p1, const vec3_t p2);
+qint
+SV_NumForGentity(sharedEntity_t *ent);
+sharedEntity_t *
+SV_GentityNum(qint num);
+playerState_t *
+SV_GameClientNum(qint num);
+svEntity_t *
+SV_SvEntityForGentity(sharedEntity_t *gEnt);
+sharedEntity_t *
+SV_GEntityForSvEntity(svEntity_t *svEnt);
+void
+SV_InitGameProgs(void);
+void
+SV_ShutdownGameProgs(void);
+void
+SV_RestartGameProgs(void);
+qbool
+SV_inPVS(const vec3_t p1, const vec3_t p2);
+
+#if defined(USE_JAVA)
+void
+Java_G_InitGame(qint levelTime, qint randomSeed, qbool restart);
+void
+Java_G_ShutdownGame(qbool restart);
+qchar *
+Java_G_ClientConnect(qint clientNum, qbool firstTime, qbool isBot);
+void
+Java_G_ClientBegin(qint clientNum);
+void
+Java_G_ClientUserInfoChanged(qint clientNum);
+void
+Java_G_ClientDisconnect(qint clientNum);
+void
+Java_G_ClientCommand(qint clientNum);
+void
+Java_G_ClientThink(qint clientNum);
+void
+Java_G_RunFrame(qint time);
+void
+Java_G_RunAIFrame(qint time);
+qbool
+Java_G_ConsoleCommand(void);
+#endif
+
+//
+// sv_bot.c
+//
+void
+SV_BotFrame(qint time);
+qint
+SV_BotAllocateClient(void);
+void
+SV_BotFreeClient(qint clientNum);
+qint
+SV_BotGetSnapshotEntity(qint client, qint ent);
+qint
+SV_BotGetConsoleMessage(qint client, qchar *buf, qint size);
+void
+SV_BotClientCommand(qint client, const qchar *command);
 
 //============================================================
 //
-// high level object sorting to reduce interaction tests
+//high level object sorting to reduce interaction tests
 //
 
-void SV_ClearWorld (void);
-// called after the world model has been loaded, before linking any entities
+void
+SV_ClearWorld(void);
+//called after the world model has been loaded, before linking any entities
 
-void SV_UnlinkEntity( sharedEntity_t *ent );
-// call before removing an entity, and before trying to move one,
-// so it doesn't clip against itself
+void
+SV_UnlinkEntity(sharedEntity_t *ent);
+//call before removing an entity, and before trying to move one, so it doesn't clip against itself
 
-void SV_LinkEntity( sharedEntity_t *ent );
-// Needs to be called any time an entity changes origin, mins, maxs,
-// or solid.  Automatically unlinks if needed.
-// sets ent->v.absmin and ent->v.absmax
-// sets ent->leafnums[] for pvs determination even if the entity
-// is not solid
+void
+SV_LinkEntity(sharedEntity_t *ent);
+//Needs to be called any time an entity changes origin, mins, maxs, or solid. Automatically unlinks if needed. sets ent->v.absmin and ent->v.absmax sets ent->leafnums[] for pvs determination even if the entity is not solid
 
+clipHandle_t
+SV_ClipHandleForEntity(const sharedEntity_t *ent);
 
-clipHandle_t SV_ClipHandleForEntity( const sharedEntity_t *ent );
+void
+SV_SectorList_f(void);
 
+qint
+SV_AreaEntities(const vec3_t mins, const vec3_t maxs, qint *entityList, qint maxcount);
+//fills in a table of entity numbers with entities that have bounding boxes that intersect the given area. It is possible for a non-axial bmodel to be returned that doesn't actually intersect the area on an exact test. returns the number of pointers filled in The world entity is never returned in this list.
 
-void SV_SectorList_f( void );
-
-
-int SV_AreaEntities( const vec3_t mins, const vec3_t maxs, int *entityList, int maxcount );
-// fills in a table of entity numbers with entities that have bounding boxes
-// that intersect the given area.  It is possible for a non-axial bmodel
-// to be returned that doesn't actually intersect the area on an exact
-// test.
-// returns the number of pointers filled in
-// The world entity is never returned in this list.
+qint
+SV_PointContents(const vec3_t p, qint passEntityNum);
+//returns the CONTENTS_* value from the world and all entities at the given point.
 
 
-int SV_PointContents( const vec3_t p, int passEntityNum );
-// returns the CONTENTS_* value from the world and all entities at the given point.
+void
+SV_Trace(trace_t *results, const vec3_t start, vec3_t mins, vec3_t maxs, const vec3_t end, qint passEntityNum, qint contentmask, const traceType_t type);
+//mins and maxs are relative if the entire move stays in a solid volume, trace.allsolid will be set, trace.startsolid will be set, and trace.fraction will be 0 if the starting point is in a solid, it will be allowed to move out to an open area passEntityNum is explicitly excluded from clipping checks (normally ENTITYNUM_NONE)
 
-
-void SV_Trace( trace_t *results, const vec3_t start, vec3_t mins, vec3_t maxs, const vec3_t end, int passEntityNum, int contentmask, traceType_t type );
-// mins and maxs are relative
-
-// if the entire move stays in a solid volume, trace.allsolid will be set,
-// trace.startsolid will be set, and trace.fraction will be 0
-
-// if the starting point is in a solid, it will be allowed to move out
-// to an open area
-
-// passEntityNum is explicitly excluded from clipping checks (normally ENTITYNUM_NONE)
-
-
-void SV_ClipToEntity( trace_t *trace, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, int entityNum, int contentmask, traceType_t type );
-// clip to a specific entity
+void
+SV_ClipToEntity(trace_t *trace, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, qint entityNum, qint contentmask, const traceType_t type);
+//clip to a specific entity
 
 //
-// sv_net_chan.c
+//sv_net_chan.c
 //
-void SV_Netchan_Transmit( client_t *client, msg_t *msg);
-void SV_Netchan_TransmitNextFragment( client_t *client );
-qboolean SV_Netchan_Process( client_t *client, msg_t *msg );
-
+void
+SV_Netchan_Transmit(client_t *client, msg_t *msg);
+void
+SV_Netchan_ClearQueue(client_t *client);
+qint
+SV_Netchan_TransmitNextFragment(client_t *client);
+qbool
+SV_Netchan_Process(client_t *client, msg_t *msg);

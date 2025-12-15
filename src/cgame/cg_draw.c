@@ -299,7 +299,7 @@ static void CG_DrawProgressBar( rectDef_t *rect, vec4_t color, float scale,
 
 #define NO_CREDITS_TIME 2000
 
-static void CG_DrawPlayerCreditsValue( rectDef_t *rect, vec4_t color, qboolean padding )
+static void CG_DrawPlayerCreditsValue( rectDef_t *rect, vec4_t color, qbool padding )
 {
   int           value;
   playerState_t *ps;
@@ -337,7 +337,7 @@ static void CG_DrawPlayerCreditsValue( rectDef_t *rect, vec4_t color, qboolean p
   }
 }
 
-static void CG_DrawPlayerBankValue( rectDef_t *rect, vec4_t color, qboolean padding )
+static void CG_DrawPlayerBankValue( rectDef_t *rect, vec4_t color, qbool padding )
 {
   int           value;
   playerState_t *ps;
@@ -600,7 +600,7 @@ static void CG_DrawPlayerBoosterBolt( rectDef_t *rect, vec4_t color, qhandle_t s
   {
     if( ( cg.time - cg.boostedTime ) > BOOST_TIME - 3000 )
     {
-      qboolean flash = ( cg.time / 500 ) % 2;
+      qbool flash = ( cg.time / 500 ) % 2;
 
       if( flash )
         localColor[ 3 ] = 1.0f;
@@ -624,7 +624,7 @@ static void CG_DrawPlayerPoisonBarbs( rectDef_t *rect, vec4_t color, qhandle_t s
   int           y = rect->y;
   int           width = rect->w;
   int           height = rect->h;
-  qboolean      vertical;
+  qbool      vertical;
   int           iconsize, numBarbs, i;
 
   numBarbs = ps->ammo;
@@ -664,7 +664,7 @@ CG_DrawPlayerWallclimbing
 static void CG_DrawPlayerWallclimbing( rectDef_t *rect, vec4_t color, qhandle_t shader )
 {
   playerState_t *ps = &cg.snap->ps;
-  qboolean      ww = ps->stats[ STAT_STATE ] & SS_WALLCLIMBING;
+  qbool      ww = ps->stats[ STAT_STATE ] & SS_WALLCLIMBING;
 
   if( ww )
     color[ 3 ] = AH_MAX_ALPHA;
@@ -1340,7 +1340,7 @@ CG_DrawFPS
 static void CG_DrawFPS( rectDef_t *rect, float text_x, float text_y,
                         float scale, vec4_t color,
                         int textalign, int textvalign, int textStyle,
-                        qboolean scalableText )
+                        qbool scalableText )
 {
   char        *s;
   float       tx, ty;
@@ -2364,7 +2364,7 @@ void CG_EventHandling( int type )
 
 
 
-void CG_KeyEvent( int key, qboolean down )
+void CG_KeyEvent( int key, qbool down )
 {
   if( !down )
     return;
@@ -2617,9 +2617,9 @@ static void CG_DrawTeamVote( void )
 }
 
 
-static qboolean CG_DrawScoreboard( void )
+static qbool CG_DrawScoreboard( void )
 {
-  static qboolean firstTime = qtrue;
+  static qbool firstTime = qtrue;
   float fade, *fadeColor;
 
   if( menuScoreboard )
@@ -2685,7 +2685,7 @@ static void CG_DrawIntermission( void )
 CG_DrawFollow
 =================
 */
-static qboolean CG_DrawFollow( void )
+static qbool CG_DrawFollow( void )
 {
   float       w;
   vec4_t      color;
@@ -2713,7 +2713,7 @@ static qboolean CG_DrawFollow( void )
 CG_DrawQueue
 =================
 */
-static qboolean CG_DrawQueue( void )
+static qbool CG_DrawQueue( void )
 {
   float       w;
   vec4_t      color;

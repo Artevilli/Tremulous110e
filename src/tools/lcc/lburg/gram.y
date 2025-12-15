@@ -70,12 +70,38 @@ static char buf[BUFSIZ], *bp = buf;
 static int ppercent = 0;
 static int code = 0;
 
+static void
+crlf_to_lf(char *buf, int bufmax)
+{
+  int i;
+  int count;
+
+  count = 0;
+
+  for(i = 0;i < bufmax;i++)
+  {
+    if (buf[i] == '\r' && buf[i + 1] == '\n')
+    {
+      continue; //skip r
+    }
+
+    buf[count] = buf[i];
+    count++;
+
+    if (buf[i] == '\0')
+    {
+      break;
+    }
+  }
+}
+
 static int get(void) {
 	if (*bp == 0) {
 		bp = buf;
 		*bp = 0;
 		if (fgets(buf, sizeof buf, infp) == NULL)
 			return EOF;
+		crlf_to_lf(buf, sizeof buf);
 		yylineno++;
 		while (buf[0] == '%' && buf[1] == '{' && buf[2] == '\n') {
 			for (;;) {
@@ -83,6 +109,7 @@ static int get(void) {
 					yywarn("unterminated %{...%}\n");
 					return EOF;
 				}
+				crlf_to_lf(buf, sizeof buf);
 				yylineno++;
 				if (strcmp(buf, "%}\n") == 0)
 					break;
@@ -90,6 +117,7 @@ static int get(void) {
 			}
 			if (fgets(buf, sizeof buf, infp) == NULL)
 				return EOF;
+			crlf_to_lf(buf, sizeof buf);
 			yylineno++;
 		}
 	}
@@ -199,4 +227,5 @@ void yywarn(char *fmt, ...) {
 		fprintf(stderr, "line %d: ", yylineno);
 	fprintf(stderr, "warning: ");
 	vfprintf(stderr, fmt, ap);
+	va_end(ap);
 }

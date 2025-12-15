@@ -38,7 +38,7 @@ struct mdfour {
 
 /* NOTE: This code makes no attempt to be fast!
 
-   It assumes that a int is at least 32 bits long
+   It assumes that a qint is at least 32 bits long
 */
 
 static struct mdfour *m;
@@ -55,7 +55,7 @@ static struct mdfour *m;
 /* this applies md4 to 64 byte chunks */
 static void mdfour64(uint32_t *M)
 {
-	int j;
+	qint j;
 	uint32_t AA, BB, CC, DD;
 	uint32_t X[16];
 	uint32_t A,B,C,D;
@@ -101,13 +101,15 @@ static void mdfour64(uint32_t *M)
 	m->A = A; m->B = B; m->C = C; m->D = D;
 }
 
-static void copy64(uint32_t *M, byte *in)
+static void
+copy64(uint32_t *M, byte *in)
 {
-	int i;
+  qint i;
 
-	for (i=0;i<16;i++)
-		M[i] = (in[i*4+3]<<24) | (in[i*4+2]<<16) |
-			(in[i*4+1]<<8) | (in[i*4+0]<<0);
+  for(i = 0;i < 16;i++)
+  {
+    M[i] = ((uint32_t)in[i * 4 + 3] << 24) | ((uint32_t)in[i * 4 + 2] << 16) | ((uint32_t)in[i * 4 + 1] << 8) | ((uint32_t)in[i * 4]);
+  }
 }
 
 static void copy4(byte *out,uint32_t x)
@@ -128,7 +130,7 @@ void mdfour_begin(struct mdfour *md)
 }
 
 
-static void mdfour_tail(byte *in, int n)
+static void mdfour_tail(byte *in, qint n)
 {
 	byte buf[128];
 	uint32_t M[16];
@@ -155,7 +157,7 @@ static void mdfour_tail(byte *in, int n)
 	}
 }
 
-static void mdfour_update(struct mdfour *md, byte *in, int n)
+static void mdfour_update(struct mdfour *md, byte *in, qint n)
 {
 	uint32_t M[16];
 
@@ -177,15 +179,13 @@ static void mdfour_update(struct mdfour *md, byte *in, int n)
 
 static void mdfour_result(struct mdfour *md, byte *out)
 {
-	m = md;
-
-	copy4(out, m->A);
-	copy4(out+4, m->B);
-	copy4(out+8, m->C);
-	copy4(out+12, m->D);
+	copy4(out, md->A);
+	copy4(out+4, md->B);
+	copy4(out+8, md->C);
+	copy4(out+12, md->D);
 }
 
-static void mdfour(byte *out, byte *in, int n)
+static void mdfour(byte *out, byte *in, qint n)
 {
 	struct mdfour md;
 	mdfour_begin(&md);
@@ -195,9 +195,9 @@ static void mdfour(byte *out, byte *in, int n)
 
 //===================================================================
 
-unsigned Com_BlockChecksum (const void *buffer, int length)
+unsigned Com_BlockChecksum (const void *buffer, qint length)
 {
-	int				digest[4];
+	qint				digest[4];
 	unsigned	val;
 
 	mdfour( (byte *)digest, (byte *)buffer, length );

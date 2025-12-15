@@ -140,7 +140,7 @@ typedef Byte    *voidp;
 
 #endif /* _ZCONF_H */
 
-#define ZLIB_VERSION "1.1.3"
+#define ZLIB_VERSION "1.1.4"
 
 /* 
      The 'zlib' compression library provides in-memory compression and
@@ -1004,7 +1004,7 @@ typedef unsigned long  ulg;
 #endif
 
 #ifndef F_OPEN
-#  define F_OPEN(name, mode) fopen((name), (mode))
+#  define F_OPEN(name, mode) Sys_FOpen((name), (mode))
 #endif
 
          /* functions */
@@ -1079,7 +1079,7 @@ static void   zcfree  OF((voidp opaque, voidp ptr));
 /* ===========================================================================
      Read a byte from a gz_stream; update next_in and avail_in. Return EOF
    for end of file.
-   IN assertion: the stream s has been sucessfully opened for reading.
+   IN assertion: the stream s has been successfully opened for reading.
 */
 
 /*
@@ -1108,10 +1108,13 @@ static int unzlocal_getByte(FILE *fin,int *pi)
 static int unzlocal_getShort (FILE* fin, uLong *pX)
 {
 	short	v;
+	if ( fread( &v, sizeof(v), 1, fin ) != 1 )
+	{
+		*pX = 0;
+		return UNZ_ERRNO;
+	}
 
-	fread( &v, sizeof(v), 1, fin );
-
-	*pX = LittleShort( v);
+	*pX = LittleShort(v);
 	return UNZ_OK;
 
 /*
@@ -1137,10 +1140,13 @@ static int unzlocal_getShort (FILE* fin, uLong *pX)
 static int unzlocal_getLong (FILE *fin, uLong *pX)
 {
 	int		v;
+	if ( fread( &v, sizeof(v), 1, fin ) != 1 )
+	{
+		*pX = 0;
+		return UNZ_ERRNO;
+	}
 
-	fread( &v, sizeof(v), 1, fin );
-
-	*pX = LittleLong( v);
+	*pX = LittleLong(v);
 	return UNZ_OK;
 
 /*
@@ -1169,6 +1175,17 @@ static int unzlocal_getLong (FILE *fin, uLong *pX)
         *pX = 0;
     return err;
 */
+}
+
+
+static int unzlocal_getData( FILE *fin, byte *buf, int size )
+{
+	if ( fread( buf, size, 1, fin ) != 1 )
+	{
+		return UNZ_ERRNO;
+	}
+
+	return UNZ_OK;
 }
 
 
@@ -1207,8 +1224,8 @@ static int strcmpcasenosensitive_internal (const char* fileName1,const char* fil
 
 /* 
    Compare two filename (fileName1,fileName2).
-   If iCaseSenisivity = 1, comparision is case sensitivity (like strcmp)
-   If iCaseSenisivity = 2, comparision is not case sensitivity (like strcmpi
+   If iCaseSenisivity = 1, comparison is case sensitivity (like strcmp)
+   If iCaseSenisivity = 2, comparison is not case sensitivity (like strcmpi
                                                                 or strcasecmp)
    If iCaseSenisivity = 0, case sensitivity is defaut of your operating system
         (like 1 on Unix, 2 on Windows)
@@ -1233,7 +1250,7 @@ extern  int unzStringFileNameCompare (const char* fileName1,const char* fileName
 */
 extern uLong unzlocal_SearchCentralDir(FILE *fin)
 {
-	unsigned char* buf;
+	unsigned char buf[BUFREADCOMMENT+4];
 	uLong uSizeFile;
 	uLong uBackRead;
 	uLong uMaxBack=0xffff; /* maximum size of global comment */
@@ -1248,9 +1265,9 @@ extern uLong unzlocal_SearchCentralDir(FILE *fin)
 	if (uMaxBack>uSizeFile)
 		uMaxBack = uSizeFile;
 
-	buf = (unsigned char*)ALLOC(BUFREADCOMMENT+4);
-	if (buf==NULL)
-		return 0;
+	//buf = (unsigned char*)ALLOC(BUFREADCOMMENT+4);
+	//if (buf==NULL)
+	//	return 0;
 
 	uBackRead = 4;
 	while (uBackRead<uMaxBack)
@@ -1282,7 +1299,7 @@ extern uLong unzlocal_SearchCentralDir(FILE *fin)
 		if (uPosFound!=0)
 			break;
 	}
-	TRYFREE(buf);
+	//TRYFREE(buf);
 	return uPosFound;
 }
 
@@ -1291,7 +1308,7 @@ extern unzFile unzReOpen (const char* path, unzFile file)
 	unz_s *s;
 	FILE * fin;
 
-    fin=fopen(path,"rb");
+    fin=F_OPEN(path,"rb");
 	if (fin==NULL)
 		return NULL;
 
@@ -1320,7 +1337,7 @@ extern unzFile unzOpen (const char* path)
 
 	uLong number_disk;          /* number of the current dist, used for 
 								   spaning ZIP, unsupported, always 0*/
-	uLong number_disk_with_CD;  /* number the the disk with central dir, used
+	uLong number_disk_with_CD;  /* number the disk with central dir, used
 								   for spaning ZIP, unsupported, always 0*/
 	uLong number_entry_CD;      /* total number of entries in
 	                               the central dir 
@@ -1328,7 +1345,7 @@ extern unzFile unzOpen (const char* path)
 
 	int err=UNZ_OK;
 
-    fin=fopen(path,"rb");
+    fin=F_OPEN(path,"rb");
 	if (fin==NULL)
 		return NULL;
 
@@ -1393,7 +1410,6 @@ extern unzFile unzOpen (const char* path)
 	us.central_pos = central_pos;
     us.pfile_in_zip_read = NULL;
 	
-
 	s=(unz_s*)ALLOC(sizeof(unz_s));
 	*s=us;
 //	unzGoToFirstFile((unzFile)s);	
@@ -1413,8 +1429,8 @@ extern int unzClose (unzFile file)
 		return UNZ_PARAMERROR;
 	s=(unz_s*)file;
 
-    if (s->pfile_in_zip_read!=NULL)
-        unzCloseCurrentFile(file);
+	if (s->pfile_in_zip_read!=NULL)
+		unzCloseCurrentFile(file);
 
 	fclose(s->file);
 	TRYFREE(s);
@@ -1470,8 +1486,9 @@ static int unzlocal_GetCurrentFileInfoInternal (unzFile file,
 	unz_s* s;
 	unz_file_info file_info;
 	unz_file_info_internal file_info_internal;
+	byte buf[46];
 	int err=UNZ_OK;
-	uLong uMagic;
+	//uLong uMagic;
 	long lSeek=0;
 
 	if (file==NULL)
@@ -1480,6 +1497,32 @@ static int unzlocal_GetCurrentFileInfoInternal (unzFile file,
 	if (fseek(s->file,s->pos_in_central_dir+s->byte_before_the_zipfile,SEEK_SET)!=0)
 		err=UNZ_ERRNO;
 
+#if 1 // try ro reduce fread() overhead
+	if ( unzlocal_getData( s->file, buf, 46 ) != UNZ_OK )
+		return UNZ_ERRNO;
+	//uMagic = LittleLong( *(int*)(buf+0) );
+	/* we check the magic */
+	//if ( uMagic != 0x02014b50 )
+	//	return UNZ_BADZIPFILE;
+	if ( memcmp( buf, "\x50\x4b\x01\x02", 4 ) != 0 )
+		return UNZ_BADZIPFILE;
+	file_info.version = LittleShort( *(short*)(buf+4) );
+	file_info.version_needed  = LittleShort( *(short*)(buf+6) );
+	file_info.flag = LittleShort( *(short*)(buf+8) );
+	file_info.compression_method = LittleShort( *(short*)(buf+10) );
+	file_info.dosDate = LittleLong( *(int*)(buf+12) );
+	unzlocal_DosDateToTmuDate( file_info.dosDate, &file_info.tmu_date );
+	file_info.crc = LittleLong( *(int*)(buf+16) );
+	file_info.compressed_size = LittleLong( *(int*)(buf+20) );
+	file_info.uncompressed_size = LittleLong( *(int*)(buf+24) );
+	file_info.size_filename = LittleShort( *(short*)(buf+28) );
+	file_info.size_file_extra = LittleShort( *(short*)(buf+30) );
+	file_info.size_file_comment = LittleShort( *(short*)(buf+32) );
+	file_info.disk_num_start = LittleShort( *(short*)(buf+34) );
+	file_info.internal_fa = LittleShort( *(short*)(buf+36) );
+	file_info.external_fa = LittleLong( *(int*)(buf+38) );
+	file_info_internal.offset_curfile = LittleLong( *(int*)(buf+42) );
+#else
 
 	/* we check the magic */
 	if (err==UNZ_OK) {
@@ -1503,7 +1546,7 @@ static int unzlocal_GetCurrentFileInfoInternal (unzFile file,
 	if (unzlocal_getLong(s->file,&file_info.dosDate) != UNZ_OK)
 		err=UNZ_ERRNO;
 
-    unzlocal_DosDateToTmuDate(file_info.dosDate,&file_info.tmu_date);
+	unzlocal_DosDateToTmuDate(file_info.dosDate,&file_info.tmu_date);
 
 	if (unzlocal_getLong(s->file,&file_info.crc) != UNZ_OK)
 		err=UNZ_ERRNO;
@@ -1534,6 +1577,7 @@ static int unzlocal_GetCurrentFileInfoInternal (unzFile file,
 
 	if (unzlocal_getLong(s->file,&file_info_internal.offset_curfile) != UNZ_OK)
 		err=UNZ_ERRNO;
+#endif
 
 	lSeek+=file_info.size_filename;
 	if ((err==UNZ_OK) && (szFileName!=NULL))
@@ -1591,7 +1635,7 @@ static int unzlocal_GetCurrentFileInfoInternal (unzFile file,
 
 		if (lSeek!=0) {
 			if (fseek(s->file,lSeek,SEEK_CUR)==0)
-				lSeek=0;
+				;//	lSeek=0;
 			else
 				err=UNZ_ERRNO;
 		}
@@ -1599,10 +1643,10 @@ static int unzlocal_GetCurrentFileInfoInternal (unzFile file,
 			if (fread(szComment,(uInt)uSizeRead,1,s->file)!=1)
 				err=UNZ_ERRNO;
 		}
-		lSeek+=file_info.size_file_comment - uSizeRead;
+		//lSeek+=file_info.size_file_comment - uSizeRead;
 	}
-	else
-		lSeek+=file_info.size_file_comment;
+	//else
+	//	lSeek+=file_info.size_file_comment;
 
 	if ((err==UNZ_OK) && (pfile_info!=NULL))
 		*pfile_info=file_info;
@@ -1738,8 +1782,8 @@ extern int unzLocateFile (unzFile file, const char *szFileName, int iCaseSensiti
 	if (file==NULL)
 		return UNZ_PARAMERROR;
 
-    if (strlen(szFileName)>=UNZ_MAXFILENAMEINZIP)
-        return UNZ_PARAMERROR;
+	if (strlen(szFileName)>=UNZ_MAXFILENAMEINZIP)
+		return UNZ_PARAMERROR;
 
 	s=(unz_s*)file;
 	if (!s->current_file_ok)
@@ -1792,13 +1836,11 @@ static int unzlocal_CheckCurrentFileCoherencyHeader (unz_s* s, uInt* piSizeVar,
 								s->byte_before_the_zipfile,SEEK_SET)!=0)
 		return UNZ_ERRNO;
 
+	if (unzlocal_getLong(s->file,&uMagic) != UNZ_OK)
+		err=UNZ_ERRNO;
+	else if (uMagic!=0x04034b50)
+		err=UNZ_BADZIPFILE;
 
-	if (err==UNZ_OK) {
-		if (unzlocal_getLong(s->file,&uMagic) != UNZ_OK)
-			err=UNZ_ERRNO;
-		else if (uMagic!=0x04034b50)
-			err=UNZ_BADZIPFILE;
-	}
 	if (unzlocal_getShort(s->file,&uData) != UNZ_OK)
 		err=UNZ_ERRNO;
 /*
@@ -1814,8 +1856,8 @@ static int unzlocal_CheckCurrentFileCoherencyHeader (unz_s* s, uInt* piSizeVar,
 		err=UNZ_BADZIPFILE;
 
     if ((err==UNZ_OK) && (s->cur_file_info.compression_method!=0) &&
-                         (s->cur_file_info.compression_method!=Z_DEFLATED))
-        err=UNZ_BADZIPFILE;
+			(s->cur_file_info.compression_method!=Z_DEFLATED))
+		err=UNZ_BADZIPFILE;
 
 	if (unzlocal_getLong(s->file,&uData) != UNZ_OK) /* date/time */
 		err=UNZ_ERRNO;
@@ -1823,7 +1865,7 @@ static int unzlocal_CheckCurrentFileCoherencyHeader (unz_s* s, uInt* piSizeVar,
 	if (unzlocal_getLong(s->file,&uData) != UNZ_OK) /* crc */
 		err=UNZ_ERRNO;
 	else if ((err==UNZ_OK) && (uData!=s->cur_file_info.crc) &&
-		                      ((uFlags & 8)==0))
+			((uFlags & 8)==0))
 		err=UNZ_BADZIPFILE;
 
 	if (unzlocal_getLong(s->file,&uData) != UNZ_OK) /* size compr */
@@ -1863,7 +1905,7 @@ static int unzlocal_CheckCurrentFileCoherencyHeader (unz_s* s, uInt* piSizeVar,
 */
 extern int unzOpenCurrentFile (unzFile file)
 {
-	int err=UNZ_OK;
+	int err/*=UNZ_OK*/;
 	int Store;
 	uInt iSizeVar;
 	unz_s* s;
@@ -1877,8 +1919,8 @@ extern int unzOpenCurrentFile (unzFile file)
 	if (!s->current_file_ok)
 		return UNZ_PARAMERROR;
 
-    if (s->pfile_in_zip_read != NULL)
-        unzCloseCurrentFile(file);
+	if (s->pfile_in_zip_read != NULL)
+		unzCloseCurrentFile(file);
 
 	if (unzlocal_CheckCurrentFileCoherencyHeader(s,&iSizeVar,
 				&offset_local_extrafield,&size_local_extrafield)!=UNZ_OK)
@@ -1902,9 +1944,11 @@ extern int unzOpenCurrentFile (unzFile file)
 
 	pfile_in_zip_read_info->stream_initialised=0;
 	
-	if ((s->cur_file_info.compression_method!=0) &&
-        (s->cur_file_info.compression_method!=Z_DEFLATED))
-		err=UNZ_BADZIPFILE;
+	// already checked in unzlocal_CheckCurrentFileCoherencyHeader()
+	//if ((s->cur_file_info.compression_method!=0) &&
+	//	(s->cur_file_info.compression_method!=Z_DEFLATED))
+	//		err=UNZ_BADZIPFILE;
+
 	Store = s->cur_file_info.compression_method==0;
 
 	pfile_in_zip_read_info->crc32_wait=s->cur_file_info.crc;
@@ -1976,7 +2020,7 @@ extern int unzReadCurrentFile  (unzFile file, void *buf, unsigned len)
 		return UNZ_PARAMERROR;
 
 
-	if ((pfile_in_zip_read_info->read_buffer == NULL))
+	if (pfile_in_zip_read_info->read_buffer == NULL)
 		return UNZ_END_OF_LIST_OF_FILE;
 	if (len==0)
 		return 0;
@@ -1997,8 +2041,8 @@ extern int unzReadCurrentFile  (unzFile file, void *buf, unsigned len)
 			uInt uReadThis = UNZ_BUFSIZE;
 			if (pfile_in_zip_read_info->rest_read_compressed<uReadThis)
 				uReadThis = (uInt)pfile_in_zip_read_info->rest_read_compressed;
-			if (uReadThis == 0)
-				return UNZ_EOF;
+			//if (uReadThis == 0)
+			//	return UNZ_EOF;
 			if (s->cur_file_info.compressed_size == pfile_in_zip_read_info->rest_read_compressed)
 				if (fseek(pfile_in_zip_read_info->file,
 						  pfile_in_zip_read_info->pos_in_zipfile + 
@@ -2043,12 +2087,12 @@ extern int unzReadCurrentFile  (unzFile file, void *buf, unsigned len)
 		else
 		{
 			uLong uTotalOutBefore,uTotalOutAfter;
-			const Byte *bufBefore;
+			//const Byte *bufBefore;
 			uLong uOutThis;
 			int flush=Z_SYNC_FLUSH;
 
 			uTotalOutBefore = pfile_in_zip_read_info->stream.total_out;
-			bufBefore = pfile_in_zip_read_info->stream.next_out;
+			//bufBefore = pfile_in_zip_read_info->stream.next_out;
 
 			/*
 			if ((pfile_in_zip_read_info->rest_read_uncompressed ==
@@ -2354,8 +2398,8 @@ static  int inflate_trees_dynamic OF((
 static  int inflate_trees_fixed OF((
     uInt *,                    /* literal desired/actual bit depth */
     uInt *,                    /* distance desired/actual bit depth */
-    inflate_huft * *,       /* literal/length tree result */
-    inflate_huft * *,       /* distance tree result */
+    const inflate_huft * *,    /* literal/length tree result */
+    const inflate_huft * *,    /* distance tree result */
     z_streamp));                /* for memory allocation */
 
 
@@ -2374,7 +2418,7 @@ typedef struct inflate_codes_state inflate_codes_statef;
 
 static inflate_codes_statef *inflate_codes_new OF((
     uInt, uInt,
-    inflate_huft *, inflate_huft *,
+    const inflate_huft *, const inflate_huft *,
     z_streamp ));
 
 static  int inflate_codes OF((
@@ -2473,7 +2517,11 @@ struct inflate_blocks_state {
 #define LOAD {LOADIN LOADOUT}
 
 /* masks for lower bits (size given to avoid silly warnings with Visual C++) */
-static  uInt inflate_mask[17];
+static const uInt inflate_mask[17] = {
+    0x0000,
+    0x0001, 0x0003, 0x0007, 0x000f, 0x001f, 0x003f, 0x007f, 0x00ff,
+    0x01ff, 0x03ff, 0x07ff, 0x0fff, 0x1fff, 0x3fff, 0x7fff, 0xffff
+} ;
 
 /* copy as much as possible from the sliding window to the output area */
 static  int inflate_flush OF((
@@ -2505,7 +2553,7 @@ static  int inflate_flush OF((
       end-of-block.  Note however that the static length tree defines
       288 codes just to fill out the Huffman codes.  Codes 286 and 287
       cannot be used though, since there is no length base or extra bits
-      defined for them.  Similarily, there are up to 30 distance codes.
+      defined for them.  Similarly, there are up to 30 distance codes.
       However, static trees define 32 codes (all 5 bits) to fill out the
       Huffman codes, but the last two had better not show up in the data.
    7. Unzip can check dynamic Huffman blocks for complete code sets.
@@ -2611,7 +2659,7 @@ int inflate_blocks(inflate_blocks_statef *s, z_streamp z, int r)
                  s->last ? " (last)" : ""));
           {
             uInt bl, bd;
-            inflate_huft *tl, *td;
+            const inflate_huft *tl, *td;
             inflate_trees_fixed(&bl, &bd, &tl, &td, z);
             s->sub.decode.codes = inflate_codes_new(bl, bd, tl, td, z);
             if (s->sub.decode.codes == Z_NULL)
@@ -2704,10 +2752,11 @@ int inflate_blocks(inflate_blocks_statef *s, z_streamp z, int r)
                              &s->sub.trees.tb, s->hufts, z);
       if (t != Z_OK)
       {
-        ZFREE(z, s->sub.trees.blens);
         r = t;
-        if (r == Z_DATA_ERROR)
-          s->mode = BAD;
+		if (r == Z_DATA_ERROR) {
+			ZFREE(z, s->sub.trees.blens);
+			s->mode = BAD;
+		}
         LEAVE
       }
       s->sub.trees.index = 0;
@@ -2770,11 +2819,12 @@ int inflate_blocks(inflate_blocks_statef *s, z_streamp z, int r)
         t = inflate_trees_dynamic(257 + (t & 0x1f), 1 + ((t >> 5) & 0x1f),
                                   s->sub.trees.blens, &bl, &bd, &tl, &td,
                                   s->hufts, z);
-        ZFREE(z, s->sub.trees.blens);
         if (t != Z_OK)
         {
-          if (t == (uInt)Z_DATA_ERROR)
-            s->mode = BAD;
+			if (t == (uInt)Z_DATA_ERROR) {
+				ZFREE(z, s->sub.trees.blens);
+				s->mode = BAD;
+			}
           r = t;
           LEAVE
         }
@@ -2786,6 +2836,7 @@ int inflate_blocks(inflate_blocks_statef *s, z_streamp z, int r)
         }
         s->sub.decode.codes = c;
       }
+	  ZFREE(z, s->sub.trees.blens);
       s->mode = CODES;
     case CODES:
       UPDATE
@@ -2848,13 +2899,6 @@ int inflate_blocks_sync_point(inflate_blocks_statef *s)
 }
 #endif
 
-
-/* And'ing with mask[n] masks the lower n bits */
-static uInt inflate_mask[17] = {
-    0x0000,
-    0x0001, 0x0003, 0x0007, 0x000f, 0x001f, 0x003f, 0x007f, 0x00ff,
-    0x01ff, 0x03ff, 0x07ff, 0x0fff, 0x1fff, 0x3fff, 0x7fff, 0xffff
-};
 
 
 /* copy as much as possible from the sliding window to the output area */
@@ -3144,7 +3188,7 @@ static int huft_build(uInt *b, uInt n, uInt s, const uInt *d, const uInt *e, inf
 
         /* allocate new table */
         if (*hn + z > MANY)     /* (note: doesn't matter for fixed) */
-          return Z_MEM_ERROR;   /* not enough memory */
+          return Z_DATA_ERROR;  /* overflow of MANY */
         u[h] = q = hp + *hn;
         *hn += z;
 
@@ -3213,10 +3257,10 @@ int inflate_trees_bits(uInt *c, uInt *bb, inflate_huft * *tb, inflate_huft *hp, 
 {
   int r;
   uInt hn = 0;          /* hufts used in space */
-  uInt *v;             /* work area for huft_build */
+  uInt v[19] = { 0 };   /* work area for huft_build */
 
-  if ((v = (uInt*)ZALLOC(z, 19, sizeof(uInt))) == Z_NULL)
-    return Z_MEM_ERROR;
+  //if ((v = (uInt*)ZALLOC(z, 19, sizeof(uInt))) == Z_NULL)
+  //  return Z_MEM_ERROR;
   r = huft_build(c, 19, 19, (uInt*)Z_NULL, (uInt*)Z_NULL,
                  tb, bb, hp, &hn, v);
   if (r == Z_DATA_ERROR)
@@ -3226,7 +3270,7 @@ int inflate_trees_bits(uInt *c, uInt *bb, inflate_huft * *tb, inflate_huft *hp, 
     z->msg = (char*)"incomplete dynamic bit lengths tree";
     r = Z_DATA_ERROR;
   }
-  ZFREE(z, v);
+  //ZFREE(z, v);
   return r;
 }
 
@@ -3244,11 +3288,11 @@ int inflate_trees_dynamic(uInt nl, uInt nd, uInt *c, uInt *bl, uInt *bd, inflate
 {
   int r;
   uInt hn = 0;          /* hufts used in space */
-  uInt *v;             /* work area for huft_build */
+  uInt v[288] = { 0 };  /* work area for huft_build */
 
   /* allocate work area */
-  if ((v = (uInt*)ZALLOC(z, 288, sizeof(uInt))) == Z_NULL)
-    return Z_MEM_ERROR;
+  //if ((v = (uInt*)ZALLOC(z, 288, sizeof(uInt))) == Z_NULL)
+ //   return Z_MEM_ERROR;
 
   /* build literal/length tree */
   r = huft_build(c, nl, 257, cplens, cplext, tl, bl, hp, &hn, v);
@@ -3261,7 +3305,7 @@ int inflate_trees_dynamic(uInt nl, uInt nd, uInt *c, uInt *bl, uInt *bd, inflate
       z->msg = (char*)"incomplete literal/length tree";
       r = Z_DATA_ERROR;
     }
-    ZFREE(z, v);
+    //ZFREE(z, v);
     return r;
   }
 
@@ -3284,13 +3328,13 @@ int inflate_trees_dynamic(uInt nl, uInt nd, uInt *c, uInt *bl, uInt *bd, inflate
       z->msg = (char*)"empty distance tree with lengths";
       r = Z_DATA_ERROR;
     }
-    ZFREE(z, v);
+    //ZFREE(z, v);
     return r;
 #endif
   }
 
   /* done */
-  ZFREE(z, v);
+  //ZFREE(z, v);
   return Z_OK;
 }
 
@@ -3305,7 +3349,7 @@ int inflate_trees_dynamic(uInt nl, uInt nd, uInt *c, uInt *bl, uInt *bd, inflate
 
 static uInt fixed_bl = 9;
 static uInt fixed_bd = 5;
-static inflate_huft fixed_tl[] = {
+static const inflate_huft fixed_tl[] = {
     {{{96,7}},256}, {{{0,8}},80}, {{{0,8}},16}, {{{84,8}},115},
     {{{82,7}},31}, {{{0,8}},112}, {{{0,8}},48}, {{{0,9}},192},
     {{{80,7}},10}, {{{0,8}},96}, {{{0,8}},32}, {{{0,9}},160},
@@ -3435,7 +3479,7 @@ static inflate_huft fixed_tl[] = {
     {{{82,7}},27}, {{{0,8}},111}, {{{0,8}},47}, {{{0,9}},191},
     {{{0,8}},15}, {{{0,8}},143}, {{{0,8}},79}, {{{0,9}},255}
   };
-static inflate_huft fixed_td[] = {
+static const inflate_huft fixed_td[] = {
     {{{80,5}},1}, {{{87,5}},257}, {{{83,5}},17}, {{{91,5}},4097},
     {{{81,5}},5}, {{{89,5}},1025}, {{{85,5}},65}, {{{93,5}},16385},
     {{{80,5}},3}, {{{88,5}},513}, {{{84,5}},33}, {{{92,5}},8193},
@@ -3446,7 +3490,7 @@ static inflate_huft fixed_td[] = {
     {{{82,5}},13}, {{{90,5}},3073}, {{{86,5}},193}, {{{192,5}},24577}
   };
 
-int inflate_trees_fixed(uInt *bl, uInt *bd, inflate_huft * *tl, inflate_huft * *td, z_streamp z)
+int inflate_trees_fixed(uInt *bl, uInt *bd, const inflate_huft * *tl, const inflate_huft * *td, z_streamp z)
 //uInt *bl;               /* literal desired/actual bit depth */
 //uInt *bd;               /* distance desired/actual bit depth */
 //inflate_huft * *tl;  /* literal/length tree result */
@@ -3473,9 +3517,9 @@ int inflate_trees_fixed(uInt *bl, uInt *bd, inflate_huft * *tl, inflate_huft * *
    at least ten.  The ten bytes are six bytes for the longest length/
    distance pair plus four bytes for overloading the bit buffer. */
 
-static int inflate_fast(uInt bl, uInt bd, inflate_huft *tl, inflate_huft *td, inflate_blocks_statef *s, z_streamp z)
+static int inflate_fast(uInt bl, uInt bd, const inflate_huft *tl, const inflate_huft *td, inflate_blocks_statef *s, z_streamp z)
 {
-  inflate_huft *t;      /* temporary pointer */
+  const inflate_huft *t;/* temporary pointer */
   uInt e;               /* extra bits or operation */
   uLong b;              /* bit buffer */
   uInt k;               /* bits in bit buffer */
@@ -3536,28 +3580,41 @@ static int inflate_fast(uInt bl, uInt bd, inflate_huft *tl, inflate_huft *td, in
 
             /* do the copy */
             m -= c;
-            if ((uInt)(q - s->window) >= d)     /* offset before dest */
-            {                                   /*  just copy */
-              r = q - d;
-              *q++ = *r++;  c--;        /* minimum count is three, */
-              *q++ = *r++;  c--;        /*  so unroll loop a little */
-            }
-            else                        /* else offset after destination */
+			r = q - d;
+            if (r < s->window)                  /* wrap if needed */
             {
-              e = d - (uInt)(q - s->window); /* bytes from offset to end */
-              r = s->end - e;           /* pointer to offset */
-              if (c > e)                /* if source crosses, */
+              do {
+                r += s->end - s->window;        /* force pointer in window */
+              } while (r < s->window);          /* covers invalid distances */
+              e = s->end - r;
+              if (c > e)
               {
-                c -= e;                 /* copy to end of window */
+                c -= e;                         /* wrapped copy */
                 do {
-                  *q++ = *r++;
+                    *q++ = *r++;
                 } while (--e);
-                r = s->window;          /* copy rest from start of window */
+                r = s->window;
+                do {
+                    *q++ = *r++;
+                } while (--c);
+              }
+              else                              /* normal copy */
+              {
+                *q++ = *r++;  c--;
+                *q++ = *r++;  c--;
+                do {
+                    *q++ = *r++;
+                } while (--c);
               }
             }
-            do {                        /* copy all or what's left */
-              *q++ = *r++;
-            } while (--c);
+            else                                /* normal copy */
+            {
+              *q++ = *r++;  c--;
+              *q++ = *r++;  c--;
+              do {
+                *q++ = *r++;
+              } while (--c);
+            }
             break;
           }
           else if ((e & 64) == 0)
@@ -3644,7 +3701,7 @@ struct inflate_codes_state {
   uInt len;
   union {
     struct {
-      inflate_huft *tree;       /* pointer into tree */
+      const inflate_huft *tree; /* pointer into tree */
       uInt need;                /* bits needed */
     } code;             /* if LEN or DIST, where in tree */
     uInt lit;           /* if LIT, literal */
@@ -3657,13 +3714,13 @@ struct inflate_codes_state {
   /* mode independent information */
   Byte lbits;           /* ltree bits decoded per branch */
   Byte dbits;           /* dtree bits decoder per branch */
-  inflate_huft *ltree;          /* literal/length/eob tree */
-  inflate_huft *dtree;          /* distance tree */
+  const inflate_huft *ltree; /* literal/length/eob tree */
+  const inflate_huft *dtree; /* distance tree */
 
 };
 
 
-inflate_codes_statef *inflate_codes_new(uInt bl, uInt bd, inflate_huft *tl, inflate_huft *td, z_streamp z)
+inflate_codes_statef *inflate_codes_new(uInt bl, uInt bd, const inflate_huft *tl, const inflate_huft *td, z_streamp z)
 {
   inflate_codes_statef *c;
 
@@ -3684,7 +3741,7 @@ inflate_codes_statef *inflate_codes_new(uInt bl, uInt bd, inflate_huft *tl, infl
 int inflate_codes(inflate_blocks_statef *s, z_streamp z, int r)
 {
   uInt j;               /* temporary storage */
-  inflate_huft *t;      /* temporary pointer */
+  const inflate_huft *t;/* temporary pointer */
   uInt e;               /* extra bits or operation */
   uLong b;              /* bit buffer */
   uInt k;               /* bits in bit buffer */
@@ -3796,15 +3853,9 @@ int inflate_codes(inflate_blocks_statef *s, z_streamp z, int r)
       Tracevv(("inflate:         distance %u\n", c->sub.copy.dist));
       c->mode = COPY;
     case COPY:          /* o: copying bytes in window, waiting for space */
-#ifndef __TURBOC__ /* Turbo C bug for following expression */
-      f = (uInt)(q - s->window) < c->sub.copy.dist ?
-          s->end - (c->sub.copy.dist - (q - s->window)) :
-          q - c->sub.copy.dist;
-#else
       f = q - c->sub.copy.dist;
-      if ((uInt)(q - s->window) < c->sub.copy.dist)
-        f = s->end - (c->sub.copy.dist - (uInt)(q - s->window));
-#endif
+      while (f < s->window)             /* modulo window size-"while" instead */
+        f += s->end - s->window;        /* of "if" handles invalid distances */
       while (c->len)
       {
         NEEDOUT
@@ -4286,7 +4337,8 @@ int inflateSyncPoint(z_streamp z)
 voidp zcalloc (voidp opaque, unsigned items, unsigned size)
 {
     if (opaque) items += size - size; /* make compiler happy */
-    return (voidp)Z_Malloc(items*size);
+    // use small zone to avoid main zone fragmentation
+    return (voidp)S_Malloc(items*size);
 }
 
 void  zcfree (voidp opaque, voidp ptr)
@@ -4294,5 +4346,3 @@ void  zcfree (voidp opaque, voidp ptr)
     Z_Free(ptr);
     if (opaque) return; /* make compiler happy */
 }
-
-

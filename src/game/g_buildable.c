@@ -33,7 +33,7 @@ G_SetBuildableAnim
 Triggers an animation client side
 ================
 */
-void G_SetBuildableAnim( gentity_t *ent, buildableAnimNumber_t anim, qboolean force )
+void G_SetBuildableAnim( gentity_t *ent, buildableAnimNumber_t anim, qbool force )
 {
   int localAnim = anim;
 
@@ -159,7 +159,7 @@ G_FindPower
 attempt to find power for self, return qtrue if successful
 ================
 */
-static qboolean G_FindPower( gentity_t *self )
+static qbool G_FindPower( gentity_t *self )
 {
   int       i;
   gentity_t *ent;
@@ -264,7 +264,7 @@ G_FindDCC
 attempt to find a controlling DCC for self, return qtrue if successful
 ================
 */
-static qboolean G_FindDCC( gentity_t *self )
+static qbool G_FindDCC( gentity_t *self )
 {
   int       i;
   gentity_t *ent;
@@ -272,7 +272,7 @@ static qboolean G_FindDCC( gentity_t *self )
   int       distance = 0;
   int       minDistance = 10000;
   vec3_t    temp_v;
-  qboolean  foundDCC = qfalse;
+  qbool  foundDCC = qfalse;
 
   if( self->buildableTeam != TEAM_HUMANS )
     return qfalse;
@@ -317,7 +317,7 @@ G_IsDCCBuilt
 simple wrapper to G_FindDCC to check for a dcc
 ================
 */
-qboolean G_IsDCCBuilt( void )
+qbool G_IsDCCBuilt( void )
 {
   gentity_t dummy;
 
@@ -336,7 +336,7 @@ G_FindOvermind
 Attempt to find an overmind for self
 ================
 */
-static qboolean G_FindOvermind( gentity_t *self )
+static qbool G_FindOvermind( gentity_t *self )
 {
   int       i;
   gentity_t *ent;
@@ -375,7 +375,7 @@ G_IsOvermindBuilt
 Simple wrapper to G_FindOvermind to check if a location has an overmind
 ================
 */
-qboolean G_IsOvermindBuilt( void )
+qbool G_IsOvermindBuilt( void )
 {
   gentity_t dummy;
 
@@ -394,7 +394,7 @@ G_FindCreep
 attempt to find creep for self, return qtrue if successful
 ================
 */
-static qboolean G_FindCreep( gentity_t *self )
+static qbool G_FindCreep( gentity_t *self )
 {
   int       i;
   gentity_t *ent;
@@ -447,7 +447,7 @@ G_IsCreepHere
 simple wrapper to G_FindCreep to check if a location has creep
 ================
 */
-static qboolean G_IsCreepHere( vec3_t origin )
+static qbool G_IsCreepHere( vec3_t origin )
 {
   gentity_t dummy;
 
@@ -768,7 +768,7 @@ void AOvermind_Think( gentity_t *self )
     if( !level.overmindMuted && level.numAlienSpawns <= 0 &&
         level.time > self->overmindSpawnsTimer )
     {
-      qboolean haveBuilder = qfalse;
+      qbool haveBuilder = qfalse;
       gentity_t *builder;
 
       self->overmindSpawnsTimer = level.time + OVERMIND_SPAWNS_PERIOD;
@@ -1122,7 +1122,7 @@ AHovel_Blocked
 Is this hovel entrance blocked?
 ================
 */
-qboolean AHovel_Blocked( gentity_t *hovel, gentity_t *player, qboolean provideExit )
+qbool AHovel_Blocked( gentity_t *hovel, gentity_t *player, qbool provideExit )
 {
   vec3_t    forward, normal, origin, start, end, angles, hovelMaxs;
   vec3_t    mins, maxs;
@@ -1178,7 +1178,7 @@ APropHovel_Blocked
 Wrapper to test a hovel placement for validity
 ================
 */
-static qboolean APropHovel_Blocked( vec3_t origin, vec3_t angles, vec3_t normal,
+static qbool APropHovel_Blocked( vec3_t origin, vec3_t angles, vec3_t normal,
                                     gentity_t *player )
 {
   gentity_t hovel;
@@ -1456,7 +1456,7 @@ ATrapper_CheckTarget
 Used by ATrapper_Think to check enemies for validity
 ================
 */
-qboolean ATrapper_CheckTarget( gentity_t *self, gentity_t *target, int range )
+qbool ATrapper_CheckTarget( gentity_t *self, gentity_t *target, int range )
 {
   vec3_t    distance;
   trace_t   trace;
@@ -1578,7 +1578,7 @@ Think for human power repeater
 void HRepeater_Think( gentity_t *self )
 {
   int       i;
-  qboolean  reactor = qfalse;
+  qbool  reactor = qfalse;
   gentity_t *ent;
 
   if( self->spawned )
@@ -1771,7 +1771,7 @@ void HMedistat_Think( gentity_t *self )
   vec3_t    mins, maxs;
   int       i, num;
   gentity_t *player;
-  qboolean  occupied = qfalse;
+  qbool  occupied = qfalse;
 
   self->nextthink = level.time + BG_Buildable( self->s.modelindex )->nextthink;
 
@@ -1884,7 +1884,7 @@ HMGTurret_TrackEnemy
 Used by HMGTurret_Think to track enemy location
 ================
 */
-qboolean HMGTurret_TrackEnemy( gentity_t *self )
+qbool HMGTurret_TrackEnemy( gentity_t *self )
 {
   vec3_t  dirToTarget, dttAdjusted, angleToTarget, angularDiff, xNormal;
   vec3_t  refNormal = { 0.0f, 0.0f, 1.0f };
@@ -1966,7 +1966,7 @@ HMGTurret_CheckTarget
 Used by HMGTurret_Think to check enemies for validity
 ================
 */
-qboolean HMGTurret_CheckTarget( gentity_t *self, gentity_t *target, qboolean ignorePainted )
+qbool HMGTurret_CheckTarget( gentity_t *self, gentity_t *target, qbool ignorePainted )
 {
   trace_t   trace;
   gentity_t *traceEnt;
@@ -2509,7 +2509,7 @@ G_BuildableRange
 Check whether a point is within some range of a type of buildable
 ===============
 */
-qboolean G_BuildableRange( vec3_t origin, float r, buildable_t buildable )
+qbool G_BuildableRange( vec3_t origin, float r, buildable_t buildable )
 {
   int       entityList[ MAX_GENTITIES ];
   vec3_t    range;
@@ -2570,7 +2570,7 @@ G_BuildablesIntersect
 Test if two buildables intersect each other
 ===============
 */
-static qboolean G_BuildablesIntersect( buildable_t a, vec3_t originA,
+static qbool G_BuildablesIntersect( buildable_t a, vec3_t originA,
                                        buildable_t b, vec3_t originB )
 {
   vec3_t minsA, maxsA;
@@ -2624,7 +2624,7 @@ static int G_CompareBuildablesForRemoval( const void *a, const void *b )
   gentity_t *buildableA, *buildableB;
   int       i;
   int       aPrecedence = 0, bPrecedence = 0;
-  qboolean  aMatches = qfalse, bMatches = qfalse;
+  qbool  aMatches = qfalse, bMatches = qfalse;
 
   buildableA = *(gentity_t **)a;
   buildableB = *(gentity_t **)b;
@@ -2718,9 +2718,9 @@ static itemBuildError_t G_SufficientBPAvailable( buildable_t     buildable,
   team_t            team = BG_Buildable( buildable )->team;
   int               buildPoints = BG_Buildable( buildable )->buildPoints;
   int               remainingBP, remainingSpawns;
-  qboolean          collision = qfalse;
+  qbool          collision = qfalse;
   int               collisionCount = 0;
-  qboolean          repeaterInRange = qfalse;
+  qbool          repeaterInRange = qfalse;
   int               repeaterInRangeCount = 0;
   itemBuildError_t  bpError;
   buildable_t       spawn;
@@ -2905,7 +2905,7 @@ G_SetBuildableLinkState
 Links or unlinks all the buildable entities
 ================
 */
-static void G_SetBuildableLinkState( qboolean link )
+static void G_SetBuildableLinkState( qbool link )
 {
   int       i;
   gentity_t *ent;
@@ -2938,7 +2938,7 @@ itemBuildError_t G_CanBuild( gentity_t *ent, buildable_t buildable, int distance
   itemBuildError_t  reason = IBE_NONE, tempReason;
   gentity_t         *tempent;
   float             minNormal;
-  qboolean          invert;
+  qbool          invert;
   int               contents;
   playerState_t     *ps = &ent->client->ps;
   int               buildPoints;
@@ -3331,7 +3331,7 @@ static gentity_t *G_Build( gentity_t *builder, buildable_t buildable, vec3_t ori
 G_BuildIfValid
 =================
 */
-qboolean G_BuildIfValid( gentity_t *ent, buildable_t buildable )
+qbool G_BuildIfValid( gentity_t *ent, buildable_t buildable )
 {
   float         dist;
   vec3_t        origin;

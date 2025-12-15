@@ -91,7 +91,7 @@ void main_init(int argc, char *argv[]) {
 			glevel = 2;
 		else if (strncmp(argv[i], "-g", 2) == 0) {	/* -gn[,x] */
 			char *p = strchr(argv[i], ',');
-			glevel = atoi(argv[i]+2);
+			glevel = Q_atoi(argv[i]+2);
 			if (p) {
 				comment = p + 1;
 				if (glevel == 0)

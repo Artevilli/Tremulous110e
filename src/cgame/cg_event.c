@@ -44,7 +44,7 @@ static void CG_Obituary( entityState_t *ent )
   char          className[ 64 ];
   gender_t      gender;
   clientInfo_t  *ci;
-  qboolean      teamKill = qfalse;
+  qbool      teamKill = qfalse;
 
   target = ent->otherEntityNum;
   attacker = ent->otherEntityNum2;

@@ -255,7 +255,7 @@ void  trap_S_StartLocalSound( sfxHandle_t sfx, int channelNum )
   syscall( CG_S_STARTLOCALSOUND, sfx, channelNum );
 }
 
-void  trap_S_ClearLoopingSounds( qboolean killall )
+void  trap_S_ClearLoopingSounds( qbool killall )
 {
   syscall( CG_S_CLEARLOOPINGSOUNDS, killall );
 }
@@ -285,7 +285,7 @@ void  trap_S_Respatialize( int entityNum, const vec3_t origin, vec3_t axis[3], i
   syscall( CG_S_RESPATIALIZE, entityNum, origin, axis, inwater );
 }
 
-sfxHandle_t trap_S_RegisterSound( const char *sample, qboolean compressed )
+sfxHandle_t trap_S_RegisterSound( const char *sample, qbool compressed )
 {
   return syscall( CG_S_REGISTERSOUND, sample, compressed );
 }
@@ -412,12 +412,12 @@ void trap_GetCurrentSnapshotNumber( int *snapshotNumber, int *serverTime )
   syscall( CG_GETCURRENTSNAPSHOTNUMBER, snapshotNumber, serverTime );
 }
 
-qboolean  trap_GetSnapshot( int snapshotNumber, snapshot_t *snapshot )
+qbool  trap_GetSnapshot( int snapshotNumber, snapshot_t *snapshot )
 {
   return syscall( CG_GETSNAPSHOT, snapshotNumber, snapshot );
 }
 
-qboolean  trap_GetServerCommand( int serverCommandNumber )
+qbool  trap_GetServerCommand( int serverCommandNumber )
 {
   return syscall( CG_GETSERVERCOMMAND, serverCommandNumber );
 }
@@ -427,7 +427,7 @@ int trap_GetCurrentCmdNumber( void )
   return syscall( CG_GETCURRENTCMDNUMBER );
 }
 
-qboolean  trap_GetUserCmd( int cmdNumber, usercmd_t *ucmd )
+qbool  trap_GetUserCmd( int cmdNumber, usercmd_t *ucmd )
 {
   return syscall( CG_GETUSERCMD, cmdNumber, ucmd );
 }
@@ -452,7 +452,7 @@ int trap_MemoryRemaining( void )
   return syscall( CG_MEMORY_REMAINING );
 }
 
-qboolean trap_Key_IsDown( int keynum )
+qbool trap_Key_IsDown( int keynum )
 {
   return syscall( CG_KEY_ISDOWN, keynum );
 }
@@ -573,10 +573,10 @@ void trap_Key_SetBinding( int keynum, const char *binding ) {
   syscall( CG_KEY_SETBINDING, keynum, binding );
 }
 
-void trap_Key_SetOverstrikeMode( qboolean state ) {
+void trap_Key_SetOverstrikeMode( qbool state ) {
   syscall( CG_KEY_SETOVERSTRIKEMODE, state );
 }
 
-qboolean trap_Key_GetOverstrikeMode( void ) {
+qbool trap_Key_GetOverstrikeMode( void ) {
   return syscall( CG_KEY_GETOVERSTRIKEMODE );
 }

@@ -46,9 +46,9 @@ typedef struct
 
   int       msec;
 
-  qboolean  walking;
-  qboolean  groundPlane;
-  qboolean  ladder;
+  qbool  walking;
+  qbool  groundPlane;
+  qbool  ladder;
   trace_t   groundTrace;
 
   float     impactSpeed;
@@ -82,7 +82,7 @@ void PM_ClipVelocity( vec3_t in, vec3_t normal, vec3_t out, float overbounce );
 void PM_AddTouchEnt( int entityNum );
 void PM_AddEvent( int newEvent );
 
-qboolean  PM_SlideMove( qboolean gravity );
+qbool  PM_SlideMove( qbool gravity );
 void      PM_StepEvent( vec3_t from, vec3_t to, vec3_t normal );
-qboolean  PM_StepSlideMove( qboolean gravity, qboolean predictive );
-qboolean  PM_PredictStepMove( void );
+qbool  PM_StepSlideMove( qbool gravity, qbool predictive );
+qbool  PM_PredictStepMove( void );

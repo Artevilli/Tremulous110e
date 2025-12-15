@@ -30,6 +30,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <termios.h>
 #include <fcntl.h>
 #include <sys/time.h>
+#include <errno.h>
+#include <stdio.h>
 
 /*
 =============================================================
@@ -41,13 +43,15 @@ called before and after a stdout or stderr output
 =============================================================
 */
 
+extern qbool stdinIsATTY;
+static qbool stdin_active;
 // general flag to tell about tty console mode
-static qboolean ttycon_on = qfalse;
-static int ttycon_hide = 0;
+static qbool ttycon_on = qfalse;
+static qint ttycon_hide = 0;
 
 // some key codes that the terminal may be using, initialised on start up
-static int TTY_erase;
-static int TTY_eof;
+static qint TTY_erase;
+static qint TTY_eof;
 
 static struct termios TTY_tc;
 
@@ -57,7 +61,7 @@ static field_t TTY_con;
 // but it's safer more modular to have our own here
 #define CON_HISTORY 32
 static field_t ttyEditLines[ CON_HISTORY ];
-static int hist_current = -1, hist_count = 0;
+static qint hist_current = -1, hist_count = 0;
 
 /*
 ==================
@@ -69,8 +73,8 @@ FIXME relevant?
 */
 static void CON_FlushIn( void )
 {
-	char key;
-	while (read(0, &key, 1)!=-1);
+	qchar key;
+	while (read(STDIN_FILENO, &key, 1)!=-1);
 }
 
 /*
@@ -84,15 +88,31 @@ send "\b \b"
 (FIXME there may be a way to find out if '\b' alone would work though)
 ==================
 */
-static void CON_Back( void )
+static void
+CON_Back(void)
 {
-	char key;
-	key = '\b';
-	write(1, &key, 1);
-	key = ' ';
-	write(1, &key, 1);
-	key = '\b';
-	write(1, &key, 1);
+  qchar key;
+
+  key = '\b';
+
+  if (write(STDOUT_FILENO, &key, 1) == -1)
+  {
+    return;
+  }
+
+  key = ' ';
+
+  if (write(STDOUT_FILENO, &key, 1) == -1)
+  {
+    return;
+  }
+
+  key = '\b';
+
+  if (write(STDOUT_FILENO, &key, 1) == -1)
+  {
+    return;
+  }
 }
 
 /*
@@ -107,7 +127,7 @@ static void CON_Hide( void )
 {
 	if( ttycon_on )
 	{
-		int i;
+		qint i;
 		if (ttycon_hide)
 		{
 			ttycon_hide++;
@@ -133,26 +153,43 @@ Show the current line
 FIXME need to position the cursor if needed?
 ==================
 */
-static void CON_Show( void )
+static void
+CON_Show(void)
 {
-	if( ttycon_on )
-	{
-		int i;
+  qint i;
+  size_t result;
+  qchar message[64];
 
-		assert(ttycon_hide>0);
-		ttycon_hide--;
-		if (ttycon_hide == 0)
-		{
-			write( 1, "]", 1 );
-			if (TTY_con.cursor)
-			{
-				for (i=0; i<TTY_con.cursor; i++)
-				{
-					write(1, TTY_con.buffer+i, 1);
-				}
-			}
-		}
-	}
+  if (ttycon_on)
+  {
+    assert(ttycon_hide > 0);
+    ttycon_hide--;
+
+    if (ttycon_hide == 0)
+    {
+      result = write(STDOUT_FILENO, "]", 1);
+
+      if (result == -1)
+      {
+        perror("write failed for ']'");
+      }
+
+      if (TTY_con.cursor)
+      {
+        for(i = 0;i < TTY_con.cursor;i++)
+        {
+          result = write(STDOUT_FILENO, TTY_con.buffer + i, 1);
+
+          if (result == -1)
+          {
+            snprintf(message, sizeof(message), "write failed at index %d", i);
+            perror(message);
+            break;
+          }
+        }
+      }
+    }
+  }
 }
 
 /*
@@ -167,11 +204,11 @@ void CON_Shutdown( void )
 	if (ttycon_on)
 	{
 		CON_Back(); // Delete "]"
-		tcsetattr (0, TCSADRAIN, &TTY_tc);
+		tcsetattr (STDIN_FILENO, TCSADRAIN, &TTY_tc);
 	}
 
   // Restore blocking to stdin reads
-  fcntl( 0, F_SETFL, fcntl( 0, F_GETFL, 0 ) & ~O_NONBLOCK );
+  fcntl( STDIN_FILENO, F_SETFL, fcntl( STDIN_FILENO, F_GETFL, 0 ) & ~O_NONBLOCK );
 }
 
 /*
@@ -181,7 +218,7 @@ Hist_Add
 */
 void Hist_Add(field_t *field)
 {
-	int i;
+	qint i;
 	assert(hist_count <= CON_HISTORY);
 	assert(hist_count >= 0);
 	assert(hist_current >= -1);
@@ -206,7 +243,7 @@ Hist_Prev
 */
 field_t *Hist_Prev( void )
 {
-	int hist_prev;
+	qint hist_prev;
 	assert(hist_count <= CON_HISTORY);
 	assert(hist_count >= 0);
 	assert(hist_current >= -1);
@@ -244,6 +281,20 @@ field_t *Hist_Next( void )
 
 /*
 ==================
+CON_SigCont
+
+Reinitialize console input after receiving SIGCONT, as on Linux the terminal seems to lose all
+set attributes if user did CTRL+Z and then does fg again.
+==================
+*/
+void
+CON_SigCont(qint signum)
+{
+  CON_Init();
+}
+
+/*
+==================
 CON_Init
 
 Initialize the console input (tty mode if possible)
@@ -258,18 +309,22 @@ void CON_Init( void )
 	signal(SIGTTIN, SIG_IGN);
 	signal(SIGTTOU, SIG_IGN);
 
-	// Make stdin reads non-blocking
-	fcntl( 0, F_SETFL, fcntl( 0, F_GETFL, 0 ) | O_NONBLOCK );
+        //if SIGCONT is received, reinitialize console
+        signal(SIGCONT, CON_SigCont);
 
-	if (isatty(STDIN_FILENO)!=1)
+	// Make stdin reads non-blocking
+	fcntl( STDIN_FILENO, F_SETFL, fcntl( STDIN_FILENO, F_GETFL, 0 ) | O_NONBLOCK );
+
+	if (!stdinIsATTY)
 	{
-		Com_Printf( "stdin is not a tty, tty console mode disabled\n");
+		Com_Printf( "tty console mode disabled\n");
 		ttycon_on = qfalse;
+		stdin_active = qtrue;
 		return;
 	}
 
 	Field_Clear(&TTY_con);
-	tcgetattr (0, &TTY_tc);
+	tcgetattr (STDIN_FILENO, &TTY_tc);
 	TTY_erase = TTY_tc.c_cc[VERASE];
 	TTY_eof = TTY_tc.c_cc[VEOF];
 	tc = TTY_tc;
@@ -292,7 +347,7 @@ void CON_Init( void )
 	tc.c_iflag &= ~(ISTRIP | INPCK);
 	tc.c_cc[VMIN] = 1;
 	tc.c_cc[VTIME] = 0;
-	tcsetattr (0, TCSADRAIN, &tc);
+	tcsetattr (STDIN_FILENO, TCSADRAIN, &tc);
 	ttycon_on = qtrue;
 }
 
@@ -301,145 +356,188 @@ void CON_Init( void )
 CON_Input
 ==================
 */
-char *CON_Input( void )
+qchar *
+CON_Input(void)
 {
-	// we use this when sending back commands
-	static char text[256];
-	int avail;
-	char key;
-	field_t *history;
+  //use when sending back commands
+  static qchar text[MAX_EDIT_LINE];
+  size_t wret; //for write return value
+  qint avail;
+  qchar key;
+  field_t *history;
+  qint len;
+  fd_set fdset;
+  struct timeval timeout;
 
-	if( ttycon_on )
-	{
-		avail = read(0, &key, 1);
-		if (avail != -1)
-		{
-			// we have something
-			// backspace?
-			// NOTE TTimo testing a lot of values .. seems it's the only way to get it to work everywhere
-			if ((key == TTY_erase) || (key == 127) || (key == 8))
-			{
-				if (TTY_con.cursor > 0)
-				{
-					TTY_con.cursor--;
-					TTY_con.buffer[TTY_con.cursor] = '\0';
-					CON_Back();
-				}
-				return NULL;
-			}
-			// check if this is a control char
-			if ((key) && (key) < ' ')
-			{
-				if (key == '\n')
-				{
-					// push it in history
-					Hist_Add(&TTY_con);
-					strcpy(text, TTY_con.buffer);
-					Field_Clear(&TTY_con);
-					key = '\n';
-					write(1, &key, 1);
-					write( 1, "]", 1 );
-					return text;
-				}
-				if (key == '\t')
-				{
-					CON_Hide();
-					Field_AutoComplete( &TTY_con );
-					CON_Show();
-					return NULL;
-				}
-				avail = read(0, &key, 1);
-				if (avail != -1)
-				{
-					// VT 100 keys
-					if (key == '[' || key == 'O')
-					{
-						avail = read(0, &key, 1);
-						if (avail != -1)
-						{
-							switch (key)
-							{
-								case 'A':
-									history = Hist_Prev();
-									if (history)
-									{
-										CON_Hide();
-										TTY_con = *history;
-										CON_Show();
-									}
-									CON_FlushIn();
-									return NULL;
-									break;
-								case 'B':
-									history = Hist_Next();
-									CON_Hide();
-									if (history)
-									{
-										TTY_con = *history;
-									} else
-									{
-										Field_Clear(&TTY_con);
-									}
-									CON_Show();
-									CON_FlushIn();
-									return NULL;
-									break;
-								case 'C':
-									return NULL;
-								case 'D':
-									return NULL;
-							}
-						}
-					}
-				}
-				Com_DPrintf("droping ISCTL sequence: %d, TTY_erase: %d\n", key, TTY_erase);
-				CON_FlushIn();
-				return NULL;
-			}
-			// push regular character
-			TTY_con.buffer[TTY_con.cursor] = key;
-			TTY_con.cursor++;
-			// print the current line (this is differential)
-			write(1, &key, 1);
-		}
+  if (ttycon_on)
+  {
+    avail = read(STDIN_FILENO, &key, 1);
 
-		return NULL;
-	}
-	else
-	{
-		int     len;
-		fd_set  fdset;
-		struct timeval timeout;
-		static qboolean stdin_active;
+    if (avail != -1)
+    {
+      //we have something .. backspace?
+      //NOTE: TTimo testing a lot of values .. seems it's the only way to get it to work everywhere
 
-		if (!com_dedicated || !com_dedicated->value)
-			return NULL;
+      if ((key == TTY_erase) || (key == 127) || (key == 8))
+      {
+        if (TTY_con.cursor > 0)
+        {
+          TTY_con.cursor--;
+          TTY_con.buffer[TTY_con.cursor] = '\0';
+          CON_Back();
+        }
 
-		if (!stdin_active)
-			return NULL;
+        return NULL;
+      }
 
-		FD_ZERO(&fdset);
-		FD_SET(0, &fdset); // stdin
-		timeout.tv_sec = 0;
-		timeout.tv_usec = 0;
-		if (select (1, &fdset, NULL, NULL, &timeout) == -1 || !FD_ISSET(0, &fdset))
-		{
-			return NULL;
-		}
+      //check if control qchar
+      if ((key) && (key) < ' ')
+      {
+        if (key == '\n')
+        {
+          //push it in history
+          Hist_Add(&TTY_con);
+          Q_strncpyz(text, TTY_con.buffer, sizeof(text));
+          Field_Clear(&TTY_con);
+          key = '\n';
+          wret = write(1, &key, 1);
 
-		len = read (0, text, sizeof(text));
-		if (len == 0)
-		{ // eof!
-			stdin_active = qfalse;
-			return NULL;
-		}
+          if (wret == -1)
+          {
+            Com_DPrintf("failed to write newline to console: %s\n", strerror(errno));
+          }
 
-		if (len < 1)
-			return NULL;
-		text[len-1] = 0;    // rip off the /n and terminate
+          wret = write(1, "]", 1);
 
-		return text;
-	}
+          if (wret == -1)
+          {
+            Com_DPrintf("failed to write ']' to console: %s\n", strerror(errno));
+          }
+
+          return text;
+        }
+
+        if (key == '\t')
+        {
+          CON_Hide();
+          Field_AutoComplete(&TTY_con);
+          CON_Show();
+          return NULL;
+        }
+
+        avail = read(STDIN_FILENO, &key, 1);
+
+        if (avail != -1)
+        {
+          //vt 100 keys
+          if (key == '[' || key == 'O')
+          {
+            avail = read(STDIN_FILENO, &key, 1);
+
+            if (avail != -1)
+            {
+              switch(key)
+              {
+                case
+                'A':
+                  history = Hist_Prev();
+
+                  if (history)
+                  {
+                    CON_Hide();
+                    TTY_con = *history;
+                    CON_Show();
+                  }
+
+                  CON_FlushIn();
+                  return NULL;
+                  break;
+
+                case
+                'B':
+                  history = Hist_Next();
+                  CON_Hide();
+
+                  if (history)
+                  {
+                    TTY_con = *history;
+                  }
+                  else
+                  {
+                    Field_Clear(&TTY_con);
+                  }
+
+                  CON_Show();
+                  CON_FlushIn();
+                  return NULL;
+                  break;
+
+                case
+                'C':
+                  return NULL;
+
+                case
+                'D':
+                  return NULL;
+              }
+            }
+          }
+        }
+
+        Com_DPrintf("droping isctl sequence: %d, tty_erase: %d\n", key, TTY_erase);
+        CON_FlushIn();
+        return NULL;
+      }
+
+      if (TTY_con.cursor >= sizeof(text) - 1)
+      {
+        return NULL;
+      }
+
+      //push regular character
+      TTY_con.buffer[TTY_con.cursor] = key;
+      TTY_con.cursor++;
+      //print the current line (this is differential)
+      wret = write(STDOUT_FILENO, &key, 1);
+
+      if (wret == -1)
+      {
+        Com_DPrintf("failed to write character to console: %s\n", strerror(errno));
+      }
+    }
+
+    return NULL;
+  }
+  else if (stdin_active)
+  {
+    FD_ZERO(&fdset);
+    FD_SET(STDIN_FILENO, &fdset); //stdin
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
+
+    if (select (STDIN_FILENO + 1, &fdset, NULL, NULL, &timeout) == -1 || !FD_ISSET(STDIN_FILENO, &fdset))
+    {
+      return NULL;
+    }
+
+    len = read (STDIN_FILENO, text, sizeof(text));
+
+    if (len == 0)
+    {
+      stdin_active = qfalse;
+      return NULL; //eof!
+    }
+
+    if (len < 1)
+    {
+      return NULL;
+    }
+
+    text[len-1] = 0; //rip off the /n and terminate
+    return text;
+  }
+
+  return NULL;
 }
 
 /*
@@ -447,7 +545,7 @@ char *CON_Input( void )
 CON_Print
 ==================
 */
-void CON_Print( const char *msg )
+void CON_Print( const qchar *msg )
 {
 	CON_Hide( );
 

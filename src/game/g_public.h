@@ -33,6 +33,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define SVF_CLIENTMASK 0x00000002
 
+#define SVF_BOT                    0x00000008  // set if the entity is a bot
+
 #define SVF_BROADCAST           0x00000020  // send to all connected clients
 #define SVF_PORTAL              0x00000040  // merge a second pvs at origin2 into snapshots
 #define SVF_USE_CURRENT_ORIGIN  0x00000080  // entity->r.currentOrigin instead of entity->s.origin
@@ -51,13 +53,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 typedef struct {
   entityState_t s;        // communicated by server to clients
 
-  qboolean  linked;       // qfalse if not in any good cluster
+  qbool  linked;       // qfalse if not in any good cluster
   int     linkcount;
 
   int     svFlags;      // SVF_NOCLIENT, SVF_BROADCAST, etc
   int     singleClient;   // only send to this client when SVF_SINGLECLIENT is set
 
-  qboolean  bmodel;       // if false, assume an explicit mins / maxs bounding box
+  qbool  bmodel;       // if false, assume an explicit mins / maxs bounding box
                   // only set by trap_SetBrushModel
   vec3_t    mins, maxs;
   int     contents;     // CONTENTS_TRIGGER, CONTENTS_SOLID, CONTENTS_BODY, etc
@@ -178,7 +180,7 @@ typedef enum {
 
   G_IN_PVS_IGNORE_PORTALS,  // ( const vec3_t p1, const vec3_t p2 );
 
-  G_ADJUST_AREA_PORTAL_STATE, // ( gentity_t *ent, qboolean open );
+  G_ADJUST_AREA_PORTAL_STATE, // ( gentity_t *ent, qbool open );
 
   G_AREAS_CONNECTED,  // ( int area1, int area2 );
 
@@ -199,7 +201,7 @@ typedef enum {
 
   G_GET_USERCMD,  // ( int clientNum, usercmd_t *cmd )
 
-  G_GET_ENTITY_TOKEN, // qboolean ( char *buffer, int bufferSize )
+  G_GET_ENTITY_TOKEN, // qbool ( char *buffer, int bufferSize )
   // Retrieves the next string token from the entity spawn text, returning
   // false when all tokens have been parsed.
   // This should only be done at GAME_INIT time.
@@ -238,34 +240,39 @@ typedef enum {
 //
 // functions exported by the game subsystem
 //
-typedef enum {
-  GAME_INIT,  // ( int levelTime, int randomSeed, int restart );
+typedef enum
+{
+  GAME_INIT, // ( int levelTime, int randomSeed, int restart );
   // init and shutdown will be called every single level
   // The game should call G_GET_ENTITY_TOKEN to parse through all the
   // entity configuration text and spawn gentities.
 
-  GAME_SHUTDOWN,  // (void);
+  GAME_SHUTDOWN, // (void);
 
-  GAME_CLIENT_CONNECT,  // ( int clientNum, qboolean firstTime );
+  GAME_CLIENT_CONNECT, // ( int clientNum, qbool firstTime );
   // return NULL if the client is allowed to connect, otherwise return
   // a text string with the reason for denial
 
-  GAME_CLIENT_BEGIN,        // ( int clientNum );
+  GAME_CLIENT_BEGIN, // ( int clientNum );
 
   GAME_CLIENT_USERINFO_CHANGED, // ( int clientNum );
 
-  GAME_CLIENT_DISCONNECT,     // ( int clientNum );
+  GAME_CLIENT_DISCONNECT, // ( int clientNum );
 
-  GAME_CLIENT_COMMAND,      // ( int clientNum );
+  GAME_CLIENT_COMMAND, // ( int clientNum );
 
-  GAME_CLIENT_THINK,        // ( int clientNum );
+  GAME_CLIENT_THINK, // ( int clientNum );
 
-  GAME_RUN_FRAME,         // ( int levelTime );
+  GAME_RUN_FRAME, // ( int levelTime );
 
-  GAME_CONSOLE_COMMAND      // ( void );
-  // ConsoleCommand will be called when a command has been issued
-  // that is not recognized as a builtin function.
-  // The game can issue trap_argc() / trap_argv() commands to get the command
-  // and parameters.  Return qfalse if the game doesn't recognize it as a command.
+  GAME_CONSOLE_COMMAND,
+// ( void );
+// ConsoleCommand will be called when a command has been issued
+// that is not recognized as a builtin function.
+// The game can issue trap_argc() / trap_argv() commands to get the command
+// and parameters.  Return qfalse if the game doesn't recognize it as a command.
+  GAME_DEMO_COMMAND,         // ( int cmd, const char *string );
+
+  BOTAI_START_FRAME			// ( int time );
 } gameExport_t;
 

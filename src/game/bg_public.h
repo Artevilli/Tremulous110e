@@ -163,8 +163,8 @@ typedef struct
   usercmd_t     cmd;
   int           tracemask;      // collide against these types of surfaces
   int           debugLevel;     // if set, diagnostic output will be printed
-  qboolean      noFootsteps;    // if the game is setup for no footsteps by the server
-  qboolean      autoWeaponHit[ 32 ];
+  qbool      noFootsteps;    // if the game is setup for no footsteps by the server
+  qbool      autoWeaponHit[ 32 ];
 
   int           framecount;
 
@@ -971,21 +971,21 @@ typedef struct
 
   int           nextthink;
   int           buildTime;
-  qboolean      usable;
+  qbool      usable;
 
   int           turretRange;
   int           turretFireSpeed;
   weapon_t      turretProjType;
 
   float         minNormal;
-  qboolean      invertNormal;
+  qbool      invertNormal;
 
-  qboolean      creepTest;
+  qbool      creepTest;
   int           creepSize;
 
-  qboolean      dccTest;
-  qboolean      transparentTest;
-  qboolean      uniqueTest;
+  qbool      dccTest;
+  qbool      transparentTest;
+  qbool      uniqueTest;
 } buildableAttributes_t;
 
 typedef struct
@@ -1014,8 +1014,8 @@ typedef struct
 
   int       maxAmmo;
   int       maxClips;
-  qboolean  infiniteAmmo;
-  qboolean  usesEnergy;
+  qbool  infiniteAmmo;
+  qbool  usesEnergy;
 
   int       repeatRate1;
   int       repeatRate2;
@@ -1023,14 +1023,14 @@ typedef struct
   int       reloadTime;
   float     knockbackScale;
 
-  qboolean  hasAltMode;
-  qboolean  hasThirdMode;
+  qbool  hasAltMode;
+  qbool  hasThirdMode;
 
-  qboolean  canZoom;
+  qbool  canZoom;
   float     zoomFov;
 
-  qboolean  purchasable;
-  qboolean  longRanged;
+  qbool  purchasable;
+  qbool  longRanged;
 
   int       buildDelay;
 
@@ -1053,24 +1053,24 @@ typedef struct
 
   char      *icon;
 
-  qboolean  purchasable;
-  qboolean  usable;
+  qbool  purchasable;
+  qbool  usable;
 
   team_t    team;
 } upgradeAttributes_t;
 
-qboolean  BG_WeaponIsFull( weapon_t weapon, int stats[ ], int ammo, int clips );
+qbool  BG_WeaponIsFull( weapon_t weapon, int stats[ ], int ammo, int clips );
 void      BG_AddWeaponToInventory( int weapon, int stats[ ] );
 void      BG_RemoveWeaponFromInventory( int weapon, int stats[ ] );
-qboolean  BG_InventoryContainsWeapon( int weapon, int stats[ ] );
+qbool  BG_InventoryContainsWeapon( int weapon, int stats[ ] );
 void      BG_AddUpgradeToInventory( int item, int stats[ ] );
 void      BG_RemoveUpgradeFromInventory( int item, int stats[ ] );
-qboolean  BG_InventoryContainsUpgrade( int item, int stats[ ] );
+qbool  BG_InventoryContainsUpgrade( int item, int stats[ ] );
 void      BG_ActivateUpgrade( int item, int stats[ ] );
 void      BG_DeactivateUpgrade( int item, int stats[ ] );
-qboolean  BG_UpgradeIsActive( int item, int stats[ ] );
-qboolean  BG_RotateAxis( vec3_t surfNormal, vec3_t inAxis[ 3 ],
-                         vec3_t outAxis[ 3 ], qboolean inverse, qboolean ceiling );
+qbool  BG_UpgradeIsActive( int item, int stats[ ] );
+qbool  BG_RotateAxis( vec3_t surfNormal, vec3_t inAxis[ 3 ],
+                         vec3_t outAxis[ 3 ], qbool inverse, qbool ceiling );
 void      BG_GetClientNormal( const playerState_t *ps, vec3_t normal );
 void      BG_PositionBuildableRelativeToPlayer( const playerState_t *ps,
                                                 const vec3_t mins, const vec3_t maxs,
@@ -1082,7 +1082,7 @@ int       BG_GetValueOfHuman( playerState_t *ps );
 const buildableAttributes_t *BG_BuildableByName( const char *name );
 const buildableAttributes_t *BG_BuildableByEntityName( const char *name );
 const buildableAttributes_t *BG_Buildable( buildable_t buildable );
-qboolean                    BG_BuildableAllowedInStage( buildable_t buildable,
+qbool                    BG_BuildableAllowedInStage( buildable_t buildable,
                                                         stage_t stage );
 
 buildableConfig_t           *BG_BuildableConfig( buildable_t buildable );
@@ -1092,7 +1092,7 @@ void                        BG_InitBuildableConfigs( void );
 
 const classAttributes_t     *BG_ClassByName( const char *name );
 const classAttributes_t     *BG_Class( class_t class );
-qboolean                    BG_ClassAllowedInStage( class_t class,
+qbool                    BG_ClassAllowedInStage( class_t class,
                                                     stage_t stage );
 
 classConfig_t               *BG_ClassConfig( class_t class );
@@ -1100,7 +1100,7 @@ classConfig_t               *BG_ClassConfig( class_t class );
 void                        BG_ClassBoundingBox( class_t class, vec3_t mins,
                                                  vec3_t maxs, vec3_t cmaxs,
                                                  vec3_t dmins, vec3_t dmaxs );
-qboolean                    BG_ClassHasAbility( class_t class, int ability );
+qbool                    BG_ClassHasAbility( class_t class, int ability );
 int                         BG_ClassCanEvolveFromTo( class_t fclass,
                                                      class_t tclass,
                                                      int credits, int num );
@@ -1109,13 +1109,18 @@ void                        BG_InitClassConfigs( void );
 
 const weaponAttributes_t    *BG_WeaponByName( const char *name );
 const weaponAttributes_t    *BG_Weapon( weapon_t weapon );
-qboolean                    BG_WeaponAllowedInStage( weapon_t weapon,
+qbool                    BG_WeaponAllowedInStage( weapon_t weapon,
                                                      stage_t stage );
 
 const upgradeAttributes_t   *BG_UpgradeByName( const char *name );
 const upgradeAttributes_t   *BG_Upgrade( upgrade_t upgrade );
-qboolean                    BG_UpgradeAllowedInStage( upgrade_t upgrade,
+qbool                    BG_UpgradeAllowedInStage( upgrade_t upgrade,
                                                       stage_t stage );
+
+//g_dmflags->integer flags
+#define	DF_NO_FALLING 8
+#define DF_FIXED_FOV 16
+#define	DF_NO_FOOTSTEPS 32
 
 // content masks
 #define MASK_ALL          (-1)
@@ -1170,10 +1175,10 @@ void  BG_EvaluateTrajectoryDelta( const trajectory_t *tr, int atTime, vec3_t res
 
 void  BG_AddPredictableEventToPlayerstate( int newEvent, int eventParm, playerState_t *ps );
 
-void  BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qboolean snap );
-void  BG_PlayerStateToEntityStateExtraPolate( playerState_t *ps, entityState_t *s, int time, qboolean snap );
+void  BG_PlayerStateToEntityState( playerState_t *ps, entityState_t *s, qbool snap );
+void  BG_PlayerStateToEntityStateExtraPolate( playerState_t *ps, entityState_t *s, int time, qbool snap );
 
-qboolean  BG_PlayerTouchesItem( playerState_t *ps, entityState_t *item, int atTime );
+qbool  BG_PlayerTouchesItem( playerState_t *ps, entityState_t *item, int atTime );
 
 #define ARENAS_PER_TIER   4
 #define MAX_ARENAS      1024
@@ -1182,19 +1187,19 @@ qboolean  BG_PlayerTouchesItem( playerState_t *ps, entityState_t *item, int atTi
 #define MAX_BOTS      1024
 #define MAX_BOTS_TEXT   8192
 
-float   atof_neg( char *token, qboolean allowNegative );
-int     atoi_neg( char *token, qboolean allowNegative );
+float   atof_neg( char *token, qbool allowNegative );
+int     atoi_neg( char *token, qbool allowNegative );
 
 void BG_ParseCSVEquipmentList( const char *string, weapon_t *weapons, int weaponsSize,
     upgrade_t *upgrades, int upgradesSize );
 void BG_ParseCSVClassList( const char *string, class_t *classes, int classesSize );
 void BG_ParseCSVBuildableList( const char *string, buildable_t *buildables, int buildablesSize );
 void BG_InitAllowedGameElements( void );
-qboolean BG_WeaponIsAllowed( weapon_t weapon );
-qboolean BG_UpgradeIsAllowed( upgrade_t upgrade );
-qboolean BG_ClassIsAllowed( class_t class );
-qboolean BG_BuildableIsAllowed( buildable_t buildable );
-qboolean BG_UpgradeClassAvailable( playerState_t *ps );
+qbool BG_WeaponIsAllowed( weapon_t weapon );
+qbool BG_UpgradeIsAllowed( upgrade_t upgrade );
+qbool BG_ClassIsAllowed( class_t class );
+qbool BG_BuildableIsAllowed( buildable_t buildable );
+qbool BG_UpgradeClassAvailable( playerState_t *ps );
 weapon_t BG_PrimaryWeapon( int stats[ ] );
 
 typedef struct 
@@ -1202,7 +1207,7 @@ typedef struct
   unsigned int hi;
   unsigned int lo;
 } clientList_t;
-qboolean BG_ClientListTest( clientList_t *list, int clientNum );
+qbool BG_ClientListTest( clientList_t *list, int clientNum );
 void BG_ClientListAdd( clientList_t *list, int clientNum );
 void BG_ClientListRemove( clientList_t *list, int clientNum );
 char *BG_ClientListString( clientList_t *list );

@@ -87,12 +87,12 @@ struct gentity_s
 
   struct gclient_s  *client;        // NULL if not a client
 
-  qboolean          inuse;
+  qbool          inuse;
 
   char              *classname;     // set in QuakeEd
   int               spawnflags;     // set in QuakeEd
 
-  qboolean          neverFree;      // if true, FreeEntity will only unlink
+  qbool          neverFree;      // if true, FreeEntity will only unlink
                                     // bodyque uses this
 
   int               flags;          // FL_* variables
@@ -102,10 +102,10 @@ struct gentity_s
   int               freetime;       // level.time when the object was freed
 
   int               eventTime;      // events will be cleared EVENT_VALID_MSEC after set
-  qboolean          freeAfterEvent;
-  qboolean          unlinkAfterEvent;
+  qbool          freeAfterEvent;
+  qbool          unlinkAfterEvent;
 
-  qboolean          physicsObject;  // if true, it can be pushed by movers and fall off edges
+  qbool          physicsObject;  // if true, it can be pushed by movers and fall off edges
                                     // all game items are physicsObjects,
   float             physicsBounce;  // 1.0 = continuous bounce, 0.0 = no bounce
   int               clipmask;       // brushes with this content value will be collided against
@@ -143,7 +143,7 @@ struct gentity_s
   vec3_t            movedir;
 
   // acceleration evaluation
-  qboolean          evaluateAcceleration;
+  qbool          evaluateAcceleration;
   vec3_t            oldVelocity;
   vec3_t            acceleration;
   vec3_t            oldAccel;
@@ -165,7 +165,7 @@ struct gentity_s
   int               health;
   int               lastHealth; // currently only used for overmind
 
-  qboolean          takedamage;
+  qbool          takedamage;
 
   int               damage;
   int               splashDamage; // quad will increase this without increasing radius
@@ -196,16 +196,16 @@ struct gentity_s
 
   team_t            buildableTeam;      // buildable item team
   gentity_t         *parentNode;        // for creep and defence/spawn dependencies
-  qboolean          active;             // for power repeater, but could be useful elsewhere
-  qboolean          powered;            // for human buildables
+  qbool          active;             // for power repeater, but could be useful elsewhere
+  qbool          powered;            // for human buildables
   int               builtBy;            // clientNum of person that built this
   gentity_t         *dccNode;           // controlling dcc
   gentity_t         *overmindNode;      // controlling overmind
-  qboolean          dcced;              // controlled by a dcc or not?
-  qboolean          spawned;            // whether or not this buildable has finished spawning
+  qbool          dcced;              // controlled by a dcc or not?
+  qbool          spawned;            // whether or not this buildable has finished spawning
   int               buildTime;          // when this buildable was built
   int               time1000;           // timer evaluated every second
-  qboolean          deconstruct;        // deconstruct if no BP left
+  qbool          deconstruct;        // deconstruct if no BP left
   int               deconstructTime;    // time at which structure marked
   int               overmindAttackTimer;
   int               overmindDyingTimer;
@@ -213,11 +213,11 @@ struct gentity_s
   int               nextPhysicsTime;    // buildables don't need to check what they're sitting on
                                         // every single frame.. so only do it periodically
   int               clientSpawnTime;    // the time until this spawn can spawn a client
-  qboolean          lev1Grabbed;        // for turrets interacting with lev1s
+  qbool          lev1Grabbed;        // for turrets interacting with lev1s
   int               lev1GrabTime;       // for turrets interacting with lev1s
 
   int               credits[ MAX_CLIENTS ];     // human credits for each client
-  qboolean          creditsHash[ MAX_CLIENTS ]; // track who has claimed credit
+  qbool          creditsHash[ MAX_CLIENTS ]; // track who has claimed credit
   int               killedBy;                   // clientNum of killer
 
   gentity_t         *targeted;          // true if the player is currently a valid target of a turret
@@ -227,7 +227,7 @@ struct gentity_s
 
   gentity_t         *builder;           // occupant of this hovel
 
-  qboolean          nonSegModel;        // this entity uses a nonsegmented player model
+  qbool          nonSegModel;        // this entity uses a nonsegmented player model
 
   buildable_t       bTriggers[ BA_NUM_BUILDABLES ]; // which buildables are triggers
   class_t           cTriggers[ PCL_NUM_CLASSES ];   // which classes are triggers
@@ -283,15 +283,15 @@ typedef struct
 {
   clientConnected_t   connected;
   usercmd_t           cmd;                // we would lose angles if not persistant
-  qboolean            localClient;        // true if "ip" info key is "localhost"
-  qboolean            initialSpawn;       // the first spawn should be at a cool location
-  qboolean            pmoveFixed;         //
+  qbool            localClient;        // true if "ip" info key is "localhost"
+  qbool            initialSpawn;       // the first spawn should be at a cool location
+  qbool            pmoveFixed;         //
   char                netname[ MAX_NETNAME ];
   int                 maxHealth;          // for handicapping
   int                 enterTime;          // level.time the client entered the game
   int                 location;           // player locations
   int                 voteCount;          // to prevent people from constantly calling votes
-  qboolean            teamInfo;           // send team overlay updates?
+  qbool            teamInfo;           // send team overlay updates?
 
   class_t             classSelection;     // player class (copied to ent->client->ps.stats[ STAT_CLASS ] once spawned)
   float               evolveHealthFraction;
@@ -299,7 +299,7 @@ typedef struct
   team_t              teamSelection;      // player team (copied to ps.stats[ STAT_TEAM ])
 
   int                 teamChangeTime;     // level.time of last team change
-  qboolean            joinedATeam;        // used to tell when a PTR code is valid
+  qbool            joinedATeam;        // used to tell when a PTR code is valid
   connectionRecord_t  *connection;
 
   int                 nameChangeTime;
@@ -309,14 +309,14 @@ typedef struct
   int                 savedCredit;
 
   // votes
-  qboolean            vote;
-  qboolean            teamVote;
+  qbool            vote;
+  qbool            teamVote;
 
   vec3_t              lastDeathLocation;
   char                guid[ 33 ];
   char                ip[ 40 ];
-  qboolean            muted;
-  qboolean            denyBuild;
+  qbool            muted;
+  qbool            denyBuild;
   int                 adminLevel;
   char                voice[ MAX_VOICE_NAME_LEN ];
 } clientPersistant_t;
@@ -326,7 +326,7 @@ typedef struct unlagged_s {
   vec3_t      origin;
   vec3_t      mins;
   vec3_t      maxs;
-  qboolean    used;
+  qbool    used;
 } unlagged_t;
 
 // this structure is cleared on each ClientSpawn(),
@@ -343,9 +343,9 @@ struct gclient_s
   clientPersistant_t  pers;
   clientSession_t     sess;
 
-  qboolean            readyToExit;    // wishes to leave the intermission
+  qbool            readyToExit;    // wishes to leave the intermission
 
-  qboolean            noclip;
+  qbool            noclip;
 
   int                 lastCmdTime;    // level.time of last usercmd_t, for EF_CONNECTION
                                       // we can't just use pers.lastCommand.time, because
@@ -362,7 +362,7 @@ struct gclient_s
   int                 damage_blood;     // damage taken out of health
   int                 damage_knockback; // impact damage
   vec3_t              damage_from;      // origin for vector calculation
-  qboolean            damage_fromWorld; // if true, don't use the damage_from vector
+  qbool            damage_fromWorld; // if true, don't use the damage_from vector
 
   //
   int                 lastkilled_client;// last client that this client killed
@@ -372,15 +372,15 @@ struct gclient_s
   // timers
   int                 respawnTime;      // can respawn when time > this
   int                 inactivityTime;   // kick players when time > this
-  qboolean            inactivityWarning;// qtrue if the five seoond warning has been given
+  qbool            inactivityWarning;// qtrue if the five seoond warning has been given
   int                 rewardTime;       // clear the EF_AWARD_IMPRESSIVE, etc when time > this
 
   int                 airOutTime;
 
   int                 lastKillTime;     // for multiple kill rewards
 
-  qboolean            fireHeld;         // used for hook
-  qboolean            fire2Held;        // used for alt fire
+  qbool            fireHeld;         // used for hook
+  qbool            fire2Held;        // used for alt fire
   gentity_t           *hook;            // grapple hook if out
 
   int                 switchTeamTime;   // time the player switched teams
@@ -410,9 +410,9 @@ struct gclient_s
   int                 medKitIncrementTime;
   int                 lastCreepSlowTime;    // time until creep can be removed
 
-  qboolean            allowedToPounce;
+  qbool            allowedToPounce;
 
-  qboolean            charging;
+  qbool            charging;
 
   vec3_t              hovelOrigin;          // player origin before entering hovel
 
@@ -444,7 +444,7 @@ int       G_GetSpawnQueueLength( spawnQueue_t *sq );
 int       G_PopSpawnQueue( spawnQueue_t *sq );
 int       G_PeekSpawnQueue( spawnQueue_t *sq );
 void      G_PushSpawnQueue( spawnQueue_t *sq, int clientNum );
-qboolean  G_RemoveFromSpawnQueue( spawnQueue_t *sq, int clientNum );
+qbool  G_RemoveFromSpawnQueue( spawnQueue_t *sq, int clientNum );
 int       G_GetPosInSpawnQueue( spawnQueue_t *sq, int clientNum );
 
 
@@ -459,7 +459,7 @@ typedef struct damageRegion_s
 
   float     modifier;
 
-  qboolean  crouch;
+  qbool  crouch;
 } damageRegion_t;
 
 #define MAX_ARMOUR_TEXT    8192
@@ -473,7 +473,7 @@ typedef struct armourRegion_s
 
   float     modifier;
 
-  qboolean  crouch;
+  qbool  crouch;
 } armourRegion_t;
 
 //status of the warning of certain events
@@ -514,10 +514,10 @@ typedef struct
   int               teamScores[ NUM_TEAMS ];
   int               lastTeamLocationTime;         // last time of client team location update
 
-  qboolean          newSession;                   // don't use any old session data, because
+  qbool          newSession;                   // don't use any old session data, because
                                                   // we changed gametype
 
-  qboolean          restarted;                    // waiting for a map_restart to fire
+  qbool          restarted;                    // waiting for a map_restart to fire
 
   int               numConnectedClients;
   int               numNonSpectatorClients;       // includes connecting clients
@@ -546,7 +546,7 @@ typedef struct
   int               numteamVotingClients[ 2 ];    // set by CalculateRanks
 
   // spawn variables
-  qboolean          spawning;                     // the G_Spawn*() functions are valid
+  qbool          spawning;                     // the G_Spawn*() functions are valid
   int               numSpawnVars;
   char              *spawnVars[ MAX_SPAWN_VARS ][ 2 ];  // key / value pairs
   int               numSpawnVarChars;
@@ -560,12 +560,12 @@ typedef struct
                                                   // kills during this delay
   int               intermissiontime;             // time the intermission was started
   char              *changemap;
-  qboolean          readyToExit;                  // at least one client wants to exit
+  qbool          readyToExit;                  // at least one client wants to exit
   int               exitTime;
   vec3_t            intermission_origin;          // also used for spectator spawns
   vec3_t            intermission_angle;
 
-  qboolean          locationLinked;               // target_locations get linked
+  qbool          locationLinked;               // target_locations get linked
   gentity_t         *locationHead;                // head of the location list
 
   int               numAlienSpawns;
@@ -592,9 +592,9 @@ typedef struct
   int               alienKills;
   int               humanKills;
 
-  qboolean          reactorPresent;
-  qboolean          overmindPresent;
-  qboolean          overmindMuted;
+  qbool          reactorPresent;
+  qbool          overmindPresent;
+  qbool          overmindMuted;
 
   int               humanBaseAttackTimer;
 
@@ -611,10 +611,10 @@ typedef struct
   int               humanStage2Time;
   int               humanStage3Time;
 
-  qboolean          uncondAlienWin;
-  qboolean          uncondHumanWin;
-  qboolean          alienTeamLocked;
-  qboolean          humanTeamLocked;
+  qbool          uncondAlienWin;
+  qbool          uncondHumanWin;
+  qbool          alienTeamLocked;
+  qbool          humanTeamLocked;
 
   int unlaggedIndex;
   int unlaggedTimes[ MAX_UNLAGGED_MARKERS ];
@@ -648,11 +648,11 @@ typedef struct
 //
 // g_spawn.c
 //
-qboolean  G_SpawnString( const char *key, const char *defaultString, char **out );
+qbool  G_SpawnString( const char *key, const char *defaultString, char **out );
 // spawn string returns a temporary reference, you must CopyString() if you want to keep it
-qboolean  G_SpawnFloat( const char *key, const char *defaultString, float *out );
-qboolean  G_SpawnInt( const char *key, const char *defaultString, int *out );
-qboolean  G_SpawnVector( const char *key, const char *defaultString, float *out );
+qbool  G_SpawnFloat( const char *key, const char *defaultString, float *out );
+qbool  G_SpawnInt( const char *key, const char *defaultString, int *out );
+qbool  G_SpawnVector( const char *key, const char *defaultString, float *out );
 void      G_SpawnEntitiesFromString( void );
 char      *G_NewString( const char *string );
 
@@ -660,12 +660,12 @@ char      *G_NewString( const char *string );
 // g_cmds.c
 //
 void      G_StopFollowing( gentity_t *ent );
-qboolean  G_FollowNewClient( gentity_t *ent, int dir );
+qbool  G_FollowNewClient( gentity_t *ent, int dir );
 void      G_ToggleFollow( gentity_t *ent );
 void      G_MatchOnePlayer( int *plist, int num, char *err, int len );
 int       G_ClientNumbersFromString( char *s, int *plist, int max );
 int       G_SayArgc( void );
-qboolean  G_SayArgv( int n, char *buffer, int bufferLength );
+qbool  G_SayArgv( int n, char *buffer, int bufferLength );
 char      *G_SayConcatArgs( int start );
 void      G_DecolorString( char *in, char *out, int len );
 void      G_LeaveTeam( gentity_t *self );
@@ -711,19 +711,19 @@ typedef enum
   IBE_MAXERRORS
 } itemBuildError_t;
 
-qboolean          AHovel_Blocked( gentity_t *hovel, gentity_t *player, qboolean provideExit );
+qbool          AHovel_Blocked( gentity_t *hovel, gentity_t *player, qbool provideExit );
 gentity_t         *G_CheckSpawnPoint( int spawnNum, vec3_t origin, vec3_t normal,
                     buildable_t spawn, vec3_t spawnOrigin );
 
 buildable_t       G_IsPowered( vec3_t origin );
-qboolean          G_IsDCCBuilt( void );
-qboolean          G_IsOvermindBuilt( void );
+qbool          G_IsDCCBuilt( void );
+qbool          G_IsOvermindBuilt( void );
 
 void              G_BuildableThink( gentity_t *ent, int msec );
-qboolean          G_BuildableRange( vec3_t origin, float r, buildable_t buildable );
+qbool          G_BuildableRange( vec3_t origin, float r, buildable_t buildable );
 itemBuildError_t  G_CanBuild( gentity_t *ent, buildable_t buildable, int distance, vec3_t origin );
-qboolean          G_BuildIfValid( gentity_t *ent, buildable_t buildable );
-void              G_SetBuildableAnim( gentity_t *ent, buildableAnimNumber_t anim, qboolean force );
+qbool          G_BuildIfValid( gentity_t *ent, buildable_t buildable );
+void              G_SetBuildableAnim( gentity_t *ent, buildableAnimNumber_t anim, qbool force );
 void              G_SetIdleBuildableAnim( gentity_t *ent, buildableAnimNumber_t anim );
 void              G_SpawnBuildable(gentity_t *ent, buildable_t buildable);
 void              FinishSpawningBuildable( gentity_t *ent );
@@ -752,7 +752,7 @@ gentity_t   *G_Spawn( void );
 gentity_t   *G_TempEntity( vec3_t origin, int event );
 void        G_Sound( gentity_t *ent, int channel, int soundIndex );
 void        G_FreeEntity( gentity_t *e );
-qboolean    G_EntitiesFree( void );
+qbool    G_EntitiesFree( void );
 
 void        G_TouchTriggers( gentity_t *ent );
 void        G_TouchSolids( gentity_t *ent );
@@ -770,25 +770,25 @@ void        AddRemap(const char *oldShader, const char *newShader, float timeOff
 const char  *BuildShaderStateConfig( void );
 
 
-qboolean    G_ClientIsLagging( gclient_t *client );
+qbool    G_ClientIsLagging( gclient_t *client );
 
 void        G_TriggerMenu( int clientNum, dynMenu_t menu );
 void        G_CloseMenus( int clientNum );
 
-qboolean    G_Visible( gentity_t *ent1, gentity_t *ent2 );
+qbool    G_Visible( gentity_t *ent1, gentity_t *ent2 );
 gentity_t   *G_ClosestEnt( vec3_t origin, gentity_t **entities, int numEntities );
 
 //
 // g_combat.c
 //
-qboolean  CanDamage( gentity_t *targ, vec3_t origin );
+qbool  CanDamage( gentity_t *targ, vec3_t origin );
 void      G_Damage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker,
                     vec3_t dir, vec3_t point, int damage, int dflags, int mod );
 void      G_SelectiveDamage( gentity_t *targ, gentity_t *inflictor, gentity_t *attacker, vec3_t dir,
                              vec3_t point, int damage, int dflags, int mod, int team );
-qboolean  G_RadiusDamage( vec3_t origin, gentity_t *attacker, float damage, float radius,
+qbool  G_RadiusDamage( vec3_t origin, gentity_t *attacker, float damage, float radius,
                           gentity_t *ignore, int mod );
-qboolean  G_SelectiveRadiusDamage( vec3_t origin, gentity_t *attacker, float damage, float radius,
+qbool  G_SelectiveRadiusDamage( vec3_t origin, gentity_t *attacker, float damage, float radius,
                                    gentity_t *ignore, int mod, int team );
 void      body_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int meansOfDeath );
 void      AddScore( gentity_t *ent, int score );
@@ -847,7 +847,7 @@ void ShineTorch( gentity_t *self );
 
 typedef struct zap_s
 {
-  qboolean      used;
+  qbool      used;
 
   gentity_t     *creator;
   gentity_t     *targets[ MAX_ZAP_TARGETS ];
@@ -860,12 +860,12 @@ typedef struct zap_s
 } zap_t;
 
 void      G_ForceWeaponChange( gentity_t *ent, weapon_t weapon );
-void      G_GiveClientMaxAmmo( gentity_t *ent, qboolean buyingEnergyAmmo );
+void      G_GiveClientMaxAmmo( gentity_t *ent, qbool buyingEnergyAmmo );
 void      CalcMuzzlePoint( gentity_t *ent, vec3_t forward, vec3_t right, vec3_t up, vec3_t muzzlePoint );
 void      SnapVectorTowards( vec3_t v, vec3_t to );
-qboolean  CheckVenomAttack( gentity_t *ent );
+qbool  CheckVenomAttack( gentity_t *ent );
 void      CheckGrabAttack( gentity_t *ent );
-qboolean  CheckPounceAttack( gentity_t *ent );
+qbool  CheckPounceAttack( gentity_t *ent );
 void      ChargeAttack( gentity_t *ent, gentity_t *victim );
 void      G_UpdateZaps( int msec );
 
@@ -873,7 +873,7 @@ void      G_UpdateZaps( int msec );
 //
 // g_client.c
 //
-void      G_AddCreditToClient( gclient_t *client, short credit, qboolean cap );
+void      G_AddCreditToClient( gclient_t *client, short credit, qbool cap );
 void      SetClientViewAngle( gentity_t *ent, vec3_t angle );
 gentity_t *SelectTremulousSpawnPoint( team_t team, vec3_t preference, vec3_t origin, vec3_t angles );
 gentity_t *SelectSpawnPoint( vec3_t avoidPoint, vec3_t origin, vec3_t angles );
@@ -882,14 +882,14 @@ void      respawn( gentity_t *ent );
 void      BeginIntermission( void );
 void      ClientSpawn( gentity_t *ent, gentity_t *spawn, vec3_t origin, vec3_t angles );
 void      player_die( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod );
-qboolean  SpotWouldTelefrag( gentity_t *spot );
+qbool  SpotWouldTelefrag( gentity_t *spot );
 
 //
 // g_svcmds.c
 //
-qboolean  ConsoleCommand( void );
+qbool  ConsoleCommand( void );
 void      G_ProcessIPBans( void );
-qboolean  G_FilterPacket( char *from );
+qbool  G_FilterPacket( char *from );
 
 //
 // g_weapon.c
@@ -915,8 +915,8 @@ void QDECL G_LogPrintf( const char *fmt, ... );
 void SendScoreboardMessageToAllClients( void );
 void QDECL G_Printf( const char *fmt, ... );
 void QDECL G_Error( const char *fmt, ... );
-void G_Vote( gentity_t *ent, qboolean voting );
-void G_TeamVote( gentity_t *ent, qboolean voting );
+void G_Vote( gentity_t *ent, qbool voting );
+void G_TeamVote( gentity_t *ent, qbool voting );
 void CheckVote( void );
 void CheckTeamVote( team_t teamnum );
 void LogExit( const char *string );
@@ -925,7 +925,7 @@ int  G_TimeTilSuddenDeath( void );
 //
 // g_client.c
 //
-char *ClientConnect( int clientNum, qboolean firstTime );
+char *ClientConnect( int clientNum, qbool firstTime );
 void ClientUserinfoChanged( int clientNum );
 void ClientDisconnect( int clientNum );
 void ClientBegin( int clientNum );
@@ -946,9 +946,9 @@ void G_RunClient( gentity_t *ent );
 //
 // g_team.c
 //
-qboolean  OnSameTeam( gentity_t *ent1, gentity_t *ent2 );
+qbool  OnSameTeam( gentity_t *ent1, gentity_t *ent2 );
 gentity_t *Team_GetLocation( gentity_t *ent );
-qboolean  Team_GetLocationMsg( gentity_t *ent, char *loc, int loclen );
+qbool  Team_GetLocationMsg( gentity_t *ent, char *loc, int loclen );
 void      TeamplayInfoMessage( gentity_t *ent );
 void      CheckTeamStatus( void );
 
@@ -995,7 +995,7 @@ typedef struct mapRotationCondition_s
 {
   char                    dest[ MAX_QPATH ];
 
-  qboolean                unconditional;
+  qbool                unconditional;
 
   mapConditionVariable_t  lhs;
   mapConditionOperator_t  op;
@@ -1032,10 +1032,10 @@ typedef struct mapRotations_s
 } mapRotations_t;
 
 void      G_PrintRotations( void );
-qboolean  G_AdvanceMapRotation( void );
-qboolean  G_StartMapRotation( char *name, qboolean changeMap );
+qbool  G_AdvanceMapRotation( void );
+qbool  G_StartMapRotation( char *name, qbool changeMap );
 void      G_StopMapRotation( void );
-qboolean  G_MapRotationActive( void );
+qbool  G_MapRotationActive( void );
 void      G_InitMapRotations( void );
 
 //
@@ -1180,25 +1180,25 @@ void      trap_SetBrushModel( gentity_t *ent, const char *name );
 void      trap_Trace( trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs,
                       const vec3_t end, int passEntityNum, int contentmask );
 int       trap_PointContents( const vec3_t point, int passEntityNum );
-qboolean  trap_InPVS( const vec3_t p1, const vec3_t p2 );
-qboolean  trap_InPVSIgnorePortals( const vec3_t p1, const vec3_t p2 );
-void      trap_AdjustAreaPortalState( gentity_t *ent, qboolean open );
-qboolean  trap_AreasConnected( int area1, int area2 );
+qbool  trap_InPVS( const vec3_t p1, const vec3_t p2 );
+qbool  trap_InPVSIgnorePortals( const vec3_t p1, const vec3_t p2 );
+void      trap_AdjustAreaPortalState( gentity_t *ent, qbool open );
+qbool  trap_AreasConnected( int area1, int area2 );
 void      trap_LinkEntity( gentity_t *ent );
 void      trap_UnlinkEntity( gentity_t *ent );
 int       trap_EntitiesInBox( const vec3_t mins, const vec3_t maxs, int *entityList, int maxcount );
-qboolean  trap_EntityContact( const vec3_t mins, const vec3_t maxs, const gentity_t *ent );
+qbool  trap_EntityContact( const vec3_t mins, const vec3_t maxs, const gentity_t *ent );
 int       trap_BotAllocateClient( void );
 void      trap_BotFreeClient( int clientNum );
 void      trap_GetUsercmd( int clientNum, usercmd_t *cmd );
-qboolean  trap_GetEntityToken( char *buffer, int bufferSize );
+qbool  trap_GetEntityToken( char *buffer, int bufferSize );
 
 void      trap_SnapVector( float *v );
 void      trap_SendGameStat( const char *data );
 
-qboolean  trap_mysql_runquery( char *query );
+qbool  trap_mysql_runquery( char *query );
 void      trap_mysql_finishquery( void );
-qboolean  trap_mysql_fetchrow( void );
+qbool  trap_mysql_fetchrow( void );
 void      trap_mysql_fetchfieldbyID( int id, char *buffer, int len );
 void      trap_mysql_fetchfieldbyName( const char *name, char *buffer, int len );
 void        trap_mysql_reconnect( void );

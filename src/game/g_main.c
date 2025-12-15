@@ -32,8 +32,8 @@ typedef struct
   char    *defaultString;
   int     cvarFlags;
   int     modificationCount;  // for tracking changes
-  qboolean  trackChange;  // track this variable, and announce if changed
-  qboolean teamShader;        // track and if changed, update shader state
+  qbool  trackChange;  // track this variable, and announce if changed
+  qbool teamShader;        // track and if changed, update shader state
 } cvarTable_t;
 
 gentity_t   g_entities[ MAX_GENTITIES ];
@@ -433,7 +433,7 @@ void G_RegisterCvars( void )
 {
   int         i;
   cvarTable_t *cv;
-  qboolean    remapped = qfalse;
+  qbool    remapped = qfalse;
 
   for( i = 0, cv = gameCvarTable; i < gameCvarTableSize; i++, cv++ )
   {
@@ -463,7 +463,7 @@ void G_UpdateCvars( void )
 {
   int         i;
   cvarTable_t *cv;
-  qboolean    remapped = qfalse;
+  qbool    remapped = qfalse;
 
   for( i = 0, cv = gameCvarTable; i < gameCvarTableSize; i++, cv++ )
   {
@@ -851,7 +851,7 @@ G_RemoveFromSpawnQueue
 remove a specific client from a spawn queue
 ============
 */
-qboolean G_RemoveFromSpawnQueue( spawnQueue_t *sq, int clientNum )
+qbool G_RemoveFromSpawnQueue( spawnQueue_t *sq, int clientNum )
 {
   int i = sq->front;
 
@@ -1867,7 +1867,7 @@ void CheckIntermissionExit( void )
 ScoreIsTied
 =============
 */
-qboolean ScoreIsTied( void )
+qbool ScoreIsTied( void )
 {
   int   a, b;
 
@@ -1963,7 +1963,7 @@ void CheckExitRules( void )
 G_Vote
 ==================
 */
-void G_Vote( gentity_t *ent, qboolean voting )
+void G_Vote( gentity_t *ent, qbool voting )
 {
   if( !level.voteTime )
     return;
@@ -2004,7 +2004,7 @@ void G_Vote( gentity_t *ent, qboolean voting )
 G_TeamVote
 ==================
 */
-void G_TeamVote( gentity_t *ent, qboolean voting )
+void G_TeamVote( gentity_t *ent, qbool voting )
 {
   int cs_offset;
 

@@ -211,8 +211,8 @@ static void HandleGetServers (const char* msg, const struct sockaddr_in* addr)
 	unsigned int protocol;
 	unsigned int sv_addr;
 	unsigned short sv_port;
-	qboolean no_empty;
-	qboolean no_full;
+	qbool no_empty;
+	qbool no_full;
 	unsigned int numServers = 0;
 
 	// Check if there's a name before the protocol number

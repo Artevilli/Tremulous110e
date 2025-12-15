@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../bspc/l_qfiles.h"
 
 void SetPlaneSignbits (cplane_t *out) {
-	int	bits, j;
+	qint	bits, j;
 
 	// for fast box on planeside test
 	bits = 0;
@@ -53,8 +53,8 @@ void SetPlaneSignbits (cplane_t *out) {
 
 
 clipMap_t	cm;
-int			c_pointcontents;
-int			c_traces, c_brush_traces, c_patch_traces;
+qint			c_pointcontents;
+uint64_t			c_traces, c_brush_traces, c_patch_traces;
 
 
 byte		*cmod_base;
@@ -90,7 +90,7 @@ CMod_LoadShaders
 */
 void CMod_LoadShaders( lump_t *l ) {
 	dshader_t	*in, *out;
-	int			i, count;
+	qint			i, count;
 
 	in = (void *)(cmod_base + l->fileofs);
 	if (l->filelen % sizeof(*in)) {
@@ -122,8 +122,8 @@ CMod_LoadSubmodels
 void CMod_LoadSubmodels( lump_t *l ) {
 	dmodel_t	*in;
 	cmodel_t	*out;
-	int			i, j, count;
-	int			*indexes;
+	qint			i, j, count;
+	qint			*indexes;
 
 	in = (void *)(cmod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
@@ -139,7 +139,7 @@ void CMod_LoadSubmodels( lump_t *l ) {
 		Com_Error( ERR_DROP, "MAX_SUBMODELS exceeded" );
 	}
 
-	for ( i=0 ; i<count ; i++, in++, out++)
+	for ( i=0 ; i<count ; i++, in++)
 	{
 		out = &cm.cmodels[i];
 
@@ -179,9 +179,9 @@ CMod_LoadNodes
 */
 void CMod_LoadNodes( lump_t *l ) {
 	dnode_t		*in;
-	int			child;
+	qint			child;
 	cNode_t		*out;
-	int			i, j, count;
+	qint			i, j, count;
 	
 	in = (void *)(cmod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
@@ -234,7 +234,7 @@ CMod_LoadBrushes
 void CMod_LoadBrushes( lump_t *l ) {
 	dbrush_t	*in;
 	cbrush_t	*out;
-	int			i, count;
+	qint			i, count;
 
 	in = (void *)(cmod_base + l->fileofs);
 	if (l->filelen % sizeof(*in)) {
@@ -269,10 +269,10 @@ CMod_LoadLeafs
 */
 void CMod_LoadLeafs (lump_t *l)
 {
-	int			i;
+	qint			i;
 	cLeaf_t		*out;
 	dleaf_t 	*in;
-	int			count;
+	qint			count;
 	
 	in = (void *)(cmod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
@@ -312,11 +312,11 @@ CMod_LoadPlanes
 */
 void CMod_LoadPlanes (lump_t *l)
 {
-	int			i, j;
+	qint			i, j;
 	cplane_t	*out;
 	dplane_t 	*in;
-	int			count;
-	int			bits;
+	qint			count;
+	qint			bits;
 	
 	in = (void *)(cmod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
@@ -353,10 +353,10 @@ CMod_LoadLeafBrushes
 */
 void CMod_LoadLeafBrushes (lump_t *l)
 {
-	int			i;
-	int			*out;
-	int		 	*in;
-	int			count;
+	qint			i;
+	qint			*out;
+	qint		 	*in;
+	qint			count;
 	
 	in = (void *)(cmod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
@@ -380,10 +380,10 @@ CMod_LoadLeafSurfaces
 */
 void CMod_LoadLeafSurfaces( lump_t *l )
 {
-	int			i;
-	int			*out;
-	int		 	*in;
-	int			count;
+	qint			i;
+	qint			*out;
+	qint		 	*in;
+	qint			count;
 	
 	in = (void *)(cmod_base + l->fileofs);
 	if (l->filelen % sizeof(*in))
@@ -407,11 +407,11 @@ CMod_LoadBrushSides
 */
 void CMod_LoadBrushSides (lump_t *l)
 {
-	int				i;
+	qint				i;
 	cbrushside_t	*out;
 	dbrushside_t 	*in;
-	int				count;
-	int				num;
+	qint				count;
+	qint				num;
 
 	in = (void *)(cmod_base + l->fileofs);
 	if ( l->filelen % sizeof(*in) ) {
@@ -443,7 +443,7 @@ void CMod_LoadBrushSides (lump_t *l)
 CMod_BrushEdgesAreTheSame
 =================
 */
-static qboolean CMod_BrushEdgesAreTheSame( const vec3_t p0, const vec3_t p1,
+static qbool CMod_BrushEdgesAreTheSame( const vec3_t p0, const vec3_t p1,
 		const vec3_t q0, const vec3_t q1 )
 {
 	if( VectorCompareEpsilon( p0, q0, CM_EDGE_VERTEX_EPSILON ) &&
@@ -462,10 +462,10 @@ static qboolean CMod_BrushEdgesAreTheSame( const vec3_t p0, const vec3_t p1,
 CMod_AddEdgeToBrush
 =================
 */
-static qboolean CMod_AddEdgeToBrush( const vec3_t p0, const vec3_t p1,
-		cbrushedge_t *edges, int *numEdges )
+static qbool CMod_AddEdgeToBrush( const vec3_t p0, const vec3_t p1,
+		cbrushedge_t *edges, qint *numEdges )
 {
-	int i;
+	qint i;
 
 	if( !edges || !numEdges )
 		return qfalse;
@@ -491,16 +491,16 @@ CMod_CreateBrushSideWindings
 */
 static void CMod_CreateBrushSideWindings( void )
 {
-	int						i, j, k;
+	qint						i, j, k;
 	winding_t			*w;
 	cbrushside_t	*side, *chopSide;
 	cplane_t			*plane;
 	cbrush_t			*brush;
 	cbrushedge_t	*tempEdges;
-	int						numEdges;
-	int						edgesAlloc;
-	int						totalEdgesAlloc = 0;
-	int						totalEdges = 0;
+	qint						numEdges;
+	qint						edgesAlloc;
+	qint						totalEdgesAlloc = 0;
+	qint						totalEdges = 0;
 	
 	for( i = 0; i < cm.numBrushes; i++ )
 	{
@@ -600,7 +600,7 @@ CMod_LoadVisibility
 */
 #define	VIS_HEADER	8
 void CMod_LoadVisibility( lump_t *l ) {
-	int		len;
+	qint		len;
 	byte	*buf;
 
     len = l->filelen;
@@ -614,8 +614,8 @@ void CMod_LoadVisibility( lump_t *l ) {
 
 	cm.vised = qtrue;
 	cm.visibility = Hunk_Alloc( len, h_high );
-	cm.numClusters = LittleLong( ((int *)buf)[0] );
-	cm.clusterBytes = LittleLong( ((int *)buf)[1] );
+	cm.numClusters = LittleLong( ((qint *)buf)[0] );
+	cm.clusterBytes = LittleLong( ((qint *)buf)[1] );
 	Com_Memcpy (cm.visibility, buf + VIS_HEADER, len - VIS_HEADER );
 }
 
@@ -631,13 +631,13 @@ CMod_LoadPatches
 void CMod_LoadPatches( lump_t *surfs, lump_t *verts ) {
 	drawVert_t	*dv, *dv_p;
 	dsurface_t	*in;
-	int			count;
-	int			i, j;
-	int			c;
+	qint			count;
+	qint			i, j;
+	qint			c;
 	cPatch_t	*patch;
 	vec3_t		points[MAX_PATCH_VERTS];
-	int			width, height;
-	int			shaderNum;
+	qint			width, height;
+	qint			shaderNum;
 
 	in = (void *)(cmod_base + surfs->fileofs);
 	if (surfs->filelen % sizeof(*in))
@@ -713,11 +713,16 @@ CM_LoadMap
 Loads in the map and all submodels
 ==================
 */
-void CM_LoadMap( const char *name, qboolean clientload, int *checksum ) {
-	int				*buf;
-	int				i;
+void CM_LoadMap( const qchar *name, qbool clientload, qint *checksum ) {
+	union
+	{
+	  qint *i;
+	  void *v;
+	}
+	buf;
+	qint				i;
 	dheader_t		header;
-	int				length;
+	qint				length;
 	static unsigned	last_checksum;
 
 	if ( !name || !name[0] ) {
@@ -753,21 +758,21 @@ void CM_LoadMap( const char *name, qboolean clientload, int *checksum ) {
 	// load the file
 	//
 #ifndef BSPC
-	length = FS_ReadFile( name, (void **)&buf );
+	length = FS_ReadFile( name, &buf.v );
 #else
-	length = LoadQuakeFile((quakefile_t *) name, (void **)&buf);
+	length = LoadQuakeFile((quakefile_t *) name, &buf.v);
 #endif
 
-	if ( !buf ) {
+	if ( !buf.i ) {
 		Com_Error (ERR_DROP, "Couldn't load %s", name);
 	}
 
-	last_checksum = LittleLong (Com_BlockChecksum (buf, length));
+	last_checksum = LittleLong (Com_BlockChecksum (buf.i, length));
 	*checksum = last_checksum;
 
-	header = *(dheader_t *)buf;
+	header = *(dheader_t *)buf.i;
 	for (i=0 ; i<sizeof(dheader_t)/4 ; i++) {
-		((int *)&header)[i] = LittleLong ( ((int *)&header)[i]);
+		((qint *)&header)[i] = LittleLong ( ((qint *)&header)[i]);
 	}
 
 	if ( header.version != BSP_VERSION ) {
@@ -775,7 +780,7 @@ void CM_LoadMap( const char *name, qboolean clientload, int *checksum ) {
 		, name, header.version, BSP_VERSION );
 	}
 
-	cmod_base = (byte *)buf;
+	cmod_base = (byte *)buf.i;
 
 	// load into heap
 	CMod_LoadShaders( &header.lumps[LUMP_SHADERS] );
@@ -794,7 +799,7 @@ void CM_LoadMap( const char *name, qboolean clientload, int *checksum ) {
 	CMod_CreateBrushSideWindings( );
 
 	// we are NOT freeing the file, because it is cached for the ref
-	FS_FreeFile (buf);
+	FS_FreeFile (buf.v);
 
 	CM_InitBoxHull ();
 
@@ -846,33 +851,33 @@ cmodel_t	*CM_ClipHandleToModel( clipHandle_t handle ) {
 CM_InlineModel
 ==================
 */
-clipHandle_t	CM_InlineModel( int index ) {
+clipHandle_t	CM_InlineModel( qint index ) {
 	if ( index < 0 || index >= cm.numSubModels ) {
 		Com_Error (ERR_DROP, "CM_InlineModel: bad number");
 	}
 	return index;
 }
 
-int		CM_NumClusters( void ) {
+qint		CM_NumClusters( void ) {
 	return cm.numClusters;
 }
 
-int		CM_NumInlineModels( void ) {
+qint		CM_NumInlineModels( void ) {
 	return cm.numSubModels;
 }
 
-char	*CM_EntityString( void ) {
+qchar	*CM_EntityString( void ) {
 	return cm.entityString;
 }
 
-int		CM_LeafCluster( int leafnum ) {
+qint		CM_LeafCluster( qint leafnum ) {
 	if (leafnum < 0 || leafnum >= cm.numLeafs) {
 		Com_Error (ERR_DROP, "CM_LeafCluster: bad number");
 	}
 	return cm.leafs[leafnum].cluster;
 }
 
-int		CM_LeafArea( int leafnum ) {
+qint		CM_LeafArea( qint leafnum ) {
 	if ( leafnum < 0 || leafnum >= cm.numLeafs ) {
 		Com_Error (ERR_DROP, "CM_LeafArea: bad number");
 	}
@@ -892,8 +897,8 @@ can just be stored out and get a proper clipping hull structure.
 */
 void CM_InitBoxHull (void)
 {
-	int			i;
-	int			side;
+	qint			i;
+	qint			side;
 	cplane_t	*p;
 	cbrushside_t	*s;
 
@@ -947,7 +952,7 @@ BSP trees instead of being compared directly.
 Capsules are handled differently though.
 ===================
 */
-clipHandle_t CM_TempBoxModel( const vec3_t mins, const vec3_t maxs, int capsule ) {
+clipHandle_t CM_TempBoxModel( const vec3_t mins, const vec3_t maxs, qint capsule ) {
 
 	VectorCopy( mins, box_model.mins );
 	VectorCopy( maxs, box_model.maxs );

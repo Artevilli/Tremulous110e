@@ -35,7 +35,7 @@ int trap_Parse_ReadToken( int handle, pc_token_t *pc_token );
 int trap_Parse_SourceFileAndLine( int handle, char *filename, int *line );
 
 #ifdef CGAME
-sfxHandle_t trap_S_RegisterSound( const char *sample, qboolean compressed );
+sfxHandle_t trap_S_RegisterSound( const char *sample, qbool compressed );
 int trap_S_SoundDuration( sfxHandle_t handle );
 #endif
 
@@ -142,12 +142,12 @@ static voice_t *BG_VoiceList( void )
 BG_VoiceParseTrack
 ============
 */
-static qboolean BG_VoiceParseTrack( int handle, voiceTrack_t *voiceTrack )
+static qbool BG_VoiceParseTrack( int handle, voiceTrack_t *voiceTrack )
 {
   pc_token_t token;
-  qboolean found = qfalse;
-  qboolean foundText = qfalse;
-  qboolean foundToken = qfalse;
+  qbool found = qfalse;
+  qbool foundText = qfalse;
+  qbool foundToken = qfalse;
 
   foundToken = trap_Parse_ReadToken( handle, &token );
   while( foundToken )
@@ -277,7 +277,7 @@ BG_VoiceParseCommand
 static voiceTrack_t *BG_VoiceParseCommand( int handle )
 {
   pc_token_t token;
-  qboolean parsingTrack = qfalse;
+  qbool parsingTrack = qfalse;
   voiceTrack_t *voiceTracks = NULL;
   voiceTrack_t *top = NULL;
   
@@ -354,7 +354,7 @@ static voiceCmd_t *BG_VoiceParse( char *name )
   voiceCmd_t *voiceCmds = NULL;
   voiceCmd_t *top = NULL;
   pc_token_t token;
-  qboolean parsingCmd = qfalse;
+  qbool parsingCmd = qfalse;
   int handle;
   
   handle = trap_Parse_LoadSource( va( "voice/%s.voice", name ) );

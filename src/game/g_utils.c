@@ -93,7 +93,7 @@ G_FindConfigstringIndex
 
 ================
 */
-int G_FindConfigstringIndex( char *name, int start, int max, qboolean create )
+int G_FindConfigstringIndex( char *name, int start, int max, qbool create )
 {
   int   i;
   char  s[ MAX_STRING_CHARS ];
@@ -484,7 +484,7 @@ gentity_t *G_Spawn( void )
 G_EntitiesFree
 =================
 */
-qboolean G_EntitiesFree( void )
+qbool G_EntitiesFree( void )
 {
   int     i;
   gentity_t *e;
@@ -703,7 +703,7 @@ void G_Sound( gentity_t *ent, int channel, int soundIndex )
 G_ClientIsLagging
 =============
 */
-qboolean G_ClientIsLagging( gclient_t *client )
+qbool G_ClientIsLagging( gclient_t *client )
 {
   if( client )
   {
@@ -775,7 +775,7 @@ G_Visible
 Test for a LOS between two entities
 ===============
 */
-qboolean G_Visible( gentity_t *ent1, gentity_t *ent2 )
+qbool G_Visible( gentity_t *ent1, gentity_t *ent2 )
 {
   trace_t trace;
 

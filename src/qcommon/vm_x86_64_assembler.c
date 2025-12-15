@@ -20,26 +20,28 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
+#define _ISOC99_SOURCE
+
+#include "vm_local.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
 
-typedef unsigned char u8;
-typedef unsigned short u16;
-typedef unsigned int u32;
-typedef unsigned long u64;
+#include <inttypes.h>
 
-static char* out;
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
+
+static qchar* out;
 static unsigned compiledOfs;
 static unsigned assembler_pass;
 
-static const char* cur_line;
+static const qchar* cur_line;
 
 static FILE* fout;
-
-#define MIN(a,b)  ((a) < (b) ? (a) : (b))
-#define MAX(a,b)  ((a) > (b) ? (a) : (b))
 
 #define crap(fmt, args...) do { \
 	_crap(__FUNCTION__, fmt, ##args); \
@@ -53,7 +55,7 @@ static FILE* fout;
 #define debug(fmt, args...)
 #endif
 
-static void _crap(const char* func, const char* fmt, ...)
+static void _crap(const qchar* func, const qchar* fmt, ...)
 {
 	va_list ap;
 	fprintf(stderr, "%s() - ", func);
@@ -66,13 +68,14 @@ static void _crap(const char* func, const char* fmt, ...)
 	exit(1);
 }
 
-static void emit1(unsigned char v)
+static void emit1(unsigned qchar v)
 {
 	if(assembler_pass)
 	{
 		out[compiledOfs++] = v;
-		if(fout) fwrite(&v, 1, 1, fout);
-		debug("%02hhx ", v);
+		if(fout)
+		  fwrite(&v, 1, 1, fout);
+		debug("%02hx ", v);
 	}
 	else
 	{
@@ -184,15 +187,15 @@ typedef struct {
 		u64 imm;
 		reg_t reg;
 		memref_t mem;
-		char label[LABELLEN];
+		qchar label[LABELLEN];
 	} v;
-	int absolute:1;
+	qint absolute:1;
 } arg_t;
 
-typedef void (*emitfunc)(const char* op, arg_t arg1, arg_t arg2, void* data);
+typedef void (*emitfunc)(const qchar* op, arg_t arg1, arg_t arg2, void* data);
 
 typedef struct {
-	char* mnemonic;
+	qchar* mnemonic;
 	emitfunc func;
 	void* data;
 } op_t;
@@ -208,7 +211,7 @@ typedef struct {
 
 /* ************************* */
 
-static unsigned hashkey(const char *string, unsigned len) {
+static unsigned hashkey(const qchar *string, unsigned len) {
 	unsigned register hash, i;
 
 	hash = 0;
@@ -220,30 +223,36 @@ static unsigned hashkey(const char *string, unsigned len) {
 }
 
 struct hashentry {
-	char* label;
+	qchar* label;
 	unsigned address;
 	struct hashentry* next;
 };
 static struct hashentry* labelhash[1021];
 
 // no dup check!
-static void hash_add_label(const char* label, unsigned address)
+static void hash_add_label(const qchar* label, unsigned address)
 {
 	struct hashentry* h;
 	unsigned i = hashkey(label, -1U);
-	i %= sizeof(labelhash)/sizeof(labelhash[0]);
-	h = malloc(sizeof(struct hashentry));
-	h->label = strdup(label);
+	qint labellen;
+
+        i %= ARRAY_LEN(labelhash);
+        h = Z_Malloc(sizeof(struct hashentry));
+
+        labellen = strlen(label) + 1;
+        h->label = Z_Malloc(labellen);
+        memcpy(h->label, label, labellen);
+
 	h->address = address;
 	h->next = labelhash[i];
 	labelhash[i] = h;
 }
 
-static unsigned lookup_label(const char* label)
+static unsigned lookup_label(const qchar* label)
 {
 	struct hashentry* h;
 	unsigned i = hashkey(label, -1U);
-	i %= sizeof(labelhash)/sizeof(labelhash[0]);
+	i %= ARRAY_LEN(labelhash);
 	for(h = labelhash[i]; h; h = h->next )
 	{
 		if(!strcmp(h->label, label))
@@ -259,15 +268,15 @@ static void labelhash_free(void)
 	struct hashentry* h;
 	unsigned i;
 	unsigned z = 0, min = -1U, max = 0, t = 0;
-	for ( i = 0; i < sizeof(labelhash)/sizeof(labelhash[0]); ++i)
+	for ( i = 0; i < ARRAY_LEN(labelhash); ++i)
 	{
 		unsigned n = 0;
 		h = labelhash[i];
 		while(h)
 		{
 			struct hashentry* next = h->next;
-			free(h->label);
-			free(h);
+			Z_Free(h->label);
+			Z_Free(h);
 			h = next;
 			++n;
 		}
@@ -277,14 +286,14 @@ static void labelhash_free(void)
 		min = MIN(min, n);
 		max = MAX(max, n);
 	}
-	printf("total %u, hsize %lu, zero %u, min %u, max %u\n", t, sizeof(labelhash)/sizeof(labelhash[0]), z, min, max);
+	printf("total %u, hsize %"PRIu64", zero %u, min %u, max %u\n", t, ARRAY_LEN(labelhash), z, min, max);
 	memset(labelhash, 0, sizeof(labelhash));
 }
 
 /* ************************* */
 
 
-static const char* argtype2str(argtype_t t)
+static const qchar* argtype2str(argtype_t t)
 {
 	switch(t)
 	{
@@ -301,39 +310,39 @@ static const char* argtype2str(argtype_t t)
 
 /* ************************* */
 
-static inline int iss8(u64 v)
+static inline qint iss8(u64 v)
 {
-	return (labs(v) <= 0x80);
+	return (llabs(v) <= 0x80); //llabs instead of labs required for __WIN64
 }
 
-static inline int isu8(u64 v)
+static inline qint isu8(u64 v)
 {
 	return (v <= 0xff);
 }
 
-static inline int iss16(u64 v)
+static inline qint iss16(u64 v)
 {
-	return (labs(v) <= 0x8000);
+	return (llabs(v) <= 0x8000);
 }
 
-static inline int isu16(u64 v)
+static inline qint isu16(u64 v)
 {
 	return (v <= 0xffff);
 }
 
-static inline int iss32(u64 v)
+static inline qint iss32(u64 v)
 {
-	return (labs(v) <= 0x80000000);
+	return (llabs(v) <= 0x80000000);
 }
 
-static inline int isu32(u64 v)
+static inline qint isu32(u64 v)
 {
 	return (v <= 0xffffffff);
 }
 
-static void emit_opsingle(const char* mnemonic, arg_t arg1, arg_t arg2, void* data)
+static void emit_opsingle(const qchar* mnemonic, arg_t arg1, arg_t arg2, void* data)
 {
-	u8 op = (u8)((unsigned long) data);
+	u8 op = (u8)((uint64_t) data);
 
 	if(arg1.type != T_NONE || arg2.type != T_NONE)
 		CRAP_INVALID_ARGS;
@@ -341,7 +350,7 @@ static void emit_opsingle(const char* mnemonic, arg_t arg1, arg_t arg2, void* da
 	emit1(op);
 }
 
-static void emit_opsingle16(const char* mnemonic, arg_t arg1, arg_t arg2, void* data)
+static void emit_opsingle16(const qchar* mnemonic, arg_t arg1, arg_t arg2, void* data)
 {
 	emit1(0x66);
 	emit_opsingle(mnemonic, arg1, arg2, data);
@@ -494,9 +503,9 @@ static void maybe_emit_displacement(arg_t* arg)
 }
 
 /* one byte operator with register added to operator */
-static void emit_opreg(const char* mnemonic, arg_t arg1, arg_t arg2, void* data)
+static void emit_opreg(const qchar* mnemonic, arg_t arg1, arg_t arg2, void* data)
 {
-	u8 op = (u8)((unsigned long) data);
+	u8 op = (u8)((uint64_t) data);
 
 	if(arg1.type != T_REGISTER || arg2.type != T_NONE)
 		CRAP_INVALID_ARGS;
@@ -510,7 +519,7 @@ static void emit_opreg(const char* mnemonic, arg_t arg1, arg_t arg2, void* data)
 }
 
 /* operator which operates on reg/mem */
-static void emit_op_rm(const char* mnemonic, arg_t arg1, arg_t arg2, void* data)
+static void emit_op_rm(const qchar* mnemonic, arg_t arg1, arg_t arg2, void* data)
 {
 	u8 rex, modrm, sib;
 	opparam_t* params = data;
@@ -538,7 +547,7 @@ static void emit_op_rm(const char* mnemonic, arg_t arg1, arg_t arg2, void* data)
 }
 
 /* operator which operates on reg/mem with cl */
-static void emit_op_rm_cl(const char* mnemonic, arg_t arg1, arg_t arg2, void* data)
+static void emit_op_rm_cl(const qchar* mnemonic, arg_t arg1, arg_t arg2, void* data)
 {
 	u8 rex, modrm, sib;
 	opparam_t* params = data;
@@ -570,7 +579,7 @@ static void emit_op_rm_cl(const char* mnemonic, arg_t arg1, arg_t arg2, void* da
 	maybe_emit_displacement(&arg2);
 }
 
-static void emit_mov(const char* mnemonic, arg_t arg1, arg_t arg2, void* data)
+static void emit_mov(const qchar* mnemonic, arg_t arg1, arg_t arg2, void* data)
 {
 	u8 rex = 0;
 	u8 modrm = 0;
@@ -593,7 +602,7 @@ static void emit_mov(const char* mnemonic, arg_t arg1, arg_t arg2, void* data)
 				crap("value too large for 16bit register");
 			emit1(0x66);
 		}
-		else if(!arg2.v.reg & R_64)
+		else if(!(arg2.v.reg & R_64))
 		{
 			if(!isu32(arg1.v.imm))
 				crap("value too large for 32bit register");
@@ -682,7 +691,7 @@ static void emit_mov(const char* mnemonic, arg_t arg1, arg_t arg2, void* data)
 		CRAP_INVALID_ARGS;
 }
 
-static void emit_subaddand(const char* mnemonic, arg_t arg1, arg_t arg2, void* data)
+static void emit_subaddand(const qchar* mnemonic, arg_t arg1, arg_t arg2, void* data)
 {
 	u8 rex = 0;
 	u8 modrm = 0;
@@ -745,11 +754,11 @@ static void emit_subaddand(const char* mnemonic, arg_t arg1, arg_t arg2, void* d
 		CRAP_INVALID_ARGS;
 }
 
-static void emit_condjump(const char* mnemonic, arg_t arg1, arg_t arg2, void* data)
+static void emit_condjump(const qchar* mnemonic, arg_t arg1, arg_t arg2, void* data)
 {
 	unsigned off;
-	int disp;
-	unsigned char opcode = (unsigned char)(((unsigned long)data)&0xFF);
+	qint disp;
+	unsigned qchar opcode = (unsigned qchar)(((uint64_t)data)&0xFF);
 
 	if(arg1.type != T_LABEL || arg2.type != T_NONE)
 		crap("%s: argument must be label", mnemonic);
@@ -764,7 +773,7 @@ static void emit_condjump(const char* mnemonic, arg_t arg1, arg_t arg2, void* da
 	emit1(disp);
 }
 
-static void emit_jmp(const char* mnemonic, arg_t arg1, arg_t arg2, void* data)
+static void emit_jmp(const qchar* mnemonic, arg_t arg1, arg_t arg2, void* data)
 {
 	if((arg1.type != T_LABEL && arg1.type != T_REGISTER && arg1.type != T_MEMORY) || arg2.type != T_NONE)
 		CRAP_INVALID_ARGS;
@@ -772,7 +781,7 @@ static void emit_jmp(const char* mnemonic, arg_t arg1, arg_t arg2, void* data)
 	if(arg1.type == T_LABEL)
 	{
 		unsigned off;
-		int disp;
+		qint disp;
 
 		off = lookup_label(arg1.v.label);
 		disp = off-(compiledOfs+5);
@@ -807,32 +816,42 @@ static void emit_jmp(const char* mnemonic, arg_t arg1, arg_t arg2, void* data)
 	}
 }
 
-static void emit_call(const char* mnemonic, arg_t arg1, arg_t arg2, void* data)
+static void emit_call(const qchar* mnemonic, arg_t arg1, arg_t arg2, void* data)
 {
 	u8 rex, modrm, sib;
 
-	if(arg1.type != T_REGISTER || arg2.type != T_NONE)
+	if((arg1.type != T_REGISTER && arg1.type != T_IMMEDIATE) || arg2.type != T_NONE)
 		CRAP_INVALID_ARGS;
 
-	if(!arg1.absolute)
-		crap("call must be absolute");
+	if(arg1.type == T_REGISTER)
+	{
+		if(!arg1.absolute)
+			crap("call must be absolute");
 
-	if((arg1.v.reg & R_64) != R_64)
-		crap("register must be 64bit");
+		if((arg1.v.reg & R_64) != R_64)
+			crap("register must be 64bit");
 
-	arg1.v.reg ^= R_64; // no rex required for call
+		arg1.v.reg ^= R_64; // no rex required for call
 
-	compute_rexmodrmsib(&rex, &modrm, &sib, &arg2, &arg1);
+		compute_rexmodrmsib(&rex, &modrm, &sib, &arg2, &arg1);
 
-	modrm |= 0x2 << 3;
+		modrm |= 0x2 << 3;
 
-	if(rex) emit1(rex);
-	emit1(0xff);
-	emit1(modrm);
+		if(rex) emit1(rex);
+		emit1(0xff);
+		emit1(modrm);
+	}
+	else 
+	{
+		if(!isu32(arg1.v.imm))
+			crap("must be 32bit argument");
+		emit1(0xe8);
+		emit4(arg1.v.imm);
+	}
 }
 
 
-static void emit_twobyte(const char* mnemonic, arg_t arg1, arg_t arg2, void* data)
+static void emit_twobyte(const qchar* mnemonic, arg_t arg1, arg_t arg2, void* data)
 {
 	u8 rex, modrm, sib;
 
@@ -875,7 +894,7 @@ static opparam_t params_or = { subcode: 1, rmcode: 0x09, };
 static opparam_t params_and = { subcode: 4, rmcode: 0x21, };
 static opparam_t params_sub = { subcode: 5, rmcode: 0x29, };
 static opparam_t params_xor = { subcode: 6, rmcode: 0x31, };
-static opparam_t params_cmp = { subcode: 6, rmcode: 0x39, mrcode: 0x3b, };
+static opparam_t params_cmp = { subcode: 7, rmcode: 0x39, mrcode: 0x3b, };
 static opparam_t params_dec = { subcode: 1, rcode: 0xff, rcode8: 0xfe, };
 static opparam_t params_sar = { subcode: 7, rcode: 0xd3, rcode8: 0xd2, };
 static opparam_t params_shl = { subcode: 4, rcode: 0xd3, rcode8: 0xd2, };
@@ -896,7 +915,7 @@ static opparam_t params_mulss = { xmmprefix: 0xf3, mrcode: 0x59 };
 static opparam_t params_subss = { xmmprefix: 0xf3, mrcode: 0x5c };
 static opparam_t params_ucomiss = { mrcode: 0x2e };
 
-static int ops_sorted = 0;
+static qint ops_sorted = 0;
 static op_t ops[] = {
 	{ "addl", emit_subaddand, &params_add },
 	{ "addq", emit_subaddand, &params_add },
@@ -968,14 +987,14 @@ static op_t ops[] = {
 	{ NULL, NULL, NULL }
 };
 
-static int opsort(const void* A, const void* B)
+static qint opsort(const void* A, const void* B)
 {
 	const op_t* a = A;
 	const op_t* b = B;
 	return strcmp(a->mnemonic, b->mnemonic);
 }
 
-static op_t* getop(const char* n)
+static op_t* getop(const qchar* n)
 {
 #if 0
 	op_t* o = ops;
@@ -988,8 +1007,8 @@ static op_t* getop(const char* n)
 
 #else
 	unsigned m, t, b;
-	int r;
-	t = sizeof(ops)/sizeof(ops[0])-1;
+	qint r;
+	t = ARRAY_LEN(ops) - 1;
 	b = 0;
 
 	while(b <= t)
@@ -1013,9 +1032,9 @@ static op_t* getop(const char* n)
 	return NULL;
 }
 
-static reg_t parsereg(const char* str)
+static reg_t parsereg(const qchar* str)
 {
-	const char* s = str;
+	const qchar* s = str;
 	if(*s == 'a' && s[1] == 'l' && !s[2])
 	{
 		return R_AL;
@@ -1102,9 +1121,9 @@ typedef enum {
 	TOK_INVALID = 0x83,
 } token_t;
 
-static unsigned char nexttok(const char** str, char* label, u64* val)
+static unsigned qchar nexttok(const qchar** str, qchar* label, u64* val)
 {
-	const char* s = *str;
+	const qchar* s = *str;
 
 	if(label) *label = 0;
 	if(val) *val = 0;
@@ -1135,8 +1154,8 @@ static unsigned char nexttok(const char** str, char* label, u64* val)
 	}
 	else if(*s >= '0' && *s <= '9')
 	{
-		char* endptr = NULL;
-		u64 v = strtol(s, &endptr, 0);
+		qchar* endptr = NULL;
+		u64 v = strtoull(s, &endptr, 0);
 		if(endptr && (endptr-s == 0))
 			crap("invalid integer %s", s);
 		if(val) *val = v;
@@ -1147,13 +1166,13 @@ static unsigned char nexttok(const char** str, char* label, u64* val)
 	return TOK_INVALID;
 }
 
-static arg_t parsearg(const char** str)
+static arg_t parsearg(const qchar** str)
 {
 	arg_t arg;
-	const char* s = *str;
-	char label[20];
+	const qchar* s = *str;
+	qchar label[20];
 	u64 val;
-	int negative = 1;
+	qint negative = 1;
 	unsigned ttype;
 
 	arg.type = T_NONE;
@@ -1257,7 +1276,7 @@ tok_memory:
 			}
 			break;
 		default:
-			crap("invalid token %hhu in %s", *(unsigned char*)s, *str);
+			crap("invalid token %hu in %s", *(unsigned qchar*)s, *str);
 			break;
 	}
 
@@ -1268,7 +1287,7 @@ tok_memory:
 
 /* ************************* */
 
-void assembler_init(int pass)
+void assembler_init(qint pass)
 {
 	compiledOfs = 0;
 	assembler_pass = pass;
@@ -1280,7 +1299,7 @@ void assembler_init(int pass)
 	if(!ops_sorted)
 	{
 		ops_sorted = 1;
-		qsort(ops, sizeof(ops)/sizeof(ops[0])-1, sizeof(ops[0]), opsort);
+		qsort(ops, ARRAY_LEN(ops) - 1, sizeof(ops[0]), opsort);
 	}
 }
 
@@ -1289,17 +1308,17 @@ size_t assembler_get_code_size(void)
 	return compiledOfs;
 }
 
-void assembler_set_output(char* buf)
+void assembler_set_output(qchar* buf)
 {
 	out = buf;
 }
 
-void assemble_line(const char* input, size_t len)
+void assemble_line(const qchar* input, size_t len)
 {
-	char line[4096];
-	char* s;
+	qchar line[4096];
+	qchar* s;
 	op_t* o;
-	char* opn;
+	qchar* opn;
 	arg_t arg1, arg2;
 
 	arg1.type = T_NONE;
@@ -1332,13 +1351,13 @@ void assemble_line(const char* input, size_t len)
 		if(s)
 		{
 			*s++ = 0;
-			arg1 = parsearg((const char**)&s);
+			arg1 = parsearg((const qchar**)&s);
 			if(*s)
 			{
 				if(*s != ',')
 					crap("expected ',', got '%c'", *s);
 				++s;
-				arg2 = parsearg((const char**)&s);
+				arg2 = parsearg((const qchar**)&s);
 			}
 		}
 
@@ -1359,11 +1378,11 @@ void assemble_line(const char* input, size_t len)
 }
 
 #ifdef SA_STANDALONE
-int main(int argc, char* argv[])
+qint main(qint argc, qchar* argv[])
 {
-	char line[4096];
+	qchar line[4096];
 	size_t len;
-	int pass;
+	qint pass;
 	FILE* file = NULL;
 
 	if(argc < 2)
@@ -1393,7 +1412,7 @@ int main(int argc, char* argv[])
 
 		if(pass)
 		{
-			char* b = malloc(assembler_get_code_size());
+			qchar* b = malloc(assembler_get_code_size());
 			if(!b)
 				crap("cannot allocate memory");
 			assembler_set_output(b);

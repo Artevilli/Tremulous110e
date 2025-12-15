@@ -896,7 +896,7 @@ static void CG_smoothWWTransitions( playerState_t *ps, const vec3_t in, vec3_t o
   int       i;
   float     stLocal, sFraction, rotAngle;
   float     smoothTime, timeMod;
-  qboolean  performed = qfalse;
+  qbool  performed = qfalse;
   vec3_t    inAxis[ 3 ], lastAxis[ 3 ], outAxis[ 3 ];
 
   if( cg.snap->ps.pm_flags & PMF_FOLLOW )
@@ -993,7 +993,7 @@ static void CG_smoothWJTransitions( playerState_t *ps, const vec3_t in, vec3_t o
 {
   int       i;
   float     stLocal, sFraction;
-  qboolean  performed = qfalse;
+  qbool  performed = qfalse;
   vec3_t    inAxis[ 3 ], outAxis[ 3 ];
 
   if( cg.snap->ps.pm_flags & PMF_FOLLOW )
@@ -1176,7 +1176,7 @@ CG_DrawActiveFrame
 Generates and draws a game scene and status information at the given time.
 =================
 */
-void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demoPlayback )
+void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qbool demoPlayback )
 {
   int   inwater;
 

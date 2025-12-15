@@ -291,7 +291,7 @@ Generates cg.predictedPlayerState by interpolating between
 cg.snap->player_state and cg.nextFrame->player_state
 ========================
 */
-static void CG_InterpolatePlayerState( qboolean grabAngles )
+static void CG_InterpolatePlayerState( qbool grabAngles )
 {
   float         f;
   int           i;
@@ -358,7 +358,7 @@ static void CG_TouchTriggerPrediction( void )
   entityState_t *ent;
   clipHandle_t  cmodel;
   centity_t     *cent;
-  qboolean      spectator;
+  qbool      spectator;
 
   // dead clients don't activate triggers
   if( cg.predictedPlayerState.stats[ STAT_HEALTH ] <= 0 )
@@ -547,7 +547,7 @@ void CG_PredictPlayerState( void )
 {
   int     cmdNum, current, i;
   playerState_t oldPlayerState;
-  qboolean  moved;
+  qbool  moved;
   usercmd_t oldestCmd;
   usercmd_t latestCmd;
   int stateIndex = 0, predictCmd = 0;
@@ -680,7 +680,7 @@ void CG_PredictPlayerState( void )
       // we have a new snapshot
       int i;
       int errorcode;
-      qboolean error = qtrue;
+      qbool error = qtrue;
 
       // loop through the saved states queue
       for( i = cg.stateHead; i != cg.stateTail;

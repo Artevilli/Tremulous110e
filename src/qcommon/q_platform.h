@@ -21,8 +21,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#ifndef __Q_PLATFORM_H
-#define __Q_PLATFORM_H
+#pragma once
 
 // this is for determining if we have an asm version of a C function
 #ifdef Q3_VM
@@ -30,6 +29,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define id386 0
 #define idppc 0
 #define idppc_altivec 0
+#define idsparc 0
 
 #else
 
@@ -46,10 +46,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define idppc_altivec 1
 #ifdef MACOS_X  // Apple's GCC does this differently than the FSF.
 #define VECCONST_UINT8(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) \
-	(vector unsigned char) (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p)
+	(vector unsigned qchar) (a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p)
 #else
 #define VECCONST_UINT8(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) \
-	(vector unsigned char) {a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p}
+	(vector unsigned qchar) {a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p}
 #endif
 #else
 #define idppc_altivec 0
@@ -57,6 +57,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #else
 #define idppc 0
 #define idppc_altivec 0
+#endif
+
+#if defined(__sparc__) && !defined(C_ONLY)
+#define idsparc 1
+#else
+#define idsparc 0
 #endif
 
 #endif
@@ -68,7 +74,32 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 //================================================================= WIN32 ===
 
-#ifdef _WIN32
+#if defined(_WIN64) || defined(__WIN64__)
+
+#undef QDECL
+#define QDECL __cdecl
+
+#if defined( _MSC_VER )
+#define OS_STRING "win_msvc64"
+#elif defined __MINGW64__
+#define OS_STRING "win_mingw64"
+#endif
+
+#define ID_INLINE __inline
+#define PATH_SEP '\\'
+#define PATH_SEP_FOREIGN '/'
+
+#if defined(__WIN64__)
+#define ARCH_STRING "x86_64"
+#elif defined _M_ALPHA
+#define ARCH_STRING "AXP"
+#endif
+
+#define Q3_LITTLE_ENDIAN
+
+#define DLL_EXT ".dll"
+
+#elif defined(_WIN32) || defined(__WIN32__)
 
 #undef QDECL
 #define QDECL __cdecl
@@ -81,6 +112,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define ID_INLINE __inline
 #define PATH_SEP '\\'
+#define PATH_SEP_FOREIGN '/'
 
 #if defined( _M_IX86 ) || defined( __i386__ )
 #define ARCH_STRING "x86"
@@ -113,6 +145,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #elif defined __i386__
 #define ARCH_STRING "x86"
 #define Q3_LITTLE_ENDIAN
+#elif defined __x86_64__
+#define ARCH_STRING "x86_64"
+#define Q3_LITTLE_ENDIAN
 #endif
 
 #define DLL_EXT ".dylib"
@@ -121,18 +156,26 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 //================================================================= LINUX ===
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__FreeBSD_kernel__)
 
 #include <endian.h>
 
+#if defined(__linux__)
 #define OS_STRING "linux"
+#else
+#define OS_STRING "kFreeBSD"
+#endif
+
 #define ID_INLINE inline
 #define PATH_SEP '/'
+#define PATH_SEP_FOREIGN '\\'
 
 #if defined __i386__
 #define ARCH_STRING "x86"
 #elif defined __x86_64__
 #define ARCH_STRING "x86_64"
+#elif defined __loongarch64
+#define ARCH_STRING "loongarch64"
 #elif defined __powerpc64__
 #define ARCH_STRING "ppc64"
 #elif defined __powerpc__
@@ -190,9 +233,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define ID_INLINE inline
 #define PATH_SEP '/'
+#define PATH_SEP_FOREIGN '\\'
 
 #ifdef __i386__
 #define ARCH_STRING "x86"
+#elif defined __amd64__
+#define ARCH_STRING "amd64"
 #elif defined __axp__
 #define ARCH_STRING "alpha"
 #endif
@@ -283,6 +329,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #error "PATH_SEP not defined"
 #endif
 
+#ifndef PATH_SEP_FOREIGN
+#error "PATH_SEP_FOREIGN not defined"
+#endif
+
 #ifndef DLL_EXT
 #error "DLL_EXT not defined"
 #endif
@@ -290,13 +340,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 //endianness
 short ShortSwap (short l);
-int LongSwap (int l);
+qint LongSwap (qint l);
 float FloatSwap (const float *f);
 
 #if defined( Q3_BIG_ENDIAN ) && defined( Q3_LITTLE_ENDIAN )
 #error "Endianness defined as both big and little"
 #elif defined( Q3_BIG_ENDIAN )
 
+#define CopyLittleShort(dest, src) CopyShortSwap(dest, src)
+#define CopyLittleLong(dest, src) CopyLongSwap(dest, src)
 #define LittleShort(x) ShortSwap(x)
 #define LittleLong(x) LongSwap(x)
 #define LittleFloat(x) FloatSwap(&x)
@@ -306,6 +358,8 @@ float FloatSwap (const float *f);
 
 #elif defined( Q3_LITTLE_ENDIAN )
 
+#define CopyLittleShort(dest, src) Com_Memcpy(dest, src, 2)
+#define CopyLittleLong(dest, src) Com_Memcpy(dest, src, 4)
 #define LittleShort
 #define LittleLong
 #define LittleFloat
@@ -315,6 +369,8 @@ float FloatSwap (const float *f);
 
 #elif defined( Q3_VM )
 
+#define CopyLittleShort(dest, src) Com_Memcpy(dest, src, 2)
+#define CopyLittleLong(dest, src) Com_Memcpy(dest, src, 4)
 #define LittleShort
 #define LittleLong
 #define LittleFloat
@@ -328,12 +384,10 @@ float FloatSwap (const float *f);
 
 
 //platform string
-#ifdef NDEBUG
+//#ifdef NDEBUG
 #define PLATFORM_STRING OS_STRING "-" ARCH_STRING
-#else
-#define PLATFORM_STRING OS_STRING "-" ARCH_STRING "-debug"
-#endif
-
-#endif
+//#else
+//#define PLATFORM_STRING OS_STRING "-" ARCH_STRING "-debug"
+//#endif
 
 #endif

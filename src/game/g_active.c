@@ -466,7 +466,7 @@ ClientInactivityTimer
 Returns qfalse if the client is dropped
 =================
 */
-qboolean ClientInactivityTimer( gclient_t *client )
+qbool ClientInactivityTimer( gclient_t *client )
 {
   if( ! g_inactivity.integer )
   {
@@ -513,7 +513,7 @@ void ClientTimerActions( gentity_t *ent, int msec )
   gclient_t *client;
   usercmd_t *ucmd;
   int       aForward, aRight;
-  qboolean  walking = qfalse, stopped = qfalse,
+  qbool  walking = qfalse, stopped = qfalse,
             crouched = qfalse, jumping = qfalse,
             strafing = qfalse;
   int       i;

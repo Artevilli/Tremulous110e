@@ -74,7 +74,7 @@ static struct in_addr listen_addr;
 
 #ifndef WIN32
 // On UNIX systems, we can run as a daemon
-static qboolean daemon_mode = qfalse;
+static qbool daemon_mode = qfalse;
 
 // Path we use for chroot
 static const char* jail_path = DEFAULT_JAIL_PATH;
@@ -142,7 +142,7 @@ SysInit
 System dependent initializations
 ====================
 */
-static qboolean SysInit (void)
+static qbool SysInit (void)
 {
 #ifdef WIN32
 	WSADATA winsockdata;
@@ -167,7 +167,7 @@ We need this intermediate step because DNS requests may not be able to resolve
 after the security initializations, due to chroot.
 ====================
 */
-static qboolean UnsecureInit (void)
+static qbool UnsecureInit (void)
 {
 	// Resolve the address mapping list
 	if (! Sv_ResolveAddressMappings ())
@@ -206,7 +206,7 @@ SecInit
 Security initializations (system dependent)
 ====================
 */
-static qboolean SecInit (void)
+static qbool SecInit (void)
 {
 #ifndef WIN32
 	// Should we run as a daemon?
@@ -269,11 +269,11 @@ ParseCommandLine
 Parse the options passed by the command line
 ====================
 */
-static qboolean ParseCommandLine (int argc, const char* argv [])
+static qbool ParseCommandLine (int argc, const char* argv [])
 {
 	int ind = 1;
 	unsigned int vlevel = max_msg_level;
-	qboolean valid_options = qtrue;
+	qbool valid_options = qtrue;
 
 	while (ind < argc && valid_options)
 	{
@@ -456,7 +456,7 @@ SecureInit
 System independent initializations, called AFTER the security initializations
 ====================
 */
-static qboolean SecureInit (void)
+static qbool SecureInit (void)
 {
 	struct sockaddr_in address;
 
@@ -531,7 +531,7 @@ static qboolean SecureInit (void)
 	return qtrue;
 }
 
-static qboolean exitNow = qfalse;
+static qbool exitNow = qfalse;
 
 /*
 ===============
@@ -566,7 +566,7 @@ static ignoreAddress_t		*ignoreAddresses		= NULL;
 parseIgnoreAddress
 ====================
 */
-static qboolean parseIgnoreAddress( void )
+static qbool parseIgnoreAddress( void )
 {
 	int		numAllocIgnoreAddresses	= 1;
 	FILE	*f											= NULL;
@@ -675,7 +675,7 @@ ignoreAddress
 Check whether or not to ignore a specific address
 ====================
 */
-static qboolean ignoreAddress( const char *address )
+static qbool ignoreAddress( const char *address )
 {
 	int i;
 
@@ -724,7 +724,7 @@ int main (int argc, const char* argv [])
 	int nb_bytes;
 	int sock;
 	char packet [MAX_PACKET_SIZE + 1];  // "+ 1" because we append a '\0'
-	qboolean valid_options;
+	qbool valid_options;
 	fd_set rfds;
 	struct timeval tv;
 

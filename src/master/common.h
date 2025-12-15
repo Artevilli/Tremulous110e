@@ -45,7 +45,7 @@
 // ---------- Types ---------- //
 
 // A few basic types
-typedef enum {qfalse, qtrue} qboolean;
+typedef enum {qfalse, qtrue} qbool;
 typedef unsigned char qbyte;
 
 // The various messages levels
