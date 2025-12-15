@@ -42,10 +42,10 @@ qint			CM_PointContents( const vec3_t p, clipHandle_t model );
 qint			CM_TransformedPointContents( const vec3_t p, clipHandle_t model, const vec3_t origin, const vec3_t angles );
 
 void		CM_BoxTrace ( trace_t *results, const vec3_t start, const vec3_t end,
-						  vec3_t mins, vec3_t maxs,
+						  const vec3_t mins, const vec3_t maxs,
 						  clipHandle_t model, qint brushmask, traceType_t type );
 void		CM_TransformedBoxTrace( trace_t *results, const vec3_t start, const vec3_t end,
-						  vec3_t mins, vec3_t maxs,
+						  const vec3_t mins, const vec3_t maxs,
 						  clipHandle_t model, qint brushmask,
 						  const vec3_t origin, const vec3_t angles, traceType_t type );
 void		CM_BiSphereTrace( trace_t *results, const vec3_t start,

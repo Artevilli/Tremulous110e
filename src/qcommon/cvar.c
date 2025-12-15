@@ -36,9 +36,6 @@ qint cvar_numIndexes;
 #define FILE_HASH_SIZE 256
 static cvar_t *hashTable[FILE_HASH_SIZE];
 
-cvar_t *
-Cvar_Set2(const qchar *var_name, const qchar *value, qbool force);
-
 /*
 ================
 return a hash value for the filename

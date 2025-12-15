@@ -715,7 +715,7 @@ passEntityNum and entities owned by passEntityNum are explicitly not checked.
 ==================
 */
 void
-SV_Trace(trace_t *results, const vec3_t start, vec3_t mins, vec3_t maxs, const vec3_t end, qint passEntityNum, qint contentmask, const traceType_t type)
+SV_Trace(trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, qint passEntityNum, qint contentmask, const traceType_t type)
 {
   moveclip_t clip;
   qint i;

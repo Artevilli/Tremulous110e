@@ -63,7 +63,7 @@ qint demo_protocols[] =
 qint com_argc;
 qchar *com_argv[MAX_NUM_ARGVS + 1];
 
-jmp_buf abortframe;		// an ERR_DROP occured, exit the entire frame
+static jmp_buf abortframe;		// an ERR_DROP occured, exit the entire frame
 
 
 FILE *debuglogfile;
@@ -84,6 +84,9 @@ cvar_t *com_altivec;
 cvar_t *com_timedemo;
 cvar_t *com_sv_running;
 cvar_t *com_cl_running;
+#if defined(_WIN32) && defined(_DEBUG)
+cvar_t *com_noErrorInterrupt;
+#endif
 cvar_t *com_logfile;		// 1 = buffer log, 2 = flush after each print
 cvar_t *com_pipefile;
 cvar_t *com_showtrace;
@@ -128,6 +131,7 @@ void CIN_CloseAllVideos( void );
 
 static qchar *rd_buffer;
 static qint rd_buffersize;
+static qbool rd_flushing = qfalse;
 static void (*rd_flush)(const qchar *buffer);
 
 void
@@ -149,7 +153,9 @@ Com_EndRedirect(void)
 {
   if (rd_flush)
   {
+    rd_flushing = qtrue;
     rd_flush(rd_buffer);
+    rd_flushing = qfalse;
   }
 
   rd_buffer = NULL;
@@ -162,27 +168,30 @@ Com_EndRedirect(void)
 Com_Printf
 
 Both client and server can use this, and it will output
-to the apropriate place.
+to the appropriate place.
 
 A raw string should NEVER be passed as fmt, because of "%f" type crashers.
 =============
 */
-void QDECL
+void FORMAT_PRINTF(1, 2) QDECL
 Com_Printf(const qchar *fmt, ...)
 {
+  static qbool opening_qconsole = qfalse;
   va_list argptr;
   qchar msg[MAXPRINTMSG];
-  static qbool opening_qconsole = qfalse;
+  qint len;
 
   va_start(argptr, fmt);
-  Q_vsnprintf(msg, sizeof(msg), fmt, argptr);
+  len = Q_vsnprintf(msg, sizeof(msg), fmt, argptr);
   va_end(argptr);
 
-  if (rd_buffer)
+  if (rd_buffer && !rd_flushing)
   {
-    if ((strlen(msg) + strlen(rd_buffer)) > (rd_buffersize - 1))
+    if (len + (qint)strlen(rd_buffer) > (rd_buffersize - 1))
     {
+      rd_flushing = qtrue;
       rd_flush(rd_buffer);
+      rd_flushing = qfalse;
       *rd_buffer = '\0';
     }
 
@@ -193,7 +202,8 @@ Com_Printf(const qchar *fmt, ...)
     return;
   }
 
-#ifndef DEDICATED
+#if !defined(DEDICATED)
+  //echo to client console if we're not a dedicated server
   if (!com_dedicated || !com_dedicated->integer)
   {
     CL_ConsolePrint(msg);
@@ -210,27 +220,33 @@ Com_Printf(const qchar *fmt, ...)
     //also, avoid recursing in the qconsole.log opening (i.e. if fs_debug is on)
     if (logfile == FS_INVALID_HANDLE && FS_Initialized() && !opening_qconsole)
     {
-      struct tm *newtime;
-      time_t aclock;
+      const qchar *logName = "qconsole.log";
       qint mode;
 
       opening_qconsole = qtrue;
-      time(&aclock);
-      newtime = localtime(&aclock);
+
       mode = com_logfile->integer - 1;
 
       if (mode & 2)
       {
-        logfile = FS_FOpenFileAppend("qconsole.log");
+        logfile = FS_FOpenFileAppend(logName);
       }
       else
       {
-        logfile = FS_FOpenFileWrite("qconsole.log");
+        logfile = FS_FOpenFileWrite( logName );
       }
 
       if (logfile != FS_INVALID_HANDLE)
       {
-        Com_Printf("logfile opened on %s\n", asctime(newtime));
+        struct tm *newtime;
+        time_t aclock;
+        qchar timestr[32];
+
+        time(&aclock);
+        newtime = localtime(&aclock);
+        strftime(timestr, sizeof(timestr), "%a %b %d %X %Y", newtime);
+
+        Com_Printf("logfile opened on %s\n", timestr);
 
         if (mode & 1)
         {
@@ -241,8 +257,8 @@ Com_Printf(const qchar *fmt, ...)
       }
       else
       {
-        Com_Printf("Opening qconsole.log failed!\n");
-        Cvar_Set("logfile", 0);
+        Com_Printf(S_COLOR_YELLOW "Opening %s failed!\n", logName);
+        Cvar_Set("logfile", "0");
       }
 
       opening_qconsole = qfalse;
@@ -250,7 +266,7 @@ Com_Printf(const qchar *fmt, ...)
 
     if (logfile != FS_INVALID_HANDLE && FS_Initialized())
     {
-      FS_Write(msg, strlen(msg), logfile);
+      FS_Write(msg, len, logfile);
     }
   }
 }
@@ -263,7 +279,7 @@ Com_DPrintf
 A Com_Printf that only shows up if the "developer" cvar is set
 ================
 */
-void QDECL
+void FORMAT_PRINTF(1, 2) QDECL
 Com_DPrintf(const qchar *fmt, ...)
 {
   va_list argptr;
@@ -274,10 +290,11 @@ Com_DPrintf(const qchar *fmt, ...)
     return; //don't confuse non-developers with techie stuff...
   }
 
-  va_start(argptr, fmt);
+  va_start(argptr,fmt);
   Q_vsnprintf(msg, sizeof(msg), fmt, argptr);
   va_end(argptr);
-  Com_Printf("%s", msg);
+
+  Com_Printf(S_COLOR_CYAN "%s", msg);
 }
 
 /*
@@ -285,116 +302,156 @@ Com_DPrintf(const qchar *fmt, ...)
 Com_Error
 
 Both client and server can use this, and it will
-do the apropriate things.
+do the appropriate things.
 =============
 */
-void QDECL Com_Error( errorParm_t code, const qchar *fmt, ... ) {
-	va_list		argptr;
-	static qint	lastErrorTime;
-	static qint	errorCount;
-	static qbool calledSysError = qfalse;
-	qint			currentTime;
+//void NORETURN FORMAT_PRINTF(2, 3) QDECL //WHERE DOES THIS RETURN?
+void FORMAT_PRINTF(2, 3) QDECL
+Com_Error(errorParm_t code, const qchar *fmt, ...)
+{
+  va_list argptr;
+  static qint lastErrorTime;
+  static qint errorCount;
+  static qbool calledSysError = qfalse;
+  qint currentTime;
 
-        if (com_errorEntered)
-        {
-          if (!calledSysError)
-          {
-            calledSysError = qtrue;
-            Sys_Error("recursive error after: %s", com_errorMessage);
-          }
-
-          return;
-        }
-
-        com_errorEntered = qtrue;
-
-        Cvar_Set("com_errorCode", va(NULL, "%i", code));
-
-	// when we are running automated scripts, make sure we
-	// know if anything failed
-	if ( com_buildScript && com_buildScript->integer ) {
-		code = ERR_FATAL;
-	}
-
-	// if we are getting a solid stream of ERR_DROP, do an ERR_FATAL
-	currentTime = Sys_Milliseconds();
-	if ( currentTime - lastErrorTime < 100 ) {
-		if ( ++errorCount > 3 ) {
-			code = ERR_FATAL;
-		}
-	} else {
-		errorCount = 0;
-	}
-	lastErrorTime = currentTime;
-
-	va_start (argptr,fmt);
-	Q_vsnprintf (com_errorMessage, sizeof(com_errorMessage),fmt,argptr);
-	va_end (argptr);
-
-	if (code != ERR_DISCONNECT && code != ERR_NEED_CD)
-	{
-	        //we can't recover from ERR_FATAL so there is no recipients for com_errorMessage
-	        //also if ERR_FATAL was called from S_Malloc - CopyString for a long (2+ chars) text
-	        //will trigger recursive error without proper client/server shutdown
-	        if (code != ERR_FATAL)
-	        {
-		  Cvar_Set("com_errorMessage", com_errorMessage);
-		}
-	}
-
-	if (code == ERR_DISCONNECT || code == ERR_SERVERDISCONNECT) {
-	        VM_Forced_Unload_Start();
-		SV_Shutdown( "Server disconnected" );
-#if !defined(DEDICATED)
-		CL_Disconnect( qtrue );
-		CL_FlushMemory( );
+#if defined(_WIN32) && defined(_DEBUG)
+  if (code != ERR_DISCONNECT && code != ERR_NEED_CD)
+  {
+    if (!com_noErrorInterrupt->integer)
+    {
+      ShowWindow(g_wv.hWnd, SW_MINIMIZE);
+      DebugBreak();
+    }
+  }
 #endif
-		VM_Forced_Unload_Done();
-		// make sure we can get at our local stuff
-		FS_PureServerSetLoadedPaks("", "");
-		com_errorEntered = qfalse;
-		longjmp (abortframe, -1);
-	} else if (code == ERR_DROP) {
-		Com_Printf ("********************\nERROR: %s\n********************\n", com_errorMessage);
-		VM_Forced_Unload_Start();
-		SV_Shutdown (va(NULL, "Server crashed: %s",  com_errorMessage));
-		CL_Disconnect( qtrue );
-		CL_FlushMemory( );
-		VM_Forced_Unload_Done();
-		FS_PureServerSetLoadedPaks("", "");
-		com_errorEntered = qfalse;
-		longjmp (abortframe, -1);
-	} else if ( code == ERR_NEED_CD ) {
-	        VM_Forced_Unload_Start();
-		SV_Shutdown( "Server didn't have CD" );
+
+  if (com_errorEntered)
+  {
+    if (!calledSysError)
+    {
+      calledSysError = qtrue;
+      Sys_Error("recursive error after: %s", com_errorMessage);
+    }
+  }
+
+  com_errorEntered = qtrue;
+
+  Cvar_SetIntegerValue("com_errorCode", code);
+
+  //when we are running automated scripts, make sure we
+  //know if anything failed
+  if (com_buildScript && com_buildScript->integer)
+  {
+    code = ERR_FATAL;
+  }
+
+  //if we are getting a solid stream of ERR_DROP, do an ERR_FATAL
+  currentTime = Sys_Milliseconds();
+
+  if (currentTime - lastErrorTime < 100)
+  {
+    if (++errorCount > 3)
+    {
+      code = ERR_FATAL;
+    }
+  }
+  else
+  {
+    errorCount = 0;
+  }
+
+  lastErrorTime = currentTime;
+
+  va_start(argptr, fmt);
+  Q_vsnprintf(com_errorMessage, sizeof(com_errorMessage), fmt, argptr);
+  va_end(argptr);
+
+  if (code != ERR_DISCONNECT && code != ERR_NEED_CD)
+  {
+    //we can't recover from ERR_FATAL so there is no recipients for com_errorMessage
+    //also if ERR_FATAL was called from S_Malloc - CopyString for a long (2+ chars) text
+    //will trigger recursive error without proper client/server shutdown
+    if (code != ERR_FATAL)
+    {
+      Cvar_Set("com_errorMessage", com_errorMessage);
+    }
+  }
+
+  Cbuf_Init();
+
+  if (code == ERR_DISCONNECT || code == ERR_SERVERDISCONNECT)
+  {
+    VM_Forced_Unload_Start();
+    SV_Shutdown("Server disconnected");
+    Com_EndRedirect();
 #if !defined(DEDICATED)
-		if ( com_cl_running && com_cl_running->integer ) {
-			CL_Disconnect( qtrue );
-			CL_FlushMemory( );
-			VM_Forced_Unload_Done();
-			CL_CDDialog();
-		} else {
-			Com_Printf("Server didn't have CD\n" );
-			VM_Forced_Unload_Start();
-		}
+    CL_Disconnect(qfalse);
+    CL_FlushMemory();
 #endif
-		FS_PureServerSetLoadedPaks("", "");
+    VM_Forced_Unload_Done();
 
-                com_errorEntered = qfalse;
-		longjmp (abortframe, -1);
-	} else {
-	        VM_Forced_Unload_Start();
+    //make sure we can get at our local stuff
+    FS_PureServerSetLoadedPaks("", "");
+    com_errorEntered = qfalse;
+
+    Q_longjmp(abortframe, 1);
+  }
+  else if (code == ERR_DROP)
+  {
+    Com_Printf("********************\nERROR: %s\n********************\n", com_errorMessage);
+    VM_Forced_Unload_Start();
+    SV_Shutdown(va(NULL, "Server crashed: %s",  com_errorMessage));
+    Com_EndRedirect();
 #if !defined(DEDICATED)
-		CL_Shutdown (va(NULL, "Client fatal crashed: %s", com_errorMessage));
+    CL_Disconnect(qfalse);
+    CL_FlushMemory();
 #endif
-		SV_Shutdown (va(NULL, "Server fatal crashed: %s", com_errorMessage));
-		VM_Forced_Unload_Done();
-	}
+    VM_Forced_Unload_Done();
 
-	Com_Shutdown ();
+    FS_PureServerSetLoadedPaks("", "");
+    com_errorEntered = qfalse;
 
-        calledSysError = qtrue;
-	Sys_Error ("%s", com_errorMessage);
+    Q_longjmp(abortframe, 1);
+  }
+  else if (code == ERR_NEED_CD)
+  {
+    SV_Shutdown("Server didn't have CD");
+    Com_EndRedirect();
+#if !defined(DEDICATED)
+    if (com_cl_running && com_cl_running->integer)
+    {
+      CL_Disconnect(qfalse);
+      VM_Forced_Unload_Start();
+      CL_FlushMemory();
+      VM_Forced_Unload_Done();
+      CL_CDDialog();
+    }
+    else
+    {
+      Com_Printf("Server didn't have CD\n");
+    }
+#endif
+    FS_PureServerSetLoadedPaks("", "");
+    com_errorEntered = qfalse;
+
+    Q_longjmp(abortframe, 1);
+  }
+  else
+  {
+    VM_Forced_Unload_Start();
+#if !defined(DEDICATED)
+    CL_Shutdown(va(NULL, "Server fatal crashed: %s", com_errorMessage));
+#endif
+    SV_Shutdown(va(NULL, "Server fatal crashed: %s", com_errorMessage));
+    Com_EndRedirect();
+    VM_Forced_Unload_Done();
+  }
+
+  Com_Shutdown();
+
+  calledSysError = qtrue;
+  Sys_Error("%s", com_errorMessage);
 }
 
 
@@ -3117,6 +3174,10 @@ void Com_Init( qchar *commandLine ) {
 	Com_InitSmallZoneMemory();
 	Cvar_Init ();
 
+#if defined(_WIN32) && defined(_DEBUG)
+        com_noErrorInterrupt = Cvar_Get("com_noErrorInterrupt", "0", 0);
+#endif
+
 	// prepare enough of the subsystems to handle
 	// cvar and command buffer management
 	Com_ParseCommandLine( commandLine );
@@ -3734,35 +3795,6 @@ Com_Shutdown(void)
 }
 
 //------------------------------------------------------------------------
-
-
-/*
-=====================
-Q_acos
-
-the msvc acos doesn't always return a value between -PI and PI:
-
-qint i;
-i = 1065353246;
-acos(*(float*) &i) == -1.#IND0
-
-	This should go in q_math but it is too late to add new traps
-	to game and ui
-=====================
-*/
-float Q_acos(float c) {
-	float angle;
-
-	angle = acos(c);
-
-	if (angle > (float)M_PI) {
-		return (float)M_PI;
-	}
-	if (angle < -(float)M_PI) {
-		return (float)M_PI;
-	}
-	return angle;
-}
 
 /*
 ===========================================

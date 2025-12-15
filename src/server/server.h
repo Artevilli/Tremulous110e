@@ -867,7 +867,7 @@ SV_PointContents(const vec3_t p, qint passEntityNum);
 
 
 void
-SV_Trace(trace_t *results, const vec3_t start, vec3_t mins, vec3_t maxs, const vec3_t end, qint passEntityNum, qint contentmask, const traceType_t type);
+SV_Trace(trace_t *results, const vec3_t start, const vec3_t mins, const vec3_t maxs, const vec3_t end, qint passEntityNum, qint contentmask, const traceType_t type);
 //mins and maxs are relative if the entire move stays in a solid volume, trace.allsolid will be set, trace.startsolid will be set, and trace.fraction will be 0 if the starting point is in a solid, it will be allowed to move out to an open area passEntityNum is explicitly excluded from clipping checks (normally ENTITYNUM_NONE)
 
 void

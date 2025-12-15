@@ -395,10 +395,10 @@ void	*VM_ExplicitArgPtr( vm_t *vm, intptr_t intValue );
 static ID_INLINE float
 _vmf(intptr_t x)
 {
-  floatint_t fi;
+  floatint_t v;
 
-  fi.i = (qint)x;
-  return fi.f;
+  v.i = (qint)x;
+  return v.f;
 }
 #define	VMF(x)	_vmf(args[x])
 
@@ -553,6 +553,10 @@ void	Cvar_Update( vmCvar_t *vmCvar );
 
 void 	Cvar_Set( const qchar *var_name, const qchar *value );
 // will create the variable with no flags if it doesn't exist
+
+cvar_t *
+Cvar_Set2(const qchar *var_name, const qchar *value, qbool force);
+//same as Cvar_Set, but allows more control over setting of cvar
 
 void
 Cvar_SetSafe(const qchar *var_name, const qchar *value);
@@ -980,9 +984,10 @@ void		Info_Print( const qchar *s );
 
 void		Com_BeginRedirect (qchar *buffer, qint buffersize, void (*flush)(const qchar *));
 void		Com_EndRedirect( void );
-void 		QDECL Com_Printf( const qchar *fmt, ... ) __attribute__ ((format (printf, 1, 2)));
-void 		QDECL Com_DPrintf( const qchar *fmt, ... ) __attribute__ ((format (printf, 1, 2)));
-void 		QDECL Com_Error( errorParm_t code, const qchar *fmt, ... ) __attribute__ ((format (printf, 2, 3)));
+void FORMAT_PRINTF(1, 2) QDECL
+Com_Printf(const qchar *fmt, ...);
+void FORMAT_PRINTF(1, 2) QDECL
+Com_DPrintf(const qchar *fmt, ...);
 void 		Com_Quit_f( void );
 void
 Com_GameRestart(qint checksumFeed, qbool clientRestart);

@@ -123,6 +123,25 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define Q_EXPORT
 #endif
 
+//XXX: paving the way...
+#if defined(__GNUC__) || defined(__clang__)
+#define NORETURN __attribute__((noreturn))
+#define NORETURN_PTR __attribute__((noreturn))
+#elif defined(_MSC_VER)
+#define NORETURN __declspec(noreturn)
+//__declspec doesn't work on function pointers
+#define NORETURN_PTR /*nothing*/
+#else
+#define NORETURN /*nothing*/
+#define NORETURN_PTR /*nothing*/
+#endif
+
+#if defined(__GNUC__) || defined(__clang__)
+#define FORMAT_PRINTF(x, y) __attribute__((format (printf, x, y)))
+#else
+#define FORMAT_PRINTF(x, y) /*nothing*/
+#endif
+
 /**********************************************************************
   VM Considerations
 
@@ -196,15 +215,25 @@ float FloatSwap(const float *f);
 	#endif
 #endif
 
+#if defined(_WIN32) && !defined(_MSC_VER)
+#define Q_setjmp __builtin_setjmp
+#define Q_longjmp __builtin_longjmp
+#else
+#define Q_setjmp setjmp
+#define Q_longjmp longjmp
+#endif
+
 typedef unsigned char byte;
 
-typedef enum {qfalse, qtrue}	qbool;
+typedef enum {qfalse = 0, qtrue}	qbool;
 
 typedef union
+floatint_u
 {
+  int32_t i;
+  uint32_t u;
   float f;
-  qint i;
-  unsigned qint ui;
+  byte b[4];
 }
 floatint_t;
 
@@ -411,6 +440,10 @@ typedef	qint	fixed16_t;
 #define M_PI		3.14159265358979323846f	// matches value in gcc v2 math.h
 #endif
 
+#ifndef M_LN2
+#define M_LN2 0.693147180559945309417f
+#endif
+
 #ifndef M_SQRT2
 #define M_SQRT2 1.414213562f
 #endif
@@ -422,6 +455,18 @@ typedef	qint	fixed16_t;
 #define ARRAY_INDEX(arr, el) ((qint)((el) - (arr)))
 #define ARRAY_LEN(x) (sizeof(x) / sizeof(*(x)))
 #define STRARRAY_LEN(x) (ARRAY_LEN(x) - 1)
+
+#if defined(__linux__)
+#if defined(__GLIBC__)
+#if idx64
+//force version for better runtime compatibility
+__asm__(".symver logf,logf@GLIBC_2.2.5");
+__asm__(".symver powf,powf@GLIBC_2.2.5");
+__asm__(".symver expf,expf@GLIBC_2.2.5");
+__asm__(".symver memcpy,memcpy@GLIBC_2.2.5");
+#endif
+#endif
+#endif
 
 #define NUMVERTEXNORMALS	162
 extern	vec3_t	bytedirs[NUMVERTEXNORMALS];
@@ -636,7 +681,7 @@ extern	vec4_t		colorIndigo;
 #define S_COLOR_CHOCOLATE '^Y'
 #define S_COLOR_INDIGO '^Z'
  
-extern vec4_t g_color_table[62];
+extern const vec4_t g_color_table[62];
 
 #define	MAKERGB(v, r, g, b) v[0]=r;v[1]=g;v[2]=b
 #define	MAKERGBA(v, r, g, b, a) v[0]=r;v[1]=g;v[2]=b;v[3]=a
@@ -651,7 +696,7 @@ extern vec4_t g_color_table[62];
 
 struct cplane_s;
 
-extern	vec3_t	vec3_origin;
+extern	const vec3_t	vec3_origin;
 extern	vec3_t	axisDefault[3];
 
 #define	nanmask (255<<23)
@@ -687,9 +732,16 @@ float Q_fabs( float f );
 float Q_rsqrt( float f );		// reciprocal square root
 #endif
 
+float
+Q_log2f(float f);
+float
+Q_exp2f(float f);
+
 #define SQRTFAST( x ) ( (x) * Q_rsqrt( x ) )
 
 signed qchar ClampChar( qint i );
+signed qchar
+ClampCharMove(qint i);
 signed short ClampShort( qint i );
 
 // this isn't a real cheap function to call!
@@ -850,7 +902,7 @@ void CrossProduct( const vec3_t v1, const vec3_t v2, vec3_t cross );
 vec_t VectorNormalize (vec3_t v);		// returns vector length
 vec_t VectorNormalize2( const vec3_t v, vec3_t out );
 void Vector4Scale( const vec4_t in, vec_t scale, vec4_t out );
-void VectorRotate( vec3_t in, vec3_t matrix[3], vec3_t out );
+void VectorRotate( const vec3_t in, const vec3_t matrix[3], vec3_t out );
 qint Q_log2(qint val);
 
 float Q_acos(float c);
@@ -902,6 +954,8 @@ void VectorMatrixMultiply( const vec3_t p, vec3_t m[ 3 ], vec3_t out );
 void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up);
 void PerpendicularVector( vec3_t dst, const vec3_t src );
 qint Q_isnan( float x );
+float
+Q_atof(const qchar *str);
 
 void GetPerpendicularViewVector( const vec3_t point, const vec3_t p1,
 		const vec3_t p2, vec3_t up );
@@ -1116,8 +1170,11 @@ unsigned
 Info_RemoveKey(qchar *s, const qchar *key);
 
 // this is only here so the functions in q_shared.c and bg_*.c can link
-void	QDECL Com_Error( errorParm_t level, const qchar *error, ... ) __attribute__ ((format (printf, 2, 3)));
-void	QDECL Com_Printf( const qchar *msg, ... ) __attribute__ ((format (printf, 1, 2)));
+//void NORETURN FORMAT_PRINTF(2, 3) QDECL
+void FORMAT_PRINTF(2, 3) QDECL
+Com_Error(errorParm_t level, const qchar *fmt, ...);
+void FORMAT_PRINTF(1, 2) QDECL
+Com_Printf(const qchar *msg, ...);
 
 
 /*
@@ -1256,7 +1313,7 @@ typedef struct {
 	cplane_t	plane;		// surface normal at impact, transformed to world space
 	qint			surfaceFlags;	// surface hit
 	qint			contents;	// contents on other side of surface hit
-	qint			entityNum;	// entity the contacted sirface is a part of
+	qint			entityNum;	// entity the contacted surface is a part of
 	float		lateralFraction; // fraction of collision tangetially to the trace direction
 } trace_t;
 
@@ -1289,7 +1346,7 @@ typedef struct {
 
 // sound channels
 // channel 0 never willingly overrides
-// other channels will allways override a playing sound on that channel
+// other channels will always override a playing sound on that channel
 typedef enum {
 	CHAN_AUTO,
 	CHAN_LOCAL,		// menu sounds, etc
@@ -1684,7 +1741,10 @@ typedef enum {
 #define LUMA(red, green, blue) (0.2126f * (red) + 0.7152f * (green) + 0.0722f * (blue))
 
 //define Q_atof(str) (float)atof(str)
-#define Q_atof(str) strtof(str, NULL)
+//#define Q_atof(str) strtof(str, NULL)
+
+//changed to add a wrapper function in q_math.c which avoids bugs caused by returned INF/NANs
+#define Q_atofdef(str) strtof(str, NULL)
 
 //define Q_atoi(str) atoi(str)
 #define Q_atoi(str) (qint)strtol(str, NULL, 10)

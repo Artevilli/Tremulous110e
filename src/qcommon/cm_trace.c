@@ -132,10 +132,7 @@ SquareRootFloat
 ================
 */
 float SquareRootFloat(float number) {
-	union {
-		float f;
-		qint i;
-	} t;
+	floatint_t t;
 	float x, y;
 	const float f = 1.5F;
 
@@ -1344,7 +1341,7 @@ CM_Trace
 ==================
 */
 void CM_Trace( trace_t *results, const vec3_t start,
-		const vec3_t end, vec3_t mins, vec3_t maxs,
+		const vec3_t end, const vec3_t mins, const vec3_t maxs,
 		clipHandle_t model, const vec3_t origin, qint brushmask,
 		traceType_t type, sphere_t *sphere ) {
 	qint			i;
@@ -1564,7 +1561,7 @@ CM_BoxTrace
 ==================
 */
 void CM_BoxTrace( trace_t *results, const vec3_t start, const vec3_t end,
-						  vec3_t mins, vec3_t maxs,
+						  const vec3_t mins, const vec3_t maxs,
 						  clipHandle_t model, qint brushmask, traceType_t type ) {
 	CM_Trace( results, start, end, mins, maxs, model, vec3_origin, brushmask, type, NULL );
 }
@@ -1578,7 +1575,7 @@ rotating entities
 ==================
 */
 void CM_TransformedBoxTrace( trace_t *results, const vec3_t start, const vec3_t end,
-						  vec3_t mins, vec3_t maxs,
+						  const vec3_t mins, const vec3_t maxs,
 						  clipHandle_t model, qint brushmask,
 						  const vec3_t origin, const vec3_t angles, traceType_t type ) {
 	trace_t		trace;

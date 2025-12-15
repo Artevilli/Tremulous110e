@@ -548,7 +548,7 @@ float FloatSwap (const float *f) {
 	floatint_t out;
 
 	out.f = *f;
-	out.ui = LongSwap(out.ui);
+	out.i = LongSwap(out.i);
 
 	return out.f;
 }
@@ -1825,7 +1825,7 @@ va(qchar *str, const qchar *format, ...)
 ============
 Com_TruncateLongString
 
-Assumes buffer is atleast TRUNCATE_LENGTH big
+Assumes buffer is at least TRUNCATE_LENGTH big
 ============
 */
 void Com_TruncateLongString( qchar *buffer, const qchar *s )

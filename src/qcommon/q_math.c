@@ -32,7 +32,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "q_shared.h"
 
-vec3_t	vec3_origin = {0,0,0};
+const vec3_t	vec3_origin = {0,0,0};
 vec3_t	axisDefault[3] = { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } };
 
 vec4_t colorBlack = {0.000f, 0.000f, 0.000f, 1.000f};
@@ -98,7 +98,7 @@ vec4_t colorPink = {1.000f, 0.753f, 0.796f, 1.000f};
 vec4_t colorChocolate = {0.482f, 0.247f, 0.000f, 1.000f};
 vec4_t colorIndigo = {0.247f, 0.000f, 1.000f, 1.000f};
 
-vec4_t
+const vec4_t
 g_color_table[62] =
 {
   {0.000f, 0.000f, 0.000f, 1.000f},
@@ -277,6 +277,22 @@ signed qchar ClampChar( qint i ) {
 	return i;
 }
 
+signed qchar
+ClampCharMove(qint i)
+{
+  if (i < -127)
+  {
+    return -127;
+  }
+
+  if (i > 127)
+  {
+    return 127;
+  }
+
+  return i;
+}
+
 signed short ClampShort( qint i ) {
 	if ( i < -32768 ) {
 		return -32768;
@@ -368,7 +384,7 @@ float NormalizeColor( const vec3_t in, vec3_t out ) {
 =====================
 PlaneFromPoints
 
-Returns false if the triangle is degenrate.
+Returns false if the triangle is degenerate.
 The normal will point out of the clock for clockwise ordered points
 =====================
 */
@@ -639,7 +655,7 @@ void MakeNormalVectors( const vec3_t forward, vec3_t right, vec3_t up) {
 }
 
 
-void VectorRotate( vec3_t in, vec3_t matrix[3], vec3_t out )
+void VectorRotate( const vec3_t in, const vec3_t matrix[3], vec3_t out )
 {
 	out[0] = DotProduct( in, matrix[0] );
 	out[1] = DotProduct( in, matrix[1] );
@@ -648,12 +664,22 @@ void VectorRotate( vec3_t in, vec3_t matrix[3], vec3_t out )
 
 //============================================================================
 
+#if defined(_MSC_SSE2)
+#include <intrin.h>
+#endif
+
 #if !idppc
 /*
 ** float q_rsqrt( float number )
 */
 float Q_rsqrt( float number )
 {
+#if defined(_MSC_SSE2)
+  float ret;
+
+  _mm_store_ss(&ret, _mm_rsqrt_ss(_mm_load_ss(&number)));
+  return ret;
+#else
 	floatint_t t;
 	float x2, y;
 	const float threehalfs = 1.5F;
@@ -666,6 +692,7 @@ float Q_rsqrt( float number )
 //	y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
 
 	return y;
+#endif
 }
 
 float
@@ -987,40 +1014,52 @@ qbool BoundsIntersectPoint(const vec3_t mins, const vec3_t maxs,
 	return qtrue;
 }
 
-vec_t VectorNormalize( vec3_t v ) {
-	float	length, ilength;
+vec_t
+VectorNormalize(vec3_t v)
+{
+  float	length;
+  float ilength;
 
-	length = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
-	length = sqrt (length);
+  length = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
 
-	if ( length ) {
-		ilength = 1/length;
-		v[0] *= ilength;
-		v[1] *= ilength;
-		v[2] *= ilength;
-	}
+  if (length)
+  {
+    /*writing it this way allows gcc to recognize that rsqrt can be used*/
+    ilength = 1 / (float)sqrt(length);
+    /*sqrt(length) = length * (1 / sqrt(length))*/
+    length *= ilength;
+    v[0] *= ilength;
+    v[1] *= ilength;
+    v[2] *= ilength;
+  }
 		
-	return length;
+  return length;
 }
 
-vec_t VectorNormalize2( const vec3_t v, vec3_t out) {
-	float	length, ilength;
+vec_t
+VectorNormalize2(const vec3_t v, vec3_t out)
+{
+  float length;
+  float ilength;
 
-	length = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
-	length = sqrt (length);
+  length = v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
 
-	if (length)
-	{
-		ilength = 1/length;
-		out[0] = v[0]*ilength;
-		out[1] = v[1]*ilength;
-		out[2] = v[2]*ilength;
-	} else {
-		VectorClear( out );
-	}
+  if (length)
+  {
+    /*writing it this way allows gcc to recognize that rsqrt can be used*/
+    ilength = 1 / (float)sqrt(length);
+    /*sqrt(length) = length * (1 / sqrt(length))*/
+    length *= ilength;
+    out[0] = v[0]*ilength;
+    out[1] = v[1]*ilength;
+    out[2] = v[2]*ilength;
+  }
+  else
+  {
+    VectorClear(out);
+  }
 		
-	return length;
-
+  return length;
 }
 
 void _VectorMA( const vec3_t veca, float scale, const vec3_t vecb, vec3_t vecc) {
@@ -1445,7 +1484,117 @@ Q_isnan(float x)
   floatint_t fi;
 
   fi.f = x;
-  fi.ui &= 0x7FFFFFFF;
-  fi.ui = 0x7F800000 - fi.ui;
-  return (qint)((unsigned qint)fi.ui >> 31);
+  fi.u &= 0x7FFFFFFF;
+  fi.u = 0x7F800000 - fi.u;
+
+  return (qint)(fi.u >> 31);
 }
+
+//------------------------------------------------------------------------
+
+/*
+================
+Q_isfinite
+================
+*/
+static qbool
+Q_isfinite(float f)
+{
+  floatint_t fi;
+
+  fi.f = f;
+
+  if (fi.u == 0xFF800000 || fi.u == 0x7F800000)
+  {
+    return qfalse; //-INF or +INF
+  }
+
+  fi.u = 0x7F800000 - (fi.u & 0x7FFFFFFF);
+
+  if ((qint)(fi.u >> 31))
+  {
+    return qfalse; //-NAN or +NAN
+  }
+
+  return qtrue;
+}
+
+/*
+================
+Q_atof
+================
+*/
+float
+Q_atof(const qchar *str)
+{
+  float f;
+
+  f = Q_atofdef(str);
+
+  //modern C11-like implementations of atof() may return INF or NAN
+  //which breaks all FP code where such values getting passed
+  //and effectively corrupts range checks for cvars as well
+  if (!Q_isfinite(f))
+  {
+    return 0.0f;
+  }
+
+  return f;
+}
+
+/*
+================
+Q_log2f
+================
+*/
+float
+Q_log2f(float f)
+{
+  const float v = logf(f);
+
+  return v / M_LN2;
+}
+
+/*
+================
+Q_exp2f
+================
+*/
+float
+Q_exp2f(float f)
+{
+  return powf(2.0f, f);
+}
+
+#if !defined(Q3_VM)
+/*
+=====================
+Q_acos
+
+the msvc acos doesn't always return a value between -PI and PI:
+
+qint i;
+i = 1065353246;
+acos(*(float *)&i) == -1.#IND0
+=====================
+*/
+float
+Q_acos(float c)
+{
+  float angle;
+
+  angle = acos(c);
+
+  if (angle > M_PI)
+  {
+    return (float)M_PI;
+  }
+
+  if (angle < -M_PI)
+  {
+    return (float)M_PI;
+  }
+
+  return angle;
+}
+#endif

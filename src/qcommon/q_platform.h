@@ -390,4 +390,12 @@ float FloatSwap (const float *f);
 //#define PLATFORM_STRING OS_STRING "-" ARCH_STRING "-debug"
 //#endif
 
+#if idx64
+#if defined(_MSC_VER)
+#define _MSC_SSE2
+#else
+#define _GCC_SSE2
+#endif
+#endif //idx64
+
 #endif
