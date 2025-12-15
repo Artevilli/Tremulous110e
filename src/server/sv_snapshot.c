@@ -1264,11 +1264,11 @@ SV_SendClientSnapshot(client_t *client)
 
   SV_SendMessageToClient(&msg, client);
 
-  if (sv_forceSendFragments->integer)
-  {
 /* this works fine on lan (160k/s dl, yay) and SEEMS okay over the net, but needs more testing */
 #define UNSUCK_DOWNLOADS
 #if defined(UNSUCK_DOWNLOADS)
+  if (sv_forceSendFragments->integer)
+  {
     //KHB 071111 the whole reason Q3 dl's SUCK is that there's a "secret" artificial cap
     //based on UDP packet sizes. so the server "sends" a 2k block each snap, but it's actually
     //cut down to 1300 bytes, MINUS the game traffic, so the ABSOLUTE peak dl speed is roughly
@@ -1278,8 +1278,8 @@ SV_SendClientSnapshot(client_t *client)
     {
       SV_Netchan_TransmitNextFragment(client);
     }
-#endif
   }
+#endif
 }
 
 /*
@@ -1314,7 +1314,7 @@ SV_CheckInvalidUserInfoValues(client_t *cl)
     warning = va(NULL, "^3Your 'rate' value is extremely low (%d). Please consider a higher value.", cl->rate);
     timeout = 1200000; //(60000 * 20) every 20 minutes
   }
-  else if (cl->snaps < 30)
+  else if (cl->snaps < 20) //30)
   {
     //FIXME: only warn about this in spectators
     warning = va(NULL, "^3Your 'snaps' value is extremely low (%d). Please consider a higher value.", cl->snaps);

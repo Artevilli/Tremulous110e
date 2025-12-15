@@ -293,7 +293,7 @@ MASTER SERVER FUNCTIONS
 */
 
 #define NEW_RESOLVE_DURATION 86400000 //24 hours
-static qint g_lastResolveTime[MAX_MASTER_SERVERS];
+static unsigned g_lastResolveTime[MAX_MASTER_SERVERS];
 
 /*
 ================
@@ -303,7 +303,7 @@ Refresh every so often regardless of if the actual address was modified
 ================
 */
 static const ID_INLINE qbool
-SV_MasterNeedsResolving(const qint server, const qint time)
+SV_MasterNeedsResolving(const unsigned server, const unsigned time)
 {
   if (g_lastResolveTime[server] > time)
   {
@@ -2311,15 +2311,11 @@ SV_FrameMsec(void)
     {
       return 0;
     }
-    else
-    {
-      return frameMsec - scaledResidual;
-    }
+
+    return frameMsec - scaledResidual;
   }
-  else
-  {
-    return 1;
-  }
+
+  return 1;
 }
 
 /*

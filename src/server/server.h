@@ -699,7 +699,7 @@ SV_WriteDownloadToClient(client_t *cl , msg_t *msg);
 #endif
 const qint
 SV_SendDownloadMessages(void);
-const int64_t
+const qint
 SV_SendQueuedMessages(void);
 
 #if defined(USE_VOIP)

@@ -567,11 +567,11 @@ SV_SetClientState(client_t *cl, const clientState_t newState)
   {
     if (cl->name[0] != '\0')
     {
-      Com_DPrintf("%s is going from %s to %s\n", cl->name, SV_GetStateName(cl->state), SV_GetStateName(newState));
+      Com_Printf("%s is going from %s to %s\n", cl->name, SV_GetStateName(cl->state), SV_GetStateName(newState));
     }
     else
     {
-      Com_DPrintf("%d is going from %s to %s\n", ARRAY_INDEX(svs.clients, cl), SV_GetStateName(cl->state), SV_GetStateName(newState));
+      Com_Printf("%d is going from %s to %s\n", ARRAY_INDEX(svs.clients, cl), SV_GetStateName(cl->state), SV_GetStateName(newState));
     }
   }
 
@@ -2232,9 +2232,9 @@ clear/free any download vars
 static const ID_INLINE void
 SV_CloseDownload(client_t *cl)
 {
-  uint64_t i;
+  unsigned i;
 
-  // EOF
+  //EOF
   if (cl->download != FS_INVALID_HANDLE)
   {
     FS_FCloseFile(cl->download);
@@ -2510,7 +2510,7 @@ SV_ReadDownloadBlock(client_t *cl, qchar **dataOut, qint *sizeOut)
       //read next source chunk
       cl->downloadSrcChunkSize = cl->downloadSrcFileRemaining < DOWNLOAD_READ_CHUNK_SIZE ? cl->downloadSrcFileRemaining:DOWNLOAD_READ_CHUNK_SIZE;
 
-      if (FS_Read(cl->downloadSrcChunk, cl->downloadSrcChunkSize, cl->download) != (uint64_t)cl->downloadSrcChunkSize)
+      if (FS_Read(cl->downloadSrcChunk, cl->downloadSrcChunkSize, cl->download) != (unsigned)cl->downloadSrcChunkSize)
       {
         return qfalse;
       }
@@ -3029,11 +3029,11 @@ Send one round of fragments, or queued messages to all clients that have data pe
 Return the shortest time interval for sending next packet to client
 ==================
 */
-const int64_t
+const qint
 SV_SendQueuedMessages(void)
 {
-  uint64_t i;
-  int64_t retval = -1;
+  unsigned i;
+  qint retval = -1;
   client_t *cl;
 
   for(i = 0;i < sv.maxclients;i++)
@@ -3049,7 +3049,7 @@ SV_SendQueuedMessages(void)
 
     if (cl->state)
     {
-      const int64_t nextFragT = SV_Netchan_TransmitNextFragment(cl);
+      const qint nextFragT = SV_Netchan_TransmitNextFragment(cl);
 
       if (nextFragT >= 0 && (retval == -1 || retval > nextFragT))
       {
