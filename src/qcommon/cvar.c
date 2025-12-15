@@ -196,7 +196,7 @@ Cvar_VariableStringBuffer(const qchar *var_name, qchar *buffer, qint bufsize)
 
   if (!var)
   {
-    *buffer = 0;
+    *buffer = '\0';
   }
   else
   {
@@ -1608,7 +1608,7 @@ Cvar_InfoString(qint bit)
   static qchar info[MAX_INFO_STRING];
   cvar_t *var;
 
-  info[0] = 0;
+  info[0] = '\0';
 
   for(var = cvar_vars;var;var = var->next)
   {
@@ -1634,7 +1634,7 @@ Cvar_InfoString_Big(qint bit)
   static qchar info[BIG_INFO_STRING];
   cvar_t *var;
 
-  info[0] = 0;
+  info[0] = '\0';
 
   for(var = cvar_vars;var;var = var->next)
   {

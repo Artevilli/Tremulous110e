@@ -141,7 +141,7 @@ Com_BeginRedirect(qchar *buffer, qint buffersize, void (*flush)(const qchar *))
   rd_buffer = buffer;
   rd_buffersize = buffersize;
   rd_flush = flush;
-  *rd_buffer = 0;
+  *rd_buffer = '\0';
 }
 
 void
@@ -183,13 +183,13 @@ Com_Printf(const qchar *fmt, ...)
     if ((strlen(msg) + strlen(rd_buffer)) > (rd_buffersize - 1))
     {
       rd_flush(rd_buffer);
-      *rd_buffer = 0;
+      *rd_buffer = '\0';
     }
 
     Q_strcat(rd_buffer, rd_buffersize, msg);
     //TTimo nooo .. that would defeat the purpose
     //rd_flush(rd_buffer);
-    //*rd_buffer = 0;
+    //*rd_buffer = '\0';
     return;
   }
 
@@ -467,7 +467,7 @@ void Com_ParseCommandLine( qchar *commandLine ) {
             }
             com_consoleLines[com_numConsoleLines] = commandLine + 1;
             com_numConsoleLines++;
-            *commandLine = 0;
+            *commandLine = '\0';
         }
         commandLine++;
     }
@@ -489,7 +489,7 @@ qbool Com_SafeMode( void ) {
 		Cmd_TokenizeString( com_consoleLines[i] );
 		if ( !Q_stricmp( Cmd_Argv(0), "safe" )
 			|| !Q_stricmp( Cmd_Argv(0), "cvar_restart" ) ) {
-			com_consoleLines[i][0] = 0;
+			com_consoleLines[i][0] = '\0';
 			return qtrue;
 		}
 	}
@@ -549,7 +549,7 @@ Com_CommandLineCheck(qbool(*clb)(void))
       continue;
     }
 
-    com_consoleLines[i][0] = 0;
+    com_consoleLines[i][0] = '\0';
   }
 }
 #endif
@@ -3711,23 +3711,26 @@ Com_Frame(void)
 Com_Shutdown
 =================
 */
-static void Com_Shutdown(void) {
-	if (logfile) {
-		FS_FCloseFile (logfile);
-		logfile = 0;
-	}
+static void
+Com_Shutdown(void)
+{
+  if (logfile != FS_INVALID_HANDLE)
+  {
+    FS_FCloseFile(logfile);
+    logfile = FS_INVALID_HANDLE;
+  }
 
-	if ( com_journalFile ) {
-		FS_FCloseFile( com_journalFile );
-		com_journalFile = 0;
-	}
+  if (com_journalFile != FS_INVALID_HANDLE)
+  {
+    FS_FCloseFile(com_journalFile);
+    com_journalFile = FS_INVALID_HANDLE;
+  }
 
-	if (pipefile)
-	{
-          FS_FCloseFile(pipefile);
-          FS_HomeRemove(com_pipefile->string);
-	}
-
+  if (pipefile)
+  {
+    FS_FCloseFile(pipefile);
+    FS_HomeRemove(com_pipefile->string);
+  }
 }
 
 //------------------------------------------------------------------------
@@ -3806,12 +3809,12 @@ static void FindMatches( const qchar *s ) {
 	// cut shortestMatch to the amount common with s
 	for ( i = 0 ; shortestMatch[i] ; i++ ) {
 		if ( i >= n ) {
-			shortestMatch[i] = 0;
+			shortestMatch[i] = '\0';
 			break;
 		}
 
 		if ( tolower(shortestMatch[i]) != tolower(s[i]) ) {
-			shortestMatch[i] = 0;
+			shortestMatch[i] = '\0';
 		}
 	}
 }
@@ -4011,7 +4014,7 @@ Field_CompleteCommand(const qchar *cmd, qbool doCommands, qbool doCvars)
     }
 
     matchCount = 0;
-    shortestMatch[0] = 0;
+    shortestMatch[0] = '\0';
 
     if (completionString[0] == '\0')
     {

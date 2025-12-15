@@ -269,7 +269,7 @@ Cbuf_Execute(void)
     }
 				
     Com_Memcpy(line, text, i);
-    line[i] = 0;
+    line[i] = '\0';
 		
     //delete the text from the command buffer and move remaining commands down
     //this is necessary because commands (exec) can insert data at the
@@ -459,7 +459,7 @@ Cmd_Args(void)
   static qchar cmd_args[MAX_STRING_CHARS];
   qint i;
 
-  cmd_args[0] = 0;
+  cmd_args[0] = '\0';
 
   for(i = 1;i < cmd_argc;i++)
   {
@@ -487,7 +487,7 @@ Cmd_ArgsFrom(qint arg)
   static qchar cmd_args[BIG_INFO_STRING];
   qint i;
 
-  cmd_args[0] = 0;
+  cmd_args[0] = '\0';
 
   if (arg < 0)
   {
@@ -736,7 +736,7 @@ Cmd_TokenizeString2(const qchar *text_in, qbool ignoreQuotes)
         *textOut++ = *text++;
       }
 
-      *textOut++ = 0;
+      *textOut++ = '\0';
 
       if (!*text)
       {
@@ -773,7 +773,7 @@ Cmd_TokenizeString2(const qchar *text_in, qbool ignoreQuotes)
       *textOut++ = *text++;
     }
 
-    *textOut++ = 0;
+    *textOut++ = '\0';
 
     if (!*text)
     {
