@@ -331,15 +331,15 @@ Cbuf_Execute(void)
       {
         if (i < cmd_text.cursize - 1)
         {
-          if (!in_star_comment && text[i] == '/' && text[i+1] == '/')
+          if (!in_star_comment && text[i] == '/' && text[i + 1] == '/')
           {
             in_slash_comment = qtrue;
           }
-          else if (!in_slash_comment && text[i] == '/' && text[i+1] == '*')
+          else if (!in_slash_comment && text[i] == '/' && text[i + 1] == '*')
           {
             in_star_comment = qtrue;
           }
-          else if (in_star_comment && text[i] == '*' && text[i+1] == '/')
+          else if (in_star_comment && text[i] == '*' && text[i + 1] == '/')
           {
             in_star_comment = qfalse;
             //if we are in a star comment, then the part after it is valid
