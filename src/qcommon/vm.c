@@ -511,6 +511,7 @@ Load a .qvm file
 */
 vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
         qint length;
+        qint previousNumJumpTableTargets;
 	qint					dataLength;
 	qint					i;
 	qchar				filename[MAX_QPATH];
@@ -620,13 +621,29 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
 	}
 
 	if( header.h->vmMagic == VM_MAGIC_VER2 ) {
+
+	        previousNumJumpTableTargets = vm->numJumpTableTargets;
+	        header.h->jtrgLength &= ~0x03;
+
 		vm->numJumpTableTargets = header.h->jtrgLength >> 2;
 		Com_Printf( "Loading %d jump table targets\n", vm->numJumpTableTargets );
 
-		if( alloc ) {
-			vm->jumpTableTargets = Hunk_Alloc( header.h->jtrgLength, h_high );
-		} else {
-			Com_Memset( vm->jumpTableTargets, 0, header.h->jtrgLength );
+		if (alloc)
+		{
+                  vm->jumpTableTargets = Hunk_Alloc(header.h->jtrgLength, h_high);
+		}
+		else
+		{
+		  if (vm->numJumpTableTargets != previousNumJumpTableTargets)
+		  {
+		    VM_Free(vm);
+		    FS_FreeFile(header.h);
+
+                    Com_Printf(S_COLOR_YELLOW "Warning: Jump table size of %s not matching after VM_Restart()\n", filename);
+                    return NULL;
+                  }
+
+                  Com_Memset(vm->jumpTableTargets, 0, header.h->jtrgLength);
 		}
 
 		Com_Memcpy( vm->jumpTableTargets, (byte *)header.h + header.h->dataOffset +
