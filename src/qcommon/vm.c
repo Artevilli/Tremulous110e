@@ -364,6 +364,145 @@ VM_DllSyscall(intptr_t arg, ...)
 }
 
 /*
+==================
+crc32 routines
+==================
+*/
+static unsigned qint crc32_table[256];
+static qbool crc32_inited = qfalse;
+
+static void
+crc32_init(unsigned *crc)
+{
+  unsigned c;
+  qint i;
+  qint j;
+
+  if (!crc32_inited)
+  {
+    for(i = 0;i < 256;i++)
+    {
+      c = i;
+
+      for(j = 0;j < 8;j++)
+      {
+        c = c & 1 ? (c >> 1) ^ 0xEDB88320UL:c >> 1;
+      }
+
+      crc32_table[i] = c;
+    }
+
+    crc32_inited = qtrue;
+  }
+
+  *crc = 0xFFFFFFFFUL;
+}
+
+static void
+crc32_update(unsigned *crc, unsigned qchar *buf, unsigned len)
+{
+  while(len--)
+  {
+    *crc = crc32_table[(*crc ^ *buf++) & 0xFF] ^ (*crc >> 8);
+  }
+}
+
+static void
+crc32_final(unsigned *crc)
+{
+  *crc = *crc ^ 0xFFFFFFFFUL;
+}
+
+static qint
+Load_JTS(vm_t *vm, unsigned crc32, void *data)
+{
+  qchar filename[MAX_QPATH];
+  qint header[2];
+  qint length;
+  qint i;
+  fileHandle_t fh;
+
+  //load the image
+  Com_sprintf(filename, sizeof(filename), "vm/%s.jts", vm->name);
+
+  if (data)
+  {
+    Com_Printf("Loading jts file %s...\n", filename);
+  }
+
+  length = FS_FOpenFileRead(filename, &fh, qtrue); //FIXME: unique?
+
+  if (fh == FS_INVALID_HANDLE)
+  {
+    if (data)
+    {
+      Com_Printf(" not found.\n");
+    }
+
+    return -1;
+  }
+
+  if (length < sizeof(header) || length < 0)
+  {
+    if (data)
+    {
+      Com_Printf(" bad filesize.\n");
+    }
+
+    FS_FCloseFile(fh);
+    return -1;
+  }
+
+  if (FS_Read(header, sizeof(header), fh) != sizeof(header))
+  {
+    if (data)
+    {
+      Com_Printf(" error reading header.\n");
+    }
+
+    FS_FCloseFile(fh);
+    return -1;
+  }
+
+  //byte swap the header
+  for(i = 0;i < sizeof(header) / 4;i++)
+  {
+    ((qint *)header)[i] = LittleLong(((qint *)header)[i]);
+  }
+
+  if ((unsigned)header[0] != crc32)
+  {
+    if (data)
+    {
+      Com_Printf(" crc32 mismatch: %08X <-> %08X.\n", header[0], crc32);
+    }
+
+    FS_FCloseFile(fh);
+    return -1;
+  }
+
+  length -= 8; //skip header and filesize
+
+  //we need just filesize
+  if (!data)
+  {
+    FS_FCloseFile(fh);
+    return length;
+  }
+
+  FS_Read(data, length, fh);
+  FS_FCloseFile(fh);
+
+  //byte swap the data
+  for(i = 0;i < length / 4;i++)
+  {
+    ((qint *)data)[i] = LittleLong(((qint *)data)[i]);
+  }
+
+  return length;
+}
+
+/*
 =================
 VM_LoadQVM
 
@@ -371,9 +510,12 @@ Load a .qvm file
 =================
 */
 vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
+        qint length;
 	qint					dataLength;
 	qint					i;
 	qchar				filename[MAX_QPATH];
+	unsigned crc32 = 0;
+	qbool tryjts;
 	union
 	{
 	  vmHeader_t *h;
@@ -384,12 +526,14 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
 	// load the image
 	Com_sprintf( filename, sizeof(filename), "vm/%s.qvm", vm->name );
 	Com_Printf( "Loading vm file %s...\n", filename );
-	FS_ReadFile( filename, &header.v );
+	length = FS_ReadFile( filename, &header.v );
 	if ( !header.h ) {
 		Com_Printf( "Failed.\n" );
 		VM_Free( vm );
 		return NULL;
 	}
+
+        tryjts = qfalse;
 
         //show where the qvm has landed from
         Cmd_ExecuteString(va(NULL, "which %s\n", filename));
@@ -412,6 +556,12 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
 			Com_Error( ERR_FATAL, "%s has bad header", filename );
 		}
 	} else if( LittleLong( header.h->vmMagic ) == VM_MAGIC ) {
+
+	        crc32_init(&crc32);
+	        crc32_update(&crc32, header.v, length);
+	        crc32_final(&crc32);
+	        tryjts = qtrue;
+
 		// byte swap the header
 		// sizeof( vmHeader_t ) - sizeof( qint ) is the 1.32b vm header size
 		for ( i = 0 ; i < ( sizeof( vmHeader_t ) - sizeof( qint ) ) / 4 ; i++ ) {
@@ -484,6 +634,32 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
 			*(qint *)(vm->jumpTableTargets + i) = LittleLong( *(qint *)(vm->jumpTableTargets + i ) );
 		}
 	}
+
+        if (tryjts == qtrue && (length = Load_JTS(vm, crc32, NULL)) >= 0)
+        {
+          //we are trying to load newer file?
+          if (vm->jumpTableTargets && vm->numJumpTableTargets != length >> 2)
+          {
+            Com_Printf(S_COLOR_YELLOW "Reload jts file\n");
+            vm->jumpTableTargets = NULL;
+            alloc = qtrue;
+          }
+
+          vm->numJumpTableTargets = length >> 2;
+
+          Com_Printf("Loading %d external jump table targets\n", vm->numJumpTableTargets);
+
+          if (alloc == qtrue)
+          {
+            vm->jumpTableTargets = Hunk_Alloc(length, h_high);
+          }
+          else
+          {
+            Com_Memset(vm->jumpTableTargets, 0, length);
+          }
+
+          Load_JTS(vm, crc32, vm->jumpTableTargets);
+        }
 
 	return header.h;
 }

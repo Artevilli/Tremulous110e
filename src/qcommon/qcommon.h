@@ -646,13 +646,6 @@ extern	qint			cvar_modifiedFlags;
 // etc, variables have been modified since the last check.  The bit
 // can then be cleared to allow another change detection.
 
-void
-crc32_init(unsigned *crc);
-void
-crc32_update(unsigned *crc, unsigned qchar *buf, unsigned len);
-void
-crc32_final(unsigned *crc);
-
 /*
 ==============================================================
 
@@ -670,7 +663,6 @@ issues.
 #define FS_UI_REF		0x02
 #define FS_CGAME_REF	0x04
 
-//Chey: FIXME: implement this
 #define FS_MATCH_EXTERN BIT(0)
 #define FS_MATCH_PURE BIT(1)
 #define FS_MATCH_UNPURE BIT(2)
