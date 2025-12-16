@@ -401,8 +401,8 @@ SV_MapRestart_f(void)
   //run a few frames to allow everything to settle
   for(i = 0;i < 3;i++)
   {
+    Cbuf_Wait();
     sv.time += 100;
-    svs.time += 100;
 #if defined(USE_JAVA)
     Java_G_RunFrame(sv.time);
 #else
@@ -459,13 +459,14 @@ SV_MapRestart_f(void)
   }
 
   // run another frame to allow things to look at all the players
+  Cbuf_Wait();
   sv.time += 100;
-  svs.time += 100;
 #if defined(USE_JAVA)
   Java_G_RunFrame(sv.time);
 #else
   VM_Call(sv.gvm, GAME_RUN_FRAME, sv.time);
 #endif
+  svs.time += 100;
 
   for(i = 0;i < sv.maxclients;i++)
   {

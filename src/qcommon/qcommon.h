@@ -421,20 +421,40 @@ files can be execed.
 
 */
 
-void Cbuf_Init (void);
-// allocates an initial text buffer that will grow as needed
+void
+Cbuf_Init(void);
+//allocates an initial text buffer that will grow as needed
 
-void Cbuf_AddText( const qchar *text );
-// Adds command text at the end of the buffer, does NOT add a final \n
+void
+Cbuf_AddText(const qchar *text);
+//adds command text at the end of the buffer, does NOT add a final \n
 
-void Cbuf_ExecuteText( qint exec_when, const qchar *text );
-// this can be used in place of either Cbuf_AddText or Cbuf_InsertText
+void
+Cbuf_NestedAdd(const qchar *text);
+//adds nested command text at the specified position of the buffer, adds \n when needed
 
-void Cbuf_Execute (void);
-// Pulls off \n terminated lines of text from the command buffer and sends
-// them through Cmd_ExecuteString.  Stops when the buffer is empty.
-// Normally called once per frame, but may be explicitly invoked.
-// Do not call inside a command function, or current args will be destroyed.
+void
+Cbuf_NestedReset(void);
+//resets nested cmd offset
+
+void
+Cbuf_InsertText(const qchar *text);
+//adds command text at the beginning of the buffer, add \n
+
+void
+Cbuf_ExecuteText(qint exec_when, const qchar *text);
+//this can be used in place of either Cbuf_AddText or Cbuf_InsertText
+
+void
+Cbuf_Execute(void);
+//pulls off \n terminated lines of text from the command buffer and sends
+//them through Cmd_ExecuteString,  stops when the buffer is empty
+//normally called once per frame, but may be explicitly invoked
+//do not call inside a command function, or current args will be destroyed
+
+void
+Cbuf_Wait(void);
+//checks if wait command timeout remaining
 
 //===========================================================================
 

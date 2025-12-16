@@ -112,6 +112,101 @@ Cbuf_AddText(const qchar *text)
   cmd_text.cursize += l;
 }
 
+static qint nestedCmdOffset;
+
+void
+Cbuf_NestedReset(void)
+{
+  nestedCmdOffset = 0;
+}
+
+/*
+============
+Cbuf_NestedAdd
+
+//Adds command text at the specified position of the buffer, adds \n when needed
+============
+*/
+void
+Cbuf_NestedAdd(const qchar *text)
+{
+  qint len = (qint)strlen(text);
+  qint pos = nestedCmdOffset;
+  qbool separate = qfalse;
+  qint i;
+
+  if (len <= 0)
+  {
+    nestedCmdOffset = cmd_text.cursize;
+    return;
+  }
+
+#if 0
+  if (cmd_text.cursize > 0)
+  {
+    const qint c = cmd_text.data[cmd_text.cursize - 1];
+
+    //insert separator for already existing command(s)
+    if (c != '\n' && c != ';' && text[0] != '\n' && text[0] != ';')
+    {
+      if (cmd_text.cursize < cmd_text.maxsize)
+      {
+        cmd_text.data[cmd_text.cursize] = ';';
+        cmd_text.cursize++;
+      }
+      else
+      {
+        Com_Printf(S_COLOR_YELLOW "%s(%i) overflowed\n", __func__, pos);
+        nestedCmdOffset = cmd_text.cursize;
+        return;
+      }
+    }
+  }
+#endif
+
+  if (pos > cmd_text.cursize || pos < 0)
+  {
+    pos = cmd_text.cursize;
+  }
+
+  if (text[len - 1] == '\n' || text[len - 1] == ';')
+  {
+    //command already has separator
+  }
+  else
+  {
+    separate = qtrue;
+    len += 1;
+  }
+
+  if (len + cmd_text.cursize > cmd_text.maxsize)
+  {
+    Com_Printf(S_COLOR_YELLOW "%s(%i) overflowed\n", __func__, pos);
+    nestedCmdOffset = cmd_text.cursize;
+    return;
+  }
+
+  //move the existing command text
+  for(i = cmd_text.cursize - 1;i >= pos;i--)
+  {
+    cmd_text.data[i + len] = cmd_text.data[i];
+  }
+
+  if (separate)
+  {
+    //copy the new text in + add a \n
+    Com_Memcpy(cmd_text.data + pos, text, len - 1);
+    cmd_text.data[pos + len - 1] = '\n';
+  }
+  else
+  {
+    //copy the new text in
+    Com_Memcpy(cmd_text.data + pos, text, len);
+  }
+
+  cmd_text.cursize += len;
+  nestedCmdOffset = cmd_text.cursize;
+}
 
 /*
 ============
@@ -160,6 +255,8 @@ Cbuf_ExecuteText(qint exec_when, const qchar *text)
   {
     case
     EXEC_NOW:
+      cmd_wait = 0; //discard any pending waiting
+
       if (text && text[0] != '\0')
       {
         Com_DPrintf(S_COLOR_YELLOW "EXEC_NOW %s\n", text);
@@ -196,29 +293,31 @@ Cbuf_Execute
 void
 Cbuf_Execute(void)
 {
-  qint i;
-  qchar *text;
   qchar line[MAX_CMD_LINE];
+  qchar *text;
+  qint i;
+  qint n;
   qint quotes;
+  qbool in_star_comment;
+  qbool in_slash_comment;
+
+  if (cmd_wait > 0)
+  {
+    //delay command buffer execution
+    return;
+  }
 
   //this will keep // style comments all on one line by not breaking on
   //a semicolon, it will keep /* ... */ style comments all on one line by not
   //breaking it for semicolon or newline
-  qbool in_star_comment = qfalse;
-  qbool in_slash_comment = qfalse;
+  in_star_comment = qfalse;
+  in_slash_comment = qfalse;
 
-  while(cmd_text.cursize)
+  while(cmd_text.cursize > 0)
   {
-    if (cmd_wait > 0)
-    {
-      //skip out while text still remains in buffer, leaving it
-      //for next frame
-      cmd_wait--;
-      break;
-    }
-
     //find a \n or ; line break or comment: // or /* */
     text = (qchar *)cmd_text.data;
+
     quotes = 0;
 
     for(i = 0;i < cmd_text.cursize;i++)
@@ -232,19 +331,19 @@ Cbuf_Execute(void)
       {
         if (i < cmd_text.cursize - 1)
         {
-          if (!in_star_comment && text[i] == '/' && text[i + 1] == '/')
+          if (!in_star_comment && text[i] == '/' && text[i+1] == '/')
           {
             in_slash_comment = qtrue;
           }
-          else if (!in_slash_comment && text[i] == '/' && text[i + 1] == '*')
+          else if (!in_slash_comment && text[i] == '/' && text[i+1] == '*')
           {
             in_star_comment = qtrue;
           }
-          else if (in_star_comment && text[i] == '*' && text[i + 1] == '/')
+          else if (in_star_comment && text[i] == '*' && text[i+1] == '/')
           {
             in_star_comment = qfalse;
             //if we are in a star comment, then the part after it is valid
-            //NOTE: this will cause it to NULL out the terminating '/'
+            //NOTE: this will cause it to NUL out the terminating '/'
             //but ExecuteString doesn't require it anyway
             i++;
             break;
@@ -256,6 +355,7 @@ Cbuf_Execute(void)
           break;
         }
       }
+
       if (!in_star_comment && (text[i] == '\n' || text[i] == '\r'))
       {
         in_slash_comment = qfalse;
@@ -263,30 +363,77 @@ Cbuf_Execute(void)
       }
     }
 
-    if (i >= (MAX_CMD_LINE - 1))
+    //copy up to (MAX_CMD_LINE - 1) chars but keep buffer position intact to prevent parsing truncated leftover
+    if (i > (MAX_CMD_LINE - 1))
     {
-      i = MAX_CMD_LINE - 1;
-    }
-				
-    Com_Memcpy(line, text, i);
-    line[i] = '\0';
-		
-    //delete the text from the command buffer and move remaining commands down
-    //this is necessary because commands (exec) can insert data at the
-    //beginning of the text buffer
-    if (i == cmd_text.cursize)
-    {
-      cmd_text.cursize = 0;
+      n = MAX_CMD_LINE - 1;
     }
     else
     {
-      i++;
-      cmd_text.cursize -= i;
-      memmove(text, text+i, cmd_text.cursize);
+      n = i;
+    }
+
+    Com_Memcpy(line, text, n);
+    line[n] = '\0';
+
+    //delete the text from the command buffer and move remaining commands down
+    //this is necessary because commands (exec) can insert data at the
+    //beginning of the text buffer
+
+    if (i == cmd_text.cursize)
+    {
+      //cmd_text.cursize = 0;
+    }
+    else
+    {
+      ++i;
+
+      //skip all repeating newlines/semicolons/whitespaces
+      while(i < cmd_text.cursize && (text[i] == '\n' || text[i] == '\r' || text[i] == ';' || (text[i] != '\0' && text[i] <= ' ')))
+      {
+        ++i;
+      }
+    }
+
+    cmd_text.cursize -= i;
+
+    if (cmd_text.cursize)
+    {
+      memmove(text, text + i, cmd_text.cursize);
+    }
+
+    if (nestedCmdOffset > 0)
+    {
+      nestedCmdOffset -= i;
+
+      if (nestedCmdOffset < 0)
+      {
+        nestedCmdOffset = 0;
+      }
     }
 
     //execute the command line
-    Cmd_ExecuteString(line);		
+    Cmd_ExecuteString(line);
+
+    //break on wait command
+    if (cmd_wait > 0)
+    {
+      break;
+    }
+  }
+}
+
+/*
+============
+Cbuf_Wait
+============
+*/
+void
+Cbuf_Wait(void)
+{
+  if (cmd_wait > 0)
+  {
+    --cmd_wait;
   }
 }
 

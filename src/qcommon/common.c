@@ -3742,6 +3742,8 @@ Com_Frame(void)
 
   NET_FlushPacketQueue(0);
 
+  Cbuf_Wait();
+
   //report timing info
   if (com_speeds->integer)
   {
