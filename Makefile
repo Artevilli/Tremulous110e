@@ -294,7 +294,7 @@ ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu"))
   endif
 
   OPTIMIZEVM = -O2 -funroll-loops -fomit-frame-pointer
-  OPTIMIZE = $(OPTIMIZEVM) --fast-math
+  OPTIMIZE = $(OPTIMIZEVM)
   
   ifeq ($(BUILD_PROFILING),0)
      OPTIMIZE += -fomit-frame-pointer
@@ -515,12 +515,12 @@ ifeq ($(PLATFORM),mingw32)
   ifeq ($(ARCH),x64)
     OPTIMIZEVM = -O2 -fno-omit-frame-pointer \
       -falign-loops=2 -funroll-loops -falign-jumps=2 -falign-functions=2
-    OPTIMIZE = $(OPTIMIZEVM) --fast-math
+    OPTIMIZE = $(OPTIMIZEVM)
     HAVE_VM_COMPILED = true
   endif
   ifeq ($(ARCH),x86)
     OPTIMIZEVM = -O2 -march=i586 -fno-omit-frame-pointer \
-      -falign-loops=2 -funroll-loops -falign-jumps=2 -falign-functions=2 \
+      -falign-loops=2 -funroll-loops -falign-jumps=2 -falign-functions=2
     OPTIMIZE = $(OPTIMIZEVM) -fno-fast-math
     HAVE_VM_COMPILED = true
   endif
