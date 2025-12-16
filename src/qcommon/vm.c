@@ -70,9 +70,9 @@ VM_Init
 ==============
 */
 void VM_Init( void ) {
-	Cvar_Get( "vm_cgame", "2", CVAR_ARCHIVE );	// !@# SHIP WITH SET TO 2
-	Cvar_Get( "vm_game", "2", CVAR_ARCHIVE );	// !@# SHIP WITH SET TO 2
-	Cvar_Get( "vm_ui", "2", CVAR_ARCHIVE );		// !@# SHIP WITH SET TO 2
+	Cvar_Get( "vm_cgame", "2", CVAR_ROM );	// !@# SHIP WITH SET TO 2
+	Cvar_Get( "vm_game", "2", CVAR_ROM );	// !@# SHIP WITH SET TO 2
+	Cvar_Get( "vm_ui", "2", CVAR_ROM );		// !@# SHIP WITH SET TO 2
 
 	Cmd_AddCommand ("vmprofile", VM_VmProfile_f );
 	Cmd_AddCommand ("vminfo", VM_VmInfo_f );
@@ -760,6 +760,7 @@ vm_t *VM_Create( const qchar *module, intptr_t (*systemCalls)(intptr_t *),
 
 	if ( i == MAX_VM ) {
 		Com_Error( ERR_FATAL, "VM_Create: no free vm_t" );
+		return NULL;
 	}
 
 	vm = &vmTable[i];
