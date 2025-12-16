@@ -290,7 +290,7 @@ Com_DPrintf(const qchar *fmt, ...)
     return; //don't confuse non-developers with techie stuff...
   }
 
-  va_start(argptr,fmt);
+  va_start(argptr, fmt);
   Q_vsnprintf(msg, sizeof(msg), fmt, argptr);
   va_end(argptr);
 
