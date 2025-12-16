@@ -553,6 +553,7 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
 			|| header.h->litLength < 0
 			|| header.h->codeLength <= 0 ) {
 			VM_Free( vm );
+			FS_FreeFile(header.h);
 			Com_Error( ERR_FATAL, "%s has bad header", filename );
 		}
 	} else if( LittleLong( header.h->vmMagic ) == VM_MAGIC ) {
@@ -574,10 +575,12 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
 			|| header.h->litLength < 0
 			|| header.h->codeLength <= 0 ) {
 			VM_Free( vm );
+			FS_FreeFile(header.h);
 			Com_Error( ERR_FATAL, "%s has bad header", filename );
 		}
 	} else {
 		VM_Free( vm );
+		FS_FreeFile(header.h);
 		Com_Error( ERR_FATAL, "%s does not have a recognisable "
 				"magic number in its header", filename );
 	}
