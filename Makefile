@@ -293,7 +293,7 @@ ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu"))
     CLIENT_CFLAGS += -DUSE_CODEC_VORBIS
   endif
 
-  OPTIMIZEVM = -O3 -funroll-loops -fomit-frame-pointer
+  OPTIMIZEVM = -O2 -funroll-loops -fomit-frame-pointer
   OPTIMIZE = $(OPTIMIZEVM) --fast-math
   
   ifeq ($(BUILD_PROFILING),0)
@@ -301,9 +301,8 @@ ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu"))
     endif
 
   ifeq ($(ARCH),x86_64)
-    OPTIMIZEVM = -O3 -fomit-frame-pointer -funroll-loops \
-      -falign-loops=2 -falign-jumps=2 -falign-functions=2 \
-      -fstrength-reduce
+    OPTIMIZEVM = -O2 -fomit-frame-pointer -funroll-loops \
+      -falign-loops=2 -falign-jumps=2 -falign-functions=2
     OPTIMIZE = $(OPTIMIZEVM) -fno-fast-math
       
     ifeq ($(BUILD_PROFILING),0)
@@ -312,9 +311,9 @@ ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu"))
     HAVE_VM_COMPILED = true
   else
   ifeq ($(ARCH),x86)
-    OPTIMIZE = -O3 -march=i586 -fno-fast-math \
+    OPTIMIZE = -O2 -march=i586 -fno-fast-math \
       -funroll-loops -falign-loops=2 -falign-jumps=2 \
-      -falign-functions=2 -fstrength-reduce
+      -falign-functions=2
     HAVE_VM_COMPILED=true
     ifeq ($(BUILD_PROFILING),0)
      OPTIMIZE += -fomit-frame-pointer
@@ -405,7 +404,7 @@ ifeq ($(PLATFORM),darwin)
 
   ifeq ($(ARCH),ppc)
     BASE_CFLAGS += -faltivec
-    OPTIMIZEVM += -O3
+    OPTIMIZEVM += -O2
   endif
   ifeq ($(ARCH),ppc64)
     BASE_CFLAGS += -faltivec
@@ -514,16 +513,14 @@ ifeq ($(PLATFORM),mingw32)
   endif
 
   ifeq ($(ARCH),x64)
-    OPTIMIZEVM = -O3 -fno-omit-frame-pointer \
+    OPTIMIZEVM = -O2 -fno-omit-frame-pointer \
       -falign-loops=2 -funroll-loops -falign-jumps=2 -falign-functions=2 \
-      -fstrength-reduce
     OPTIMIZE = $(OPTIMIZEVM) --fast-math
     HAVE_VM_COMPILED = true
   endif
   ifeq ($(ARCH),x86)
-    OPTIMIZEVM = -O3 -march=i586 -fno-omit-frame-pointer \
+    OPTIMIZEVM = -O2 -march=i586 -fno-omit-frame-pointer \
       -falign-loops=2 -funroll-loops -falign-jumps=2 -falign-functions=2 \
-      -fstrength-reduce
     OPTIMIZE = $(OPTIMIZEVM) -fno-fast-math
     HAVE_VM_COMPILED = true
   endif
@@ -601,7 +598,7 @@ ifeq ($(PLATFORM),freebsd)
   SERVER_CFLAGS =
   HAVE_VM_COMPILED = true
 
-  OPTIMIZEVM = -O3 -funroll-loops -fomit-frame-pointer
+  OPTIMIZEVM = -O2 -funroll-loops -fomit-frame-pointer
   OPTIMIZE = $(OPTIMIZEVM) -fno-fast-math
 
   SHLIBEXT=so
@@ -760,7 +757,7 @@ ifeq ($(PLATFORM),irix64)
   BASE_CFLAGS=-Dstricmp=strcasecmp -Xcpluscomm -woff 1185 \
     -I. -I$(ROOT)/usr/include -DNO_VM_COMPILED
   CLIENT_CFLAGS = $(SDL_CFLAGS)
-  OPTIMIZE = -O3
+  OPTIMIZE = -O2
 
   SHLIBEXT=so
   SHLIBCFLAGS=
@@ -802,18 +799,17 @@ ifeq ($(PLATFORM),sunos)
   CLIENT_CFLAGS = $(SDL_CFLAGS)
   SERVER_CFLAGS =
 
-  OPTIMIZEVM = -O3 -funroll-loops
+  OPTIMIZEVM = -O2 -funroll-loops
 
   ifeq ($(ARCH),sparc)
-    OPTIMIZE = -O3 -fno-fast-math \
-      -fstrength-reduce -falign-functions=2 \
+    OPTIMIZE = -O2 -fno-fast-math -falign-functions=2 \
       -mtune=ultrasparc3 -mv8plus -mno-faster-structs
       HAVE_VM_COMPILED=true
   else
   ifeq ($(ARCH),x86)
     OPTIMIZEVM += -march=i586 -fomit-frame-pointer \
       -falign-loops=2 -falign-jumps=2 \
-      -falign-functions=2 -fstrength-reduce
+      -falign-functions=2
     HAVE_VM_COMPILED=true
     BASE_CFLAGS += -m32
     CLIENT_CFLAGS += -I/usr/X11/include/NVIDIA
@@ -844,7 +840,7 @@ else # ifeq sunos
 # SETUP AND BUILD -- GENERIC
 #############################################################################
   BASE_CFLAGS=-DNO_VM_COMPILED
-  OPTIMIZE = -O3
+  OPTIMIZE = -O2
 
   SHLIBEXT=so
   SHLIBCFLAGS=-fPIC
