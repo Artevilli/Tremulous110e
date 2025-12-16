@@ -504,6 +504,101 @@ Load_JTS(vm_t *vm, unsigned crc32, void *data)
 
 /*
 =================
+VM_ValidateHeader
+=================
+*/
+static qchar *
+VM_ValidateHeader(vmHeader_t *header, qint fileSize)
+{
+  static qchar errMsg[128];
+  qint i;
+  qint n;
+
+  //truncated
+  if (fileSize < (sizeof(vmHeader_t) - sizeof(qint)))
+  {
+    sprintf(errMsg, "truncated image header (%i bytes long)", fileSize);
+    return errMsg;
+  }
+
+  //bad magic
+  if (LittleLong(header->vmMagic) != VM_MAGIC && LittleLong(header->vmMagic) != VM_MAGIC_VER2)
+  {
+    sprintf(errMsg, "bad file magic %08x", LittleLong(header->vmMagic));
+    return errMsg;
+  }
+
+  //truncated
+  if (fileSize < sizeof(vmHeader_t) && LittleLong(header->vmMagic) != VM_MAGIC_VER2)
+  {
+    sprintf(errMsg, "truncated image header (%i bytes long)", fileSize);
+    return errMsg;
+  }
+
+  if (LittleLong(header->vmMagic) == VM_MAGIC_VER2)
+  {
+    n = sizeof(vmHeader_t) / 4;
+  }
+  else
+  {
+    n = (sizeof(vmHeader_t) - sizeof(qint)) / 4;
+  }
+
+  //byte swap the header
+  for(i = 0;i < n;i++)
+  {
+    ((qint *)header)[i] = LittleLong(((qint *)header)[i]);
+  }
+
+  //bad code offset
+  if (header->codeOffset >= fileSize)
+  {
+    sprintf(errMsg, "bad code offset %i", header->codeOffset);
+    return errMsg;
+  }
+
+  //bad code length
+  if (header->codeLength <= 0 || header->codeOffset + header->codeLength > fileSize)
+  {
+    sprintf(errMsg, "bad code length %i", header->codeLength);
+    return errMsg;
+  }
+
+  //bad data offset
+  if (header->dataOffset >= fileSize || header->dataOffset != header->codeOffset + header->codeLength)
+  {
+    sprintf(errMsg, "bad data offset %i", header->dataOffset);
+    return errMsg;
+  }
+
+  //bad data length
+  if (header->dataOffset + header->dataLength > fileSize)
+  {
+    sprintf(errMsg, "bad data length %i", header->dataLength);
+    return errMsg;
+  }
+
+  if (header->vmMagic == VM_MAGIC_VER2)
+  {
+    //bad lit/jtrg length
+    if (header->dataOffset + header->dataLength + header->litLength + header->jtrgLength != fileSize)
+    {
+      sprintf(errMsg, "bad lit/jrgs length");
+      return errMsg;
+    }
+  }
+  //bad lit length
+  else if (header->dataOffset + header->dataLength + header->litLength != fileSize)
+  {
+    sprintf(errMsg, "bad lit length %i", header->litLength);
+    return errMsg;
+  }
+
+  return NULL;
+}
+
+/*
+=================
 VM_LoadQVM
 
 Load a .qvm file
@@ -515,6 +610,7 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
 	qint					dataLength;
 	qint					i;
 	qchar				filename[MAX_QPATH];
+	qchar *errorMsg;
 	unsigned crc32 = 0;
 	qbool tryjts;
 	union
@@ -534,56 +630,33 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
 		return NULL;
 	}
 
+        crc32_init(&crc32);
+        crc32_update(&crc32, header.v, length);
+        crc32_final(&crc32);
+
+        //will also swap header
+        errorMsg = VM_ValidateHeader(header.h, length);
+
+        if (errorMsg)
+        {
+          VM_Free(vm);
+          FS_FreeFile(header.h);
+          Com_Error(ERR_FATAL, "%s", errorMsg);
+          return NULL;
+        }
+
         tryjts = qfalse;
 
         //show where the qvm has landed from
         Cmd_ExecuteString(va(NULL, "which %s\n", filename));
 
-	if( LittleLong( header.h->vmMagic ) == VM_MAGIC_VER2 ) {
-		Com_Printf( "...which has vmMagic VM_MAGIC_VER2\n" );
-
-		// byte swap the header
-		for ( i = 0 ; i < sizeof( vmHeader_t ) / 4 ; i++ ) {
-			((qint *)header.h)[i] = LittleLong( ((qint *)header.h)[i] );
-		}
-
-		// validate
-		if ( header.h->jtrgLength < 0
-			|| header.h->bssLength < 0
-			|| header.h->dataLength < 0
-			|| header.h->litLength < 0
-			|| header.h->codeLength <= 0 ) {
-			VM_Free( vm );
-			FS_FreeFile(header.h);
-			Com_Error( ERR_FATAL, "%s has bad header", filename );
-		}
-	} else if( LittleLong( header.h->vmMagic ) == VM_MAGIC ) {
-
-	        crc32_init(&crc32);
-	        crc32_update(&crc32, header.v, length);
-	        crc32_final(&crc32);
-	        tryjts = qtrue;
-
-		// byte swap the header
-		// sizeof( vmHeader_t ) - sizeof( qint ) is the 1.32b vm header size
-		for ( i = 0 ; i < ( sizeof( vmHeader_t ) - sizeof( qint ) ) / 4 ; i++ ) {
-			((qint *)header.h)[i] = LittleLong( ((qint *)header.h)[i] );
-		}
-
-		// validate
-		if ( header.h->bssLength < 0
-			|| header.h->dataLength < 0
-			|| header.h->litLength < 0
-			|| header.h->codeLength <= 0 ) {
-			VM_Free( vm );
-			FS_FreeFile(header.h);
-			Com_Error( ERR_FATAL, "%s has bad header", filename );
-		}
-	} else {
-		VM_Free( vm );
-		FS_FreeFile(header.h);
-		Com_Error( ERR_FATAL, "%s does not have a recognisable "
-				"magic number in its header", filename );
+	if (LittleLong(header.h->vmMagic) == VM_MAGIC_VER2)
+	{
+          Com_Printf("...which has vmMagic VM_MAGIC_VER2\n");
+	}
+	else
+	{
+          tryjts = qtrue;
 	}
 
 	// round up to next power of 2 so all data operations can
