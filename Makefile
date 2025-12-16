@@ -514,7 +514,7 @@ ifeq ($(PLATFORM),mingw32)
 
   ifeq ($(ARCH),x64)
     OPTIMIZEVM = -O2 -fno-omit-frame-pointer \
-      -falign-loops=2 -funroll-loops -falign-jumps=2 -falign-functions=2 \
+      -falign-loops=2 -funroll-loops -falign-jumps=2 -falign-functions=2
     OPTIMIZE = $(OPTIMIZEVM) --fast-math
     HAVE_VM_COMPILED = true
   endif
