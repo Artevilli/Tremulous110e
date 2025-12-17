@@ -777,7 +777,7 @@ SVC_RateDrop
 ================
 */
 static const ID_INLINE void
-SVC_RateDrop(leakyBucket_t *bucket, const unsigned burst)
+SVC_RateDrop(leakyBucket_t *bucket, const unsigned burst, const unsigned now)
 {
   if (bucket != NULL)
   {
@@ -787,7 +787,7 @@ SVC_RateDrop(leakyBucket_t *bucket, const unsigned burst)
     }
 
     bucket->rate.burst = burst * bucket->toxic;
-    bucket->rate.lastTime = Sys_Milliseconds();
+    bucket->rate.lastTime = now;
   }
 }
 
@@ -880,7 +880,7 @@ SVC_RateDropAddress(const netadr_t *from, const unsigned burst, const unsigned p
 {
   leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period, now);
 
-  SVC_RateDrop(bucket, burst);
+  SVC_RateDrop(bucket, burst, now);
 }
 
 /*
