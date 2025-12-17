@@ -661,7 +661,7 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
         //show where the qvm has landed from
         Cmd_ExecuteString(va(NULL, "which %s\n", filename));
 
-	if (LittleLong(header.h->vmMagic) == VM_MAGIC_VER2)
+	if (header.h->vmMagic == VM_MAGIC_VER2)
 	{
           Com_Printf("...which has vmMagic VM_MAGIC_VER2\n");
 	}
