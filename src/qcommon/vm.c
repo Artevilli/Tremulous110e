@@ -442,7 +442,7 @@ Load_JTS(vm_t *vm, unsigned crc32, void *data)
     return -1;
   }
 
-  if (length < sizeof(header) || length < 0)
+  if (length < sizeof(header))
   {
     if (data)
     {
@@ -465,7 +465,7 @@ Load_JTS(vm_t *vm, unsigned crc32, void *data)
   }
 
   //byte swap the header
-  for(i = 0;i < sizeof(header) / 4;i++)
+  for(i = 0;i < sizeof(header) / sizeof(qint);i++)
   {
     ((qint *)header)[i] = LittleLong(((qint *)header)[i]);
   }
@@ -481,7 +481,18 @@ Load_JTS(vm_t *vm, unsigned crc32, void *data)
     return -1;
   }
 
-  length -= 8; //skip header and filesize
+  if (header[1] < 0 || header[1] != (length - (qint)sizeof(header)))
+  {
+    if (data)
+    {
+      Com_Printf(" bad file header.\n");
+    }
+
+    FS_FCloseFile(fh);
+    return -1;
+  }
+
+  length -= sizeof(header); //skip header and filesize
 
   //we need just filesize
   if (!data)
@@ -494,7 +505,7 @@ Load_JTS(vm_t *vm, unsigned crc32, void *data)
   FS_FCloseFile(fh);
 
   //byte swap the data
-  for(i = 0;i < length / 4;i++)
+  for(i = 0;i < length / sizeof(qint);i++)
   {
     ((qint *)data)[i] = LittleLong(((qint *)data)[i]);
   }
