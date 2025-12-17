@@ -497,11 +497,11 @@ static const char *opnames[256] = {
 
 static void VM_Destroy_Compiled(vm_t *vm)
 {
-	if (vm->codeBase) {
-		if (munmap(vm->codeBase, vm->codeLength))
+	if (vm->codeBase.ptr) {
+		if (munmap(vm->codeBase.ptr, vm->codeLength))
 			Com_Printf(S_COLOR_RED "Memory unmap failed, possible memory leak\n");
 	}
-	vm->codeBase = NULL;
+	vm->codeBase.ptr = NULL;
 }
 
 typedef struct VM_Data {
@@ -1468,7 +1468,7 @@ static void sparc_compute_code(vm_t *vm, struct func_info * const fp)
 		jp = jp->next;
 	}
 
-	vm->codeBase = data_and_code;
+	vm->codeBase.ptr = data_and_code;
 	vm->codeLength = code_length;
 
 	data = (vm_data_t *) data_and_code;
@@ -1606,7 +1606,7 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 		}
 	}
 
-	if (mprotect(vm->codeBase, vm->codeLength, PROT_READ|PROT_EXEC)) {
+	if (mprotect(vm->codeBase.ptr, vm->codeLength, PROT_READ|PROT_EXEC)) {
 		VM_Destroy_Compiled(vm);
 		DIE("mprotect failed");
 	}
@@ -1617,7 +1617,7 @@ void VM_Compile(vm_t *vm, vmHeader_t *header)
 
 int VM_CallCompiled(vm_t *vm, int *args)
 {
-	vm_data_t *vm_dataAndCode = (void *) vm->codeBase;
+	vm_data_t *vm_dataAndCode = (void *) vm->codeBase.ptr;
 	int programStack = vm->programStack;
 	int stackOnEntry = programStack;
 	byte *image = vm->dataBase;
@@ -1637,8 +1637,8 @@ int VM_CallCompiled(vm_t *vm, int *args)
 	/* call generated code */
 	{
 		int (*entry)(void *, int, void *, int);
-		entry = (void *)(vm->codeBase + vm_dataAndCode->dataLength);
-		retVal = entry(vm->codeBase, programStack, vm->dataBase, vm->dataMask);
+		entry = (void *)(vm->codeBase.ptr + vm_dataAndCode->dataLength);
+		retVal = entry(vm->codeBase.ptr, programStack, vm->dataBase, vm->dataMask);
 	}
 
 	vm->programStack = stackOnEntry;

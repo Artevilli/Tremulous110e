@@ -299,7 +299,7 @@ void emit(const qchar* fmt, ...)
 
 #define JMPIARG() \
 	CHECK_INSTR(iarg); \
-	emit("movq $%"PRIu64", %%rax", vm->codeBase+vm->instructionPointers[iarg]); \
+	emit("movq $%"PRIu64", %%rax", vm->codeBase.ptr+vm->instructionPointers[iarg]); \
 	emit("jmpq *%%rax")
  
 #define CONST_OPTIMIZE
@@ -393,7 +393,7 @@ void emit(const qchar* fmt, ...)
 
 static void* getentrypoint(vm_t* vm)
 {
-       return vm->codeBase;
+       return vm->codeBase.ptr;
 }
 
 static void CROSSCALL block_copy_vm(unsigned dest, unsigned src, unsigned count)
@@ -461,7 +461,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 	// const optimization
 	unsigned got_const = 0, const_value = 0;
 	
-	vm->codeBase = NULL;
+	vm->codeBase.ptr = NULL;
 
 	gettimeofday(&tvstart, NULL);
 
@@ -473,21 +473,21 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 		vm->codeLength = compiledOfs;
 
 		#ifdef VM_X86_64_MMAP
-			vm->codeBase = mmap(NULL, compiledOfs, PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
-			if(vm->codeBase == MAP_FAILED)
+			vm->codeBase.ptr = mmap(NULL, compiledOfs, PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+			if(vm->codeBase.ptr == MAP_FAILED)
 				Com_Error(ERR_FATAL, "VM_CompileX86_64: can't mmap memory");
 		#elif __WIN64__
 			// allocate memory with write permissions under windows.
-			vm->codeBase = VirtualAlloc(NULL, compiledOfs, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
-			if(!vm->codeBase)
+			vm->codeBase.ptr = VirtualAlloc(NULL, compiledOfs, MEM_RESERVE|MEM_COMMIT, PAGE_READWRITE);
+			if(!vm->codeBase.ptr)
 				Com_Error(ERR_FATAL, "VM_CompileX86_64: VirtualAlloc failed");
 		#else
-			vm->codeBase = malloc(compiledOfs);
+			vm->codeBase.ptr = malloc(compiledOfs);
 			if(!vm_codeBase)
 				Com_Error(ERR_FATAL, "VM_CompileX86_64: Failed to allocate memory");
 		#endif
 
-		assembler_set_output((qchar*)vm->codeBase);
+		assembler_set_output((qchar*)vm->codeBase.ptr);
 	}
 
 	assembler_init(pass);
@@ -570,7 +570,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 					if ((qint) const_value >= 0)
 					{
 						CHECK_INSTR(const_value);
-						emit("movq $%"PRIu64", %%rax", vm->codeBase+vm->instructionPointers[const_value]);
+						emit("movq $%"PRIu64", %%rax", vm->codeBase.ptr+vm->instructionPointers[const_value]);
 						emit("callq *%%rax");
 						got_const = 0;
 						break;
@@ -980,14 +980,14 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 	assembler_init(0);
 
 	#ifdef VM_X86_64_MMAP
-		if(mprotect(vm->codeBase, compiledOfs, PROT_READ|PROT_EXEC))
+		if(mprotect(vm->codeBase.ptr, compiledOfs, PROT_READ|PROT_EXEC))
 			Com_Error(ERR_FATAL, "VM_CompileX86_64: mprotect failed");
 	#elif __WIN64__
 		{
 			DWORD oldProtect = 0;
 			
 			// remove write permissions; give exec permision
-			if(!VirtualProtect(vm->codeBase, compiledOfs, PAGE_EXECUTE_READ, &oldProtect))
+			if(!VirtualProtect(vm->codeBase.ptr, compiledOfs, PAGE_EXECUTE_READ, &oldProtect))
 				Com_Error(ERR_FATAL, "VM_CompileX86_64: VirtualProtect failed");
 		}
 	#endif
@@ -1002,7 +1002,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 	strcpy(fn_d,vm->name);
 	strcat(fn_d, ".bin");
 	qdasmout = fopen(fn_d, "w");
-	fwrite(vm->codeBase, compiledOfs, 1, qdasmout);
+	fwrite(vm->codeBase.ptr, compiledOfs, 1, qdasmout);
 	fflush(qdasmout);
 	fclose(qdasmout);
 #endif
@@ -1013,7 +1013,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 		{
 			struct timeval tvdone =  {0, 0};
 			struct timeval dur =  {0, 0};
-			Com_Printf( "VM file %s compiled to %i bytes of code (%p - %p)\n", vm->name, vm->codeLength, vm->codeBase, vm->codeBase+vm->codeLength );
+			Com_Printf( "VM file %s compiled to %i bytes of code (%p - %p)\n", vm->name, vm->codeLength, vm->codeBase.ptr, vm->codeBase.ptr+vm->codeLength );
 
 			gettimeofday(&tvdone, NULL);
 			timersub(&tvdone, &tvstart, &dur);
@@ -1025,14 +1025,14 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 
 void VM_Destroy_Compiled(vm_t* self)
 {
-	if(self && self->codeBase)
+	if(self && self->codeBase.ptr)
 	{
 #ifdef VM_X86_64_MMAP
-		munmap(self->codeBase, self->codeLength);
+		munmap(self->codeBase.ptr, self->codeLength);
 #elif __WIN64__
-		VirtualFree(self->codeBase, 0, MEM_RELEASE);
+		VirtualFree(self->codeBase.ptr, 0, MEM_RELEASE);
 #else
-		free(self->codeBase);
+		free(self->codeBase.ptr);
 #endif
 	}
 }

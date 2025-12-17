@@ -1917,7 +1917,7 @@ PPC_ComputeCode( vm_t *vm )
 		jumpFrom[ -1 ] = IN( iBC, bo, sj_now->bi, +2*4 );
 	}
 
-	vm->codeBase = dataAndCode;
+	vm->codeBase.ptr = dataAndCode;
 	vm->codeLength = codeLength;
 
 	vm_data_t *data = (vm_data_t *)dataAndCode;
@@ -1989,11 +1989,11 @@ PPC_ComputeCode( vm_t *vm )
 static void
 VM_Destroy_Compiled( vm_t *self )
 {
-	if ( self->codeBase ) {
-		if ( munmap( self->codeBase, self->codeLength ) )
+	if ( self->codeBase.ptr ) {
+		if ( munmap( self->codeBase.ptr, self->codeLength ) )
 			Com_Printf( S_COLOR_RED "Memory unmap failed, possible memory leak\n" );
 	}
-	self->codeBase = NULL;
+	self->codeBase.ptr = NULL;
 }
 
 void
@@ -2083,7 +2083,7 @@ VM_Compile( vm_t *vm, vmHeader_t *header )
 #endif
 
 	/* mark memory as executable and not writeable */
-	if ( mprotect( vm->codeBase, vm->codeLength, PROT_READ|PROT_EXEC ) ) {
+	if ( mprotect( vm->codeBase.ptr, vm->codeLength, PROT_READ|PROT_EXEC ) ) {
 
 		// it has failed, make sure memory is unmapped before throwing the error
 		VM_Destroy_Compiled( vm );
@@ -2097,7 +2097,7 @@ VM_Compile( vm_t *vm, vmHeader_t *header )
 		struct timeval tvdone = {0, 0};
 		struct timeval dur = {0, 0};
 		Com_Printf( "VM file %s compiled to %i bytes of code (%p - %p)\n",
-			vm->name, vm->codeLength, vm->codeBase, vm->codeBase+vm->codeLength );
+			vm->name, vm->codeLength, vm->codeBase.ptr, vm->codeBase.ptr+vm->codeLength );
 
 		gettimeofday(&tvdone, NULL);
 		timersub(&tvdone, &tvstart, &dur);
@@ -2112,7 +2112,7 @@ VM_CallCompiled( vm_t *vm, int *args )
 	int retVal;
 	int *argPointer;
 
-	vm_data_t *vm_dataAndCode = (void *)( vm->codeBase );
+	vm_data_t *vm_dataAndCode = (void *)( vm->codeBase.ptr );
 	int programStack = vm->programStack;
 	int stackOnEntry = programStack;
 
@@ -2142,9 +2142,9 @@ VM_CallCompiled( vm_t *vm, int *args )
 #ifdef __PPC64__
 		entry = (void *)&(vm_dataAndCode->opd);
 #else
-		entry = (void *)(vm->codeBase + vm_dataAndCode->dataLength);
+		entry = (void *)(vm->codeBase.ptr + vm_dataAndCode->dataLength);
 #endif
-		retVal = entry( vm->codeBase, programStack, vm->dataBase );
+		retVal = entry( vm->codeBase.ptr, programStack, vm->dataBase );
 	}
 
 #ifdef VM_TIMES

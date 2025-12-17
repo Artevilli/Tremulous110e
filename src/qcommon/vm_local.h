@@ -131,6 +131,13 @@ typedef struct vmSymbol_s {
 	qchar	symName[1];		// variable sized
 } vmSymbol_t;
 
+typedef union
+{
+  byte *ptr;
+  void (*func)(void);
+}
+vmFunc_t;
+
 #define	VM_OFFSET_PROGRAM_STACK		0
 #define	VM_OFFSET_SYSTEM_CALL		4
 
@@ -155,13 +162,14 @@ struct vm_s {
 	qbool	currentlyInterpreting;
 
 	qbool	compiled;
-	byte		*codeBase;
+	vmFunc_t		codeBase;
 	qint			codeLength;
 
 	qint			*instructionPointers;
 	qint			instructionCount;
 
 	byte		*dataBase;
+	qint *opStack; //pointer to local function stack
 	qint			dataMask;
 	qint dataAlloc; //actually allocated
 

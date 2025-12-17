@@ -176,15 +176,15 @@ void VM_PrepareInterpreter( vm_t *vm, vmHeader_t *header ) {
 	qint		instruction;
 	qint		*codeBase;
 
-	vm->codeBase = Hunk_Alloc( vm->codeLength*4, h_high );			// we're now qint aligned
-//	memcpy( vm->codeBase, (byte *)header + header->codeOffset, vm->codeLength );
+	vm->codeBase.ptr = Hunk_Alloc( vm->codeLength*4, h_high );			// we're now qint aligned
+//	memcpy( vm->codeBase.ptr, (byte *)header + header->codeOffset, vm->codeLength );
 
 	// we don't need to translate the instructions, but we still need
 	// to find each instructions starting point for jumps
 	int_pc = byte_pc = 0;
 	instruction = 0;
 	code = (byte *)header + header->codeOffset;
-	codeBase = (qint *)vm->codeBase;
+	codeBase = (qint *)vm->codeBase.ptr;
 
         //copy and expand instructions to words while building instruction table
 	while ( instruction < header->instructionCount ) {
@@ -349,7 +349,7 @@ qint	VM_CallInterpreted( vm_t *vm, qint *args ) {
 	// set up the stack frame 
 
 	image = vm->dataBase;
-	codeImage = (qint *)vm->codeBase;
+	codeImage = (qint *)vm->codeBase.ptr;
 	dataMask = vm->dataMask;
 	
 	// leave a free spot at start of stack so

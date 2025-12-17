@@ -1095,34 +1095,34 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 	// copy to an exact size buffer on the hunk
 	vm->codeLength = compiledOfs;
 #ifdef VM_X86_MMAP
-	vm->codeBase = mmap(NULL, compiledOfs, PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
-	if(vm->codeBase == MAP_FAILED)
+	vm->codeBase.ptr = mmap(NULL, compiledOfs, PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+	if(vm->codeBase.ptr == MAP_FAILED)
 		Com_Error(ERR_FATAL, "VM_CompileX86: can't mmap memory");
 #elif _WIN32
 	// allocate memory with EXECUTE permissions under windows.
-	vm->codeBase = VirtualAlloc(NULL, compiledOfs, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-	if(!vm->codeBase)
+	vm->codeBase.ptr = VirtualAlloc(NULL, compiledOfs, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	if(!vm->codeBase.ptr)
 		Com_Error(ERR_FATAL, "VM_CompileX86: VirtualAlloc failed");
 #else
-	vm->codeBase = malloc(compiledOfs);
+	vm->codeBase.ptr = malloc(compiledOfs);
 
-        if (!vm->codeBase)
+        if (!vm->codeBase.ptr)
         {
           Com_Error(ERR_FATAL, "VM_CompileX86: malloc failed");
         }
 #endif
 
-	Com_Memcpy( vm->codeBase, buf, compiledOfs );
+	Com_Memcpy( vm->codeBase.ptr, buf, compiledOfs );
 
 #ifdef VM_X86_MMAP
-	if(mprotect(vm->codeBase, compiledOfs, PROT_READ|PROT_EXEC))
+	if(mprotect(vm->codeBase.ptr, compiledOfs, PROT_READ|PROT_EXEC))
 		Com_Error(ERR_FATAL, "VM_CompileX86: mprotect failed");
 #elif _WIN32
 	{
 		DWORD oldProtect = 0;
 		
 		// remove write permissions.
-		if(!VirtualProtect(vm->codeBase, compiledOfs, PAGE_EXECUTE_READ, &oldProtect))
+		if(!VirtualProtect(vm->codeBase.ptr, compiledOfs, PAGE_EXECUTE_READ, &oldProtect))
 			Com_Error(ERR_FATAL, "VM_CompileX86: VirtualProtect failed");
 	}
 #endif
@@ -1135,18 +1135,18 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 
 	// offset all the instruction pointers for the new location
 	for ( i = 0 ; i < header->instructionCount ; i++ ) {
-		vm->instructionPointers[i] += (qint)vm->codeBase;
+		vm->instructionPointers[i] += (qint)vm->codeBase.ptr;
 	}
 }
 
 void VM_Destroy_Compiled(vm_t* self)
 {
 #ifdef VM_X86_MMAP
-	munmap(self->codeBase, self->codeLength);
+	munmap(self->codeBase.ptr, self->codeLength);
 #elif _WIN32
-	VirtualFree(self->codeBase, 0, MEM_RELEASE);
+	VirtualFree(self->codeBase.ptr, 0, MEM_RELEASE);
 #else
-	free(self->codeBase);
+	free(self->codeBase.ptr);
 #endif
 }
 
@@ -1205,7 +1205,7 @@ qint	VM_CallCompiled( vm_t *vm, qint *args ) {
 
 	{
 #ifdef _MSC_VER
-		void *entryPoint = vm->codeBase;
+		void *entryPoint = vm->codeBase.ptr;
 
 		__asm {
 			pushad
@@ -1228,7 +1228,7 @@ qint	VM_CallCompiled( vm_t *vm, qint *args ) {
 			"call *%6"
 			: "+S" (programStack), "+D" (opStack),
 			  "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)
-			: "mr" (vm->codeBase)
+			: "mr" (vm->codeBase.ptr)
 			: "cc", "memory"
 		);
 #endif
