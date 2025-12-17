@@ -613,6 +613,20 @@ VM_ValidateHeader(vmHeader_t *header, qint fileSize)
 VM_LoadQVM
 
 Load a .qvm file
+
+if (alloc)
+{
+  - Validate header, swap data
+  - Alloc memory for data/instructions
+  - Alloc memory for instructionPointers
+  - Load instructions
+  - Clear/load data
+}
+else
+{
+  - Check for header changes
+  - Clear/load data
+}
 =================
 */
 vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
@@ -885,6 +899,10 @@ vm_t *VM_Create( const qchar *module, intptr_t (*systemCalls)(intptr_t *),
 	// copy or compile the instructions
 	vm->codeLength = header->codeLength;
 
+        //the stack is implicitly at the end of the image
+        vm->programStack = vm->dataMask + 1;
+        vm->stackBottom = vm->programStack - PROGRAM_STACK_SIZE;
+
 	vm->compiled = qfalse;
 
 #ifdef NO_VM_COMPILED
@@ -909,10 +927,6 @@ vm_t *VM_Create( const qchar *module, intptr_t (*systemCalls)(intptr_t *),
 
 	// load the map file
 	VM_LoadSymbols( vm );
-
-	// the stack is implicitly at the end of the image
-	vm->programStack = vm->dataMask + 1;
-	vm->stackBottom = vm->programStack - PROGRAM_STACK_SIZE;
 
 	Com_Printf("%s loaded in %d bytes on the hunk\n", module, remaining - Hunk_MemoryRemaining());
 
