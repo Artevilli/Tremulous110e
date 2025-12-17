@@ -430,7 +430,7 @@ Load_JTS(vm_t *vm, unsigned crc32, void *data)
     Com_Printf("Loading jts file %s...\n", filename);
   }
 
-  length = FS_FOpenFileRead(filename, &fh, qtrue); //FIXME: unique?
+  length = FS_FOpenFileRead(filename, &fh, qtrue);
 
   if (fh == FS_INVALID_HANDLE)
   {
@@ -548,11 +548,11 @@ VM_ValidateHeader(vmHeader_t *header, qint fileSize)
 
   if (LittleLong(header->vmMagic) == VM_MAGIC_VER2)
   {
-    n = sizeof(vmHeader_t) / 4;
+    n = sizeof(vmHeader_t) / sizeof(qint);
   }
   else
   {
-    n = (sizeof(vmHeader_t) - sizeof(qint)) / 4;
+    n = (sizeof(vmHeader_t) - sizeof(qint)) / sizeof(qint);
   }
 
   //byte swap the header
@@ -684,9 +684,11 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
           tryjts = qtrue;
 	}
 
+        dataLength = header.h->dataLength + header.h->litLength + header.h->bssLength;
+        vm->dataLength = dataLength;
+
 	// round up to next power of 2 so all data operations can
 	// be mask protected
-	dataLength = header.h->dataLength + header.h->litLength + header.h->bssLength;
 	for ( i = 0 ; dataLength > ( 1 << i ) ; i++ ) {
 	}
 	dataLength = 1 << i;

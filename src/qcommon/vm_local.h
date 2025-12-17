@@ -171,6 +171,7 @@ struct vm_s {
 	byte		*dataBase;
 	qint *opStack; //pointer to local function stack
 	qint			dataMask;
+	qint dataLength; //exact data segment length
 	qint dataAlloc; //actually allocated
 
 	qint			stackBottom;		// if programStack < stackBottom, error
