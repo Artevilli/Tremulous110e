@@ -500,7 +500,7 @@ crc32_final(unsigned *crc)
 }
 
 static qint
-Load_JTS(vm_t *vm, unsigned crc32, void *data)
+Load_JTS(vm_t *vm, unsigned crc32, void *data, qint vmPakIndex)
 {
   qchar filename[MAX_QPATH];
   qint header[2];
@@ -528,11 +528,18 @@ Load_JTS(vm_t *vm, unsigned crc32, void *data)
     return -1;
   }
 
+  if (fs_lastPakIndex != vmPakIndex)
+  {
+    Com_Printf(" bad pak index %i (expecting %i) for %s.\n", fs_lastPakIndex, vmPakIndex, filename);
+    FS_FCloseFile(fh);
+    return -1;
+  }
+
   if (length < sizeof(header))
   {
     if (data)
     {
-      Com_Printf(" bad filesize.\n");
+      Com_Printf(" bad filesize %i for %s.\n", length, filename);
     }
 
     FS_FCloseFile(fh);
@@ -543,7 +550,7 @@ Load_JTS(vm_t *vm, unsigned crc32, void *data)
   {
     if (data)
     {
-      Com_Printf(" error reading header.\n");
+      Com_Printf(" error reading header of %s.\n", filename);
     }
 
     FS_FCloseFile(fh);
@@ -724,6 +731,7 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
 	qchar *errorMsg;
 	unsigned crc32 = 0;
 	qbool tryjts;
+	qint vmPakIndex;
 	union
 	{
 	  vmHeader_t *h;
@@ -740,6 +748,8 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
 		VM_Free( vm );
 		return NULL;
 	}
+
+        vmPakIndex = fs_lastPakIndex;
 
         crc32_init(&crc32);
         crc32_update(&crc32, header.v, length);
@@ -841,7 +851,7 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
 		}
 	}
 
-        if (tryjts == qtrue && (length = Load_JTS(vm, crc32, NULL)) >= 0)
+        if (tryjts == qtrue && (length = Load_JTS(vm, crc32, NULL, vmPakIndex)) >= 0)
         {
           //we are trying to load newer file?
           if (vm->jumpTableTargets && vm->numJumpTableTargets != length >> 2)
@@ -864,7 +874,7 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
             Com_Memset(vm->jumpTableTargets, 0, length);
           }
 
-          Load_JTS(vm, crc32, vm->jumpTableTargets);
+          Load_JTS(vm, crc32, vm->jumpTableTargets, vmPakIndex);
         }
 
 	return header.h;
