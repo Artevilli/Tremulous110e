@@ -1804,32 +1804,32 @@ static qint QDECL VM_ProfileSort( const void *a, const void *b ) {
 VM_NameToVM
 ==============
 */
-vm_t *
-VM_NameToVM(const qchar *vm)
+static vm_t *
+VM_NameToVM(const qchar *name)
 {
   vmIndex_t index;
 
-  if (!Q_stricmp(vm, "game"))
+  if (!Q_stricmp(name, "game"))
   {
     index = VM_GAME;
   }
-  else if (!Q_stricmp(vm, "cgame"))
+  else if (!Q_stricmp(name, "cgame"))
   {
     index = VM_CGAME;
   }
-  else if (!Q_stricmp(vm, "ui"))
+  else if (!Q_stricmp(name, "ui"))
   {
     index = VM_UI;
   }
   else
   {
-    Com_Printf(" unknown VM name '%s'\n", vm);
+    Com_Printf(" unknown VM name '%s'\n", name);
     return NULL;
   }
 
   if (!vmTable[index].name)
   {
-    Com_Printf(" %s is not running.\n", vm);
+    Com_Printf(" %s is not running.\n", name);
     return NULL;
   }
 
@@ -1908,7 +1908,7 @@ void VM_VmInfo_f( void ) {
 	for ( i = 0 ; i < VM_COUNT ; i++ ) {
 		vm = &vmTable[i];
 		if ( !vm->name ) {
-			break;
+			continue;
 		}
 		Com_Printf( "%s : ", vm->name );
 		if ( vm->dllHandle ) {
