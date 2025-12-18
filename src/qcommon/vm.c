@@ -906,7 +906,7 @@ VM_LoadInstructions(const vmHeader_t *header, instruction_t *buf)
 
     if (op0 < 0 || op0 >= OP_MAX)
     {
-      sprintf(errBuf, "bad opcode %02X at offset %li", op0, code_pos - code_start);
+      sprintf(errBuf, "bad opcode %02X at offset %ld", op0, code_pos - code_start);
       return errBuf;
     }
 
@@ -928,7 +928,7 @@ VM_LoadInstructions(const vmHeader_t *header, instruction_t *buf)
     }
     else if (n == 1)
     {
-      ci->value = *((qchar *)code_pos);
+      ci->value = *((unsigned qchar *)code_pos);
       code_pos += 1;
     }
     else
