@@ -301,7 +301,7 @@ void VM_PrepareInterpreter( vm_t *vm, vmHeader_t *header ) {
 VM_PrepareInterpreter2
 ==============
 */
-void
+qbool
 VM_PrepareInterpreter2(vm_t *vm, vmHeader_t *header)
 {
   const qchar *errMsg;
@@ -318,11 +318,12 @@ VM_PrepareInterpreter2(vm_t *vm, vmHeader_t *header)
 
   if (errMsg)
   {
-    Com_Printf("VM_PrepareInterpreter error: %s\n", errMsg);
-    return;
+    Com_Printf("VM_PrepareInterpreter2 error: %s\n", errMsg);
+    return qfalse;
   }
 
   vm->codeBase.ptr = (void *)buf;
+  return qtrue;
 }
 
 /*

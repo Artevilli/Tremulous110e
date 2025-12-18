@@ -145,6 +145,9 @@ typedef struct
   byte opStack; //8
   qint jused:1;
   qint swtch:1;
+  qint root:1;
+  qint fpu:1;
+  qint store:1;
 }
 instruction_t;
 
@@ -223,7 +226,7 @@ void VM_Compile( vm_t *vm, vmHeader_t *header );
 qint	VM_CallCompiled( vm_t *vm, qint *args );
 
 void VM_PrepareInterpreter( vm_t *vm, vmHeader_t *header );
-void
+qbool
 VM_PrepareInterpreter2(vm_t *vm, vmHeader_t *header);
 qint	VM_CallInterpreted( vm_t *vm, qint *args );
 qint
@@ -238,5 +241,19 @@ const qchar *
 VM_LoadInstructions(const vmHeader_t *header, instruction_t *buf);
 const qchar *
 VM_CheckInstructions(instruction_t *buf, qint instructionCount, const byte *jumpTableTargets, qint numJumpTableTargets, qint dataLength);
+#if 0
 void
 VM_FindMOps(vmHeader_t *header, instruction_t *buf);
+#endif
+
+#define JUMP (BIT(0))
+
+typedef struct
+opcode_info_s
+{
+  qint size;
+  qint stack;
+  qint nargs;
+  qint flags;
+}
+opcode_info_t;
