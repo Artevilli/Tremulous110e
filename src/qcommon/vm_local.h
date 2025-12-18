@@ -178,15 +178,17 @@ struct vm_s {
     // DO NOT MOVE OR CHANGE THESE WITHOUT CHANGING THE VM_OFFSET_* DEFINES
     // USED BY THE ASM CODE
     qint			programStack;		// the vm may be recursively entered
-    intptr_t			(*systemCall)( intptr_t *parms );
+    syscall_t systemCall;
 
 	//------------------------------------
    
-    qchar		name[MAX_QPATH];
+    const qchar *name;
+    vmIndex_t index;
 
 	// for dynamic linked modules
 	void		*dllHandle;
-	intptr_t			(QDECL *entryPoint)( qint callNum, ... );
+	dllSyscall_t entryPoint;
+	dllSyscall_t dllSyscall;
 	void (*destroy)(vm_t* self);
 
 	// for interpreted modules
@@ -220,6 +222,7 @@ struct vm_s {
 
 
 extern	vm_t	*currentVM;
+extern  vm_t    *lastVM;
 extern	qint		vm_debugLevel;
 
 void VM_Compile( vm_t *vm, vmHeader_t *header );

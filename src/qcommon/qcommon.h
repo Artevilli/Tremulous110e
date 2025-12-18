@@ -373,9 +373,21 @@ typedef enum {
 	TRAP_TESTPRINTFLOAT
 } sharedTraps_t;
 
-void	VM_Init( void );
-vm_t	*VM_Create( const qchar *module, intptr_t (*systemCalls)(intptr_t *), 
-				   vmInterpret_t interpret );
+typedef enum
+{
+  VM_GAME = 0,
+#if !defined(USE_DEDICATED)
+  VM_CGAME,
+  VM_UI,
+#endif
+  VM_COUNT
+}
+vmIndex_t;
+
+void
+VM_Init(void);
+vm_t *
+VM_Create(vmIndex_t index, syscall_t systemCalls, dllSyscall_t dllSyscalls, vmInterpret_t interpret);
 // module should be bare: "cgame", not "cgame.dll" or "vm/cgame.qvm"
 
 void	VM_Free( vm_t *vm );
@@ -1268,8 +1280,8 @@ typedef enum {
 void	Sys_Init (void);
 
 // general development dll loading for virtual machine testing
-void	* QDECL Sys_LoadDll( const qchar *name, intptr_t (QDECL **entryPoint)(qint, ...),
-				  intptr_t (QDECL *systemcalls)(intptr_t, ...) );
+void *
+Sys_LoadDll(const qchar *name, dllSyscall_t *entryPoint, dllSyscall_t systemcalls);
 void	Sys_UnloadDll( void *dllHandle );
 
 void	Sys_UnloadGame( void );

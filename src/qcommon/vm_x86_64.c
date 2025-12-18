@@ -82,7 +82,6 @@ static void VM_Destroy_Compiled(vm_t* self);
   r10   start of generated code
 */
 
-
 static int64_t CROSSCALL callAsmCall(int64_t callProgramStack, int64_t callSyscallNum)
 {
 	vm_t *savedVM;

@@ -492,10 +492,10 @@ Used to load a development dll instead of a virtual machine
 =================
 */
 void *
-Sys_LoadDll(const char *name, intptr_t(**entryPoint) (int, ...), intptr_t(*systemcalls) (intptr_t, ...))
+Sys_LoadDll(const qchar *name, dllSyscall_t *entryPoint, dllSyscall_t systemcalls)
 {
   void *libHandle;
-  void (*dllEntry) (intptr_t(*syscallptr) (intptr_t, ...));
+  dllEntry_t dllEntry;
   char fname[MAX_OSPATH];
   char *netpath;
 
@@ -529,8 +529,9 @@ Sys_LoadDll(const char *name, intptr_t(**entryPoint) (int, ...), intptr_t(*syste
     return NULL;
   }
 
-  Com_Printf("Sys_LoadDll(%s) found vmMain function at %p\n", name, *entryPoint);
+  Com_Printf("Sys_LoadDll(%s) found **vmMain** function at %p\n", name, *entryPoint);
   dllEntry(systemcalls);
+  Com_Printf("Sys_LoadDll(%s) succeeded!\n", name);
   return libHandle;
 }
 

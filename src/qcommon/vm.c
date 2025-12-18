@@ -114,15 +114,21 @@ opcode_info_t ops[OP_MAX] =
   {0, 0, 1, 0} //cvfi
 };
 
-vm_t	*currentVM = NULL;
-vm_t	*lastVM    = NULL;
+vm_t *currentVM = NULL;
+vm_t *lastVM = NULL;
 qint		vm_debugLevel;
 
 // used by Com_Error to get rid of running vm's before longjmp
 static qint forced_unload;
 
-#define	MAX_VM		3
-vm_t	vmTable[MAX_VM];
+struct vm_s vmTable[VM_COUNT];
+
+static const qchar *vmName[VM_COUNT] =
+{
+  "game",
+  "cgame",
+  "ui"
+};
 
 
 void VM_VmInfo_f( void );
@@ -416,6 +422,7 @@ Dlls will call this directly
  
 ============
 */
+#if 0 //- disabled because now is different for each module
 intptr_t QDECL __attribute__((no_sanitize_address))
 VM_DllSyscall(intptr_t arg, ...)
 {
@@ -440,6 +447,7 @@ VM_DllSyscall(intptr_t arg, ...)
   return currentVM->systemCall(&arg);
 #endif
 }
+#endif
 
 /*
 ==================
@@ -1455,35 +1463,41 @@ Reload the data, but leave everything else in place
 This allows a server to do a map_restart without changing memory allocation
 =================
 */
-vm_t *VM_Restart( vm_t *vm ) {
-	vmHeader_t	*header;
+vm_t *
+VM_Restart(vm_t *vm)
+{
+  vmHeader_t *header;
 
-	// DLL's can't be restarted in place
-	if ( vm->dllHandle ) {
-		qchar	name[MAX_QPATH];
-		intptr_t	(*systemCall)( intptr_t *parms );
-		
-		systemCall = vm->systemCall;	
-		Q_strncpyz( name, vm->name, sizeof( name ) );
+  //DLL's can't be restarted in place
+  if (vm->dllHandle)
+  {
+    syscall_t systemCall;
+    dllSyscall_t dllSyscall;
+    vmIndex_t index;
 
-		VM_Free( vm );
+    index = vm->index;
+    systemCall = vm->systemCall;
+    dllSyscall = vm->dllSyscall;
 
-		vm = VM_Create( name, systemCall, VMI_NATIVE );
-		return vm;
-	}
+    VM_Free(vm);
 
-	// load the image
-	Com_Printf( "VM_Restart()\n" );
+    vm = VM_Create(index, systemCall, dllSyscall, VMI_NATIVE);
+    return vm;
+  }
 
-	if( !( header = VM_LoadQVM( vm, qfalse ) ) ) {
-		Com_Error( ERR_DROP, "VM_Restart failed." );
-		return NULL;
-	}
+  //load the image
+  Com_Printf("VM_Restart()\n");
 
-	// free the original file
-	FS_FreeFile( header );
+  if (!(header = VM_LoadQVM(vm, qfalse)))
+  {
+    Com_Error(ERR_DROP, "VM_Restart failed.");
+    return NULL;
+  }
 
-	return vm;
+  //free the original file
+  FS_FreeFile(header);
+
+  return vm;
 }
 
 /*
@@ -1494,113 +1508,123 @@ If image ends in .qvm it will be interpreted, otherwise
 it will attempt to load as a system dll
 ================
 */
-vm_t *VM_Create( const qchar *module, intptr_t (*systemCalls)(intptr_t *), 
-				vmInterpret_t interpret ) {
-	vm_t		*vm;
-	vmHeader_t	*header;
-	qint			i, remaining;
+vm_t *
+VM_Create(vmIndex_t index, syscall_t systemCalls, dllSyscall_t dllSyscalls, vmInterpret_t interpret)
+{
+  qint remaining;
+  const qchar *name;
+  vmHeader_t *header;
+  vm_t *vm;
 
-	if ( !module || !module[0] || !systemCalls ) {
-		Com_Error( ERR_FATAL, "VM_Create: bad parms" );
-	}
+  if (!systemCalls)
+  {
+    Com_Error(ERR_FATAL, "VM_Create: bad parms");
+  }
 
-	remaining = Hunk_MemoryRemaining();
+  if ((unsigned)index >= VM_COUNT)
+  {
+    Com_Error(ERR_FATAL, "VM_Create: bad vm index %i", index);
+  }
 
-	// see if we already have the VM
-	for ( i = 0 ; i < MAX_VM ; i++ ) {
-		if (!Q_stricmp(vmTable[i].name, module)) {
-			vm = &vmTable[i];
-			return vm;
-		}
-	}
+  remaining = Hunk_MemoryRemaining();
 
-	// find a free vm
-	for ( i = 0 ; i < MAX_VM ; i++ ) {
-		if ( !vmTable[i].name[0] ) {
-			break;
-		}
-	}
+  vm = &vmTable[index];
 
-	if ( i == MAX_VM ) {
-		Com_Error( ERR_FATAL, "VM_Create: no free vm_t" );
-		return NULL;
-	}
+  //see if we already have the VM
+  if (vm->name)
+  {
+    if (vm->index != index)
+    {
+      Com_Error(ERR_FATAL, "VM_Create: bad allocated vm index %i", vm->index);
+      return NULL;
+    }
 
-	vm = &vmTable[i];
+    return vm;
+  }
 
-	Q_strncpyz( vm->name, module, sizeof( vm->name ) );
-	vm->systemCall = systemCalls;
+  name = vmName[index];
 
-        //never allow dll loading with a demo
-        if (interpret == VMI_NATIVE)
-        {
-          if (Cvar_VariableValue("fs_restrict"))
-          {
-            interpret = VMI_COMPILED;
-          }
-        }
+  vm->name = name;
+  vm->index = index;
+  vm->systemCall = systemCalls;
+  vm->dllSyscall = dllSyscalls;
 
-	if ( interpret == VMI_NATIVE ) {
-		// try to load as a system dll
-		Com_Printf( "Loading dll file %s.\n", vm->name );
-		vm->dllHandle = Sys_LoadDll( module, &vm->entryPoint, VM_DllSyscall );
-		if ( vm->dllHandle ) {
-			return vm;
-		}
+  //never allow dll loading with a demo
+  if (interpret == VMI_NATIVE)
+  {
+    if (Cvar_VariableValue("fs_restrict"))
+    {
+      interpret = VMI_COMPILED;
+    }
+  }
 
-		Com_Printf( "Failed to load dll, looking for qvm.\n" );
-		interpret = VMI_COMPILED;
-	}
+  if (interpret == VMI_NATIVE)
+  {
+    //try to load as a system dll
+    Com_Printf("Loading dll file %s.\n", name);
+    vm->dllHandle = Sys_LoadDll(name, &vm->entryPoint, dllSyscalls);
 
-	// load the image
-	if( ( header = VM_LoadQVM( vm, qtrue ) ) == NULL ) {
-		return NULL;
-	}
+    if (vm->dllHandle)
+    {
+      return vm;
+    }
 
-	// allocate space for the jump targets, which will be filled in by the compile/prep functions
-	vm->instructionCount = header->instructionCount;
-	vm->instructionPointers = Hunk_Alloc( vm->instructionCount * sizeof(intptr_t), h_high );
+    Com_Printf( "Failed to load dll, looking for qvm.\n" );
+    interpret = VMI_COMPILED;
+  }
 
-	// copy or compile the instructions
-	vm->codeLength = header->codeLength;
+  //load the image
+  if ((header = VM_LoadQVM(vm, qtrue)) == NULL)
+  {
+    return NULL;
+  }
 
-        //the stack is implicitly at the end of the image
-        vm->programStack = vm->dataMask + 1;
-        vm->stackBottom = vm->programStack - PROGRAM_STACK_SIZE;
+  //allocate space for the jump targets, which will be filled in by the compile/prep functions
+  vm->instructionCount = header->instructionCount;
+  vm->instructionPointers = Hunk_Alloc(vm->instructionCount * sizeof(intptr_t), h_high);
 
-	vm->compiled = qfalse;
+  //copy or compile the instructions
+  vm->codeLength = header->codeLength;
 
-#ifdef NO_VM_COMPILED
-	if(interpret >= VMI_COMPILED) {
-		Com_Printf("Architecture doesn't have a bytecode compiler, using interpreter\n");
-		interpret = VMI_BYTECODE;
-	}
+  //the stack is implicitly at the end of the image
+  vm->programStack = vm->dataMask + 1;
+  vm->stackBottom = vm->programStack - PROGRAM_STACK_SIZE;
+
+  vm->compiled = qfalse;
+
+#if defined(NO_VM_COMPILED)
+  if (interpret >= VMI_COMPILED)
+  {
+    Com_Printf("Architecture doesn't have a bytecode compiler, using interpreter\n");
+    interpret = VMI_BYTECODE;
+  }
 #else
-	if ( interpret >= VMI_COMPILED ) {
-		vm->compiled = qtrue;
-		VM_Compile( vm, header );
-	}
+  if (interpret >= VMI_COMPILED)
+  {
+    vm->compiled = qtrue;
+    VM_Compile(vm, header);
+  }
 #endif
-	// VM_Compile may have reset vm->compiled if compilation failed
-	if (!vm->compiled)
-	{
-          if (!VM_PrepareInterpreter2(vm, header))
-          {
-            FS_FreeFile(header); //free the original file
-            VM_Free(vm);
-            return NULL;
-          }
-	}
+  //VM_Compile may have reset vm->compiled if compilation failed
+  if (!vm->compiled)
+  {
+    if (!VM_PrepareInterpreter2(vm, header))
+    {
+      FS_FreeFile(header); //free the original file
+      VM_Free(vm);
+      return NULL;
+    }
+  }
 
-	// free the original file
-	FS_FreeFile( header );
+  //free the original file
+  FS_FreeFile(header);
 
-	// load the map file
-	VM_LoadSymbols( vm );
+  //load the map file
+  VM_LoadSymbols(vm);
 
-	Com_Printf("%s loaded in %d bytes on the hunk\n", module, remaining - Hunk_MemoryRemaining());
+  Com_Printf("%s loaded in %d bytes on the hunk\n", vm->name, remaining - Hunk_MemoryRemaining());
 
-	return vm;
+  return vm;
 }
 
 /*
@@ -1642,15 +1666,19 @@ void VM_Free( vm_t *vm ) {
 #endif
 	Com_Memset( vm, 0, sizeof( *vm ) );
 
-	currentVM = NULL;
-	lastVM = NULL;
+        currentVM = NULL;
+        lastVM = NULL;
 }
 
-void VM_Clear(void) {
-	qint i;
-	for (i=0;i<MAX_VM; i++) {
-		VM_Free(&vmTable[i]);
-	}
+void
+VM_Clear(void)
+{
+  qint i;
+
+  for(i = 0;i < VM_COUNT;i++)
+  {
+    VM_Free(&vmTable[i]);
+  }
 }
 
 void VM_Forced_Unload_Start(void) {
@@ -1693,9 +1721,9 @@ intptr_t	QDECL __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, qint call
 		Com_Error( ERR_FATAL, "VM_Call with NULL vm" );
 	}
 
-	oldVM = currentVM;
-	currentVM = vm;
-	lastVM = vm;
+        oldVM = currentVM;
+        currentVM = vm;
+        lastVM = vm;
 
 	if ( vm_debugLevel ) {
 	  Com_Printf( "VM_Call( %d )\n", callnum );
@@ -1747,13 +1775,16 @@ intptr_t	QDECL __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, qint call
 	}
 	--vm->callLevel;
 
-	if ( oldVM != NULL )
-	  currentVM = oldVM;
+        if (oldVM != NULL)
+        {
+          currentVM = oldVM;
+        }
+
 	return r;
 }
 
 //=================================================================
-
+#if 0
 static qint QDECL VM_ProfileSort( const void *a, const void *b ) {
 	vmSymbol_t	*sa, *sb;
 
@@ -1768,6 +1799,7 @@ static qint QDECL VM_ProfileSort( const void *a, const void *b ) {
 	}
 	return 0;
 }
+#endif
 
 /*
 ==============
@@ -1776,6 +1808,7 @@ VM_VmProfile_f
 ==============
 */
 void VM_VmProfile_f( void ) {
+#if 0
 	vm_t		*vm;
 	vmSymbol_t	**sorted, *sym;
 	qint			i;
@@ -1814,6 +1847,7 @@ void VM_VmProfile_f( void ) {
 	Com_Printf("    %9.0f total\n", total );
 
 	Z_Free( sorted );
+#endif
 }
 
 /*
@@ -1827,9 +1861,9 @@ void VM_VmInfo_f( void ) {
 	qint		i;
 
 	Com_Printf( "Registered virtual machines:\n" );
-	for ( i = 0 ; i < MAX_VM ; i++ ) {
+	for ( i = 0 ; i < VM_COUNT ; i++ ) {
 		vm = &vmTable[i];
-		if ( !vm->name[0] ) {
+		if ( !vm->name ) {
 			break;
 		}
 		Com_Printf( "%s : ", vm->name );
@@ -1856,6 +1890,7 @@ Insert calls to this while debugging the vm compiler
 ===============
 */
 void VM_LogSyscalls( qint *args ) {
+#if 0
 	static	qint		callnum;
 	static	FILE	*f;
 
@@ -1870,4 +1905,5 @@ void VM_LogSyscalls( qint *args ) {
 	callnum++;
 	fprintf(f, "%i: %p (%i) = %i %i %i %i\n", callnum, (void*)(args - (qint *)currentVM->dataBase),
 		args[0], args[1], args[2], args[3], args[4] );
+#endif
 }
