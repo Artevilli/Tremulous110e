@@ -27,6 +27,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define OPSTACK_SIZE 1024
 #define OPSTACK_MASK (OPSTACK_SIZE - 1)
+#define PROC_OPSTACK_SIZE 30
+#define VM_CALL_PSTACK 48
 
 //dont change
 //hardcoded in q3asm and reserved at end of bss
@@ -117,10 +119,36 @@ typedef enum {
 	OP_MULF,
 
 	OP_CVIF,
-	OP_CVFI
+	OP_CVFI,
+
+        OP_MAX
 } opcode_t;
 
+//macro opcode sequences
+typedef enum
+{
+  MOP_UNDEF = OP_MAX,
+  MOP_IGNORE4,
+  MOP_ADD4,
+  MOP_SUB4,
+  MOP_BAND4,
+  MOP_BOR4,
+  MOP_CALCF4,
+}
+macro_op_t;
 
+typedef struct
+{
+  qint value; //32
+  byte op; //8
+  byte mop; //8
+  byte opStack; //8
+  qint jused:1;
+  qint swtch:1;
+}
+instruction_t;
+
+//const qchar *opname[OP_MAX];
 
 typedef qint	vmptr_t;
 
@@ -195,9 +223,20 @@ void VM_Compile( vm_t *vm, vmHeader_t *header );
 qint	VM_CallCompiled( vm_t *vm, qint *args );
 
 void VM_PrepareInterpreter( vm_t *vm, vmHeader_t *header );
+void
+VM_PrepareInterpreter2(vm_t *vm, vmHeader_t *header);
 qint	VM_CallInterpreted( vm_t *vm, qint *args );
+qint
+VM_CallInterpreted2(vm_t *vm, qint *args);
 
 vmSymbol_t *VM_ValueToFunctionSymbol( vm_t *vm, qint value );
 qint VM_SymbolToValue( vm_t *vm, const qchar *symbol );
 const qchar *VM_ValueToSymbol( vm_t *vm, qint value );
 void VM_LogSyscalls( qint *args );
+
+const qchar *
+VM_LoadInstructions(const vmHeader_t *header, instruction_t *buf);
+const qchar *
+VM_CheckInstructions(instruction_t *buf, qint instructionCount, const byte *jumpTableTargets, qint numJumpTableTargets, qint dataLength);
+void
+VM_FindMOps(vmHeader_t *header, instruction_t *buf);
