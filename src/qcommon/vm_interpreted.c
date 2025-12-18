@@ -361,6 +361,8 @@ qint	VM_CallInterpreted( vm_t *vm, qint *args ) {
 	qint		*codeImage;
 	qint		v1;
 	qint		dataMask;
+	qint j;
+	qint *img;
 #ifdef DEBUG_VM
 	vmSymbol_t	*profileSymbol;
 #endif
@@ -388,20 +390,16 @@ qint	VM_CallInterpreted( vm_t *vm, qint *args ) {
 	opStack = stack;
 	programCounter = 0;
 
-	programStack -= VM_CALL_PSTACK;
+	programStack -= 8 + (VMMAIN_CALL_ARGS * 4);
+	img = (qint *)&image[programStack];
 
-	*(qint *)&image[ programStack + 44] = args[9];
-	*(qint *)&image[ programStack + 40] = args[8];
-	*(qint *)&image[ programStack + 36] = args[7];
-	*(qint *)&image[ programStack + 32] = args[6];
-	*(qint *)&image[ programStack + 28] = args[5];
-	*(qint *)&image[ programStack + 24] = args[4];
-	*(qint *)&image[ programStack + 20] = args[3];
-	*(qint *)&image[ programStack + 16] = args[2];
-	*(qint *)&image[ programStack + 12] = args[1];
-	*(qint *)&image[ programStack + 8 ] = args[0];
-	*(qint *)&image[ programStack + 4 ] = 0;	// return stack
-	*(qint *)&image[ programStack ] = -1;	// will terminate the loop on return
+        for(j = 0;j < VMMAIN_CALL_ARGS;j++)
+        {
+          img[j + 2] = args[j];
+        }
+
+        img[1] = 0; //return stack
+        img[0] = -1; //will terminate the loop on return
 
 	VM_Debug(0);
 
@@ -973,6 +971,8 @@ VM_CallInterpreted2(vm_t *vm, qint *args)
   floatint_t r0;
   floatint_t r1;
   qint opcode;
+  qint *img;
+  qint i;
 
   //interpret the code
   vm->currentlyInterpreting = qtrue;
@@ -990,20 +990,16 @@ VM_CallInterpreted2(vm_t *vm, qint *args)
   //not corrupt anything
   opStack = stack;
 
-  programStack -= VM_CALL_PSTACK;
+  programStack -= 8 + (VMMAIN_CALL_ARGS * 4);
+  img = (qint *)&image[programStack];
 
-  //*(qint *)&image[programStack + 44] = args[9];
-  //*(qint *)&image[programStack + 40] = args[8];
-  //*(qint *)&image[programStack + 36] = args[7];
-  *(qint *)&image[programStack + 32] = args[6];
-  *(qint *)&image[programStack + 28] = args[5];
-  *(qint *)&image[programStack + 24] = args[4];
-  *(qint *)&image[programStack + 20] = args[3];
-  *(qint *)&image[programStack + 16] = args[2];
-  *(qint *)&image[programStack + 12] = args[1];
-  *(qint *)&image[programStack + 8] = args[0];
-  *(qint *)&image[programStack + 4] = 0; //return stack
-  *(qint *)&image[programStack] = -1; //will terminate loop on return
+  for(i = 0;i < VMMAIN_CALL_ARGS;i++)
+  {
+    img[i + 2] = args[i];
+  }
+
+  img[1] = 0; //return stack
+  img[0] = -1; //will terminate loop on return
 
   ci = inst;
 

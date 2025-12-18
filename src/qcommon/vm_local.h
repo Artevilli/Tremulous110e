@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define OPSTACK_SIZE 1024
 #define OPSTACK_MASK (OPSTACK_SIZE - 1)
 #define PROC_OPSTACK_SIZE 30
-#define VM_CALL_PSTACK 48
+#define VMMAIN_CALL_ARGS 13
 
 //dont change
 //hardcoded in q3asm and reserved at end of bss

@@ -1740,7 +1740,7 @@ intptr_t	QDECL __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, qint call
 	// if we have a dll loaded, call it directly
 	if ( vm->entryPoint ) {
 		//rcg010207 -  see dissertation at top of VM_DllSyscall() in this file.
-		intptr_t args[VM_SYSCALL_ARGS];
+		intptr_t args[VMMAIN_CALL_ARGS - 1];
 		va_list ap;
 		va_start(ap, callnum);
 		for (i = 0;i < ARRAY_LEN(args);i++) {
@@ -1750,9 +1750,9 @@ intptr_t	QDECL __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, qint call
 
 		r = vm->entryPoint( callnum,  args[0],  args[1],  args[2], args[3],
                             args[4],  args[5],  args[6], args[7],
-                            args[8],  args[9]);
+                            args[8],  args[9], args[10], args[11]);
 	} else {
-#if id386 || idsparc // i386/sparc calling convention doesn't need conversion
+#if (id386 || idsparc) && !defined(__clang__) // i386/sparc calling convention doesn't need conversion in some cases
 #ifndef NO_VM_COMPILED
 		if ( vm->compiled )
 			r = VM_CallCompiled( vm, (qint*)&callnum );
@@ -1762,7 +1762,7 @@ intptr_t	QDECL __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, qint call
 #else
 		struct {
 			qint callnum;
-			qint args[10];
+			qint args[VMMAIN_CALL_ARGS - 1];
 		} a;
 		va_list ap;
 
