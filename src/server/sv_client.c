@@ -1076,7 +1076,7 @@ gotnewcl1:
     if (denied)
     {
       // we can't just use VM_ArgPtr, because that is only valid inside a VM_Call
-      const qchar *str = (const qchar *)VM_ExplicitArgPtr(sv.gvm, denied);
+      const qchar *str = (const qchar *)GVM_ArgPtr(denied);
 
       NET_OutOfBandPrint(NS_SERVER, from, "print\n%s\n", str);
       Com_DPrintf("Game rejected a connection: %s.\n", str);
@@ -1529,7 +1529,7 @@ gotnewcl2:
     if (denied)
     {
       // we can't just use VM_ArgPtr, because that is only valid inside a VM_Call
-      const qchar *str = (const qchar *)VM_ExplicitArgPtr(sv.gvm, denied);
+      const qchar *str = (const qchar *)GVM_ArgPtr(denied);
 
       NET_OutOfBandPrint(NS_SERVER, from, "print\n%s\n", str);
       Com_DPrintf("Game rejected a connection: %s.\n", str);

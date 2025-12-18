@@ -1661,41 +1661,6 @@ void VM_Forced_Unload_Done(void) {
 	forced_unload = 0;
 }
 
-void *VM_ArgPtr( intptr_t intValue ) {
-	if ( !intValue ) {
-		return NULL;
-	}
-	// currentVM is missing on reconnect
-	if ( currentVM==NULL )
-	  return NULL;
-
-	if ( currentVM->entryPoint ) {
-		return (void *)(currentVM->dataBase + intValue);
-	}
-	else {
-		return (void *)(currentVM->dataBase + (intValue & currentVM->dataMask));
-	}
-}
-
-void *VM_ExplicitArgPtr( vm_t *vm, intptr_t intValue ) {
-	if ( !intValue ) {
-		return NULL;
-	}
-
-	// currentVM is missing on reconnect here as well?
-	if ( currentVM==NULL )
-	  return NULL;
-
-	//
-	if ( vm->entryPoint ) {
-		return (void *)(vm->dataBase + intValue);
-	}
-	else {
-		return (void *)(vm->dataBase + (intValue & vm->dataMask));
-	}
-}
-
-
 /*
 ==============
 VM_Call

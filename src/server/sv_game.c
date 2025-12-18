@@ -384,6 +384,42 @@ FloatAsInt(float f)
 
 /*
 ====================
+VM_ArgPtr
+====================
+*/
+static void *
+VM_ArgPtr(intptr_t intValue)
+{
+  if (!intValue || sv.gvm == NULL)
+  {
+    return NULL;
+  }
+
+  if (sv.gvm->entryPoint)
+  {
+    return (void *)(sv.gvm->dataBase + intValue);
+  }
+  else
+  {
+    return (void *)(sv.gvm->dataBase + (intValue & sv.gvm->dataMask));
+  }
+}
+
+/*
+====================
+GVM_ArgPtr
+
+exported version
+====================
+*/
+void *
+GVM_ArgPtr(intptr_t intValue)
+{
+  return VM_ArgPtr(intValue);
+}
+
+/*
+====================
 SV_GameSystemCalls
 
 The module is making a system call

@@ -388,8 +388,8 @@ intptr_t		QDECL VM_Call( vm_t *vm, qint callNum, ... );
 
 void	VM_Debug( qint level );
 
-void	*VM_ArgPtr( intptr_t intValue );
-void	*VM_ExplicitArgPtr( vm_t *vm, intptr_t intValue );
+void *
+GVM_ArgPtr(intptr_t intValue);
 
 #define	VMA(x) VM_ArgPtr(args[x])
 static ID_INLINE float

@@ -778,7 +778,7 @@ SV_SpawnServer(const qchar *server, qbool killBots)
 #if defined(USE_JAVA)
       denied = Java_G_ClientConnect(i, qfalse, isBot);
 #else
-      denied = VM_ExplicitArgPtr(sv.gvm, VM_Call(sv.gvm, GAME_CLIENT_CONNECT, i, qfalse)); //firstTime = qfalse
+      denied = GVM_ArgPtr(VM_Call(sv.gvm, GAME_CLIENT_CONNECT, i, isBot)); //firstTime = qfalse
 #endif
       if (denied)
       {

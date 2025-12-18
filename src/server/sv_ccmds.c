@@ -439,7 +439,7 @@ SV_MapRestart_f(void)
 #if defined(USE_JAVA)
     denied = Java_G_ClientConnect(i, qfalse, isBot);
 #else
-    denied = VM_ExplicitArgPtr(sv.gvm, VM_Call(sv.gvm, GAME_CLIENT_CONNECT, i, qfalse));
+    denied = GVM_ArgPtr(VM_Call(sv.gvm, GAME_CLIENT_CONNECT, i, isBot));
 #endif
     if (denied)
     {
