@@ -222,8 +222,6 @@ struct vm_s {
 
 	byte		*jumpTableTargets;
 	qint			numJumpTableTargets;
-
-        uint32_t crc32sum;
 };
 
 

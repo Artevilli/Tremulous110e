@@ -385,7 +385,7 @@ VM_CallInterpreted2(vm_t *vm, qint nargs, qint *args)
   //not corrupt anything
   opStack = stack;
 
-  vm->programStack -= MAX_VMMAIN_CALL_ARGS * 4;
+  vm->programStack -= 256; //reserve entire frame for effective compile-time LOCAL + LOAD* checks
   img = (qint *)&image[programStack];
 
   for(i = 0;i < nargs;i++)

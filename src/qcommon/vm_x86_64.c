@@ -1076,7 +1076,7 @@ qint	VM_CallCompiled( vm_t *vm, qint nargs, qint *args ) {
 	memData = (qchar*)image;
 #endif
 
-	programStack -= MAX_VMMAIN_CALL_ARGS * 4;
+	programStack -= 256;
 
 	*(qint *)&image[ programStack + 44] = args[9];
 	*(qint *)&image[ programStack + 40] = args[8];
