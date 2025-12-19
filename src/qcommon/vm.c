@@ -726,10 +726,11 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
         qint length;
         qint previousNumJumpTableTargets;
 	qint					dataLength;
+	qint dataAlloc;
 	qint					i;
 	qchar				filename[MAX_QPATH];
 	qchar *errorMsg;
-	unsigned crc32 = 0;
+	unsigned crc32sum;
 	qbool tryjts;
 	qint vmPakIndex;
 	union
@@ -751,9 +752,9 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
 
         vmPakIndex = fs_lastPakIndex;
 
-        crc32_init(&crc32);
-        crc32_update(&crc32, header.v, length);
-        crc32_final(&crc32);
+        crc32_init(&crc32sum);
+        crc32_update(&crc32sum, header.v, length);
+        crc32_final(&crc32sum);
 
         //will also swap header
         errorMsg = VM_ValidateHeader(header.h, length);
@@ -766,6 +767,7 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
           return NULL;
         }
 
+        vm->crc32sum = crc32sum;
         tryjts = qfalse;
 
         //show where the qvm has landed from
@@ -780,25 +782,29 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
           tryjts = qtrue;
 	}
 
-        //reserve 256 bytes for entry frame
-        dataLength = header.h->dataLength + header.h->litLength + header.h->bssLength + 256;
+        dataLength = header.h->dataLength + header.h->litLength + header.h->bssLength;
         vm->dataLength = dataLength;
 
 	// round up to next power of 2 so all data operations can
 	// be mask protected
-	for ( i = 0 ; dataLength > ( 1 << i ) ; i++ ) {
-	}
-	dataLength = 1 << i;
+	for ( i = 0 ; dataLength > ( BIT(i) ) ; i++ );
+
+	dataLength = BIT(i);
+
+        //reserve some space for effective LOCAL+LOAD* checks
+        dataAlloc = dataLength + 256;
 
 	if( alloc ) {
 		// allocate zero filled space for initialized and uninitialized data
 		//leave some space beyond data mask so we can secure all mask operations
-		vm->dataAlloc = dataLength + 4;
-		vm->dataBase = Hunk_Alloc(vm->dataAlloc, h_high);
+		//vm->dataAlloc = dataLength + 4;
+		vm->dataBase = Hunk_Alloc(dataAlloc, h_high);
 		vm->dataMask = dataLength - 1;
+		vm->dataAlloc = dataAlloc;
 	} else {
 		// clear the data, but make sure we're not clearing more than allocated
-		if (vm->dataAlloc != dataLength + 4)
+		//if (vm->dataAlloc != dataLength + 4)
+		if (vm->dataAlloc != dataAlloc)
 		{
 		  VM_Free(vm);
 		  FS_FreeFile(header.v);
@@ -852,7 +858,7 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
 		}
 	}
 
-        if (tryjts == qtrue && (length = Load_JTS(vm, crc32, NULL, vmPakIndex)) >= 0)
+        if (tryjts == qtrue && (length = Load_JTS(vm, crc32sum, NULL, vmPakIndex)) >= 0)
         {
           //we are trying to load newer file?
           if (vm->jumpTableTargets && vm->numJumpTableTargets != length >> 2)
@@ -875,7 +881,7 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
             Com_Memset(vm->jumpTableTargets, 0, length);
           }
 
-          Load_JTS(vm, crc32, vm->jumpTableTargets, vmPakIndex);
+          Load_JTS(vm, crc32sum, vm->jumpTableTargets, vmPakIndex);
         }
 
 	return header.h;
