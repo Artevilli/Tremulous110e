@@ -1048,7 +1048,7 @@ This function is called directly by the generated code
 static qchar* memData;
 #endif
 
-qint	VM_CallCompiled( vm_t *vm, qint *args ) {
+qint	VM_CallCompiled( vm_t *vm, qint nargs, qint *args ) {
 	qint		programStack;
 	qint		stackOnEntry;
 	qint		opStackRet;
@@ -1062,7 +1062,7 @@ qint	VM_CallCompiled( vm_t *vm, qint *args ) {
 //	Com_Printf("entering %s level %d, call %d, arg1 = 0x%x\n", vm->name, vm->callLevel, args[0], args[1]);
 
 	// interpret the code
-	vm->currentlyInterpreting = qtrue;
+	//vm->currentlyInterpreting = qtrue;
 
 //	callMask = vm->dataMask;
 
@@ -1076,7 +1076,7 @@ qint	VM_CallCompiled( vm_t *vm, qint *args ) {
 	memData = (qchar*)image;
 #endif
 
-	programStack -= 48;
+	programStack -= 256;
 
 	*(qint *)&image[ programStack + 44] = args[9];
 	*(qint *)&image[ programStack + 40] = args[8];
@@ -1114,9 +1114,11 @@ qint	VM_CallCompiled( vm_t *vm, qint *args ) {
 	if(opStackRet != 4)
 		Com_Error(ERR_DROP, "opStack corrupted in compiled code (offset %d)\n", opStackRet);
 
-	if ( programStack != stackOnEntry - 48 ) {
+#if defined(DEBUG_VM)
+	if ( programStack != stackOnEntry - CALL_PSTACK ) { //FIXME
 		Com_Error( ERR_DROP, "programStack corrupted in compiled code\n" );
 	}
+#endif
 
 //	Com_Printf("exiting %s level %d\n", vm->name, vm->callLevel);
 	vm->programStack = stackOnEntry;

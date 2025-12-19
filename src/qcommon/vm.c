@@ -780,7 +780,8 @@ vmHeader_t *VM_LoadQVM( vm_t *vm, qbool alloc ) {
           tryjts = qtrue;
 	}
 
-        dataLength = header.h->dataLength + header.h->litLength + header.h->bssLength;
+        //reserve 256 bytes for entry frame
+        dataLength = header.h->dataLength + header.h->litLength + header.h->bssLength + 256;
         vm->dataLength = dataLength;
 
 	// round up to next power of 2 so all data operations can
@@ -1483,15 +1484,17 @@ VM_Restart(vm_t *vm)
   {
     syscall_t systemCall;
     dllSyscall_t dllSyscall;
+    const qint *vmMainArgs;
     vmIndex_t index;
 
     index = vm->index;
     systemCall = vm->systemCall;
     dllSyscall = vm->dllSyscall;
+    vmMainArgs = vm->vmMainArgs;
 
     VM_Free(vm);
 
-    vm = VM_Create(index, systemCall, dllSyscall, VMI_NATIVE);
+    vm = VM_Create(index, systemCall, dllSyscall, vmMainArgs, VMI_NATIVE);
     return vm;
   }
 
@@ -1519,7 +1522,7 @@ it will attempt to load as a system dll
 ================
 */
 vm_t *
-VM_Create(vmIndex_t index, syscall_t systemCalls, dllSyscall_t dllSyscalls, vmInterpret_t interpret)
+VM_Create(vmIndex_t index, syscall_t systemCalls, dllSyscall_t dllSyscalls, const qint *vmMainArgs, vmInterpret_t interpret)
 {
   qint remaining;
   const qchar *name;
@@ -1558,6 +1561,7 @@ VM_Create(vmIndex_t index, syscall_t systemCalls, dllSyscall_t dllSyscalls, vmIn
   vm->index = index;
   vm->systemCall = systemCalls;
   vm->dllSyscall = dllSyscalls;
+  vm->vmMainArgs = vmMainArgs;
 
   //never allow dll loading with a demo
   if (interpret == VMI_NATIVE)
@@ -1725,6 +1729,7 @@ locals from sp
 intptr_t	QDECL __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, qint callnum, ... ) {
 	vm_t	*oldVM;
 	intptr_t r;
+	qint nargs;
 	qint i;
 
 	if ( !vm ) {
@@ -1739,48 +1744,46 @@ intptr_t	QDECL __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, qint call
 	  Com_Printf( "VM_Call( %d )\n", callnum );
 	}
 
+        nargs = vm->vmMainArgs[callnum]; //counting callnum
+
 	++vm->callLevel;
 	// if we have a dll loaded, call it directly
 	if ( vm->entryPoint ) {
 		//rcg010207 -  see dissertation at top of VM_DllSyscall() in this file.
-		intptr_t args[VMMAIN_CALL_ARGS - 1];
+		intptr_t args[MAX_VMMAIN_CALL_ARGS - 1];
 		va_list ap;
 		va_start(ap, callnum);
-		for (i = 0;i < ARRAY_LEN(args);i++) {
+		for (i = 0;i < nargs - 1;i++) {
 			args[i] = va_arg(ap, intptr_t);
 		}
 		va_end(ap);
 
-		r = vm->entryPoint( callnum,  args[0],  args[1],  args[2], args[3],
-                            args[4],  args[5],  args[6], args[7],
-                            args[8],  args[9], args[10], args[11]);
+		//add more arguments if you've changed MAX_VMMAIN_CALL_ARGS:
+		r = vm->entryPoint(callnum, args[0], args[1], args[2]);
 	} else {
 #if (id386 || idsparc) && !defined(__clang__) // i386/sparc calling convention doesn't need conversion in some cases
 #ifndef NO_VM_COMPILED
 		if ( vm->compiled )
-			r = VM_CallCompiled( vm, (qint*)&callnum );
+			r = VM_CallCompiled( vm, nargs, (qint*)&callnum );
 		else
 #endif
-			r = VM_CallInterpreted2( vm, (qint*)&callnum );
+			r = VM_CallInterpreted2( vm, nargs, (qint*)&callnum );
 #else
-		struct {
-			qint callnum;
-			qint args[VMMAIN_CALL_ARGS - 1];
-		} a;
+		qint args[MAX_VMMAIN_CALL_ARGS];
 		va_list ap;
 
-		a.callnum = callnum;
+		args[0] = callnum;
 		va_start(ap, callnum);
-		for (i = 0; i < ARRAY_LEN(a.args); i++) {
-			a.args[i] = va_arg(ap, qint);
+		for (i = 1; i < nargs; i++) {
+			args[i] = va_arg(ap, qint);
 		}
 		va_end(ap);
 #ifndef NO_VM_COMPILED
 		if ( vm->compiled )
-			r = VM_CallCompiled( vm, &a.callnum );
+			r = VM_CallCompiled( vm, nargs, &args[0] );
 		else
 #endif
-			r = VM_CallInterpreted2( vm, &a.callnum );
+			r = VM_CallInterpreted2( vm, nargs, &args[0] );
 #endif
 	}
 	--vm->callLevel;

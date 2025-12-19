@@ -248,10 +248,12 @@ typedef enum
   CG_EVENT_HANDLING,
   // void (*CG_EventHandling)(int type);
 
-  CG_CONSOLE_TEXT
+  CG_CONSOLE_TEXT,
   // void (*CG_ConsoleText)( void );
   // pass text that has been printed to the console to cgame
   // use Cmd_Argc() / Cmd_Argv() to read it
+
+  CG_EXPORT_LAST,
 } cgameExport_t;
 
 //----------------------------------------------

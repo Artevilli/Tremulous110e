@@ -28,7 +28,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define OPSTACK_SIZE 1024
 #define OPSTACK_MASK (OPSTACK_SIZE - 1)
 #define PROC_OPSTACK_SIZE 30
-#define VMMAIN_CALL_ARGS 13
+
+//we don't need more than 4 arguments (counting callnum) for vmMain, at least in Tremulous
+#define MAX_VMMAIN_CALL_ARGS 4
 
 //dont change
 //hardcoded in q3asm and reserved at end of bss
@@ -182,8 +184,10 @@ struct vm_s {
 
 	//------------------------------------
    
-    const qchar *name;
-    vmIndex_t index;
+        const qchar *name;
+        vmIndex_t index;
+
+        const qint *vmMainArgs;
 
 	// for dynamic linked modules
 	void		*dllHandle;
@@ -192,7 +196,7 @@ struct vm_s {
 	void (*destroy)(vm_t* self);
 
 	// for interpreted modules
-	qbool	currentlyInterpreting;
+	//qbool	currentlyInterpreting;
 
 	qbool	compiled;
 	vmFunc_t		codeBase;
@@ -226,14 +230,12 @@ extern  vm_t    *lastVM;
 extern	qint		vm_debugLevel;
 
 void VM_Compile( vm_t *vm, vmHeader_t *header );
-qint	VM_CallCompiled( vm_t *vm, qint *args );
+qint	VM_CallCompiled( vm_t *vm, qint nargs, qint *args );
 
-void VM_PrepareInterpreter( vm_t *vm, vmHeader_t *header );
 qbool
 VM_PrepareInterpreter2(vm_t *vm, vmHeader_t *header);
-qint	VM_CallInterpreted( vm_t *vm, qint *args );
 qint
-VM_CallInterpreted2(vm_t *vm, qint *args);
+VM_CallInterpreted2(vm_t *vm, qint nargs, qint *args);
 
 vmSymbol_t *VM_ValueToFunctionSymbol( vm_t *vm, qint value );
 qint VM_SymbolToValue( vm_t *vm, const qchar *symbol );
