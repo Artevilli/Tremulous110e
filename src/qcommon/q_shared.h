@@ -998,14 +998,48 @@ void	COM_DefaultExtension( qchar *path, qint maxSize, const qchar *extension );
 long
 Com_GenerateHashValue(const qchar *fname, const unsigned size);
 
-void	COM_BeginParseSession( const qchar *name );
-qint		COM_GetCurrentParseLine( void );
-qchar	*COM_Parse( const qchar **data_p );
-qchar	*COM_ParseExt( const qchar **data_p, qbool allowLineBreak );
-qint		COM_Compress( qchar *data_p );
-void	COM_ParseError( qchar *format, ... ) __attribute__ ((format (printf, 1, 2)));
-void	COM_ParseWarning( qchar *format, ... ) __attribute__ ((format (printf, 1, 2)));
-//qint		COM_ParseInfos( qchar *buf, qint max, qchar infos[][MAX_INFO_STRING] );
+void
+COM_BeginParseSession(const qchar *name);
+qint
+COM_GetCurrentParseLine(void);
+const qchar *
+COM_Parse(const qchar **data_p);
+qchar *
+COM_ParseExt(const qchar **data_p, qbool allowLineBreak);
+qint
+COM_Compress(qchar *data_p);
+void
+COM_ParseError(const qchar *format, ...) __attribute__ ((format (printf, 1, 2)));
+void
+COM_ParseWarning(qchar *format, ...) __attribute__((format (printf, 1, 2)));
+//qint
+//COM_ParseInfos(qchar *buf, qint max, qchar infos[][MAX_INFO_STRING]);
+
+qchar *
+COM_ParseComplex(const qchar **data_p, qbool allowLineBreak);
+
+typedef enum
+{
+  TK_GENERIC = 0, //for single-qchar tokens
+  TK_STRING,
+  TK_QUOTED,
+  TK_EQ,
+  TK_NEQ,
+  TK_GT,
+  TK_GTE,
+  TK_LT,
+  TK_LTE,
+  TK_MATCH,
+  TK_OR,
+  TK_AND,
+  TK_SCOPE_OPEN,
+  TK_SCOPE_CLOSE,
+  TK_NEWLINE,
+  TK_EOF,
+}
+tokenType_t;
+
+extern tokenType_t com_tokentype;
 
 #define MAX_TOKENLENGTH		1024
 

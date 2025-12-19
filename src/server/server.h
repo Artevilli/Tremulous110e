@@ -679,7 +679,7 @@ SV_SetClientState(client_t *cl, const clientState_t newState);
 void
 SV_ExecuteClientMessage(client_t *cl, msg_t *msg);
 void
-SV_UserinfoChanged(client_t *cl, const qbool updateUserinfo);
+SV_UserinfoChanged(client_t *cl, const qbool updateUserinfo, const qbool runFilter);
 void
 SV_UpdateUserinfo_f(client_t *cl);
 void
@@ -723,6 +723,8 @@ void
 SV_RemoveOperatorCommands(void);
 void
 SV_Heartbeat_f(void);
+client_t *
+SV_GetPlayerByHandle(void);
 const void
 SV_UptimeReset(void);
 
@@ -771,6 +773,18 @@ void
 SV_DemoWriteServerCommand(const qchar *str);
 void
 SV_DemoWriteGameCommand(qint cmd, const qchar *str);
+
+//
+// sv_filter.c
+//
+void
+SV_LoadFilters(const qchar *filename);
+const qchar *
+SV_RunFilters(const qchar *userinfo, const netadr_t *addr);
+void
+SV_AddFilter_f(void);
+void
+SV_AddFilterCmd_f(void);
 
 //
 // sv_game.c

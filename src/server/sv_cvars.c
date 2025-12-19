@@ -94,6 +94,7 @@ cvar_t *sv_dequeuePeriod;
 cvar_t *sv_demoState;
 cvar_t *sv_autoDemo;
 cvar_t *sv_levelTimeReset;
+cvar_t *sv_filter;
 cvar_t *sv_antiWallhack;
 cvar_t *sv_sendNearbyEnts;
 cvar_t *sv_sendNearbyEntsRange;
@@ -228,6 +229,7 @@ SV_InitCvars(void)
   sv_demoState = Cvar_Get("sv_demoState", "0", CVAR_ROM);
   sv_autoDemo = Cvar_Get("sv_autoDemo", "0", CVAR_ARCHIVE);
   sv_levelTimeReset = Cvar_GetAndDescribe("sv_levelTimeReset", "0", CVAR_ARCHIVE, "Toggle whether or not to reset leveltime after a new map loads.");
+  sv_filter = Cvar_GetAndDescribe("sv_filter", "filter.txt", CVAR_ARCHIVE, "Cvar that point on filter file, if it is \"\" then filtering will be disabled.");
   sv_antiWallhack = Cvar_GetAndDescribe("sv_antiWallhack", "0", CVAR_ARCHIVE, "Enables serverside wallhack protection\n0 - disabled\n1: players only\n2: items/structures only\n3: all");
   sv_sendNearbyEnts = Cvar_GetAndDescribe("sv_sendNearbyEnts", "0", CVAR_ARCHIVE, "Toggle whether or not to send nearby entities regardless of pvs or anti wallhack.\nNOTE: range is specified by sv_sendNearbyEntsRange.");
   sv_sendNearbyEntsRange = Cvar_GetAndDescribe("sv_sendNearbyEntsRange", "1500", CVAR_ARCHIVE, "Specifies the range at which entities that fail the pvs check are sent to the client.");

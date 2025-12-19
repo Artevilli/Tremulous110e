@@ -532,6 +532,8 @@ Sys_GetFileStats(const qchar *filename, fileOffset_t *size, fileTime_t *mtime, f
     return qtrue;
   }
 
+  *size = 0;
+  *mtime = *ctime = 0;
   return qfalse;
 }
 

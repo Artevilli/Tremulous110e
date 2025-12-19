@@ -603,48 +603,63 @@ PARSING
 ============================================================================
 */
 
-static	qchar	com_token[MAX_TOKEN_CHARS];
-static	qchar	com_parsename[MAX_TOKEN_CHARS];
-static	qint		com_lines;
+static qchar com_token[MAX_TOKEN_CHARS];
+static qchar com_parsename[MAX_TOKEN_CHARS];
+static qint com_lines;
+static qint com_tokenline;
 
-void COM_BeginParseSession( const qchar *name )
+//for complex parser
+tokenType_t com_tokentype;
+
+void
+COM_BeginParseSession(const qchar *name)
 {
-	com_lines = 0;
-	Com_sprintf(com_parsename, sizeof(com_parsename), "%s", name);
+  com_lines = 1;
+  com_tokenline = 0;
+  Com_sprintf(com_parsename, sizeof(com_parsename), "%s", name);
 }
 
-qint COM_GetCurrentParseLine( void )
+qint
+COM_GetCurrentParseLine(void)
 {
-	return com_lines;
+  if (com_tokenline)
+  {
+    return com_tokenline;
+  }
+
+  return com_lines;
 }
 
-qchar *COM_Parse( const qchar **data_p )
+const qchar *
+COM_Parse(const qchar **data_p)
 {
-	return COM_ParseExt( data_p, qtrue );
+  return COM_ParseExt(data_p, qtrue);
 }
 
-void COM_ParseError( qchar *format, ... )
+void
+COM_ParseError(const qchar *format, ...)
 {
-	va_list argptr;
-	static qchar string[4096];
+  va_list argptr;
+  static qchar string[4096];
 
-	va_start (argptr, format);
-	Q_vsnprintf (string, sizeof(string), format, argptr);
-	va_end (argptr);
+  va_start(argptr, format);
+  Q_vsnprintf(string, sizeof(string), format, argptr);
+  va_end(argptr);
 
-	Com_Printf("ERROR: %s, line %d: %s\n", com_parsename, com_lines, string);
+  Com_Printf("ERROR: %s, line %d: %s\n", com_parsename, COM_GetCurrentParseLine(), string);
 }
 
-void COM_ParseWarning( qchar *format, ... )
+void
+COM_ParseWarning(qchar *format, ...)
 {
-	va_list argptr;
-	static qchar string[4096];
+  va_list argptr;
+  static qchar string[4096];
 
-	va_start (argptr, format);
-	Q_vsnprintf (string, sizeof(string), format, argptr);
-	va_end (argptr);
+  va_start(argptr, format);
+  Q_vsnprintf(string, sizeof(string), format, argptr);
+  va_end(argptr);
 
-	Com_Printf("WARNING: %s, line %d: %s\n", com_parsename, com_lines, string);
+  Com_Printf("WARNING: %s, line %d: %s\n", com_parsename, COM_GetCurrentParseLine(), string);
 }
 
 /*
@@ -785,7 +800,8 @@ qchar *COM_ParseExt( const qchar **data_p, qbool allowLineBreaks )
 
 	data = *data_p;
 	len = 0;
-	com_token[0] = 0;
+	com_token[0] = '\0';
+	com_tokenline = 0;
 
 	// make sure incoming data is valid
 	if ( !data )
@@ -837,6 +853,9 @@ qchar *COM_ParseExt( const qchar **data_p, qbool allowLineBreaks )
 			break;
 		}
 	}
+
+        //token starts on this line
+        com_tokenline = com_lines;
 
 	// handle quoted strings
 	if (c == '\"')
@@ -934,6 +953,352 @@ qint COM_ParseInfos( qchar *buf, qint max, qchar infos[][MAX_INFO_STRING] ) {
 }
 #endif
 
+/*
+==============
+COM_ParseComplex
+==============
+*/
+qchar *
+COM_ParseComplex(const qchar **data_p, qbool allowLineBreaks)
+{
+  static const byte is_separator[256] =
+  {
+    //\0 . . . . . . .\b\t\n . .\r . .
+      1,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,
+    // . . . . . . . . . . . . . . . .
+      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    //   ! " # $ % & ' ( ) * + , - . /
+      1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0, // excl. '-' '.' '/'
+    // 0 1 2 3 4 5 6 7 8 9 : ; < = > ?
+      0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,
+    // @ A B C D E F G H I J K L M N O
+      1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    // P Q R S T U V W X Y Z [ \ ] ^ _
+      0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,0, // excl. '\\' '_'
+    // ` a b c d e f g h i j k l m n o
+      1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    // p q r s t u v w x y z { | } ~ 
+      0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1
+  };
+
+  qint c;
+  qint len;
+  qint shift;
+  const byte *str;
+
+  str = (byte *)*data_p;
+  len = 0; 
+  shift = 0; //token line shift relative to com_lines
+  com_tokentype = TK_GENERIC;
+	
+__reswitch:
+  switch(*str)
+  {
+    case
+    '\0':
+      com_tokentype = TK_EOF;
+      break;
+
+    //whitespace
+    case
+    ' ':
+
+    case
+    '\t':
+      str++;
+
+      while((c = *str) == ' ' || c == '\t')
+      {
+        str++;
+      }
+
+      goto __reswitch;
+
+    //newlines
+    case
+    '\n':
+
+    case
+    '\r':
+      com_lines++;
+
+      if (*str == '\r' && str[1] == '\n')
+      {
+        str += 2; //CR + LF
+      }
+      else
+      {
+        str++;
+      }
+
+      if (!allowLineBreaks)
+      {
+        com_tokentype = TK_NEWLINE;
+        break;
+      }
+
+      goto __reswitch;
+
+    // comments, single slash
+    case
+    '/':
+      //until end of line
+      if (str[1] == '/')
+      {
+        str += 2;
+
+        while((c = *str) != '\0' && c != '\n' && c != '\r')
+        {
+          str++;
+        }
+
+        goto __reswitch;
+      }
+
+      //comment
+      if (str[1] == '*')
+      {
+        str += 2;
+
+        while((c = *str) != '\0' && (c != '*' || str[1] != '/'))
+        {
+          if (c == '\n' || c == '\r')
+          {
+            com_lines++;
+
+            if (c == '\r' && str[1] == '\n') //CR + LF?
+            {
+              str++;
+            }
+          }
+
+          str++;
+        }
+
+        if (c != '\0' && str[1] != '\0')
+        {
+          str += 2;
+        }
+        else
+        {
+          //FIXME: unterminated comment?
+        }
+
+        goto __reswitch;
+      }
+
+      //single slash
+      com_token[len++] = *str++;
+      break;
+	
+    //quoted string?
+    case
+    '"':
+      str++; //skip leading '"'
+      //com_tokenline = com_lines;
+
+      while((c = *str) != '\0' && c != '"')
+      {
+        if (c == '\n' || c == '\r')
+        {
+          com_lines++; //FIXME: unterminated quoted string?
+          shift++;
+        }
+
+        if (len < MAX_TOKEN_CHARS - 1) //overflow check
+        {
+          com_token[len++] = c;
+        }
+
+        str++;
+      }
+
+      if (c != '\0')
+      {
+        str++; //skip ending '"'
+      }
+      else
+      {
+        //FIXME: unterminated quoted string?
+      }
+
+      com_tokentype = TK_QUOTED;
+      break;
+
+    //single tokens:
+    case
+    '+':
+
+    case
+    '`':
+
+    /*case
+    '*':*/
+
+    case
+    '~':
+
+    case
+    '{':
+
+    case
+    '}':
+
+    case
+    '[':
+
+    case
+    ']':
+
+    case
+    '?':
+
+    case
+    ',':
+
+    case
+    ':':
+
+    case
+    ';':
+
+    case
+    '%':
+
+    case
+    '^':
+      com_token[len++] = *str++;
+      break;
+
+    case
+    '*':
+      com_token[len++] = *str++;
+      com_tokentype = TK_MATCH;
+      break;
+
+    case
+    '(':
+      com_token[len++] = *str++;
+      com_tokentype = TK_SCOPE_OPEN;
+      break;
+
+    case
+    ')':
+      com_token[len++] = *str++;
+      com_tokentype = TK_SCOPE_CLOSE;
+      break;
+
+    //!, !=
+    case
+    '!':
+      com_token[len++] = *str++;
+
+      if (*str == '=')
+      {
+        com_token[len++] = *str++;
+        com_tokentype = TK_NEQ;
+      }
+
+      break;
+
+    //=, ==
+    case
+    '=':
+      com_token[len++] = *str++;
+
+      if (*str == '=')
+      {
+        com_token[len++] = *str++;
+        com_tokentype = TK_EQ;
+      }
+
+      break;
+
+    //>, >=
+    case
+    '>':
+      com_token[len++] = *str++;
+
+      if (*str == '=')
+      {
+        com_token[len] = *str;
+        com_tokentype = TK_GTE;
+      }
+      else
+      {
+        com_tokentype = TK_GT;
+      }
+
+      break;
+
+    //<, <=
+    case
+    '<':
+      com_token[len++] = *str++;
+
+      if (*str == '=')
+      {
+        com_token[len++] = *str++;
+        com_tokentype = TK_LTE;
+      }
+      else
+      {
+        com_tokentype = TK_LT;
+      }
+
+      break;
+
+    //|, ||
+    case
+    '|':
+      com_token[len++] = *str++;
+
+      if (*str == '|')
+      {
+        com_token[len++] = *str++;
+        com_tokentype = TK_OR;
+      }
+
+      break;
+
+    //&, &&
+    case
+    '&':
+      com_token[len++] = *str++;
+
+      if (*str == '&')
+      {
+        com_token[len++] = *str++;
+        com_tokentype = TK_AND;
+      }
+
+      break;
+
+    //rest of the charset
+    default:
+      com_token[len++] = *str++;
+
+      while(!is_separator[(c = *str)])
+      {
+        if (len < MAX_TOKEN_CHARS - 1)
+        {
+          com_token[len] = c;
+          len++;
+        }
+
+        str++;
+      }
+
+      com_tokentype = TK_STRING;
+      break;
+
+  } //switch(*str)
+
+  com_tokenline = com_lines - shift;
+  com_token[len] = '\0';
+  *data_p = (qchar *)str;
+  return com_token;
+}
 
 /*
 ==================
@@ -999,7 +1364,7 @@ void SkipRestOfLine ( const qchar **data ) {
 
 
 void Parse1DMatrix (const qchar **buf_p, qint x, float *m) {
-	qchar	*token;
+	const qchar	*token;
 	qint		i;
 
 	COM_MatchToken( buf_p, "(" );

@@ -118,6 +118,7 @@ extern cvar_t *sv_dequeuePeriod;
 extern cvar_t *sv_demoState;
 extern cvar_t *sv_autoDemo;
 extern cvar_t *sv_levelTimeReset;
+extern cvar_t *sv_filter;
 extern cvar_t *sv_antiWallhack;
 extern cvar_t *sv_sendNearbyEnts;
 extern cvar_t *sv_sendNearbyEntsRange;

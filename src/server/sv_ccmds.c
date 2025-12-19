@@ -43,7 +43,7 @@ SV_GetPlayerByHandle
 Returns the player with player id or name from Cmd_Argv(1)
 ==================
 */
-static client_t *
+client_t *
 SV_GetPlayerByHandle(void)
 {
   client_t *cl;
@@ -1307,6 +1307,8 @@ SV_AddOperatorCommands(void)
   Cmd_SetCommandCompletionFunc("devmap", SV_CompleteMapName);
   Cmd_AddCommand("killserver", SV_KillServer_f);
   Cmd_AddCommand("uptime", SV_Uptime_f);
+  Cmd_AddCommand("filter", SV_AddFilter_f);
+  Cmd_AddCommand("filtercmd", SV_AddFilterCmd_f);
   Cmd_AddCommand("demo_record", SV_Demo_Record_f);
   Cmd_AddCommand("demo_play", SV_Demo_Play_f);
   Cmd_SetCommandCompletionFunc("demo_play", SV_CompleteDemoName);
