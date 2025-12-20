@@ -300,7 +300,6 @@ client_s
   qint reliableAcknowledge; //last acknowledged reliable message
   qint reliableSent; //last sent reliable message, not necesarily acknowledged yet
   qint messageAcknowledge;
-  qint numCommands; //number of commands before flood protection triggers, set by sv_floodLimit
 
   qint gamestateMessageNum; //netchan->outgoingSequence of gamestate
   qint challenge;
@@ -369,7 +368,6 @@ client_s
 #endif
 
   qint deltaMessage; //frame last client usercmd message
-  qint nextReliableTime; //svs.time when another reliable command will be allowed
   qint nextReliableUserTime; //svs.time when another useinfo change will be allowed
   qint lastPacketTime; //svs.time when packet was last received
   qint lastConnectTime; //svs.time when connection started
@@ -491,13 +489,6 @@ extern unsigned queueCount;
 
 #define MAX_CONNECTIONS 256
 
-typedef struct
-{
-  netadr_t adr;
-  qint time;
-}
-connections_t;
-
 //this structure will be cleared only when the game dll changes
 typedef struct
 {
@@ -529,7 +520,6 @@ typedef struct
   unsigned currentFrameIndex;
   unsigned serverLoad;
   svstats_t stats;
-  connections_t connects[MAX_CONNECTIONS];
 
   //common snapshot storage
   qint freeStorageEntities;
@@ -690,8 +680,8 @@ void
 SV_DropClient(client_t *drop, const qchar *reason);
 void
 SV_SendClientGameState(client_t *client);
-void
-SV_ExecuteClientCommand(client_t *cl, const qchar *s, qbool clientOK);
+qbool
+SV_ExecuteClientCommand(client_t *cl, const qchar *s);
 void
 SV_ClientThink(qint client, usercmd_t *cmd);
 #if !defined(UDP_DOWNLOAD_OPTIMIZE)
