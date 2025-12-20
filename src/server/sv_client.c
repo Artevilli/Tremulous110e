@@ -224,6 +224,172 @@ SV_GetChallenge(const netadr_t *from)
 
 /*
 ==================
+SV_isClientIPValidToConnect
+
+Determines if a client is allowed to connect when sv_ipMaxClients is set
+Returns qtrue for valid clients
+
+NOTE: maybe we want to have more control over localhost clients in future.
+So we let localhost connect since bots don't connect from SV_DirectConnect
+where SV_isClientIPValidToConnect is done.
+==================
+*/
+static const qbool
+SV_isClientIPValidToConnect(const netadr_t *from)
+{
+  client_t *clientTmp;
+  qint count = 1; //we count as the first one
+  const qint max = sv_ipMaxClients->integer;
+  qint i;
+
+  //disabled
+  if (max <= 0)
+  {
+    return qtrue;
+  }
+
+  //let localhost connect
+  //FIXME: see above note: we might use a free flag of sv_protect cvar to include local addresses
+  if (NET_IsLocalAddress(from))
+  {
+    return qtrue;
+  }
+
+  //iterate over each connected client and check the IP, keeping a count of connections
+  //from the same IP as this client connecting
+  for(i = 0;i < sv.maxclients;i++)
+  {
+    clientTmp = &svs.clients[i];
+
+    if (clientTmp->state < CS_CONNECTED) //only active clients
+    {
+      continue;
+    }
+
+    //dont compare the port - just the IP
+    if (NET_CompareBaseAdr(from, &clientTmp->netchan.remoteAddress))
+    {
+      ++count;
+
+      if (count > max)
+      {
+        //no dev print - let admins see this
+        Com_Printf("SV_isClientIPValidToConnect: too many connections from %s\n", NET_AdrToString(from));
+        return qfalse;
+      }
+    }
+  }
+
+  //ok let them connect
+  return qtrue;
+}
+
+/*
+==================
+SV_IsValidUserinfo
+
+Screening of userinfo keys and values
+==================
+*/
+static const qbool
+SV_IsValidUserinfo(const netadr_t *from, const qchar *userinfo)
+{
+  //FIXME: add some logging for admins? we only do developer prints when a client is filtered
+  qint version;
+
+  //NOTE: but we might need to store the protocol around for potential non http/ftp clients
+  version = Q_atoi(Info_ValueForKey(userinfo, "protocol"));
+
+  if (version != PROTOCOL_VERSION)
+  {
+    if (!com_dedicated->integer)
+    {
+      NET_OutOfBandPrint(NS_SERVER, from, "print\nmaster must be a dedicated server\n");
+
+      if (com_developer->integer)
+      {
+        Com_Printf("rejected slave connection from %s because server is not dedicated\n", NET_AdrToString(from));
+      }
+    }
+
+      return qfalse;
+  }
+
+  //validate userinfo to filter out the people blindly using hack code
+  //FIXME: check existence of all keys and do some sanity checks
+  if (!Info_ValueForKey(userinfo, "rate")[0])
+  {
+    NET_OutOfBandPrint(NS_SERVER, from, "print\ninvalid connection\n"); //invalid connection! ... using temp ban msg :)
+    Com_DPrintf("rejected connection with wrong rate\n");
+    return qfalse;
+  }
+  //else
+  //{
+    //FIXME: check rate in between 0 and sv_maxrate?
+  //}
+
+  //FIXME:
+  //if (Info_ValueForKey(userinfo, "cl_wwwDownload")[0] == 0)
+  //varify this value with server setting
+  //we can send a proper message to clients when server has set up wwwdDownload and client
+  //uses poor server download. worst case: clients run into missing file issues later on and can't connect
+
+  //FIXME: auth service?
+  //if (Info_ValueForKey(userinfo, "g_password")[0] == 0)
+  //if (Info_ValueForKey(userinfo, "name")[0] == 0)
+
+  return qtrue;
+}
+
+/*
+==================
+SV_isValidClient
+
+Screening of user before 'real connection' and the client enters the world (using a slot)
+==================
+*/
+static const qbool
+SV_isValidClient(const netadr_t *from, const qchar *userinfo)
+{
+  //FIXME: add some logging for admins? we only do developer prints when a client is filtered
+
+  //inspect what we get as userinfo
+  if (!SV_IsValidUserinfo(from, userinfo))
+  {
+    return qfalse;
+  }
+
+  //server bots are always valid (with valid userinfo)
+  if (from->type == NA_BOT)
+  {
+    return qtrue;
+  }
+
+  //too many connections from the same IP - don't permit the connection (if set)
+  if (!SV_isClientIPValidToConnect(from))
+  {
+    if (sv_ipMaxClients->integer == 1)
+    {
+      NET_OutOfBandPrint(NS_SERVER, from, "print\nonly 1 connection per IP is allowed on this server\n");
+    }
+    else
+    {
+      NET_OutOfBandPrint(NS_SERVER, from, "print\nonly %i connections per IP is allowed on this server\n", sv_ipMaxClients->integer);
+
+      if (com_developer->integer)
+      {
+        Com_Printf("rejected connect with max IP connection limit reached [%s]\n", NET_AdrToString(from));
+      }
+    }
+
+    return qfalse;
+  }
+
+  return qtrue;
+}
+
+/*
+==================
 SV_isValidGUID
 ==================
 */
@@ -236,7 +402,13 @@ SV_isValidGUID(const netadr_t *from, const qchar *userinfo)
 
   Q_strncpyz(guid, Info_ValueForKey(userinfo, "cl_guid"), sizeof(guid));
 
-  //Chey: FIXME: this is still a bit of a problem... ideally i want stock 1.1 to have a special flag and have the server actually detect that it is stock 1.1 rather than just blindly accepting blank guid values, but this will do for now
+  //Chey: FIXME: honestly im not sure how else to detect stock 1.1, ideally i want to pass this cvar to it somehow but passing it as this then checking it will cause conflicts with other clients, and if i make a special cvar, that is no better because then every client gets that special cvar and is automatically passed, so, i guess for now this should just be commented out... maybe a client flag passed from the game qvm? i dont think thats possible because this check happens while the client is connecting, not after the client has already connected
+  /*if (!Q_stricmp(guid, "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"))
+  {
+    return qtrue;
+  }*/
+
+  //Chey: FIXME: the above comment is a little old because i just wasnt thinking of this, but this is still a bit of a problem... ideally i want stock 1.1 to have a special flag and have the server actually detect that it is stock 1.1 rather than just blindly accepting blank guid values, but this will do for now
   if (sv_guidCheckAllowStock->integer)
   {
     if (guid[0] == '\0')
@@ -459,6 +631,7 @@ SV_DirectConnect(const netadr_t *from)
     qchar userinfo[MAX_INFO_STRING];
     qint i;
     qint n;
+    qint j;
     client_t *cl;
     client_t *newcl;
     //sharedEntity_t *ent;
@@ -474,9 +647,25 @@ SV_DirectConnect(const netadr_t *from)
     const qchar *ip;
     const qchar *v;
     const qchar *info;
+    connections_t *connect = &svs.connects[0];
+    unsigned oldest = 0;
+    unsigned oldestTime = 0x7fffffff;
+    unsigned connectPacks = 1;
 
     Com_DPrintf("SVC_DirectConnect()\n");
 
+    Q_strncpyz(userinfo, Cmd_Argv(1), sizeof(userinfo));
+
+    //sort out clients we don't want to have in game/does temp ban!
+    if (!SV_isValidClient(from, userinfo))
+    {
+      return;
+    }
+
+    //filter name while connecting to server
+    SV_FilterNameStringed(userinfo);
+
+#if 0
     for(i = 0, n = 0;i < sv.maxclients;i++)
     {
       const netadr_t *addr = &svs.clients[i].netchan.remoteAddress;
@@ -493,11 +682,8 @@ SV_DirectConnect(const netadr_t *from)
         }
       }
     }
+#endif
 
-    info = Cmd_Argv(1);
-    v = Info_ValueForKey(info, "challenge");
-
-    //verify challenge in the first place
     info = Cmd_Argv(1);
     v = Info_ValueForKey(info, "challenge");
 
@@ -508,14 +694,6 @@ SV_DirectConnect(const netadr_t *from)
     }
 
     challenge = Q_atoi(v);
-    Q_strncpyz(userinfo, info, sizeof(userinfo));
-    v = Info_ValueForKey(userinfo, "protocol");
-
-    if (*v == '\0')
-    {
-      NET_OutOfBandPrint(NS_SERVER, from, "print\nmissing protocol in userinfo\n");
-      return;
-    }
 
     version = Q_atoi(Info_ValueForKey(userinfo, "protocol"));
 
@@ -523,6 +701,15 @@ SV_DirectConnect(const netadr_t *from)
     {
       NET_OutOfBandPrint(NS_SERVER, from, "print\nServer uses protocol version %i\n", PROTOCOL_VERSION);
       Com_DPrintf("    rejected connect from version %i\n", version);
+      return;
+    }
+
+    Q_strncpyz(userinfo, info, sizeof(userinfo));
+    v = Info_ValueForKey(userinfo, "protocol");
+
+    if (*v == '\0')
+    {
+      NET_OutOfBandPrint(NS_SERVER, from, "print\nmissing protocol in userinfo\n");
       return;
     }
 
@@ -643,6 +830,33 @@ SV_DirectConnect(const netadr_t *from)
 
       !challengeptr->connected ? Com_Printf("Client %i connecting with %i challenge ping\n", i, ping):Com_DPrintf("Client %i connecting again with %i challenge ping\n", i, ping);
 
+      for(j = 0;j < MAX_CONNECTIONS;j++, connect++)
+      {
+        if (NET_CompareBaseAdr(from, &connect->adr) && connect->time + 2000 > svs.time)
+        {
+          connectPacks++;
+        }
+
+        if (connect->time < oldestTime)
+        {
+          oldestTime = connect->time;
+          oldest = j;
+        }
+      }
+
+      if (connectPacks > 12)
+      {
+        if (com_developer->integer)
+        {
+          Com_Printf("%s seems to be spamming connect packets, ignoring\n", NET_AdrToStringwPort(from));
+        }
+
+        return;
+      }
+
+      connect = &svs.connects[oldest];
+      connect->adr = *from;
+      connect->time = svs.time;
       challengeptr->connected = qtrue;
 
       //never reject a LAN client based on ping
@@ -855,9 +1069,6 @@ gotnewcl1:
     //save the userinfo
     Q_strncpyz(newcl->userinfo, userinfo, sizeof(newcl->userinfo));
 
-    //filter name while connecting to server
-    SV_FilterNameStringed(newcl->userinfo);
-
     SV_UserinfoChanged(newcl, qtrue, qfalse); //update userinfo, do not run filter
 
     //get the game a chance to reject this connection or modify the userinfo
@@ -932,6 +1143,7 @@ gotnewcl1:
 #endif
     qchar userinfo[MAX_INFO_STRING];
     qint i;
+    unsigned j;
     qint n;
     client_t *cl;
     client_t *newcl;
@@ -948,9 +1160,25 @@ gotnewcl1:
     const qchar *ip;
     const qchar *v;
     const qchar *info;
+    connections_t *connect = &svs.connects[0];
+    unsigned oldest = 0;
+    unsigned oldestTime = 0x7fffffff;
+    unsigned connectPacks = 1;
 
     Com_DPrintf("SVC_DirectConnect()\n");
 
+    Q_strncpyz(userinfo, Cmd_Argv(1), sizeof(userinfo));
+
+    //sort out clients we don't want to have in game/does temp ban!
+    if (!SV_isValidClient(from, userinfo))
+    {
+      return;
+    }
+
+    //filter name while connecting to server
+    SV_FilterNameStringed(userinfo);
+
+#if 0
     for(i = 0, n = 0;i < sv.maxclients;i++)
     {
       const netadr_t *addr = &svs.clients[i].netchan.remoteAddress;
@@ -967,8 +1195,36 @@ gotnewcl1:
         }
       }
     }
+#endif
 
-    //verify challenge in first place
+    for(j = 0;j < MAX_CONNECTIONS;j++, connect++)
+    {
+      if (NET_CompareBaseAdr(from, &connect->adr) && connect->time + 2000 > svs.time)
+      {
+        connectPacks++;
+      }
+
+      if (connect->time < oldestTime)
+      {
+        oldestTime = connect->time;
+        oldest = j;
+      }
+    }
+
+    if (connectPacks > 12)
+    {
+      if (com_developer->integer)
+      {
+        Com_Printf("%s seems to be spamming connect packets, ignoring\n", NET_AdrToStringwPort(from));
+      }
+
+      return;
+    }
+
+    connect = &svs.connects[oldest];
+    connect->adr = *from;
+    connect->time = svs.time;
+
     info = Cmd_Argv(1);
     v = Info_ValueForKey(info, "challenge");
 
@@ -999,7 +1255,6 @@ gotnewcl1:
 #endif
     }
 
-    Q_strncpyz(userinfo, info, sizeof(userinfo));
     v = Info_ValueForKey(userinfo, "protocol");
 
     if (*v == '\0')
@@ -1275,9 +1530,6 @@ gotnewcl2:
 
     //save the userinfo
     Q_strncpyz(newcl->userinfo, userinfo, sizeof(newcl->userinfo));
-
-    //filter name while connecting to server
-    SV_FilterNameStringed(newcl->userinfo);
 
     SV_UserinfoChanged(newcl, qtrue, qfalse); //update userinfo, do not run filter
 
@@ -3673,7 +3925,7 @@ SV_FloodProtect(client_t *cl)
 
   if (sv_floodProtect->integer)
   {
-    return SVC_RateLimit(&cl->cmd_rate, sv_floodLimit->integer, sv_floodWait->integer, now);
+    return SVC_RateLimit(&cl->cmd_rate, 8, 500, now);
   }
   else
   {
@@ -3688,72 +3940,35 @@ SV_ExecuteClientCommand
 Also called by bot code
 ==================
 */
-const qbool
-SV_ExecuteClientCommand(client_t *cl, const qchar *s)
+const void
+SV_ExecuteClientCommand(client_t *cl, const qchar *s, qbool clientOK)
 {
-  const unsigned now = Sys_Milliseconds();
-  const ucmd_t *ucmd;
-  qbool bFloodProtect;
-  qbool isBot;
+  ucmd_t *u;
+  qbool bProcessed = qfalse;
 	
   Cmd_TokenizeString(s);
 
-  //malicious users may try using too many string commands
-  //to lag other players.  If we decide that we want to stall
-  //the command, we will stop processing the rest of the packet,
-  //including the usercmd.  This causes flooders to lag themselves
-  //but not other people
-  //We don't do this when the client hasn't been active yet since its
-  //normal to spam a lot of commands when downloading
-  //flood protection in game for trem
-
-  //applying flood protection only to "CS_ACTIVE" clients leaves too much room for abuse, extending this flood protection to clients pre CS_ACTIVE should not cause any issues, as the download-commands are handled within the engine and floodprotect only filters calls to the qvm
-  isBot = ((cl->netchan.remoteAddress.type == NA_BOT) || (cl->gentity->r.svFlags & SVF_BOT)) ? qtrue:qfalse;
-  bFloodProtect = !isBot; //&& cl->state >= CS_ACTIVE;
-
   //see if it is a server level command
-  for(ucmd = ucmds;ucmd->name;ucmd++)
+  for(u=ucmds;u->name;u++)
   {
-    if (!Q_stricmp(Cmd_Argv(0), ucmd->name))
+    if (!Q_stricmp(Cmd_Argv(0), u->name))
     {
-      if (ucmd->func == SV_UpdateUserinfo_f)
-      {
-        if (bFloodProtect)
-        {
-          if (sv_userInfoFloodProtect->integer)
-          {
-            if (!SVC_RateLimit(&cl->info_rate, 5, 1000, now))
-            {
-              return qfalse; //lag flooder
-            }
-          }
-        }
-      }
-
-      ucmd->func(cl);
-      bFloodProtect = qfalse;
+      u->func(cl);
+      bProcessed = qtrue;
       break;
     }
   }
 
-#if !defined(DEDICATED)
-  if (!com_cl_running->integer && bFloodProtect && SV_FloodProtect(cl))
-#else
-  if (bFloodProtect && SV_FloodProtect(cl))
-#endif
-  {
-    //ignore any other text messages from this client but let them keep playing
-    Com_DPrintf("client text ignored for %s: %s\n", cl->name, Cmd_Argv(0));
-  }
-  else
+  if (clientOK)
   {
     //pass unknown strings to the game
-    if (!ucmd->name && sv.state == SS_GAME && cl->state >= CS_PRIMED)
+    if (!u->name && sv.state == SS_GAME && (cl->state == CS_ACTIVE || cl->state == CS_PRIMED))
     {
+
       if (cl->state != CS_ACTIVE && !Q_strncmp(Cmd_Argv(0), "say", 3))
       {
         Com_DPrintf("client spam ignored for %s\n", cl->name);
-        return qfalse;
+        return;
       }
 
       Cmd_Args_Sanitize();
@@ -3762,7 +3977,7 @@ SV_ExecuteClientCommand(client_t *cl, const qchar *s)
       {
         Cmd_Args_Sanitize2(MAX_CVAR_VALUE_STRING, "\n\r", "  ");
 
-        if (sv_filterCommands->integer >= 2)
+        if (sv_filterCommands->integer == 2)
         {
           Cmd_Args_Sanitize2(MAX_CVAR_VALUE_STRING, ";", " ");
         }
@@ -3775,8 +3990,10 @@ SV_ExecuteClientCommand(client_t *cl, const qchar *s)
 #endif
     }
   }
-
-  return qtrue;
+  else if (!bProcessed)
+  {
+    Com_DPrintf("client text ignored for %s: %s\n", cl->name, Cmd_Argv(0));
+  }
 }
 
 /*
@@ -3789,6 +4006,7 @@ SV_ClientCommand(client_t *cl, msg_t *msg)
 {
   qint seq;
   const qchar *s;
+  qbool clientOk = qtrue;
 
   seq = MSG_ReadLong(msg);
   s = MSG_ReadString(msg);
@@ -3809,10 +4027,29 @@ SV_ClientCommand(client_t *cl, msg_t *msg)
     return qfalse;
   }
 
-  if (!SV_ExecuteClientCommand(cl, s))
+  cl->numCommands++;
+
+  //malicious users may try using too many string commands
+  //to lag other players.  If we decide that we want to stall
+  //the command, we will stop processing the rest of the packet,
+  //including the usercmd.  This causes flooders to lag themselves
+  //but not other people
+  //We don't do this when the client hasn't been active yet since its
+  //normal to spam a lot of commands when downloading
+  //flood protection in game for trem
+
+  //applying flood protection only to "CS_ACTIVE" clients leaves too much room for abuse, extending this flood protection to clients pre CS_ACTIVE should not cause any issues, as the download-commands are handled within the engine and floodprotect only filters calls to the qvm
+  if (!com_cl_running->integer && /*cl->state >= CS_ACTIVE &&*/ sv_floodProtect->integer && svs.time < cl->nextReliableTime && ((cl->numCommands > sv_floodLimit->integer) || (SV_FloodProtect(cl))))
   {
-    return qfalse;
+    //ignore any other text messages from this client but let them keep playing
+    //TTimo - moved the ignored verbose to the actual processing in SV_ExecuteClientCommand, only printing if the core doesn't intercept
+    clientOk = qfalse;
   }
+
+  //don't allow another command for one second
+  cl->nextReliableTime = svs.time + sv_floodWait->integer; //formerly 1000
+
+  SV_ExecuteClientCommand(cl, s, clientOk);
 
   cl->lastClientCommand = seq;
   Q_strncpyz(cl->lastClientCommandString, s, sizeof(cl->lastClientCommandString));

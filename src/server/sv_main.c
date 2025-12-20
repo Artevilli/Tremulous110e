@@ -2053,6 +2053,38 @@ SV_CalcPings(void)
 
 /*
 ==================
+SV_LastClientCommandTime
+==================
+*/
+static const ID_INLINE void
+SV_LastClientCommandTime(void)
+{
+  client_t *cl;
+  unsigned i;
+
+  for(i = 0;i < sv.maxclients;i++)
+  {
+    cl = &svs.clients[i];
+
+    if (cl->state != CS_ACTIVE)
+    {
+      continue;
+    }
+
+    if (!cl->gentity)
+    {
+      continue;
+    }
+
+    if (cl->nextReliableTime < svs.time)
+    {
+      cl->numCommands = 0;
+    }
+  }
+}
+
+/*
+==================
 SV_CheckTimeouts
 
 If a packet has not been received from a client for timeout->integer 
@@ -2480,6 +2512,9 @@ SV_Frame(const qint msec)
 
   //update ping based on the all received frames
   SV_CalcPings();
+
+  //reset the number of client commands since the client stopped flooding
+  SV_LastClientCommandTime();
 
   if (com_dedicated->integer)
   {
