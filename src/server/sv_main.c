@@ -1615,7 +1615,6 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
   const unsigned burst = rate; //one second worth of packets
   const unsigned ipburst = 10 * iprate; //one second worth of packets
   unsigned i;
-  static netadr_t floodedFrom;
   static unsigned droppedAdr;
   static unsigned dropped[SVC_MAX];
   static unsigned lastMsgAdr;
@@ -1653,7 +1652,6 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
   {
     if (SVC_RateLimitAddress(from, ipburst, ipperiod, now))
     {
-      floodedFrom = *from;
       droppedAdr++;
       return;
     }
@@ -1710,15 +1708,14 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
     //this will print every 5 'period' msecs
     if (dropped[cmd] > 0 && lastMsg[cmd] + 5000 < now)
     {
-      SV_WriteAttackLog(va(NULL, "SVC_ConnectionlessPacket: \"%s\" rate limit exceeded, dropped %d requests\n", commands[cmd], dropped[cmd]));
+      SV_WriteAttackLog(va(NULL, "%s: \"%s\" rate limit exceeded, dropped %d request%s\n", __func__, commands[cmd], dropped[cmd], dropped[cmd] == 1 ? "":"s"));
       dropped[cmd] = 0;
       lastMsg[cmd] = now;
     }
 
     if (droppedAdr > 0 && lastMsgAdr + 5000 < now)
     {
-      SV_WriteAttackLog(va(NULL, "SVC_ConnectionlessPacket: IP rate limit exceeded (%s), dropped %d requests\n", NET_AdrToString(&floodedFrom), droppedAdr));
-      Com_Memset(&floodedFrom, 0, sizeof(floodedFrom));
+      SV_WriteAttackLog(va(NULL, "%s: IP rate limit exceeded, dropped %d request%s\n", __func__, droppedAdr, droppedAdr == 1 ? "":"s"));
       droppedAdr = 0;
       lastMsgAdr = now;
     }
