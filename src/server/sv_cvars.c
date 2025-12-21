@@ -43,7 +43,6 @@ cvar_t *sv_allowDownload;
 cvar_t *sv_cl_allowDownload;
 cvar_t *sv_maxclients;
 cvar_t *sv_maxclientsPerIP;
-cvar_t *sv_ipMaxClients;
 cvar_t *sv_guidCheck;
 cvar_t *sv_guidCheckAllowStock;
 cvar_t *sv_democlients; //number of slots reserved for playing a demo
@@ -126,7 +125,6 @@ SV_InitCvars(void)
   sv_hostname = Cvar_GetAndDescribe("sv_hostname", "noname", CVAR_SERVERINFO | CVAR_ARCHIVE, "Sets the name of the server.");
   sv_maxclients = Cvar_GetAndDescribe("sv_maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH, "Maximum number of people allowed to join the server.");
   sv_maxclientsPerIP = Cvar_GetAndDescribe("sv_maxclientsPerIP", "3", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_LATCH, "Limits the number of simultaneous connections from the same IP address.");
-  sv_ipMaxClients = Cvar_GetAndDescribe("sv_ipMaxClients", "0", CVAR_ARCHIVE, "Limits the number of simultaneous connections from the same IP address.");
   sv_guidCheck = Cvar_GetAndDescribe("sv_guidCheck", "0", CVAR_ARCHIVE | CVAR_SERVERINFO, "More thorough GUID validity check for connecting players.\nNOTE: setting this to 1 bricks clients without a guid (notably stock 1.1)!\nNOTE: to bypass this, check sv_guidCheckAllowStock");
   sv_guidCheckAllowStock = Cvar_GetAndDescribe("sv_guidCheckAllowStock", "0", CVAR_ARCHIVE | CVAR_SERVERINFO, "Toggles whether or not to allow stock 1.1 to bypass the guid check set by sv_guidCheck.");
   sv_democlients = Cvar_GetAndDescribe("sv_democlients", "0", CVAR_SERVERINFO | CVAR_LATCH | CVAR_ARCHIVE, "Maximum number of people allowed to view serverside demos.");

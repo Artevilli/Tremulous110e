@@ -1041,8 +1041,6 @@ Only called at main exe startup, not for each game
 const void
 SV_Init(void)
 {
-  //qint i;
-
   SV_UptimeReset();
 
   SV_AddOperatorCommands();
@@ -1059,13 +1057,6 @@ SV_Init(void)
 #if !defined(STATELESS_CHALLENGES_VERSION_ONE)
   SV_InitChallenger();
 #endif
-
-  //hack to fix this stupid memory issue
-  //for(i = 0;i < MAX_CONNECTIONS;i++)
-  //{
-    //svs.connects[i].adr = NULL;
-    //svs.connects[i].time = 0;
-  //}
 }
 
 

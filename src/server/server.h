@@ -487,8 +487,6 @@ extern unsigned queueCount;
 #define SERVER_PERFORMANCECOUNTER_FRAMES 600
 #define SERVER_PERFORMANCECOUNTER_SAMPLES 6
 
-#define MAX_CONNECTIONS 256
-
 //this structure will be cleared only when the game dll changes
 typedef struct
 {
