@@ -33,7 +33,7 @@ SV_BotClientCommand
 void
 BotClientCommand(qint client, const qchar *command)
 {
-  SV_ExecuteClientCommand(&svs.clients[client], command, qtrue);
+  SV_ExecuteClientCommand(&svs.clients[client], command);
 }
 
 /*
@@ -209,5 +209,5 @@ SV_BotClientCommand
 void
 SV_BotClientCommand(qint client, const qchar *command)
 {
-  SV_ExecuteClientCommand(&svs.clients[client], command, qtrue);
+  SV_ExecuteClientCommand(&svs.clients[client], command);
 }

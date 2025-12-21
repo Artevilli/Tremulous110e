@@ -42,7 +42,7 @@ cvar_t *sv_hidden;
 cvar_t *sv_allowDownload;
 cvar_t *sv_cl_allowDownload;
 cvar_t *sv_maxclients;
-//cvar_t *sv_maxclientsPerIP;
+cvar_t *sv_maxclientsPerIP;
 cvar_t *sv_ipMaxClients;
 cvar_t *sv_guidCheck;
 cvar_t *sv_guidCheckAllowStock;
@@ -125,7 +125,7 @@ SV_InitCvars(void)
   sv_privateClients = Cvar_GetAndDescribe("sv_privateClients", "0", CVAR_SERVERINFO, "The number of spots out of sv_maxclients reserved for players with the server password set by sv_privatePassword, also the number of bot slots for ^1Z^7.");
   sv_hostname = Cvar_GetAndDescribe("sv_hostname", "noname", CVAR_SERVERINFO | CVAR_ARCHIVE, "Sets the name of the server.");
   sv_maxclients = Cvar_GetAndDescribe("sv_maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH, "Maximum number of people allowed to join the server.");
-  //sv_maxclientsPerIP = Cvar_GetAndDescribe("sv_maxclientsPerIP", "3", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_LATCH, "Limits the number of simultaneous connections from the same IP address.");
+  sv_maxclientsPerIP = Cvar_GetAndDescribe("sv_maxclientsPerIP", "3", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_LATCH, "Limits the number of simultaneous connections from the same IP address.");
   sv_ipMaxClients = Cvar_GetAndDescribe("sv_ipMaxClients", "0", CVAR_ARCHIVE, "Limits the number of simultaneous connections from the same IP address.");
   sv_guidCheck = Cvar_GetAndDescribe("sv_guidCheck", "0", CVAR_ARCHIVE | CVAR_SERVERINFO, "More thorough GUID validity check for connecting players.\nNOTE: setting this to 1 bricks clients without a guid (notably stock 1.1)!\nNOTE: to bypass this, check sv_guidCheckAllowStock");
   sv_guidCheckAllowStock = Cvar_GetAndDescribe("sv_guidCheckAllowStock", "0", CVAR_ARCHIVE | CVAR_SERVERINFO, "Toggles whether or not to allow stock 1.1 to bypass the guid check set by sv_guidCheck.");
@@ -158,8 +158,8 @@ SV_InitCvars(void)
   Cvar_CheckRange(sv_warningscpu, "0", "100", CV_INTEGER);
   sv_warningsframetime = Cvar_GetAndDescribe("sv_warningsframetime", "30", CVAR_ARCHIVE, va(NULL, "Sets the desired value the average frame time has to go over before warnings begin appearing.\nNOTE: Falls back to %i if not set!", FRAME_TIME_WARNING));
   Cvar_CheckRange(sv_warningsframetime, "0", "100", CV_INTEGER);
-  sv_floodWait = Cvar_GetAndDescribe("sv_floodWait", "1000", CVAR_ARCHIVE | CVAR_SERVERINFO, "Time in milliseconds that a client has to wait before sending another client command.");
-  sv_floodLimit = Cvar_GetAndDescribe("sv_floodLimit", "5", CVAR_ARCHIVE | CVAR_SERVERINFO, "The number of client commands a client is allowed to send before flood protection triggers.");
+  sv_floodWait = Cvar_GetAndDescribe("sv_floodWait", "500", CVAR_ARCHIVE | CVAR_SERVERINFO, "Time in milliseconds that a client has to wait before sending another client command.");
+  sv_floodLimit = Cvar_GetAndDescribe("sv_floodLimit", "8", CVAR_ARCHIVE | CVAR_SERVERINFO, "The number of client commands a client is allowed to send before flood protection triggers.");
   sv_floodProtect = Cvar_GetAndDescribe("sv_floodProtect", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, "Causes flooders to lag themselves but not other people, customizable with sv_floodWait and sv_floodLimit");
 #if defined(INCLUDE_SV_PINGFIX)
   sv_pingFix = Cvar_GetAndDescribe("sv_pingFix", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, "Fix client ping calculation to more accurately reflect packet loss and force minimum ping for humans to 1");
