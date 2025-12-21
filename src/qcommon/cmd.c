@@ -20,22 +20,24 @@ along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
-// cmd.c -- Quake script command processing module
+//cmd.c -- Quake script command processing module
 
 #include "q_shared.h"
 #include "qcommon.h"
 
 #define	MAX_CMD_BUFFER	65536
 
-typedef struct {
-	byte	*data;
-	qint		maxsize;
-	qint		cursize;
-} cmd_t;
+typedef struct
+{
+  byte *data;
+  qint maxsize;
+  qint cursize;
+}
+cmd_t;
 
-qint			cmd_wait;
-cmd_t		cmd_text;
-byte		cmd_text_buf[MAX_CMD_BUFFER];
+qint cmd_wait;
+cmd_t cmd_text;
+byte cmd_text_buf[MAX_CMD_BUFFER];
 
 
 //=============================================================================
@@ -306,7 +308,7 @@ Cbuf_Execute(void)
     return;
   }
 
-  //this will keep // style comments all on one line by not breaking on
+  //this will keep //style comments all on one line by not breaking on
   //a semicolon, it will keep /* ... */ style comments all on one line by not
   //breaking it for semicolon or newline
   in_star_comment = qfalse;
@@ -314,7 +316,7 @@ Cbuf_Execute(void)
 
   while(cmd_text.cursize > 0)
   {
-    //find a \n or ; line break or comment: // or /* */
+    //find a \n or ; line break or comment: //or /* */
     text = (qchar *)cmd_text.data;
 
     quotes = 0;
@@ -673,7 +675,7 @@ Cmd_ArgsBuffer(qchar *buffer, qint bufferLength)
   Return: --
   Examples: Q_strstrip("Bo\nb is h\rairy!!", "\n\r!", "123"); //"Bo1b is h2airy33"
   Examples: Q_strstrip("Bo\nb is h\rairy!!", "\n\r!", "12"); //"Bo1b is h2airy"
-  Examples: Q_strstrip("Bo\nb is h\rairy!!", "\n\r!", NULL);	// "Bob is hairy"
+  Examples: Q_strstrip("Bo\nb is h\rairy!!", "\n\r!", NULL);	//"Bob is hairy"
 */
 void
 Q_strstrip(qchar *string, const qchar *strip, const qchar *repl)
@@ -797,7 +799,7 @@ are inserted in the apropriate place, The argv array
 will point into this temporary buffer.
 ============
 */
-// NOTE TTimo define that to track tokenization issues
+//NOTE TTimo define that to track tokenization issues
 //#define TKN_DBG
 static void
 Cmd_TokenizeString2(const qchar *text_in, qbool ignoreQuotes)
@@ -842,7 +844,7 @@ Cmd_TokenizeString2(const qchar *text_in, qbool ignoreQuotes)
         return; //all tokens parsed
       }
 
-      //skip // comments
+      //skip //comments
       if (text[0] == '/' && text[1] == '/')
       {
         return; //all tokens parsed
@@ -993,7 +995,7 @@ Cmd_AddCommand(const qchar *cmd_name, xcommand_t function)
     return;
   }
 
-  // use a small malloc to avoid zone fragmentation
+  //use a small malloc to avoid zone fragmentation
   cmd = S_Malloc(sizeof(cmd_function_t));
   cmd->name = CopyString(cmd_name);
   cmd->function = function;

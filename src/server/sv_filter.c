@@ -94,7 +94,11 @@ static qint nodeCount; //total count
 static qint tempCount; //nodes that can expire
 static qint expiredCount;
 
-
+/*
+===============
+CleanStr
+===============
+*/
 static void
 CleanStr(qchar *dst, qint dst_size, const qchar *src)
 {
@@ -124,7 +128,11 @@ CleanStr(qchar *dst, qint dst_size, const qchar *src)
   *dst = '\0';
 }
 
-
+/*
+===============
+op2str
+===============
+*/
 static const qchar
 *op2str(filter_op op)
 {
@@ -136,7 +144,11 @@ static const qchar
   return opstr[op];
 }
 
-
+/*
+===============
+free_nodes
+===============
+*/
 static void
 free_nodes(filter_node_t *node)
 {
@@ -156,7 +168,11 @@ free_nodes(filter_node_t *node)
   }
 }
 
-
+/*
+===============
+eval_node
+===============
+*/
 static qint
 eval_node(const filter_node_t *node)
 {
@@ -279,7 +295,11 @@ eval_node(const filter_node_t *node)
   }
 }
 
-
+/*
+===============
+dump_nodes
+===============
+*/
 static void
 dump_nodes(const filter_node_t *node, qint level, qint skip_tagged, FILE *f)
 {
@@ -384,7 +404,11 @@ dump_nodes(const filter_node_t *node, qint level, qint skip_tagged, FILE *f)
   }
 }
 
-
+/*
+===============
+walk_nodes
+===============
+*/
 static qint
 walk_nodes(const filter_node_t *node)
 {
@@ -407,8 +431,13 @@ walk_nodes(const filter_node_t *node)
   return 0;
 }
 
+/*
+===============
+tag_from
 
-//marks specified node and its kids as expired
+marks specified node and its kids as expired
+===============
+*/
 static void
 tag_from(filter_node_t *node)
 {
@@ -435,7 +464,11 @@ tag_from(filter_node_t *node)
   }
 }
 
-
+/*
+===============
+clear_tags
+===============
+*/
 static void
 clear_tags(filter_node_t *node)
 {
@@ -451,8 +484,13 @@ clear_tags(filter_node_t *node)
   }
 }
 
+/*
+===============
+tag_expired
 
-//try to find single expired date nodes
+try to find single expired date nodes
+===============
+*/
 static qint
 tag_expired(filter_node_t *node)
 {
@@ -491,8 +529,12 @@ tag_expired(filter_node_t *node)
   return 0;
 }
 
+/*
+===============
+tag_parents
 
-//starting from root node
+starting from root node
+*/
 static unsigned
 tag_parents(filter_node_t *node)
 {
@@ -518,7 +560,11 @@ tag_parents(filter_node_t *node)
   return r;
 }
 
-
+/*
+===============
+is_integer
+===============
+*/
 static qbool
 is_integer(const qchar *s)
 {
@@ -543,7 +589,11 @@ is_integer(const qchar *s)
   return qtrue;
 }
 
-
+/*
+===============
+new_node
+===============
+*/
 static filter_node_t *
 new_node(const qchar *p1, const qchar *p2, filter_op fop, qint quoted)
 {
@@ -666,10 +716,16 @@ new_node(const qchar *p1, const qchar *p2, filter_op fop, qint quoted)
   return node;
 }
 
+/*
+===============
+parse_selection
+===============
+*/
 static const qchar *
 parse_section(const qchar *text, qint level, filter_node_t **root, qbool in_scope)
 {
-  filter_node_t *curr, *ch;
+  filter_node_t *curr;
+  filter_node_t *ch;
   filter_op fop;
   qchar lvalue[256];
   const qchar *v0;
@@ -873,7 +929,11 @@ parse_section(const qchar *text, qint level, filter_node_t **root, qbool in_scop
   return text;
 }
 
-
+/*
+===============
+parse_file
+===============
+*/
 static qbool
 parse_file(const qchar *filename)
 {
@@ -946,7 +1006,11 @@ parse_file(const qchar *filename)
   return qtrue;
 }
 
-
+/*
+===============
+SV_ReloadFilters
+===============
+*/
 static void
 SV_ReloadFilters(const qchar *filename, filter_node_t *new_node)
 {
@@ -1063,14 +1127,22 @@ SV_ReloadFilters(const qchar *filename, filter_node_t *new_node)
   }
 }
 
-
+/*
+===============
+SV_LoadFilters
+===============
+*/
 void
 SV_LoadFilters(const qchar *filename)
 {
   SV_ReloadFilters(filename, NULL);
 }
 
-
+/*
+===============
+SV_RunFilters
+===============
+*/
 const qchar *
 SV_RunFilters(const qchar *userinfo, const netadr_t *addr)
 {
@@ -1101,7 +1173,13 @@ SV_RunFilters(const qchar *userinfo, const netadr_t *addr)
 
 #define IS_LEAP(year) ((((year) % 4 == 0) && ((year) % 100 != 0)) || ((year) % 400 == 0))
 
-/*Add hours to specified date*/
+/*
+===============
+Q_AddTime
+
+Add hours to specified date
+===============
+*/
 static void
 Q_AddTime(qtime_t *qtime, unsigned qint n)
 {
@@ -1119,10 +1197,16 @@ Q_AddTime(qtime_t *qtime, unsigned qint n)
   min = qtime->tm_min;
 
   //add minutes
-  n += min;  min  = n % 60; n -= min;  n /= 60; //hours
+  n += min;
+  min = n % 60;
+  n -= min;
+  n /= 60; //hours
 
   //add hours
-  n += hour; hour = n % 24; n -= hour; n /= 24; //days
+  n += hour;
+  hour = n % 24;
+  n -= hour;
+  n /= 24; //days
 
   //add days
   if (IS_LEAP(year))
@@ -1172,8 +1256,13 @@ Q_AddTime(qtime_t *qtime, unsigned qint n)
   qtime->tm_min = min;
 }
 
+/*
+===============
+Q_AddDate
 
-/*Add months to specified date*/
+Add months to specified date
+===============
+*/
 static void
 Q_AddDate(qtime_t *qtime, qint n)
 {

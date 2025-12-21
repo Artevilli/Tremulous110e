@@ -361,7 +361,7 @@ qbool fs_reordered;
 
 #define MAX_REF_PAKS MAX_STRING_TOKENS
 
-// never load anything from pk3 files that are not present at the server when pure
+//never load anything from pk3 files that are not present at the server when pure
 static qint fs_numServerPaks = 0;
 static qint fs_serverPaks[MAX_REF_PAKS]; //checksums
 static qchar *fs_serverPakNames[MAX_REF_PAKS]; //pk3 names
@@ -539,7 +539,8 @@ FS_FileLength(FILE *h)
 FS_PakIndexForHandle
 ====================
 */
-qint FS_PakIndexForHandle(fileHandle_t f)
+qint
+FS_PakIndexForHandle(fileHandle_t f)
 {
   if (f <= FS_INVALID_HANDLE || f >= MAX_FILE_HANDLES)
   {
@@ -1188,7 +1189,7 @@ FS_Rename(const qchar *from, const qchar *to)
 
   if (rename(from_ospath, to_ospath))
   {
-    // Failed, try copying it and deleting the original
+    //Failed, try copying it and deleting the original
     FS_CopyFile(from_ospath, to_ospath);
     FS_Remove(from_ospath);
   }
@@ -3151,7 +3152,7 @@ FS_SavePackToFile(const pack_t *pak, FILE *f)
     fwrite(&it, sizeof(it), 1, f);
   }
 
-  // pure checksums, excluding first uninitialized
+  //pure checksums, excluding first uninitialized
   fwrite(pak->headerLongs + 1, (pak->numHeaderLongs - 1) * sizeof(pak->headerLongs[0]), 1, f);
 
 #if 0
@@ -3200,7 +3201,7 @@ FS_LoadPakFromFile(FILE *f)
 
   if (fread(&pk, sizeof(pk), 1, f) != 1)
   {
-    return qfalse; // probably EOF
+    return qfalse; //probably EOF
   }
 
   //validate header data
@@ -5140,7 +5141,7 @@ FS_AddGameDirectory(const qchar *path, const qchar *dir)
       search->policy = DIR_ALLOW;
 
       strcpy(search->dir->path, curpath); //c:\quake3\baseq3
-      strcpy(search->dir->gamedir, pakdirs[pakdirsi]); // mypak.pk3dir
+      strcpy(search->dir->gamedir, pakdirs[pakdirsi]); //mypak.pk3dir
 
       search->next = fs_searchpaths;
       fs_searchpaths = search;

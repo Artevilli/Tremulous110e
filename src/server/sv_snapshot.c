@@ -216,7 +216,7 @@ SV_WriteSnapshotToClient(client_t *client, msg_t *msg)
   //this is the snapshot we are creating
   frame = &client->frames[client->netchan.outgoingSequence & PACKET_MASK];
 
-  // try to use a previous frame as the source for delta compressing the snapshot
+  //try to use a previous frame as the source for delta compressing the snapshot
   if (/*client->deltaMessage <= 0 || */client->state != CS_ACTIVE)
   {
     //client is asking for a retransmit
@@ -239,7 +239,7 @@ SV_WriteSnapshotToClient(client_t *client, msg_t *msg)
   }
   else
   {
-    // we have a valid snapshot to delta from
+    //we have a valid snapshot to delta from
     oldframe = &client->frames[client->deltaMessage & PACKET_MASK];
     lastframe = client->netchan.outgoingSequence - client->deltaMessage;
 
@@ -256,10 +256,10 @@ SV_WriteSnapshotToClient(client_t *client, msg_t *msg)
 
   //NOTE, MRE: now sent at the start of every message from server to client
   //let the client know which reliable clientCommands we have received
-  //MSG_WriteLong( msg, client->lastClientCommand );
+  //MSG_WriteLong(msg, client->lastClientCommand);
 
-  // send over the current server time so the client can drift
-  // its view of time to try to match
+  //send over the current server time so the client can drift
+  //its view of time to try to match
   if (client->oldServerTime)
   {
     //The server has not yet got an acknowledgement of the
@@ -269,11 +269,13 @@ SV_WriteSnapshotToClient(client_t *client, msg_t *msg)
     //incorrect, but since it'll be busy loading a map at
     //the time it doesn't really matter.
     MSG_WriteLong(msg, sv.time + client->oldServerTime);
-  } else {
+  }
+  else
+  {
     MSG_WriteLong(msg, sv.time);
   }
 
-  // what we are delta'ing from
+  //what we are delta'ing from
   MSG_WriteByte(msg, lastframe);
 
   snapFlags = svs.snapFlagServerBit;
@@ -288,11 +290,11 @@ SV_WriteSnapshotToClient(client_t *client, msg_t *msg)
     snapFlags |= SNAPFLAG_NOT_ACTIVE;
   }
 
-  MSG_WriteByte (msg, snapFlags);
+  MSG_WriteByte(msg, snapFlags);
 
-  // send over the areabits
-  MSG_WriteByte (msg, frame->areabytes);
-  MSG_WriteData (msg, frame->areabits, frame->areabytes);
+  //send over the areabits
+  MSG_WriteByte(msg, frame->areabytes);
+  MSG_WriteData(msg, frame->areabits, frame->areabytes);
 
   //dont send any changes to zombies
   if (client->state <= CS_ZOMBIE)
@@ -306,7 +308,7 @@ SV_WriteSnapshotToClient(client_t *client, msg_t *msg)
     return;
   }
 
-  // delta encode the playerstate
+  //delta encode the playerstate
   if (oldframe)
   {
     MSG_WriteDeltaPlayerstate(msg, &oldframe->ps, &frame->ps);
@@ -328,7 +330,7 @@ SV_WriteSnapshotToClient(client_t *client, msg_t *msg)
   {
     for(i = 0;i < sv_padPackets->integer;i++)
     {
-      MSG_WriteByte (msg, svc_nop);
+      MSG_WriteByte(msg, svc_nop);
     }
   }
 }
@@ -478,58 +480,74 @@ SV_AddIndexToSnapshot(svEntity_t *svEnt, qint index, snapshotEntityNumbers_t *eN
 SV_AddEntitiesVisibleFromPoint
 ===============
 */
-static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *frame, 
-                  snapshotEntityNumbers_t *eNums, qbool portal ) {
-  qint   e, i;
+static void
+SV_AddEntitiesVisibleFromPoint(vec3_t origin, clientSnapshot_t *frame, snapshotEntityNumbers_t *eNums, qbool portal)
+{
+  qint e;
+  qint i;
   sharedEntity_t *ent;
-  svEntity_t  *svEnt;
+  svEntity_t *svEnt;
   entityState_t *es;
-  qint   l;
-  qint   clientarea, clientcluster;
-  qint   leafnum;
-  qint   eventNumber;
-  byte  *clientpvs;
-  byte  *bitvector;
+  qint l;
+  qint clientarea;
+  qint clientcluster;
+  qint leafnum;
+  qint eventNumber;
+  byte *clientpvs;
+  byte *bitvector;
 
-  // during an error shutdown message we may need to transmit
-  // the shutdown message after the server has shutdown, so
-  // specfically check for it
-  if ( sv.state == SS_DEAD ) {
+  //during an error shutdown message we may need to transmit
+  //the shutdown message after the server has shutdown, so
+  //specfically check for it
+  if (sv.state == SS_DEAD)
+  {
     return;
   }
 
-  leafnum = CM_PointLeafnum (origin);
-  clientarea = CM_LeafArea (leafnum);
-  clientcluster = CM_LeafCluster (leafnum);
+  leafnum = CM_PointLeafnum(origin);
+  clientarea = CM_LeafArea(leafnum);
+  clientcluster = CM_LeafCluster(leafnum);
 
-  // calculate the visible areas
-  frame->areabytes = CM_WriteAreaBits( frame->areabits, clientarea );
+  //calculate the visible areas
+  frame->areabytes = CM_WriteAreaBits(frame->areabits, clientarea);
 
-  clientpvs = CM_ClusterPVS (clientcluster);
+  clientpvs = CM_ClusterPVS(clientcluster);
 
   for(e = 0;e < svs.currFrame->count;e++)
   {
     es = svs.currFrame->ents[e];
     ent = SV_GentityNum(es->number);
 
-    // entities can be flagged to be sent to only one client
-    if ( ent->r.svFlags & SVF_SINGLECLIENT ) {
-      if ( ent->r.singleClient != frame->ps.clientNum ) {
+    //entities can be flagged to be sent to only one client
+    if (ent->r.svFlags & SVF_SINGLECLIENT)
+    {
+      if (ent->r.singleClient != frame->ps.clientNum)
+      {
         continue;
       }
     }
-    // entities can be flagged to be sent to everyone but one client
-    if ( ent->r.svFlags & SVF_NOTSINGLECLIENT ) {
-      if ( ent->r.singleClient == frame->ps.clientNum ) {
+
+    //entities can be flagged to be sent to everyone but one client
+    if (ent->r.svFlags & SVF_NOTSINGLECLIENT)
+    {
+      if (ent->r.singleClient == frame->ps.clientNum)
+      {
         continue;
       }
     }
-    // entities can be flagged to be sent to a given mask of clients
-    if ( ent->r.svFlags & SVF_CLIENTMASK ) {
+
+    //entities can be flagged to be sent to a given mask of clients
+    if (ent->r.svFlags & SVF_CLIENTMASK)
+    {
       if (frame->ps.clientNum >= 128)
-        Com_Error( ERR_DROP, "SVF_CLIENTMASK: clientNum >= 128" );
-      if (~ent->r.singleClient & (1 << frame->ps.clientNum))
+      {
+        Com_Error(ERR_DROP, "SVF_CLIENTMASK: clientNum >= 128");
+      }
+
+      if (~ent->r.singleClient & (BIT(frame->ps.clientNum)))
+      {
         continue;
+      }
     }
 
     if (ent->s.eType >= ET_EVENTS)
@@ -544,8 +562,9 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
 
     svEnt = &sv.svEntities[es->number];
 
-    // don't double add an entity through portals
-    if ( svEnt->snapshotCounter == sv.snapshotCounter ) {
+    //don't double add an entity through portals
+    if (svEnt->snapshotCounter == sv.snapshotCounter)
+    {
       continue;
     }
 
@@ -555,8 +574,9 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
       continue;
     }
 
-    // broadcast entities are always sent
-    if ( ent->r.svFlags & SVF_BROADCAST ) {
+    //broadcast entities are always sent
+    if (ent->r.svFlags & SVF_BROADCAST)
+    {
       SV_AddIndexToSnapshot(svEnt, e, eNums);
       continue;
     }
@@ -574,43 +594,59 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
       }
     }
 
-    // ignore if not touching a PV leaf
-    // check area
-    if ( !CM_AreasConnected( clientarea, svEnt->areanum ) ) {
-      // doors can legally straddle two areas, so
-      // we may need to check another one
-      if ( !CM_AreasConnected( clientarea, svEnt->areanum2 ) ) {
-        continue;   // blocked by a door
+    //ignore if not touching a PV leaf
+    //check area
+    if (!CM_AreasConnected(clientarea, svEnt->areanum))
+    {
+      //doors can legally straddle two areas, so
+      //we may need to check another one
+      if (!CM_AreasConnected(clientarea, svEnt->areanum2))
+      {
+        continue;   //blocked by a door
       }
     }
 
     bitvector = clientpvs;
 
-    // check individual leafs
-    if ( !svEnt->numClusters ) {
+    //check individual leafs
+    if (!svEnt->numClusters)
+    {
       continue;
     }
+
     l = 0;
-    for ( i=0 ; i < svEnt->numClusters ; i++ ) {
+
+    for(i = 0;i < svEnt->numClusters;i++)
+    {
       l = svEnt->clusternums[i];
-      if ( bitvector[l >> 3] & (1 << (l&7) ) ) {
+
+      if (bitvector[l >> 3] & (BIT(l & 7)))
+      {
         break;
       }
     }
 
-    // if we haven't found it to be visible,
-    // check overflow clusters that coudln't be stored
-    if ( i == svEnt->numClusters ) {
-      if ( svEnt->lastCluster ) {
-        for ( ; l <= svEnt->lastCluster ; l++ ) {
-          if ( bitvector[l >> 3] & (1 << (l&7) ) ) {
+    //if we haven't found it to be visible,
+    //check overflow clusters that coudln't be stored
+    if (i == svEnt->numClusters)
+    {
+      if (svEnt->lastCluster)
+      {
+        for (;l <= svEnt->lastCluster;l++)
+        {
+          if (bitvector[l >> 3] & (BIT(l & 7)))
+          {
             break;
           }
         }
-        if ( l == svEnt->lastCluster ) {
-          continue; // not visible
+
+        if (l == svEnt->lastCluster)
+        {
+          continue; //not visible
         }
-      } else {
+      }
+      else
+      {
         continue;
       }
     }
@@ -876,14 +912,16 @@ currently doesn't.
 For viewing through other player's eyes, clent can be something other than client->gentity
 =============
 */
-static void SV_BuildClientSnapshot( client_t *client ) {
-  vec3_t            org;
-  clientSnapshot_t      *frame;
-  snapshotEntityNumbers_t   entityNumbers;
-  qint             i;
-  svEntity_t          *svEnt;
-  qint             clientNum;
-  playerState_t       *ps;
+static void
+SV_BuildClientSnapshot(client_t *client)
+{
+  vec3_t org;
+  clientSnapshot_t *frame;
+  snapshotEntityNumbers_t entityNumbers;
+  qint i;
+  svEntity_t *svEnt;
+  qint clientNum;
+  playerState_t *ps;
 
   //this is the frame we are creating
   frame = &client->frames[client->netchan.outgoingSequence & PACKET_MASK];
@@ -901,13 +939,14 @@ static void SV_BuildClientSnapshot( client_t *client ) {
     return;
   }
 
-  // grab the current playerState_t
+  //grab the current playerState_t
   ps = SV_GameClientNum(ARRAY_INDEX(svs.clients, client));
   frame->ps = *ps;
 
   //never send client's own entity, because it can
   //be regenerated from the playerstate
   clientNum = frame->ps.clientNum;
+
   if (clientNum < 0 || clientNum >= MAX_GENTITIES)
   {
     Com_Error(ERR_DROP, "SV_SvEntityForGentity: bad gEnt");
@@ -947,11 +986,11 @@ static void SV_BuildClientSnapshot( client_t *client ) {
   //add all the entities directly visible to the eye, which
   //may include portal entities that merge other viewpoints
   entityNumbers.unordered = qfalse;
-  SV_AddEntitiesVisibleFromPoint( org, frame, &entityNumbers, qfalse );
+  SV_AddEntitiesVisibleFromPoint(org, frame, &entityNumbers, qfalse);
 
   //if there were portals visible, there may be out of order entities
   //in the list which will need to be resorted for the delta compression
-  //to work correctly.  This also catches the error condition
+  //to work correctly. This also catches the error condition
   //of an entity being included twice.
   if (entityNumbers.unordered)
   {
@@ -960,7 +999,7 @@ static void SV_BuildClientSnapshot( client_t *client ) {
 
   //now that all viewpoint's areabits have been OR'd together, invert
   //all of them to make it a mask vector, which is what the renderer wants
-  for (i = 0;i < MAX_MAP_AREA_BYTES / sizeof(qint);i++)
+  for(i = 0;i < MAX_MAP_AREA_BYTES / sizeof(qint);i++)
   {
     ((qint *)frame->areabits)[i] = ((qint *)frame->areabits)[i] ^ -1;
   }
@@ -1037,7 +1076,7 @@ SV_SendMessageToClient
 Called by SV_SendClientSnapshot and SV_SendClientGameState
 =======================
 */
-void SV_SendMessageToClient( msg_t *msg, client_t *client ) {
+void SV_SendMessageToClient(msg_t *msg, client_t *client) {
   //qint     rateMsec;
 
   if (client->gentity && (client->gentity->r.svFlags & SVF_BOT))
@@ -1045,45 +1084,52 @@ void SV_SendMessageToClient( msg_t *msg, client_t *client ) {
     return; //Chey: bots dont need snapshots
   }
 
-  // record information about the message
+  //record information about the message
   client->frames[client->netchan.outgoingSequence & PACKET_MASK].messageSize = msg->cursize;
   client->frames[client->netchan.outgoingSequence & PACKET_MASK].messageSent = svs.msgTime;
   client->frames[client->netchan.outgoingSequence & PACKET_MASK].messageAcked = 0;
 
 #if 0
-  // send the datagram
-  SV_Netchan_Transmit( client, msg ); //msg->cursize, msg->data );
+  //send the datagram
+  SV_Netchan_Transmit(client, msg); //msg->cursize, msg->data);
 
-  // set nextSnapshotTime based on rate and requested number of updates
+  //set nextSnapshotTime based on rate and requested number of updates
 
-  // local clients get snapshots every server frame
-  // TTimo - https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=491
-  // added sv_lanForceRate check
-  if (client->netchan.remoteAddress.type == NA_LOOPBACK || (sv_lanForceRate->integer && c->netchan.isLANAddress)) {
+  //local clients get snapshots every server frame
+  //TTimo - https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=491
+  //added sv_lanForceRate check
+  if (client->netchan.remoteAddress.type == NA_LOOPBACK || (sv_lanForceRate->integer && c->netchan.isLANAddress))
+  {
     client->nextSnapshotTime = svs.time + ((qint)(1000.0 / sv_fps->integer * com_timescale->value));
     return;
   }
   
-  // normal rate / snapshotMsec calculation
+  //normal rate / snapshotMsec calculation
   rateMsec = SV_RateMsec(client, msg->cursize);
 
-  if ( rateMsec < client->snapshotMsec * com_timescale->value) {
-    // never send more packets than this, no matter what the rate is at
+  if (rateMsec < client->snapshotMsec * com_timescale->value)
+  {
+    //never send more packets than this, no matter what the rate is at
     rateMsec = client->snapshotMsec * com_timescale->value;
     client->rateDelayed = qfalse;
-  } else {
+  }
+  else
+  {
     client->rateDelayed = qtrue;
   }
 
-  client->nextSnapshotTime = svs.time + ((qint) (rateMsec * com_timescale->value));
+  client->nextSnapshotTime = svs.time + ((qint)(rateMsec * com_timescale->value));
 
-  // don't pile up empty snapshots while connecting
-  if ( client->state != CS_ACTIVE ) {
-    // a gigantic connection message may have already put the nextSnapshotTime
-    // more than a second away, so don't shorten it
-    // do shorten if client is downloading
-    if (!*client->downloadName && client->nextSnapshotTime < svs.time + ((qint) (1000.0 * com_timescale->value)))
-      client->nextSnapshotTime = svs.time + ((qint) (1000 * com_timescale->value));
+  //don't pile up empty snapshots while connecting
+  if (client->state != CS_ACTIVE)
+  {
+    //a gigantic connection message may have already put the nextSnapshotTime
+    //more than a second away, so don't shorten it
+    //do shorten if client is downloading
+    if (!*client->downloadName && client->nextSnapshotTime < svs.time + ((qint)(1000.0 * com_timescale->value)))
+    {
+      client->nextSnapshotTime = svs.time + ((qint)(1000 * com_timescale->value));
+    }
   }
 #endif
 
@@ -1507,7 +1553,6 @@ SV_IsValidClientSnapshot
 qbool
 SV_IsValidClientSnapshot(const client_t *client)
 {
-  //if (client->deltaMessage <= 0)
   if (client->deltaMessage == client->netchan.outgoingSequence - (PACKET_BACKUP + 1))
   {
     return qtrue;
@@ -1523,7 +1568,6 @@ SV_IsValidClientSnapshot(const client_t *client)
     return qtrue;
   }
 
-  //if (client->netchan.outgoingSequence - client->deltaMessage < 29)
   if (client->netchan.outgoingSequence - client->deltaMessage < (PACKET_BACKUP - 3))
   {
     return qtrue;
