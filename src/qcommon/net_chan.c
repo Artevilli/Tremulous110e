@@ -815,23 +815,26 @@ NET_OutOfBandPrint
 Sends a text message in an out-of-band datagram
 ================
 */
-void QDECL NET_OutOfBandPrint( netsrc_t sock, const netadr_t *adr, const qchar *format, ... ) {
-	va_list		argptr;
-	qchar		string[MAX_PACKETLEN];
+void QDECL
+NET_OutOfBandPrint(netsrc_t sock, const netadr_t *adr, const qchar *format, ...)
+{
+  va_list argptr;
+  qchar string[MAX_PACKETLEN];
+  qint len;
 
 
-	// set the header
-	string[0] = -1;
-	string[1] = -1;
-	string[2] = -1;
-	string[3] = -1;
+  //set the header
+  string[0] = -1;
+  string[1] = -1;
+  string[2] = -1;
+  string[3] = -1;
 
-	va_start( argptr, format );
-	Q_vsnprintf( string+4, sizeof(string)-4, format, argptr );
-	va_end( argptr );
+  va_start(argptr, format);
+  len = Q_vsnprintf(string + 4, sizeof(string) - 4, format, argptr) + 4;
+  va_end(argptr);
 
-	// send the datagram
-	NET_SendPacket( sock, strlen( string ), string, adr );
+  //send the datagram
+  NET_SendPacket(sock, len, string, adr);
 }
 
 /*
