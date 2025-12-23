@@ -860,7 +860,7 @@ SV_SpawnServer(const qchar *server, qbool killBots)
 
     pakslen = strlen(p) + 9; //+ strlen("\\sv_paks\\")
     freespace = SV_RemainingGameState();
-    infolen = strlen(Cvar_InfoString_Big(CVAR_SYSTEMINFO));
+    infolen = strlen(Cvar_InfoString_Big(CVAR_SYSTEMINFO, &infoTruncated));
 
     if (infoTruncated)
     {
@@ -888,10 +888,10 @@ SV_SpawnServer(const qchar *server, qbool killBots)
   }
 
   //save systeminfo and serverinfo strings
-  SV_SetConfigstring(CS_SYSTEMINFO, Cvar_InfoString_Big(CVAR_SYSTEMINFO));
+  SV_SetConfigstring(CS_SYSTEMINFO, Cvar_InfoString_Big(CVAR_SYSTEMINFO, NULL));
   cvar_modifiedFlags &= ~CVAR_SYSTEMINFO;
 
-  SV_SetConfigstring(CS_SERVERINFO, Cvar_InfoString(CVAR_SERVERINFO));
+  SV_SetConfigstring(CS_SERVERINFO, Cvar_InfoString(CVAR_SERVERINFO, NULL));
   cvar_modifiedFlags &= ~CVAR_SERVERINFO;
 
   //any media configstring setting now should issue a warning

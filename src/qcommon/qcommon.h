@@ -638,8 +638,8 @@ void 	Cvar_WriteVariables( fileHandle_t f );
 
 void	Cvar_Init( void );
 
-qchar	*Cvar_InfoString( qint bit );
-qchar	*Cvar_InfoString_Big( qint bit );
+const qchar	*Cvar_InfoString( qint bit, qbool *truncated );
+const qchar	*Cvar_InfoString_Big( qint bit, qbool *truncated );
 // returns an info string containing all the cvars that have the given bit set
 // in their flags ( CVAR_USERINFO, CVAR_SERVERINFO, CVAR_SYSTEMINFO, etc )
 void	Cvar_InfoStringBuffer( qint bit, qchar *buff, qint buffsize );

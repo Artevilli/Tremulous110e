@@ -1599,24 +1599,68 @@ Cvar_Restart_f(void)
 Cvar_InfoString
 =====================
 */
-qchar *
-Cvar_InfoString(qint bit)
+const qchar *
+Cvar_InfoString(qint bit, qbool *truncated)
 {
-  static qchar info[MAX_INFO_STRING];
-  cvar_t *var;
+  static char info[MAX_INFO_STRING];
+  const cvar_t *user_vars[MAX_CVARS];
+  const cvar_t *vm_vars[MAX_CVARS];
+  const cvar_t *var;
+  qint user_count;
+  qint vm_count;
+  qint i;
+  qbool allSet;
 
   info[0] = '\0';
+  user_count = 0;
+  vm_count = 0;
+  allSet = qtrue; //this will be qfalse on overflow
 
   for(var = cvar_vars;var;var = var->next)
   {
-    if(var->name && (var->flags & bit))
+    if (var->name && (var->flags & bit))
     {
-      Info_SetValueForKey(info, var->name, var->string);
+      //put vm/user-created cvars to the end
+      if (var->flags & (CVAR_USER_CREATED | CVAR_VM_CREATED))
+      {
+        if (var->flags & CVAR_USER_CREATED)
+        {
+          user_vars[user_count++] = var;
+        }
+        else
+        {
+          vm_vars[vm_count++] = var;
+        }
+      }
+      else
+      {
+        allSet &= Info_SetValueForKey(info, var->name, var->string);
+      }
     }
+  }
+
+  //add vm-created cvars
+  for(i = 0;i < vm_count;i++)
+  {
+    var = vm_vars[i];
+    allSet &= Info_SetValueForKey(info, var->name, var->string);
+  }
+
+  //add user-created cvars
+  for(i = 0;i < user_count;i++)
+  {
+    var = user_vars[i];
+    allSet &= Info_SetValueForKey(info, var->name, var->string);
+  }
+
+  if (truncated)
+  {
+    *truncated = !allSet;
   }
 
   return info;
 }
+
 
 /*
 =====================
@@ -1625,20 +1669,27 @@ Cvar_InfoString_Big
   handles large info strings ( CS_SYSTEMINFO )
 =====================
 */
-qchar *
-Cvar_InfoString_Big(qint bit)
+const qchar *
+Cvar_InfoString_Big(qint bit, qbool *truncated)
 {
   static qchar info[BIG_INFO_STRING];
-  cvar_t *var;
+  const cvar_t *var;
+  qbool allSet;
 
   info[0] = '\0';
+  allSet = qtrue;
 
   for(var = cvar_vars;var;var = var->next)
   {
     if (var->name && (var->flags & bit))
     {
-      Info_SetValueForKey_s(info, sizeof(info), var->name, var->string);
+      allSet &= Info_SetValueForKey_s(info, sizeof(info), var->name, var->string);
     }
+  }
+
+  if (truncated)
+  {
+    *truncated = !allSet;
   }
 
   return info;
@@ -1652,7 +1703,7 @@ Cvar_InfoStringBuffer
 void
 Cvar_InfoStringBuffer(qint bit, qchar *buff, qint buffsize)
 {
-  Q_strncpyz(buff, Cvar_InfoString(bit), buffsize);
+  Q_strncpyz(buff, Cvar_InfoString(bit, NULL), buffsize);
 }
 
 /*

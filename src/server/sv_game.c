@@ -318,7 +318,7 @@ SV_GetServerinfo(qchar *buffer, qint bufferSize)
     Com_Error(ERR_DROP, "SV_GetServerinfo: bufferSize == %i", bufferSize);
   }
 
-  Q_strncpyz(buffer, Cvar_InfoString(CVAR_SERVERINFO), bufferSize);
+  Q_strncpyz(buffer, Cvar_InfoString(CVAR_SERVERINFO, NULL), bufferSize);
 }
 
 /*

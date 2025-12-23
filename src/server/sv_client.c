@@ -1665,7 +1665,7 @@ SV_RemainingGameState(void)
     {
       MSG_WriteByte(&msg, svc_configstring);
       MSG_WriteShort(&msg, start);
-      MSG_WriteBigString(&msg, Cvar_InfoString(CVAR_SERVERINFO));
+      MSG_WriteBigString(&msg, Cvar_InfoString(CVAR_SERVERINFO, NULL));
       continue;
     }
 
@@ -1673,7 +1673,7 @@ SV_RemainingGameState(void)
     {
       MSG_WriteByte(&msg, svc_configstring);
       MSG_WriteShort(&msg, start);
-      MSG_WriteBigString(&msg, Cvar_InfoString_Big(CVAR_SYSTEMINFO));
+      MSG_WriteBigString(&msg, Cvar_InfoString_Big(CVAR_SYSTEMINFO, NULL));
       continue;
     }
 
