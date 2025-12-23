@@ -517,7 +517,7 @@ SV_DirectConnect(const netadr_t *from)
       return;
     }
 
-    version = Q_atoi(Info_ValueForKey(userinfo, "protocol"));
+    version = Q_atoi(v);
 
     if (version != PROTOCOL_VERSION)
     {
@@ -1008,7 +1008,7 @@ gotnewcl1:
       return;
     }
 
-    version = Q_atoi(Info_ValueForKey(userinfo, "protocol"));
+    version = Q_atoi(v);
 
     if (version != PROTOCOL_VERSION)
     {

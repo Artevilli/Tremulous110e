@@ -2078,12 +2078,12 @@ SV_CheckTimeouts(void)
     cl = &svs.clients[i];
 
     //message times may be wrong across a changelevel
-    if (cl->lastPacketTime > svs.time)
+    if (cl->lastPacketTime - svs.time > 0)
     {
       cl->lastPacketTime = svs.time;
     }
 
-    if (cl->state == CS_ZOMBIE && cl->lastPacketTime < zombiepoint)
+    if (cl->state == CS_ZOMBIE && cl->lastPacketTime - zombiepoint < 0)
     {
       //using the client id cause the cl->name is empty at this point
       SV_SetClientState(cl, CS_FREE); //can now be reused
@@ -2099,7 +2099,7 @@ SV_CheckTimeouts(void)
       continue;
     }
 
-    if (cl->state >= CS_CONNECTED && cl->lastPacketTime < droppoint)
+    if (cl->state >= CS_CONNECTED && cl->lastPacketTime - droppoint < 0)
     {
       //wait several frames so a debugger session doesn't
       //cause a timeout
@@ -2125,6 +2125,10 @@ SV_CheckPaused
 static const ID_INLINE qbool
 SV_CheckPaused(void)
 {
+#if defined(DEDICATED)
+  //can't pause on dedicated servers
+  return qfalse;
+#else
   qbool players;
   client_t *cl;
   unsigned i;
@@ -2139,7 +2143,7 @@ SV_CheckPaused(void)
   {
     cl = &svs.clients[i];
 
-    if (cl->state >= CS_ZOMBIE && ((!(cl->gentity->r.svFlags & SVF_BOT) || cl->netchan.remoteAddress.type != NA_BOT)))
+    if (cl->state >= CS_CONNECTED && ((!(cl->gentity->r.svFlags & SVF_BOT) || cl->netchan.remoteAddress.type != NA_BOT)))
     {
       players = qtrue;
       break;
@@ -2163,6 +2167,7 @@ SV_CheckPaused(void)
   }
 
   return qtrue;
+#endif //!DEDICATED
 }
 
 /*
