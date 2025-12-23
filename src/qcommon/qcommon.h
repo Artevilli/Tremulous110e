@@ -91,7 +91,8 @@ MSG_HashKey(const qchar *string, const qint maxlen);
 void	MSG_BeginReading (msg_t *sb);
 void	MSG_BeginReadingOOB(msg_t *sb);
 
-qint		MSG_ReadBits( msg_t *msg, qint bits );
+qint
+MSG_ReadBits(msg_t *msg, qint bits);
 
 qint		MSG_ReadChar (msg_t *sb);
 qint		MSG_ReadByte (msg_t *sb);
@@ -1398,58 +1399,21 @@ Sys_Dialog(dialogType_t type, const qchar *message, const qchar *title);
 qbool
 Sys_WritePIDFile(void);
 
-/* This is based on the Adaptive Huffman algorithm described in Sayood's Data
- * Compression book.  The ranks are not actually stored, but implicitly defined
- * by the location of a node within a doubly-linked list */
+//adaptive huffman functions
+void
+Huff_Compress(msg_t *buf, qint offset);
+void
+Huff_Decompress(msg_t *buf, qint offset);
 
-#define NYT HMAX					/* NYT = Not Yet Transmitted */
-#define INTERNAL_NODE (HMAX+1)
-
-typedef struct nodetype {
-	struct	nodetype *left, *right, *parent; /* tree structure */ 
-	struct	nodetype *next, *prev; /* doubly-linked list */
-	struct	nodetype **head; /* highest ranked node in block */
-	qint		weight;
-	qint		symbol;
-} node_t;
-
-#define HMAX 256 /* Maximum symbol */
-
-typedef struct {
-	qint			blocNode;
-	qint			blocPtrs;
-
-	node_t*		tree;
-	node_t*		lhead;
-	node_t*		ltail;
-	node_t*		loc[HMAX+1];
-	node_t**	freelist;
-
-	node_t		nodeList[768];
-	node_t*		nodePtrs[768];
-} huff_t;
-
-typedef struct {
-	huff_t		compressor;
-	huff_t		decompressor;
-} huffman_t;
-
-void	Huff_Compress(msg_t *buf, qint offset);
-void	Huff_Decompress(msg_t *buf, qint offset);
-void	Huff_Init(huffman_t *huff);
-void	Huff_addRef(huff_t* huff, byte ch);
-qint		Huff_Receive (node_t *node, qint *ch, byte *fin);
-void	Huff_transmit (huff_t *huff, qint ch, byte *fout);
-void	Huff_offsetReceive (node_t *node, qint *ch, byte *fin, qint *offset);
-void	Huff_offsetTransmit (huff_t *huff, qint ch, byte *fout, qint *offset);
-void	Huff_putBit( qint bit, byte *fout, qint *offset);
-qint		Huff_getBit( byte *fout, qint *offset);
-
-// don't use if you don't know what you're doing.
-qint		Huff_getBloc(void);
-void	Huff_setBloc(qint _bloc);
-
-extern huffman_t clientHuffTables;
+//static huffman functions
+void
+HuffmanPutBit(byte *fout, int32_t bitIndex, qint bit);
+qint
+HuffmanPutSymbol(byte* fout, uint32_t offset, qint symbol);
+qint
+HuffmanGetBit(const byte* buffer, qint bitIndex);
+qint
+HuffmanGetSymbol(unsigned *symbol, const byte* buffer, qint bitIndex);
 
 qint		Parse_AddGlobalDefine(qchar *string);
 qint		Parse_LoadSourceHandle(const qchar *filename);

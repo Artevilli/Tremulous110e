@@ -28,36 +28,55 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "q_shared.h"
 #include "qcommon.h"
 
-static qint			bloc = 0;
+#define NYT HMAX					/* NYT = Not Yet Transmitted */
+#define INTERNAL_NODE (HMAX+1)
 
-void	Huff_putBit( qint bit, byte *fout, qint *offset) {
-	bloc = *offset;
-	if ((bloc&7) == 0) {
-		fout[(bloc>>3)] = 0;
-	}
-	fout[(bloc>>3)] |= bit << (bloc&7);
-	bloc++;
-	*offset = bloc;
-}
-
-qint		Huff_getBloc(void)
+typedef struct
+nodetype
 {
-	return bloc;
-}
+  /* tree structure */
+  struct nodetype *left;
+  struct nodetype *right;
+  struct nodetype *parent; 
 
-void	Huff_setBloc(qint _bloc)
+  /* doubly-linked list */
+  struct nodetype *next;
+  struct nodetype *prev;
+
+  /* highest ranked node in block */
+  struct nodetype **head;
+
+  qint weight;
+  qint symbol;
+}
+node_t;
+
+#define HMAX 256 /* Maximum symbol */
+
+typedef struct
 {
-	bloc = _bloc;
-}
+  qint blocNode;
+  qint blocPtrs;
 
-qint		Huff_getBit( byte *fin, qint *offset) {
-	qint t;
-	bloc = *offset;
-	t = (fin[(bloc>>3)] >> (bloc&7)) & 0x1;
-	bloc++;
-	*offset = bloc;
-	return t;
+  node_t *tree;
+  node_t *lhead;
+  node_t *ltail;
+  node_t *loc[HMAX + 1];
+  node_t **freelist;
+
+  node_t nodeList[768];
+  node_t *nodePtrs[768];
 }
+huff_t;
+
+typedef struct
+{
+  huff_t compressor;
+  huff_t decompressor;
+}
+huffman_t;
+
+static qint bloc = 0;
 
 /* Add a bit to the output file (buffered) */
 static void add_bit (qchar bit, byte *fout) {
@@ -264,7 +283,7 @@ void Huff_addRef(huff_t* huff, byte ch) {
 }
 
 /* Get a symbol */
-qint Huff_Receive (node_t *node, qint *ch, byte *fin) {
+static qint Huff_Receive (node_t *node, qint *ch, byte *fin) {
 	while (node && node->symbol == INTERNAL_NODE) {
 		if (get_bit(fin)) {
 			node = node->right;
@@ -277,25 +296,6 @@ qint Huff_Receive (node_t *node, qint *ch, byte *fin) {
 //		Com_Error(ERR_DROP, "Illegal tree!");
 	}
 	return (*ch = node->symbol);
-}
-
-/* Get a symbol */
-void Huff_offsetReceive (node_t *node, qint *ch, byte *fin, qint *offset) {
-	bloc = *offset;
-	while (node && node->symbol == INTERNAL_NODE) {
-		if (get_bit(fin)) {
-			node = node->right;
-		} else {
-			node = node->left;
-		}
-	}
-	if (!node) {
-		*ch = 0;
-		return;
-//		Com_Error(ERR_DROP, "Illegal tree!");
-	}
-	*ch = node->symbol;
-	*offset = bloc;
 }
 
 /* Send the prefix code for this node */
@@ -313,7 +313,7 @@ static void send(node_t *node, node_t *child, byte *fout) {
 }
 
 /* Send a symbol */
-void Huff_transmit (huff_t *huff, qint ch, byte *fout) {
+static void Huff_transmit (huff_t *huff, qint ch, byte *fout) {
 	qint i;
 	if (huff->loc[ch] == NULL) { 
 		/* node_t hasn't been transmitted, send a NYT, then the symbol */
@@ -324,12 +324,6 @@ void Huff_transmit (huff_t *huff, qint ch, byte *fout) {
 	} else {
 		send(huff->loc[ch], NULL, fout);
 	}
-}
-
-void Huff_offsetTransmit (huff_t *huff, qint ch, byte *fout, qint *offset) {
-	bloc = *offset;
-	send(huff->loc[ch], NULL, fout);
-	*offset = bloc;
 }
 
 void Huff_Decompress(msg_t *mbuf, qint offset) {
@@ -391,7 +385,7 @@ void Huff_Compress(msg_t *mbuf, qint offset) {
 	huff_t		huff;
 
 	size = mbuf->cursize - offset;
-	buffer = mbuf->data+ + offset;
+	buffer = mbuf->data + offset;
 
 	if (size<=0) {
 		return;
@@ -404,7 +398,6 @@ void Huff_Compress(msg_t *mbuf, qint offset) {
 	huff.tree->weight = 0;
 	huff.lhead->next = huff.lhead->prev = NULL;
 	huff.tree->parent = huff.tree->left = huff.tree->right = NULL;
-	huff.loc[NYT] = huff.tree;
 
 	seq[0] = (size>>8);
 	seq[1] = size&0xff;
@@ -423,6 +416,7 @@ void Huff_Compress(msg_t *mbuf, qint offset) {
 	Com_Memcpy(mbuf->data+offset, seq, (bloc>>3));
 }
 
+#if 0
 void Huff_Init(huffman_t *huff) {
 
 	Com_Memset(&huff->compressor, 0, sizeof(huff_t));
@@ -441,6 +435,5 @@ void Huff_Init(huffman_t *huff) {
 	huff->compressor.tree->weight = 0;
 	huff->compressor.lhead->next = huff->compressor.lhead->prev = NULL;
 	huff->compressor.tree->parent = huff->compressor.tree->left = huff->compressor.tree->right = NULL;
-	huff->compressor.loc[NYT] = huff->compressor.tree;
 }
-
+#endif

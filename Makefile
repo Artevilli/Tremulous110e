@@ -1293,6 +1293,7 @@ Q3OBJ = \
   $(B)/client/net_chan.o \
   $(B)/client/net_ip.o \
   $(B)/client/huffman.o \
+  $(B)/client/huffman_static.o \
   $(B)/client/parse.o \
   \
   $(B)/client/snd_adpcm.o \
@@ -1583,6 +1584,7 @@ Q3DOBJ = \
   $(B)/ded/net_chan.o \
   $(B)/ded/net_ip.o \
   $(B)/ded/huffman.o \
+  $(B)/ded/huffman_static.o \
   $(B)/ded/parse.o \
   \
   $(B)/ded/q_math.o \
