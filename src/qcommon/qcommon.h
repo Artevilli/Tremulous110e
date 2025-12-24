@@ -69,7 +69,7 @@ void MSG_Bitstream( msg_t *buf );
 // copy a msg_t in case we need to store it as is for a bit
 // (as I needed this to keep an msg_t from a static var for later use)
 // sets data buffer as MSG_Init does prior to do the copy
-void MSG_Copy(msg_t *buf, byte *data, qint length, msg_t *src);
+void MSG_Copy(msg_t *buf, byte *data, qint length, const msg_t *src);
 
 struct usercmd_s;
 struct entityState_s;
@@ -104,6 +104,8 @@ const qchar *MSG_ReadBigString (msg_t *sb);
 const qchar *MSG_ReadStringLine (msg_t *sb);
 float	MSG_ReadAngle16 (msg_t *sb);
 void	MSG_ReadData (msg_t *sb, void *buffer, qint size);
+qint
+MSG_ReadEntitynum(msg_t *sb);
 
 void MSG_WriteDeltaUsercmdKey( msg_t *msg, qint key, const usercmd_t *from, usercmd_t *to );
 void MSG_ReadDeltaUsercmdKey( msg_t *msg, qint key, const usercmd_t *from, usercmd_t *to );

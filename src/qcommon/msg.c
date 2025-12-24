@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "qcommon.h"
 #include "../game/g_local.h"
 
-qint pcount[256];
+static qint pcount[256];
 
 /*
 ==============================================================================
@@ -73,7 +73,7 @@ void MSG_BeginReadingOOB( msg_t *msg ) {
 	msg->oob = qtrue;
 }
 
-void MSG_Copy(msg_t *buf, byte *data, qint length, msg_t *src)
+void MSG_Copy(msg_t *buf, byte *data, qint length, const msg_t *src)
 {
 	if (length<src->cursize) {
 		Com_Error( ERR_DROP, "MSG_Copy: can't copy into a smaller msg_t buffer");
@@ -553,6 +553,19 @@ void MSG_ReadData( msg_t *msg, void *data, qint len ) {
 	}
 }
 
+qint
+MSG_ReadEntitynum(msg_t *sb)
+{
+  const qint num = MSG_ReadBits(sb, GENTITYNUM_BITS);
+
+  if (sb->readcount > sb->cursize)
+  {
+    return -1;
+  }
+
+  return num;
+}
+
 //a string hasher which gives the same hash value even if the
 //string is later modified via the legacy MSG read/write code
 qint
@@ -606,7 +619,7 @@ static const qint kbitmask[32] = {
 	0x1FFFFFFF,	0x3FFFFFFF,	0x7FFFFFFF,	0xFFFFFFFF,
 };
 
-void MSG_WriteDeltaKey( msg_t *msg, qint key, qint oldV, qint newV, qint bits ) {
+static void MSG_WriteDeltaKey( msg_t *msg, qint key, qint oldV, qint newV, qint bits ) {
 	if ( oldV == newV ) {
 		MSG_WriteBits( msg, 0, 1 );
 		return;
@@ -615,7 +628,7 @@ void MSG_WriteDeltaKey( msg_t *msg, qint key, qint oldV, qint newV, qint bits ) 
 	MSG_WriteBits( msg, newV ^ key, bits );
 }
 
-qint	MSG_ReadDeltaKey( msg_t *msg, qint key, qint oldV, qint bits ) {
+static qint	MSG_ReadDeltaKey( msg_t *msg, qint key, qint oldV, qint bits ) {
 	if ( MSG_ReadBits( msg, 1 ) ) {
 		return MSG_ReadBits( msg, bits ) ^ (key & kbitmask[bits - 1]);
 	}
@@ -646,7 +659,7 @@ MSG_WriteDeltaUsercmdKey
 =====================
 */
 void MSG_WriteDeltaUsercmdKey( msg_t *msg, qint key, const usercmd_t *from, usercmd_t *to ) {
-	if ( to->serverTime - from->serverTime < 256 ) {
+	if ( (unsigned)(to->serverTime - from->serverTime) < 256 ) {
 		MSG_WriteBits( msg, 1, 1 );
 		MSG_WriteBits( msg, to->serverTime - from->serverTime, 8 );
 	} else {
@@ -841,7 +854,7 @@ void MSG_WriteDeltaEntity( msg_t *msg, const entityState_t *from, const entitySt
 	const netField_t	*field;
 	qint			trunc;
 	float		fullFloat;
-	qint			*fromF, *toF;
+	const qint			*fromF, *toF;
 
 	numFields = ARRAY_LEN(entityStateFields);
 
@@ -862,11 +875,11 @@ void MSG_WriteDeltaEntity( msg_t *msg, const entityState_t *from, const entitySt
 	}
 
 	if ( to->number < 0 || to->number >= MAX_GENTITIES ) {
-		Com_Error (ERR_FATAL, "MSG_WriteDeltaEntity: Bad entity number: %i", to->number );
+		Com_Error (ERR_DROP, "MSG_WriteDeltaEntity: Bad entity number: %i", to->number );
 	}
 
 	lc = 0;
-	// build the change vector as bytes so it is endien independent
+	// build the change vector as bytes so it is endian independent
 	for ( i = 0, field = entityStateFields ; i < numFields ; i++, field++ ) {
 		fromF = (qint *)( (byte *)from + field->offset );
 		toF = (qint *)( (byte *)to + field->offset );
@@ -907,7 +920,7 @@ void MSG_WriteDeltaEntity( msg_t *msg, const entityState_t *from, const entitySt
 
 		if ( field->bits == 0 ) {
 			// float
-			fullFloat = *(float *)toF;
+			fullFloat = *(const float *)toF;
 			trunc = (qint)fullFloat;
 
 			if (fullFloat == 0.0f) {
@@ -953,7 +966,8 @@ void MSG_ReadDeltaEntity( msg_t *msg, const entityState_t *from, entityState_t *
 	qint			i, lc;
 	qint			numFields;
 	const netField_t	*field;
-	qint			*fromF, *toF;
+	const qint *fromF;
+	qint *toF;
 	qint			print;
 	qint			trunc;
 	qint			startBit, endBit;
@@ -999,7 +1013,7 @@ void MSG_ReadDeltaEntity( msg_t *msg, const entityState_t *from, entityState_t *
 
 #if !defined(DEDICATED)
 	// shownet 2/3 will interleave with other printed info, -1 will
-	// just print the delta records`
+	// just print the delta records
 	if ( cl_shownet && (cl_shownet->integer >= 2 || cl_shownet->integer == -2) ) {
 		print = 1;
 		Com_Printf( "%3i: #%-3i ", msg->readcount, to->number );
@@ -1011,7 +1025,7 @@ void MSG_ReadDeltaEntity( msg_t *msg, const entityState_t *from, entityState_t *
 #endif
 
 	for ( i = 0, field = entityStateFields ; i < lc ; i++, field++ ) {
-		fromF = (qint *)( (byte *)from + field->offset );
+		fromF = (const qint *)( (const byte *)from + field->offset );
 		toF = (qint *)( (byte *)to + field->offset );
 
 		if ( ! MSG_ReadBits( msg, 1 ) ) {
@@ -1391,8 +1405,8 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, const playerState_t *from, const pla
 
 	lc = 0;
 	for ( i = 0, field = playerStateFields ; i < numFields ; i++, field++ ) {
-		fromF = (qint *)( (byte *)from + field->offset );
-		toF = (qint *)( (byte *)to + field->offset );
+		fromF = (const qint *)( (byte *)from + field->offset );
+		toF = (const qint *)( (byte *)to + field->offset );
 		if ( *fromF != *toF ) {
 			lc = i+1;
 		}
@@ -1401,8 +1415,8 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, const playerState_t *from, const pla
 	MSG_WriteByte( msg, lc );	// # of changes
 
 	for ( i = 0, field = playerStateFields ; i < lc ; i++, field++ ) {
-		fromF = (qint *)( (byte *)from + field->offset );
-		toF = (qint *)( (byte *)to + field->offset );
+		fromF = (const qint *)( (byte *)from + field->offset );
+		toF = (const qint *)( (byte *)to + field->offset );
 
 		if ( *fromF == *toF ) {
 			MSG_WriteBits( msg, 0, 1 );	// no change
@@ -1414,7 +1428,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, const playerState_t *from, const pla
 
 		if ( field->bits == 0 ) {
 			// float
-			fullFloat = *(float *)toF;
+			fullFloat = *(const float *)toF;
 			trunc = (qint)fullFloat;
 
 			if ( trunc == fullFloat && trunc + FLOAT_INT_BIAS >= 0 && 
