@@ -412,7 +412,7 @@ SV_DemoStartPlayback(void)
   qint i;
   qint clients;
   qint count;
-  qchar *s;
+  const qchar *s;
 
   MSG_Init(&msg, buf, sizeof(buf));
   //get demo header

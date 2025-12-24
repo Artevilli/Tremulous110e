@@ -99,7 +99,7 @@ qint		MSG_ReadByte (msg_t *sb);
 qint		MSG_ReadShort (msg_t *sb);
 qint		MSG_ReadLong (msg_t *sb);
 float	MSG_ReadFloat (msg_t *sb);
-qchar	*MSG_ReadString (msg_t *sb);
+const qchar *MSG_ReadString (msg_t *sb);
 qchar	*MSG_ReadBigString (msg_t *sb);
 qchar	*MSG_ReadStringLine (msg_t *sb);
 float	MSG_ReadAngle16 (msg_t *sb);

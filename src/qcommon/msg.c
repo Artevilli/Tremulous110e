@@ -446,7 +446,7 @@ float MSG_ReadFloat( msg_t *msg ) {
 	return dat.f;	
 }
 
-qchar *MSG_ReadString( msg_t *msg ) {
+const qchar *MSG_ReadString( msg_t *msg ) {
 	static qchar	string[MAX_STRING_CHARS];
 	qint		l,c;
 	
@@ -1077,6 +1077,9 @@ void MSG_ReadDeltaEntity( msg_t *msg, const entityState_t *from, entityState_t *
         {
           Com_Error(ERR_DROP, "invalid entityState field count");
         }
+
+        to->number = number;
+
 #if !defined(DEDICATED)
 	// shownet 2/3 will interleave with other printed info, -1 will
 	// just print the delta records`
@@ -1089,7 +1092,6 @@ void MSG_ReadDeltaEntity( msg_t *msg, const entityState_t *from, entityState_t *
 #else
         print = 0;
 #endif
-	to->number = number;
 
 	for ( i = 0, field = entityStateFields ; i < lc ; i++, field++ ) {
 		fromF = (qint *)( (byte *)from + field->offset );
