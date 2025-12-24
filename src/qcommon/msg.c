@@ -453,7 +453,7 @@ const qchar *MSG_ReadString( msg_t *msg ) {
 	l = 0;
 	do {
 		c = MSG_ReadByte(msg);		// use ReadByte so -1 is out of bounds
-		if ( c <= 0 /*c == -1 || c == 0*/ ) {
+		if ( c <= 0 /*c == -1 || c == 0*/ || l >= sizeof(string) - 1 ) {
 			break;
 		}
 		// translate all fmt spec to avoid crash bugs
@@ -465,23 +465,22 @@ const qchar *MSG_ReadString( msg_t *msg ) {
 			c = '.';
 		}
 
-		string[l] = c;
-		l++;
-	} while (l < sizeof(string)-1);
+		string[l++] = c;
+	} while(qtrue);
 	
 	string[l] = '\0';
 	
 	return string;
 }
 
-qchar *MSG_ReadBigString( msg_t *msg ) {
+const qchar *MSG_ReadBigString( msg_t *msg ) {
 	static qchar	string[BIG_INFO_STRING];
 	qint		l,c;
 	
 	l = 0;
 	do {
 		c = MSG_ReadByte(msg);		// use ReadByte so -1 is out of bounds
-		if ( c <= 0 /*c == -1 || c == 0*/ ) {
+		if ( c <= 0 /*c == -1 || c == 0*/ || l >= sizeof(string) - 1 ) {
 			break;
 		}
 		// translate all fmt spec to avoid crash bugs
@@ -493,23 +492,22 @@ qchar *MSG_ReadBigString( msg_t *msg ) {
 			c = '.';
 		}
 
-		string[l] = c;
-		l++;
-	} while (l < sizeof(string)-1);
+		string[l++] = c;
+	} while(qtrue);
 	
 	string[l] = '\0';
 	
 	return string;
 }
 
-qchar *MSG_ReadStringLine( msg_t *msg ) {
+const qchar *MSG_ReadStringLine( msg_t *msg ) {
 	static qchar	string[MAX_STRING_CHARS];
 	qint		l,c;
 
 	l = 0;
 	do {
-		c = MSG_ReadByte(msg);		// use ReadByte so -1 is out of bounds
-		if (c <= 0 /*c == -1 || c == 0*/ || c == '\n') {
+		c = MSG_ReadByte(msg); // use ReadByte so -1 is out of bounds
+		if (c <= 0 /*c == -1 || c == 0*/ || c == '\n' || l >= sizeof(string) - 1) {
 			break;
 		}
 		// translate all fmt spec to avoid crash bugs
@@ -521,9 +519,8 @@ qchar *MSG_ReadStringLine( msg_t *msg ) {
 			c = '.';
 		}
 
-		string[l] = c;
-		l++;
-	} while (l < sizeof(string)-1);
+		string[l++] = c;
+	} while(qtrue);
 	
 	string[l] = '\0';
 	
@@ -568,13 +565,6 @@ MSG_HashKey(const qchar *string, const qint maxlen)
   return hash;
 }
 
-/*
-=============================================================================
-
-delta functions
-  
-=============================================================================
-*/
 #if !defined(DEDICATED)
 extern cvar_t *cl_shownet;
 
@@ -582,42 +572,6 @@ extern cvar_t *cl_shownet;
 #else
 #define LOG(x)
 #endif
-void MSG_WriteDelta( msg_t *msg, qint oldV, qint newV, qint bits ) {
-	if ( oldV == newV ) {
-		MSG_WriteBits( msg, 0, 1 );
-		return;
-	}
-	MSG_WriteBits( msg, 1, 1 );
-	MSG_WriteBits( msg, newV, bits );
-}
-
-qint	MSG_ReadDelta( msg_t *msg, qint oldV, qint bits ) {
-	if ( MSG_ReadBits( msg, 1 ) ) {
-		return MSG_ReadBits( msg, bits );
-	}
-	return oldV;
-}
-
-void MSG_WriteDeltaFloat( msg_t *msg, float oldV, float newV ) {
-        floatint_t fi;
-	if ( oldV == newV ) {
-		MSG_WriteBits( msg, 0, 1 );
-		return;
-	}
-	fi.f = newV;
-	MSG_WriteBits( msg, 1, 1 );
-	MSG_WriteBits( msg, fi.i, 32 );
-}
-
-float MSG_ReadDeltaFloat( msg_t *msg, float oldV ) {
-	if ( MSG_ReadBits( msg, 1 ) ) {
-		floatint_t fi;
-
-		fi.i = MSG_ReadBits( msg, 32 );
-		return fi.f;
-	}
-	return oldV;
-}
 
 /*
 =============================================================================
@@ -627,7 +581,7 @@ delta functions with keys
 =============================================================================
 */
 
-qint kbitmask[32] = {
+static const qint kbitmask[32] = {
 	0x00000001, 0x00000003, 0x00000007, 0x0000000F,
 	0x0000001F,	0x0000003F,	0x0000007F,	0x000000FF,
 	0x000001FF,	0x000003FF,	0x000007FF,	0x00000FFF,
@@ -654,28 +608,6 @@ qint	MSG_ReadDeltaKey( msg_t *msg, qint key, qint oldV, qint bits ) {
 	return oldV;
 }
 
-void MSG_WriteDeltaKeyFloat( msg_t *msg, qint key, float oldV, float newV ) {
-        floatint_t fi;
-	if ( oldV == newV ) {
-		MSG_WriteBits( msg, 0, 1 );
-		return;
-	}
-	fi.f = newV;
-	MSG_WriteBits( msg, 1, 1 );
-	MSG_WriteBits( msg, fi.i ^ key, 32 );
-}
-
-float MSG_ReadDeltaKeyFloat( msg_t *msg, qint key, float oldV ) {
-	if ( MSG_ReadBits( msg, 1 ) ) {
-		floatint_t fi;
-
-		fi.i = MSG_ReadBits( msg, 32 ) ^ key;
-		return fi.f;
-	}
-	return oldV;
-}
-
-
 /*
 ============================================================================
 
@@ -699,52 +631,7 @@ usercmd_t communication
 MSG_WriteDeltaUsercmd
 =====================
 */
-void MSG_WriteDeltaUsercmd( msg_t *msg, usercmd_t *from, usercmd_t *to ) {
-	if ( to->serverTime - from->serverTime < 256 ) {
-		MSG_WriteBits( msg, 1, 1 );
-		MSG_WriteBits( msg, to->serverTime - from->serverTime, 8 );
-	} else {
-		MSG_WriteBits( msg, 0, 1 );
-		MSG_WriteBits( msg, to->serverTime, 32 );
-	}
-	MSG_WriteDelta( msg, from->angles[0], to->angles[0], 16 );
-	MSG_WriteDelta( msg, from->angles[1], to->angles[1], 16 );
-	MSG_WriteDelta( msg, from->angles[2], to->angles[2], 16 );
-	MSG_WriteDelta( msg, from->forwardmove, to->forwardmove, 8 );
-	MSG_WriteDelta( msg, from->rightmove, to->rightmove, 8 );
-	MSG_WriteDelta( msg, from->upmove, to->upmove, 8 );
-	MSG_WriteDelta( msg, from->buttons, to->buttons, 16 );
-	MSG_WriteDelta( msg, from->weapon, to->weapon, 8 );
-}
-
-
-/*
-=====================
-MSG_ReadDeltaUsercmd
-=====================
-*/
-void MSG_ReadDeltaUsercmd( msg_t *msg, usercmd_t *from, usercmd_t *to ) {
-	if ( MSG_ReadBits( msg, 1 ) ) {
-		to->serverTime = from->serverTime + MSG_ReadBits( msg, 8 );
-	} else {
-		to->serverTime = MSG_ReadBits( msg, 32 );
-	}
-	to->angles[0] = MSG_ReadDelta( msg, from->angles[0], 16);
-	to->angles[1] = MSG_ReadDelta( msg, from->angles[1], 16);
-	to->angles[2] = MSG_ReadDelta( msg, from->angles[2], 16);
-	to->forwardmove = MSG_ReadDelta( msg, from->forwardmove, 8);
-	to->rightmove = MSG_ReadDelta( msg, from->rightmove, 8);
-	to->upmove = MSG_ReadDelta( msg, from->upmove, 8);
-	to->buttons = MSG_ReadDelta( msg, from->buttons, 16);
-	to->weapon = MSG_ReadDelta( msg, from->weapon, 8);
-}
-
-/*
-=====================
-MSG_WriteDeltaUsercmd
-=====================
-*/
-void MSG_WriteDeltaUsercmdKey( msg_t *msg, qint key, usercmd_t *from, usercmd_t *to ) {
+void MSG_WriteDeltaUsercmdKey( msg_t *msg, qint key, const usercmd_t *from, usercmd_t *to ) {
 	if ( to->serverTime - from->serverTime < 256 ) {
 		MSG_WriteBits( msg, 1, 1 );
 		MSG_WriteBits( msg, to->serverTime - from->serverTime, 8 );
@@ -916,8 +803,7 @@ If force is not set, then nothing at all will be generated if the entity is
 identical, under the assumption that the in-order delta code will catch it.
 ==================
 */
-void MSG_WriteDeltaEntity( msg_t *msg, const entityState_t *from, const entityState_t *to, 
-						   qbool force ) {
+void MSG_WriteDeltaEntity( msg_t *msg, const entityState_t *from, const entityState_t *to, qbool force ) {
 	qint			i, lc;
 	qint			numFields;
 	const netField_t	*field;
@@ -1031,8 +917,7 @@ If the delta removes the entity, entityState_t->number will be set to MAX_GENTIT
 Can go from either a baseline or a previous packet_entity
 ==================
 */
-void MSG_ReadDeltaEntity( msg_t *msg, const entityState_t *from, entityState_t *to, 
-						 qint number) {
+void MSG_ReadDeltaEntity( msg_t *msg, const entityState_t *from, entityState_t *to, qint number) {
 	qint			i, lc;
 	qint			numFields;
 	const netField_t	*field;

@@ -100,15 +100,12 @@ qint		MSG_ReadShort (msg_t *sb);
 qint		MSG_ReadLong (msg_t *sb);
 float	MSG_ReadFloat (msg_t *sb);
 const qchar *MSG_ReadString (msg_t *sb);
-qchar	*MSG_ReadBigString (msg_t *sb);
-qchar	*MSG_ReadStringLine (msg_t *sb);
+const qchar *MSG_ReadBigString (msg_t *sb);
+const qchar *MSG_ReadStringLine (msg_t *sb);
 float	MSG_ReadAngle16 (msg_t *sb);
 void	MSG_ReadData (msg_t *sb, void *buffer, qint size);
 
-void MSG_WriteDeltaUsercmd( msg_t *msg, struct usercmd_s *from, struct usercmd_s *to );
-void MSG_ReadDeltaUsercmd( msg_t *msg, struct usercmd_s *from, struct usercmd_s *to );
-
-void MSG_WriteDeltaUsercmdKey( msg_t *msg, qint key, usercmd_t *from, usercmd_t *to );
+void MSG_WriteDeltaUsercmdKey( msg_t *msg, qint key, const usercmd_t *from, usercmd_t *to );
 void MSG_ReadDeltaUsercmdKey( msg_t *msg, qint key, const usercmd_t *from, usercmd_t *to );
 
 void MSG_WriteDeltaEntity( msg_t *msg, const entityState_t *from, const entityState_t *to
