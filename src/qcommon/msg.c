@@ -448,7 +448,7 @@ float MSG_ReadFloat( msg_t *msg ) {
 
 const qchar *MSG_ReadString( msg_t *msg ) {
 	static qchar	string[MAX_STRING_CHARS];
-	qint		l,c;
+	qint l, c;
 	
 	l = 0;
 	do {
@@ -461,7 +461,7 @@ const qchar *MSG_ReadString( msg_t *msg ) {
 			c = '.';
 		}
 		// don't allow higher ascii values
-		if ( c > 127 ) {
+		else if ( c > 127 ) {
 			c = '.';
 		}
 
@@ -488,7 +488,7 @@ const qchar *MSG_ReadBigString( msg_t *msg ) {
 			c = '.';
 		}
 		// don't allow higher ascii values
-		if ( c > 127 ) {
+		else if ( c > 127 ) {
 			c = '.';
 		}
 
@@ -515,7 +515,7 @@ const qchar *MSG_ReadStringLine( msg_t *msg ) {
 			c = '.';
 		}
 		// don't allow higher ascii values
-		if ( c > 127 ) {
+		else if ( c > 127 ) {
 			c = '.';
 		}
 
