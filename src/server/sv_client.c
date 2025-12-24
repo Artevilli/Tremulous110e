@@ -4426,7 +4426,7 @@ SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
     return;
   }
 #else
-#if 0  //Chey: FIXME: this causes stock 1.1 to get stuck in an infinite gamestate resend loop specifically after downloading completes
+#if 0 //Chey: FIXME: this causes clients to get stuck in an infinite gamestate resend loop specifically after server downloading completes
   if (cl->gamestateAck != GSA_ACKED)
   {
     //late check for gamestate resend

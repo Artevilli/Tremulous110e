@@ -598,7 +598,7 @@ SV_SpawnServer(const qchar *server, qbool killBots)
   SV_ShutdownGameProgs();
 
   Com_Printf("------ Server Initialization ------\n");
-  Com_Printf("Server: %s\n",server);
+  Com_Printf("Server: %s\n", server);
 #if !defined(DEDICATED)
   //if not running a dedicated server CL_MapLoading will connect the client to the server
   //also print some status stuff
@@ -617,6 +617,9 @@ SV_SpawnServer(const qchar *server, qbool killBots)
 
   //clear collision map data
   CM_ClearMap();
+
+  //timescale can be updated before SV_Frame() and cause division-by-zero in SV_RateMsec()
+  Cvar_CheckRange(com_timescale, "0.001", NULL, CV_FLOAT);
 
   //init client structures and svs.numSnapshotEntities 
   if (!Cvar_VariableValue("sv_running"))
@@ -642,8 +645,8 @@ SV_SpawnServer(const qchar *server, qbool killBots)
   FS_ClearPakReferences(0);
 
   //allocate the snapshot entities on the hunk
-  svs.snapshotEntities = Hunk_Alloc(sizeof(entityState_t)*svs.numSnapshotEntities, h_high);
-  Com_Memset(svs.snapshotEntities, 0, sizeof(entityState_t) * svs.numSnapshotEntities);
+  svs.snapshotEntities = Hunk_Alloc(sizeof(entityState_t) * svs.numSnapshotEntities, h_high);
+  //Com_Memset(svs.snapshotEntities, 0, sizeof(entityState_t) * svs.numSnapshotEntities);
 
   //initialize snapshot storage
   SV_InitSnapshotStorage();
@@ -727,6 +730,9 @@ SV_SpawnServer(const qchar *server, qbool killBots)
   sv.serverId = com_frameTime;
   sv.restartedServerId = sv.serverId;
   Cvar_Set("sv_serverid", va(NULL, "%i", sv.serverId));
+
+  //clear physics interaction links
+  SV_ClearWorld();
 	
   //media configstring setting should be done during
   //the loading stage, so connected clients don't have
@@ -741,8 +747,8 @@ SV_SpawnServer(const qchar *server, qbool killBots)
   //run a few frames to allow everything to settle
   for(i = 0;i < 3; i++)
   {
+    Cbuf_Wait();
     sv.time += 100;
-    svs.time += 100;
 #if defined(USE_JAVA)
     Java_G_RunFrame(sv.time);
 #else
@@ -809,14 +815,15 @@ SV_SpawnServer(const qchar *server, qbool killBots)
   }	
 
   //run another frame to allow things to look at all the players
+  Cbuf_Wait();
   sv.time += 100;
-  svs.time += 100;
 #if defined(USE_JAVA)
   Java_G_RunFrame(sv.time);
 #else
   VM_Call(sv.gvm, GAME_RUN_FRAME, sv.time);
 #endif
   SV_BotFrame(sv.time);
+  svs.time += 100;
 
   //if a dedicated pure server we need to touch the cgame/ui because it could be in a
   //seperate pk3 file and the client will need to load the latest cgame/ui.qvms
@@ -901,6 +908,7 @@ SV_SpawnServer(const qchar *server, qbool killBots)
 
   //send a heartbeat now so the master will get up to date info
   SV_Heartbeat_f();
+
   Hunk_SetMark();
 
   for(client = svs.clients;ARRAY_INDEX(svs.clients, client) < sv.maxclients;client++)

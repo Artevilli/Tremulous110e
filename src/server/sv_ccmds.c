@@ -378,8 +378,8 @@ SV_MapRestart_f(void)
 
   //toggle the server bit so clients can detect that a map_restart has happened
   svs.snapFlagServerBit ^= SNAPFLAG_SERVERCOUNT;
-  //generate a new restartedserverid	
-  //TTimo - don't update restartedserverId there, otherwise we won't deal correctly with multiple map_restart
+
+  //generate a new restartedserverid
   sv.restartedServerId = com_frameTime;
 
   //if a map_restart occurs while a client is changing maps, we need
@@ -396,6 +396,7 @@ SV_MapRestart_f(void)
   //reset all the vm data in place without changing memory allocation note that we do NOT set sv.state = SS_LOADING, so configstrings that had been changed from their default values will generate broadcast updates
   sv.state = SS_LOADING;
   sv.restarting = qtrue;
+
   SV_RestartGameProgs();
 
   //run a few frames to allow everything to settle
@@ -413,7 +414,7 @@ SV_MapRestart_f(void)
   sv.state = SS_GAME;
   sv.restarting = qfalse;
 
-  // connect and begin all the clients
+  //connect and begin all the clients
   for(i = 0;i < sv.maxclients;i++)
   {
     client = &svs.clients[i];
@@ -435,6 +436,7 @@ SV_MapRestart_f(void)
 
     //add the map_restart command
     SV_AddServerCommand(client, "map_restart\n");
+
     //connect the client again, without the firstTime flag
 #if defined(USE_JAVA)
     denied = Java_G_ClientConnect(i, qfalse, isBot);
@@ -454,11 +456,13 @@ SV_MapRestart_f(void)
       continue;
     }
 
-    client->state = CS_ACTIVE;
-    SV_ClientEnterWorld(client);
+    if (client->state == CS_ACTIVE)
+    {
+      SV_ClientEnterWorld(client);
+    }
   }
 
-  // run another frame to allow things to look at all the players
+  //run another frame to allow things to look at all the players
   Cbuf_Wait();
   sv.time += 100;
 #if defined(USE_JAVA)
