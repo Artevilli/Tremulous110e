@@ -324,56 +324,70 @@ void MSG_WriteFloat( msg_t *sb, float f ) {
 	MSG_WriteBits( sb, dat.i, 32 );
 }
 
-void MSG_WriteString( msg_t *sb, const qchar *s ) {
-	if ( !s ) {
-		MSG_WriteData (sb, "", 1);
-	} else {
-		qint		l,i;
-		qchar	string[MAX_STRING_CHARS];
+void
+MSG_WriteString(msg_t *sb, const qchar *s)
+{
+  qint l;
+  qint i;
+  qchar v;
 
-		l = strlen( s );
-		if ( l >= MAX_STRING_CHARS ) {
-			Com_Printf( "MSG_WriteString: MAX_STRING_CHARS" );
-			MSG_WriteData (sb, "", 1);
-			return;
-		}
-		Q_strncpyz( string, s, sizeof( string ) );
+  l = s ? strlen(s):0;
 
-		// get rid of 0x80+ chars, because old clients don't like them
-		for ( i = 0 ; i < l ; i++ ) {
-			if ( ((byte *)string)[i] > 127 ) {
-				string[i] = '.';
-			}
-		}
+  if (l >= MAX_STRING_CHARS)
+  {
+    Com_Printf("MSG_WriteString: MAX_STRING_CHARS\n");
+    l = 0;
+  }
 
-		MSG_WriteData (sb, string, l+1);
-	}
+  for(i = 0;i < l;i++)
+  {
+    //get rid ox 0x80+ and '%' chars, because old clients don't like them
+    if (s[i] & 0x80 || s[i] == '%')
+    {
+      v = '.';
+    }
+    else
+    {
+      v = s[i];
+    }
+
+    MSG_WriteChar(sb, v);
+  }
+
+  MSG_WriteChar(sb, '\0');
 }
 
-void MSG_WriteBigString( msg_t *sb, const qchar *s ) {
-	if ( !s ) {
-		MSG_WriteData (sb, "", 1);
-	} else {
-		qint		l,i;
-		qchar	string[BIG_INFO_STRING];
+void
+MSG_WriteBigString(msg_t *sb, const char *s)
+{
+  qint l;
+  qint i;
+  qchar v;
 
-		l = strlen( s );
-		if ( l >= BIG_INFO_STRING ) {
-			Com_Printf( "MSG_WriteString: BIG_INFO_STRING" );
-			MSG_WriteData (sb, "", 1);
-			return;
-		}
-		Q_strncpyz( string, s, sizeof( string ) );
+  l = s ? strlen(s):0;
 
-		// get rid of 0x80+ chars, because old clients don't like them
-		for ( i = 0 ; i < l ; i++ ) {
-			if ( ((byte *)string)[i] > 127 ) {
-				string[i] = '.';
-			}
-		}
+  if (l >= BIG_INFO_STRING)
+  {
+    Com_Printf("MSG_WriteBigString: BIG_INFO_STRING\n");
+    l = 0; 
+  }
 
-		MSG_WriteData (sb, string, l+1);
-	}
+  for(i = 0;i < l;i++)
+  {
+    //get rid of 0x80+ and '%' chars, because old clients don't like them
+    if (s[i] & 0x80 || s[i] == '%')
+    {
+      v = '.';
+    }
+    else
+    {
+      v = s[i];
+    }
+
+    MSG_WriteChar(sb, v);
+  }
+
+  MSG_WriteChar(sb, '\0');
 }
 
 void MSG_WriteAngle( msg_t *sb, float f ) {
@@ -628,7 +642,7 @@ usercmd_t communication
 
 /*
 =====================
-MSG_WriteDeltaUsercmd
+MSG_WriteDeltaUsercmdKey
 =====================
 */
 void MSG_WriteDeltaUsercmdKey( msg_t *msg, qint key, const usercmd_t *from, usercmd_t *to ) {
@@ -665,7 +679,7 @@ void MSG_WriteDeltaUsercmdKey( msg_t *msg, qint key, const usercmd_t *from, user
 
 /*
 =====================
-MSG_ReadDeltaUsercmd
+MSG_ReadDeltaUsercmdKey
 =====================
 */
 void MSG_ReadDeltaUsercmdKey( msg_t *msg, qint key, const usercmd_t *from, usercmd_t *to ) {
@@ -680,8 +694,26 @@ void MSG_ReadDeltaUsercmdKey( msg_t *msg, qint key, const usercmd_t *from, userc
 		to->angles[1] = MSG_ReadDeltaKey( msg, key, from->angles[1], 16);
 		to->angles[2] = MSG_ReadDeltaKey( msg, key, from->angles[2], 16);
 		to->forwardmove = MSG_ReadDeltaKey( msg, key, from->forwardmove, 8);
+
+		if (to->forwardmove == -128)
+		{
+		  to->forwardmove = -127;
+		}
+
 		to->rightmove = MSG_ReadDeltaKey( msg, key, from->rightmove, 8);
+
+		if (to->rightmove == -128)
+		{
+		  to->rightmove = -127;
+		}
+
 		to->upmove = MSG_ReadDeltaKey( msg, key, from->upmove, 8);
+
+		if (to->upmove == -128)
+		{
+		  to->upmove = -127;
+		}
+
 		to->buttons = MSG_ReadDeltaKey( msg, key, from->buttons, 16);
 		to->weapon = MSG_ReadDeltaKey( msg, key, from->weapon, 8);
 	} else {
