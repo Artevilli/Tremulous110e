@@ -649,7 +649,7 @@ void MSG_WriteDeltaKey( msg_t *msg, qint key, qint oldV, qint newV, qint bits ) 
 
 qint	MSG_ReadDeltaKey( msg_t *msg, qint key, qint oldV, qint bits ) {
 	if ( MSG_ReadBits( msg, 1 ) ) {
-		return MSG_ReadBits( msg, bits ) ^ (key & kbitmask[bits]);
+		return MSG_ReadBits( msg, bits ) ^ (key & kbitmask[bits - 1]);
 	}
 	return oldV;
 }
