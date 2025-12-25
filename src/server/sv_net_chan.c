@@ -121,7 +121,7 @@ SV_Netchan_Decode(client_t *client, msg_t *msg)
   sbit = msg->bit;
   soob = msg->oob;
         
-  msg->oob = 0;
+  msg->oob = qfalse;
         
   serverId = MSG_ReadLong(msg);
   messageAcknowledge = MSG_ReadLong(msg);

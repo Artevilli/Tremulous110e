@@ -87,7 +87,7 @@ SV_BotFreeClient(qint clientNum)
 
   cl = &svs.clients[clientNum];
   cl->state = CS_FREE;
-  cl->name[0] = 0;
+  cl->name[0] = '\0';
 
   if (cl->gentity)
   {

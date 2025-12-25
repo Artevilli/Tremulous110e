@@ -615,7 +615,7 @@ SV_GameSystemCalls(intptr_t *args)
     G_GET_ENTITY_TOKEN:
       qchar *s;
 
-      s = (qchar*)COM_Parse(&sv.entityParsePoint);
+      s = (qchar *)COM_Parse(&sv.entityParsePoint);
       //Q_strncpyz(VMA(1), s, args[2]);
       //we can't use our optimized Q_strncpyz() function
       //because of uninitialized memory bug in defrag mod

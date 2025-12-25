@@ -1119,10 +1119,16 @@ Q_AddTime(qtime_t *qtime, unsigned qint n)
   min = qtime->tm_min;
 
   //add minutes
-  n += min;  min  = n % 60; n -= min;  n /= 60; //hours
+  n += min;
+  min  = n % 60;
+  n -= min;
+  n /= 60; //hours
 
   //add hours
-  n += hour; hour = n % 24; n -= hour; n /= 24; //days
+  n += hour;
+  hour = n % 24;
+  n -= hour;
+  n /= 24; //days
 
   //add days
   if (IS_LEAP(year))
@@ -1198,7 +1204,8 @@ Q_AddDate(qtime_t *qtime, qint n)
     md[1] = 28;
   }
 
-  n += month; month = n % 12;
+  n += month;
+  month = n % 12;
   n -= month;
   n /= 12;
   year += n;
@@ -1348,7 +1355,6 @@ SV_AddFilter_f(void)
             Q_AddTime(&t, n * 24 * 60);
             break;
 
-
           case
           'W':
 
@@ -1356,7 +1362,6 @@ SV_AddFilter_f(void)
           'w':
             Q_AddTime(&t, n * 24 * 7 * 60);
             break;
-
 
           case
           'M':

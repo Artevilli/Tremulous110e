@@ -69,20 +69,33 @@ generateHashValue(const qchar *fname)
 
 /*
 ============
-Cvar_ValidateString
+Cvar_ValidateName
 ============
 */
 static qbool
-Cvar_ValidateString(const qchar *s)
+Cvar_ValidateName(const qchar *name)
 {
+  const qchar *s;
   qint c;
+
+  if (!name)
+  {
+    return qfalse;
+  }
+
+  s = name;
 
   while((c = *s++) != '\0')
   {
-    if (c == '\\' || c == '\"' || c == ';')
+    if (c == '\\' || c == '\"' || c == ';' || c == '%' || c <= ' ' || c >= '~')
     {
       return qfalse;
     }
+  }
+
+  if ((s - name) >= MAX_STRING_CHARS)
+  {
+    return qfalse;
   }
 
   return qtrue;
@@ -297,7 +310,7 @@ Cvar_Validate(cvar_t * var, const qchar *value, qbool warn)
     {
       if (warn)
       {
-        Com_Printf(S_COLOR_YELLOW "WARNING: cvar '%s' must be numeric", var->name);
+        Com_Printf("WARNING: cvar '%s' must be numeric", var->name);
       }
 
       limit = var->resetString;
@@ -310,7 +323,7 @@ Cvar_Validate(cvar_t * var, const qchar *value, qbool warn)
         {
           if (warn)
           {
-            Com_Printf(S_COLOR_YELLOW "WARNING: cvar '%s' must be integral", var->name);
+            Com_Printf("WARNING: cvar '%s' must be integral", var->name);
           }
 
           sprintf(intbuf, "%i", Q_atoi(value));
@@ -348,14 +361,14 @@ Cvar_Validate(cvar_t * var, const qchar *value, qbool warn)
         {
           if (value == intbuf) //cast to integer
           {
-            Com_Printf(S_COLOR_YELLOW " and");
+            Com_Printf(" and");
           }
           else
           {
-            Com_Printf(S_COLOR_YELLOW "WARNING: cvar '%s'", var->name);
+            Com_Printf("WARNING: cvar '%s'", var->name);
           }
 
-          Com_Printf(S_COLOR_YELLOW " is out of range (%s '%s')", limit == var->mins ? "min":"max", limit);
+          Com_Printf(" is out of range (%s '%s')", limit == var->mins ? "min":"max", limit);
         }
       }
     } //Q_isanumber
@@ -372,15 +385,13 @@ Cvar_Validate(cvar_t * var, const qchar *value, qbool warn)
 
     if (warn)
     {
-      Com_Printf(S_COLOR_YELLOW ", setting to %s\n", limit);
+      Com_Printf(", setting to %s\n", limit);
     }
 
     return limit;
   }
-  else
-  {
-    return value;
-  }
+
+  return value;
 }
 
 
@@ -404,7 +415,7 @@ Cvar_Get(const qchar *var_name, const qchar *var_value, qint flags)
     Com_Error(ERR_FATAL, "Cvar_Get: NULL parameter");
   }
 
-  if (!Cvar_ValidateString(var_name))
+  if (!Cvar_ValidateName(var_name))
   {
     Com_Printf("invalid cvar name string: %s\n", var_name);
     var_name = "BADNAME";
@@ -633,7 +644,7 @@ Cvar_Set2(const qchar *var_name, const qchar *value, qbool force)
 
   //Com_DPrintf("Cvar_Set2: %s %s\n", var_name, value);
 
-  if (!Cvar_ValidateString(var_name))
+  if (!Cvar_ValidateName(var_name))
   {
     Com_Printf("invalid cvar name string: %s\n", var_name);
     var_name = "BADNAME";

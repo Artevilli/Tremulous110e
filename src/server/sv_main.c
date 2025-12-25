@@ -1155,7 +1155,7 @@ SVC_Info(const netadr_t *from)
     }
   }
 
-  infostring[0] = 0;
+  infostring[0] = '\0';
   //echo back the parameter to status. so servers can use it as a challenge to prevent timed spoofed reply packets that add ghost servers
   Info_SetValueForKey(infostring, "challenge", Cmd_Argv(1));
   Info_SetValueForKey(infostring, "protocol", va(NULL, "%i", PROTOCOL_VERSION));
@@ -1564,7 +1564,7 @@ SVC_RemoteCommand(const netadr_t *from, msg_t *msg)
   }
   else
   {
-    remaining[0] = 0;
+    remaining[0] = '\0';
 
     //https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=543 get command directly to avoid quote issues and extract by walking since cmd can fuck up using dumb step by step parsing
     cmd_aux = Cmd_Cmd();
