@@ -3011,6 +3011,8 @@ FS_ResetCacheReferences(void)
 
   for(i = 0;i < ARRAY_LEN(pakHashTable);i++)
   {
+    pak = pakHashTable[i];
+
     while(pak)
     {
       pak->touched = qfalse;
