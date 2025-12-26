@@ -316,12 +316,13 @@ void Netchan_Transmit( netchan_t *chan, qint length, const byte *data ) {
 	MSG_InitOOB (&send, send_buf, sizeof(send_buf));
 
 	MSG_WriteLong( &send, chan->outgoingSequence );
-	chan->outgoingSequence++;
 
 	// send the qport if we are a client
 	if ( chan->sock == NS_CLIENT ) {
 		MSG_WriteShort( &send, qport->integer );
 	}
+
+        chan->outgoingSequence++;
 
 	MSG_WriteData( &send, data, length );
 

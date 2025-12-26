@@ -4357,11 +4357,6 @@ SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
       }
     }
 #endif
-    if (c == clc_EOF)
-    {
-      break;
-    }
-
     if (c != clc_clientCommand)
     {
       break;
