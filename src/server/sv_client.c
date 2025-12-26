@@ -2632,7 +2632,7 @@ SV_WriteDownloadToClient(client_t *cl, msg_t *msg)
   if (cl->download == FS_INVALID_HANDLE)
   {
     //we open the file here
-    if (!(sv_allowDownload->integer & DLF_ENABLE) || (sv_allowDownload->integer & DLF_NO_UDP) || unreferenced || (cl->downloadSize = FS_SV_FOpenFileRead(cl->downloadName, &cl->download)) < 0)
+    if (!(sv_allowDownload->integer & DLF_ENABLE) || (sv_allowDownload->integer & DLF_NO_UDP) || (cl->downloadSize = FS_SV_FOpenFileRead(cl->downloadName, &cl->download)) < 0)
     {
       //cannot auto-download file
       if (!(sv_allowDownload->integer & DLF_ENABLE) || (sv_allowDownload->integer & DLF_NO_UDP))
