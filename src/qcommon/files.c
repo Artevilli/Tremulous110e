@@ -539,7 +539,8 @@ FS_FileLength(FILE *h)
 FS_PakIndexForHandle
 ====================
 */
-qint FS_PakIndexForHandle(fileHandle_t f)
+qint
+FS_PakIndexForHandle(fileHandle_t f)
 {
   if (f <= FS_INVALID_HANDLE || f >= MAX_FILE_HANDLES)
   {

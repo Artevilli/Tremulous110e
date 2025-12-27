@@ -806,22 +806,6 @@ SV_DllSyscall(intptr_t arg, ...)
 #endif
 }
 
-static const qint g_vmMainArgs[GAME_EXPORT_LAST] =
-{
-  4, //GAME_INIT, (qint levelTime, qint randomSee, qint restart);
-  2, //GAME_SHUTDOWN, (qint restart);
-  4, //GAME_CLIENT_CONNECT, (qint clientNum, qbool firstTime, qbool isBot);
-  2, //GAME_CLIENT_BEGIN, (qint clientNum);
-  2, //GAME_CLIENT_USERINFO_CHANGED, (qint clientNum);
-  2, //GAME_CLIENT_DISCONNECT, (qint clientNum);
-  2, //GAME_CLIENT_COMMAND, (qint clientNum);
-  2, //GAME_CLIENT_THINK, (qint clientNum);
-  2, //GAME_RUN_FRAME, (qint levelTime);
-  1, //GAME_CONSOLE_COMMAND, (void);
-  3, //GAME_DEMO_COMMAND, (qint cmd, const qchar *string);
-  2 //BOTAI_START_FRAME, (qint time);
-};
-
 /*
 ===============
 SV_ShutdownGameProgs
@@ -837,7 +821,7 @@ SV_ShutdownGameProgs(void)
     return;
   }
 
-  VM_Call(sv.gvm, GAME_SHUTDOWN, qfalse);
+  VM_Call(sv.gvm, GAME_SHUTDOWN, 1, qfalse);
   VM_Free(sv.gvm);
   sv.gvm = NULL;
   FS_VM_CloseFiles(H_GAME);
@@ -876,7 +860,7 @@ SV_InitGameVM(qbool restart)
 
   //use the current msec count for a random seed
   //init for this gamestate
-  VM_Call(sv.gvm, GAME_INIT, sv.time, Com_Milliseconds(), restart);
+  VM_Call(sv.gvm, GAME_INIT, 3, sv.time, Com_Milliseconds(), restart);
 }
 
 
@@ -896,7 +880,7 @@ SV_RestartGameProgs(void)
     return;
   }
 
-  VM_Call(sv.gvm, GAME_SHUTDOWN, qtrue);
+  VM_Call(sv.gvm, GAME_SHUTDOWN, 1, qtrue);
 
   //do a restart instead of a free
   sv.gvm = VM_Restart(sv.gvm);
@@ -925,12 +909,12 @@ SV_InitGameProgs(void)
 {
 #if defined(USE_LLVM)
   //load the dll or bytecode
-  sv.gvm = VM_Create("game", SV_GameSystemCalls, SV_DllSyscall, g_vmMainArgs, Cvar_VariableValue("vm_game"));
+  sv.gvm = VM_Create("game", SV_GameSystemCalls, SV_DllSyscall, Cvar_VariableValue("vm_game"));
 #else
   //load the dll
   //sv.gvm = VM_Create("game", SV_GameSystemCalls, VMI_NATIVE);
   //load the dll or bytecode
-  sv.gvm = VM_Create(VM_GAME, SV_GameSystemCalls, SV_DllSyscall, g_vmMainArgs, Cvar_VariableValue("vm_game"));
+  sv.gvm = VM_Create(VM_GAME, SV_GameSystemCalls, SV_DllSyscall, Cvar_VariableValue("vm_game"));
 #endif
 
   if (!sv.gvm)
@@ -960,7 +944,7 @@ SV_GameCommand(void)
     return qfalse;
   }
 
-  return VM_Call(sv.gvm, GAME_CONSOLE_COMMAND);
+  return VM_Call(sv.gvm, GAME_CONSOLE_COMMAND, 0);
 }
 
 #endif //!defined(USE_JAVA)

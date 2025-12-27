@@ -1484,17 +1484,15 @@ VM_Restart(vm_t *vm)
   {
     syscall_t systemCall;
     dllSyscall_t dllSyscall;
-    const qint *vmMainArgs;
     vmIndex_t index;
 
     index = vm->index;
     systemCall = vm->systemCall;
     dllSyscall = vm->dllSyscall;
-    vmMainArgs = vm->vmMainArgs;
 
     VM_Free(vm);
 
-    vm = VM_Create(index, systemCall, dllSyscall, vmMainArgs, VMI_NATIVE);
+    vm = VM_Create(index, systemCall, dllSyscall, VMI_NATIVE);
     return vm;
   }
 
@@ -1522,7 +1520,7 @@ it will attempt to load as a system dll
 ================
 */
 vm_t *
-VM_Create(vmIndex_t index, syscall_t systemCalls, dllSyscall_t dllSyscalls, const qint *vmMainArgs, vmInterpret_t interpret)
+VM_Create(vmIndex_t index, syscall_t systemCalls, dllSyscall_t dllSyscalls, vmInterpret_t interpret)
 {
   qint remaining;
   const qchar *name;
@@ -1561,7 +1559,6 @@ VM_Create(vmIndex_t index, syscall_t systemCalls, dllSyscall_t dllSyscalls, cons
   vm->index = index;
   vm->systemCall = systemCalls;
   vm->dllSyscall = dllSyscalls;
-  vm->vmMainArgs = vmMainArgs;
 
   //never allow dll loading with a demo
   if (interpret == VMI_NATIVE)
@@ -1726,10 +1723,9 @@ an OP_ENTER instruction, which will subtract space for
 locals from sp
 ==============
 */
-intptr_t	QDECL __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, qint callnum, ... ) {
+intptr_t	QDECL __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, qint callnum, qint nargs, ... ) {
 	vm_t	*oldVM;
 	intptr_t r;
-	qint nargs;
 	qint i;
 
 	if ( !vm ) {
@@ -1744,7 +1740,12 @@ intptr_t	QDECL __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, qint call
 	  Com_Printf( "VM_Call( %d )\n", callnum );
 	}
 
-        nargs = vm->vmMainArgs[callnum]; //counting callnum
+#if defined(DEBUG)
+        if (nargs >= MAX_VMMAIN_CALL_ARGS)
+        {
+          Com_Error(ERR_DROP, "VM_Call: nargs >= MAX_VMMAIN_CALL_ARGS");
+        }
+#endif
 
 	++vm->callLevel;
 	// if we have a dll loaded, call it directly
@@ -1752,7 +1753,7 @@ intptr_t	QDECL __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, qint call
 		//rcg010207 -  see dissertation at top of VM_DllSyscall() in this file.
 		intptr_t args[MAX_VMMAIN_CALL_ARGS - 1];
 		va_list ap;
-		va_start(ap, callnum);
+		va_start(ap, nargs);
 		for (i = 0;i < nargs - 1;i++) {
 			args[i] = va_arg(ap, intptr_t);
 		}
@@ -1764,26 +1765,26 @@ intptr_t	QDECL __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, qint call
 #if (id386 || idsparc) && !defined(__clang__) // i386/sparc calling convention doesn't need conversion in some cases
 #ifndef NO_VM_COMPILED
 		if ( vm->compiled )
-			r = VM_CallCompiled( vm, nargs, (qint*)&callnum );
+			r = VM_CallCompiled( vm, nargs + 1, (qint*)&callnum );
 		else
 #endif
-			r = VM_CallInterpreted2( vm, nargs, (qint*)&callnum );
+			r = VM_CallInterpreted2( vm, nargs + 1, (qint*)&callnum );
 #else
 		qint args[MAX_VMMAIN_CALL_ARGS];
 		va_list ap;
 
 		args[0] = callnum;
-		va_start(ap, callnum);
-		for (i = 1; i < nargs; i++) {
-			args[i] = va_arg(ap, qint);
+		va_start(ap, nargs);
+		for (i = 0; i < nargs; i++) {
+			args[i + 1] = va_arg(ap, qint);
 		}
 		va_end(ap);
 #ifndef NO_VM_COMPILED
 		if ( vm->compiled )
-			r = VM_CallCompiled( vm, nargs, &args[0] );
+			r = VM_CallCompiled( vm, nargs + 1, &args[0] );
 		else
 #endif
-			r = VM_CallInterpreted2( vm, nargs, &args[0] );
+			r = VM_CallInterpreted2( vm, nargs + 1, &args[0] );
 #endif
 	}
 	--vm->callLevel;

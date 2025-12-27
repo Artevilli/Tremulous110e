@@ -2499,7 +2499,7 @@ SV_Frame(const qint msec)
 #if defined(USE_JAVA)
     Java_G_RunFrame(sv.time);
 #else
-    VM_Call(sv.gvm, GAME_RUN_FRAME, sv.time);
+    VM_Call(sv.gvm, GAME_RUN_FRAME, 1, sv.time);
 #endif
 
     if (sv.demoState == DS_RECORDING)

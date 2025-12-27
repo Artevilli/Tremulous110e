@@ -713,7 +713,7 @@ SV_DirectConnect(const netadr_t *from)
 #if defined(USE_JAVA)
           Java_G_ClientDisconnect(svs.clients, newcl);
 #else
-          VM_Call(sv.gvm, GAME_CLIENT_DISCONNECT, ARRAY_INDEX(svs.clients, newcl));
+          VM_Call(sv.gvm, GAME_CLIENT_DISCONNECT, 1, ARRAY_INDEX(svs.clients, newcl));
 #endif
 
           //don't leak memory or file handles due to e.g. downloads in progress
@@ -727,7 +727,7 @@ SV_DirectConnect(const netadr_t *from)
 //#if defined(USE_JAVA)
 //     Java_G_ClientDisconnect(svs.clients, newcl);
 //#else
-//     VM_Call(sv.gvm, GAME_CLIENT_DISCONNECT, ARRAY_INDEX(svs.clients, newcl));
+//     VM_Call(sv.gvm, GAME_CLIENT_DISCONNECT, 1, ARRAY_INDEX(svs.clients, newcl));
 //#endif
         //
         goto gotnewcl1;
@@ -871,7 +871,7 @@ gotnewcl1:
       return;
     }
 #else
-    denied = VM_Call(sv.gvm, GAME_CLIENT_CONNECT, clientNum, qtrue, qfalse);	//firstTime = qtrue
+    denied = VM_Call(sv.gvm, GAME_CLIENT_CONNECT, 3, clientNum, qtrue, qfalse);	//firstTime = qtrue
 
     if (denied)
     {
@@ -1134,7 +1134,7 @@ gotnewcl1:
 #if defined(USE_JAVA)
           Java_G_ClientDisconnect(svs.clients, newcl);
 #else
-          VM_Call(sv.gvm, GAME_CLIENT_DISCONNECT, ARRAY_INDEX(svs.clients, newcl));
+          VM_Call(sv.gvm, GAME_CLIENT_DISCONNECT, 1, ARRAY_INDEX(svs.clients, newcl));
 #endif
 
           //don't leak memory or file handles due to e.g. downloads in progress
@@ -1148,7 +1148,7 @@ gotnewcl1:
 //#if defined(USE_JAVA)
 //     Java_G_ClientDisconnect(svs.clients, newcl);
 //#else
-//     VM_Call(sv.gvm, GAME_CLIENT_DISCONNECT, ARRAY_INDEX(svs.clients, newcl));
+//     VM_Call(sv.gvm, GAME_CLIENT_DISCONNECT, 1, ARRAY_INDEX(svs.clients, newcl));
 //#endif
         //
         goto gotnewcl2;
@@ -1292,7 +1292,7 @@ gotnewcl2:
       return;
     }
 #else
-    denied = VM_Call(sv.gvm, GAME_CLIENT_CONNECT, clientNum, qtrue, qfalse);	//firstTime = qtrue
+    denied = VM_Call(sv.gvm, GAME_CLIENT_CONNECT, 3, clientNum, qtrue, qfalse);	//firstTime = qtrue
 
     if (denied)
     {
@@ -1455,7 +1455,7 @@ SV_DropClient(client_t *drop, const qchar *reason)
 #if defined(USE_JAVA)
     Java_G_ClientDisconnect(ARRAY_INDEX(svs.clients, drop));
 #else
-    VM_Call(sv.gvm, GAME_CLIENT_DISCONNECT, ARRAY_INDEX(svs.clients, drop));
+    VM_Call(sv.gvm, GAME_CLIENT_DISCONNECT, 1, ARRAY_INDEX(svs.clients, drop));
 #endif
 
     //add the disconnect command
@@ -1570,7 +1570,7 @@ SV_DropClient(client_t *drop, const qchar *reason)
 #if defined(USE_JAVA)
     Java_G_ClientDisconnect(ARRAY_INDEX(svs.clients, drop));
 #else
-    VM_Call(sv.gvm, GAME_CLIENT_DISCONNECT, ARRAY_INDEX(svs.clients, drop));
+    VM_Call(sv.gvm, GAME_CLIENT_DISCONNECT, 1, ARRAY_INDEX(svs.clients, drop));
 #endif
 
     //add the disconnect command
@@ -1947,7 +1947,7 @@ SV_ClientEnterWorld(client_t *client)
 #if defined(USE_JAVA)
   Java_G_ClientBegin(clientNum);
 #else
-  VM_Call(sv.gvm, GAME_CLIENT_BEGIN, clientNum);
+  VM_Call(sv.gvm, GAME_CLIENT_BEGIN, 1, clientNum);
 #endif
 }
 
@@ -3583,7 +3583,7 @@ SV_UpdateUserinfo_f(client_t *cl)
 #if defined(USE_JAVA)
   Java_G_ClientUserInfoChanged(ARRAY_INDEX(svs.clients, cl));
 #else
-  VM_Call(sv.gvm, GAME_CLIENT_USERINFO_CHANGED, ARRAY_INDEX(svs.clients, cl));
+  VM_Call(sv.gvm, GAME_CLIENT_USERINFO_CHANGED, 1, ARRAY_INDEX(svs.clients, cl));
 #endif
 
   //get name out of game and send to engine
@@ -3771,7 +3771,7 @@ SV_ExecuteClientCommand(client_t *cl, const qchar *s)
 #if defined(USE_JAVA)
       Java_G_ClientCommand(ARRAY_INDEX(svs.clients, cl));
 #else
-      VM_Call(sv.gvm, GAME_CLIENT_COMMAND, ARRAY_INDEX(svs.clients, cl));
+      VM_Call(sv.gvm, GAME_CLIENT_COMMAND, 1, ARRAY_INDEX(svs.clients, cl));
 #endif
     }
   }
@@ -3860,7 +3860,7 @@ SV_ClientThink(qint client, usercmd_t *cmd)
 #if defined(USE_JAVA)
     Java_G_ClientUserInfoChanged(ARRAY_INDEX(svs.clients, cl));
 #else
-    VM_Call(sv.gvm, GAME_CLIENT_USERINFO_CHANGED, ARRAY_INDEX(svs.clients, cl));
+    VM_Call(sv.gvm, GAME_CLIENT_USERINFO_CHANGED, 1, ARRAY_INDEX(svs.clients, cl));
 #endif
 
     //get the name out of the game and set it in the engine
@@ -3877,7 +3877,7 @@ SV_ClientThink(qint client, usercmd_t *cmd)
 #if defined(USE_JAVA)
   Java_G_ClientThink(ARRAY_INDEX(svs.clients, cl));
 #else
-  VM_Call(sv.gvm, GAME_CLIENT_THINK, ARRAY_INDEX(svs.clients, cl));
+  VM_Call(sv.gvm, GAME_CLIENT_THINK, 1, ARRAY_INDEX(svs.clients, cl));
 #endif
 }
 

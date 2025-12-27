@@ -388,7 +388,7 @@ vmIndex_t;
 void
 VM_Init(void);
 vm_t *
-VM_Create(vmIndex_t index, syscall_t systemCalls, dllSyscall_t dllSyscalls, const qint *vmMainArgs, vmInterpret_t interpret);
+VM_Create(vmIndex_t index, syscall_t systemCalls, dllSyscall_t dllSyscalls, vmInterpret_t interpret);
 // module should be bare: "cgame", not "cgame.dll" or "vm/cgame.qvm"
 
 void	VM_Free( vm_t *vm );
@@ -397,7 +397,7 @@ void	VM_Forced_Unload_Start(void);
 void	VM_Forced_Unload_Done(void);
 vm_t	*VM_Restart( vm_t *vm );
 
-intptr_t		QDECL VM_Call( vm_t *vm, qint callNum, ... );
+intptr_t		QDECL VM_Call( vm_t *vm, qint callNum, qint nargs, ... );
 
 void	VM_Debug( qint level );
 
