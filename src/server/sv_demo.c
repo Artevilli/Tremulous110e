@@ -279,7 +279,7 @@ exit_loop:
           num = MSG_ReadByte(&msg);
           //Cmd_SaveCmdContext(); //Chey: FIXME: this is no longer a valid function
           Cmd_TokenizeString(MSG_ReadString(&msg));
-          VM_Call(sv.gvm, G_DEMO_COMMAND, 2, num);
+          VM_Call(sv.gvm, 2, G_DEMO_COMMAND, num);
           //Cmd_RestoreCmdContext(); //Chey: FIXME: this is no longer a valid function
           break;
 

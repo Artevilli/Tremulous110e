@@ -112,7 +112,7 @@ SV_BotFrame(qint time)
     return;
   }
 
-  VM_Call(sv.gvm, BOTAI_START_FRAME, 1, time);
+  VM_Call(sv.gvm, 1, BOTAI_START_FRAME, time);
 #endif
 }
 

@@ -1723,7 +1723,7 @@ an OP_ENTER instruction, which will subtract space for
 locals from sp
 ==============
 */
-intptr_t	QDECL __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, qint callnum, qint nargs, ... ) {
+intptr_t	QDECL __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, qint nargs, qint callnum, ... ) {
 	vm_t	*oldVM;
 	intptr_t r;
 	qint i;
@@ -1753,7 +1753,7 @@ intptr_t	QDECL __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, qint call
 		//rcg010207 -  see dissertation at top of VM_DllSyscall() in this file.
 		intptr_t args[MAX_VMMAIN_CALL_ARGS - 1];
 		va_list ap;
-		va_start(ap, nargs);
+		va_start(ap, callnum);
 		for (i = 0;i < nargs - 1;i++) {
 			args[i] = va_arg(ap, intptr_t);
 		}
@@ -1774,7 +1774,7 @@ intptr_t	QDECL __attribute__((no_sanitize_address)) VM_Call( vm_t *vm, qint call
 		va_list ap;
 
 		args[0] = callnum;
-		va_start(ap, nargs);
+		va_start(ap, callnum);
 		for (i = 0; i < nargs; i++) {
 			args[i + 1] = va_arg(ap, qint);
 		}
