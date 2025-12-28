@@ -122,9 +122,12 @@ SV_InitCvars(void)
   Cvar_Get("protocol", va(NULL, "%i", PROTOCOL_VERSION), CVAR_SERVERINFO | CVAR_ROM);
   sv_mapname = Cvar_GetAndDescribe("mapname", "nomap", CVAR_SERVERINFO | CVAR_ROM, "Display the name of the current map being used on the server.");
   sv_privateClients = Cvar_GetAndDescribe("sv_privateClients", "0", CVAR_SERVERINFO, "The number of spots out of sv_maxclients reserved for players with the server password set by sv_privatePassword, also the number of bot slots for ^1Z^7.");
+  Cvar_CheckRange(sv_privateClients, "0", va(NULL, "%i", MAX_CLIENTS - 1), CV_INTEGER);
   sv_hostname = Cvar_GetAndDescribe("sv_hostname", "noname", CVAR_SERVERINFO | CVAR_ARCHIVE, "Sets the name of the server.");
   sv_maxclients = Cvar_GetAndDescribe("sv_maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH, "Maximum number of people allowed to join the server.");
+  Cvar_CheckRange(sv_maxclients, "1", XSTRING(MAX_CLIENTS), CV_INTEGER);
   sv_maxclientsPerIP = Cvar_GetAndDescribe("sv_maxclientsPerIP", "3", CVAR_ARCHIVE | CVAR_SERVERINFO | CVAR_LATCH, "Limits the number of simultaneous connections from the same IP address.");
+  Cvar_CheckRange(sv_maxclientsPerIP, "1", NULL, CV_INTEGER);
   sv_guidCheck = Cvar_GetAndDescribe("sv_guidCheck", "0", CVAR_ARCHIVE | CVAR_SERVERINFO, "More thorough GUID validity check for connecting players.\nNOTE: setting this to 1 bricks clients without a guid (notably stock 1.1)!\nNOTE: to bypass this, check sv_guidCheckAllowStock");
   sv_guidCheckAllowStock = Cvar_GetAndDescribe("sv_guidCheckAllowStock", "0", CVAR_ARCHIVE | CVAR_SERVERINFO, "Toggles whether or not to allow stock 1.1 to bypass the guid check set by sv_guidCheck.");
   sv_democlients = Cvar_GetAndDescribe("sv_democlients", "0", CVAR_SERVERINFO | CVAR_LATCH | CVAR_ARCHIVE, "Maximum number of people allowed to view serverside demos.");
@@ -137,7 +140,11 @@ SV_InitCvars(void)
   sv_maxOOBRateIP = Cvar_GetAndDescribe("sv_maxOOBRateIP", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, "Max out of band rate for handling incoming packets per IP address.\nNOTE: sv_protect & SVP_XREAL must be set!");
   Cvar_CheckRange(sv_maxOOBRateIP, "1", "1000", CV_INTEGER);
   sv_dlRate = Cvar_GetAndDescribe("sv_dlRate", "1000", CVAR_ARCHIVE | CVAR_SERVERINFO, "Bandwidth allotted to PK3 file downloads via UDP, in kbyte/s.");
+#if defined(UDP_DOWNLOAD_OPTIMIZE)
   Cvar_CheckRange(sv_dlRate, "0", "1500", CV_INTEGER);
+#else
+  Cvar_CheckRange(sv_dlRate, "0", "500", CV_INTEGER);
+#endif
 #if defined(USE_JAVA) || defined(USE_BULLET)
   sv_minSnaps = Cvar_GetAndDescribe("sv_minSnaps", "60", CVAR_ARCHIVE | CVAR_SERVERINFO, "Minimum snaps the client is allowed to have.");
 #else
@@ -158,13 +165,13 @@ SV_InitCvars(void)
   Cvar_CheckRange(sv_warningsframetime, "0", "100", CV_INTEGER);
   sv_floodWait = Cvar_GetAndDescribe("sv_floodWait", "500", CVAR_ARCHIVE | CVAR_SERVERINFO, "Time in milliseconds that a client has to wait before sending another client command.");
   sv_floodLimit = Cvar_GetAndDescribe("sv_floodLimit", "8", CVAR_ARCHIVE | CVAR_SERVERINFO, "The number of client commands a client is allowed to send before flood protection triggers.");
-  sv_floodProtect = Cvar_GetAndDescribe("sv_floodProtect", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, "Causes flooders to lag themselves but not other people, customizable with sv_floodWait and sv_floodLimit");
+  sv_floodProtect = Cvar_GetAndDescribe("sv_floodProtect", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, "Toggle server flood protection to keep players from bringing the server down.");
 #if defined(INCLUDE_SV_PINGFIX)
   sv_pingFix = Cvar_GetAndDescribe("sv_pingFix", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, "Fix client ping calculation to more accurately reflect packet loss and force minimum ping for humans to 1");
 #endif
   sv_userInfoFloodProtect = Cvar_GetAndDescribe("sv_userInfoFloodProtect", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, "Prevents users from flooding the server with userinfo changes by delaying the next change for 5 seconds.");
   sv_forceSendFragments = Cvar_GetAndDescribe("sv_forceSendFragments", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, "Forces all unsent fragments to be sent to each client each time a snapshot is created.");
-  sv_collectClientJunkInfo = Cvar_GetAndDescribe("sv_collectClientJunkInfo", "1", CVAR_ARCHIVE, "If both this and developer is set, prints if message readcount isn't equal to the message cursize.");
+  sv_collectClientJunkInfo = Cvar_GetAndDescribe("sv_collectClientJunkInfo", "0", CVAR_ARCHIVE, "If this is set, prints if message readcount isn't equal to the message cursize.");
 
   //systeminfo
   sv_cheats = Cvar_GetAndDescribe("sv_cheats", "1", CVAR_SYSTEMINFO | CVAR_ROM, "Unmodifiable cvar used for certain functions to act differently if the server allows cheats. If you want to turn cheats on, look at devmap.");
@@ -193,11 +200,13 @@ SV_InitCvars(void)
   sv_cl_fps = Cvar_GetAndDescribe("sv_cl_fps", "40", CVAR_SYSTEMINFO, "This cvar is purely for cgame, do not touch.");
 #endif
   sv_timeout = Cvar_GetAndDescribe("sv_timeout", "200", CVAR_TEMP, "Seconds without any message before automatic client disconnect.");
+  Cvar_CheckRange(sv_timeout, "4", NULL, CV_INTEGER);
   sv_zombietime = Cvar_GetAndDescribe("sv_zombietime", "2", CVAR_TEMP, "Seconds to sink messages after disconnect.");
+  Cvar_CheckRange(sv_zombietime, "1", NULL, CV_INTEGER);
   sv_allowDownload = Cvar_Get("sv_allowDownload", "0", CVAR_SERVERINFO);
   sv_cl_allowDownload = Cvar_GetAndDescribe("cl_allowDownload", "1", CVAR_SYSTEMINFO, "Force enable downloading for 1.1 clients");
   sv_hidden = Cvar_GetAndDescribe("sv_hidden", "0", CVAR_ARCHIVE, "Hide the server from queries and from master servers.");
-  Cvar_Get("sv_dlURL", "", CVAR_SERVERINFO | CVAR_ARCHIVE);
+  Cvar_GetAndDescribe("sv_dlURL", "", CVAR_SERVERINFO | CVAR_ARCHIVE, "Disconnects clients and redirects them to download paks from this URL instead of the server. When the download finishes, the client will automatically be reconnected.\nNOTE: if the URL does not have the correct paks, is missing some, or the checksum is mismatched, clients will get dropped!");
   Cvar_Get("sv_wwwDownload", "1", CVAR_SYSTEMINFO | CVAR_ARCHIVE);
   Cvar_Get("sv_wwwBaseURL", "", CVAR_SYSTEMINFO | CVAR_ARCHIVE);
   //master servers

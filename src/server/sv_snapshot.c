@@ -528,7 +528,7 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
     if ( ent->r.svFlags & SVF_CLIENTMASK ) {
       if (frame->ps.clientNum >= 128)
         Com_Error( ERR_DROP, "SVF_CLIENTMASK: clientNum >= 128" );
-      if (~ent->r.singleClient & (1 << frame->ps.clientNum))
+      if (~ent->r.singleClient & BIT(frame->ps.clientNum))
         continue;
     }
 

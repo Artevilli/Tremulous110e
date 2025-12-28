@@ -314,15 +314,9 @@ SV_BoundMaxClients(const qint minimum)
 
   if (sv_maxclients->integer < minimum)
   {
-    Cvar_Set("sv_maxclients", va(NULL, "%i", minimum));
+    Cvar_SetIntegerValue("sv_maxclients", minimum);
     sv_maxclients->modified = qfalse;
     return minimum;
-  }
-  else if (sv.maxclients > MAX_CLIENTS)
-  {
-    Cvar_Set("sv_maxclients", va(NULL, "%i", MAX_CLIENTS));
-    sv_maxclients->modified = qfalse;
-    return MAX_CLIENTS;
   }
 
   sv_maxclients->modified = qfalse;
@@ -724,12 +718,12 @@ SV_SpawnServer(const qchar *server, qbool killBots)
   //set serverinfo visible name
   Cvar_Set("mapname", server);
 
-  Cvar_Set("sv_mapChecksum", va(NULL, "%i",checksum));
+  Cvar_SetIntegerValue("sv_mapChecksum", checksum);
 
   //serverid should be different each time
   sv.serverId = com_frameTime;
   sv.restartedServerId = sv.serverId;
-  Cvar_Set("sv_serverid", va(NULL, "%i", sv.serverId));
+  Cvar_SetIntegerValue("sv_serverid", sv.serverId);
 
   //clear physics interaction links
   SV_ClearWorld();

@@ -1916,8 +1916,11 @@ SV_ClientEnterWorld
 const void
 SV_ClientEnterWorld(client_t *client)
 {
-  qint clientNum;
   sharedEntity_t *ent;
+  qbool isBot;
+  qint clientNum;
+
+  isBot = client->netchan.remoteAddress.type == NA_BOT;
 
   SV_SetClientState(client, CS_ACTIVE);
 #if !defined(GAMESTATE_RETRANSMIT_VERSION_TWO)
@@ -1928,7 +1931,10 @@ SV_ClientEnterWorld(client_t *client)
 
   //resend all configstrings using the cs commands since these are
   //no longer sent when the client is CS_PRIMED
-  SV_UpdateConfigstrings(client);
+  if (!isBot)
+  {
+    SV_UpdateConfigstrings(client);
+  }
 
   //set up the entity for the client
   clientNum = ARRAY_INDEX(svs.clients, client);
@@ -3951,7 +3957,7 @@ SV_UserMove(client_t *cl, msg_t *msg, qbool delta)
   {
     cl->frames[cl->messageAcknowledge & PACKET_MASK].messageAcked = Sys_Milliseconds();
   }
-	
+
   //if this is the first usercmd we have received
   //this gamestate, put the client into the world
   if (cl->state == CS_PRIMED)
@@ -4478,7 +4484,7 @@ SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
 
   if (msg->readcount != msg->cursize && sv_collectClientJunkInfo->integer)
   {
-    Com_DPrintf("WARNING: junk at end of packet for client %i\n", ARRAY_INDEX(svs.clients, cl));
+    Com_Printf("WARNING: junk at end of packet for client %i\n", ARRAY_INDEX(svs.clients, cl));
   }
 
 #if defined(GAMESTATE_RETRANSMIT_VERSION_TWO)

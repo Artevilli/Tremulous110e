@@ -38,6 +38,10 @@
 //switching between the first and second version of stateless challenges
 //#define STATELESS_CHALLENGES_VERSION_ONE
 
+//improve udp download rate control for better performance, especially on slower or less stable connections
+//supports larger downloads
+#define UDP_DOWNLOAD_OPTIMIZE
+
 //fix client ping calculation to more accurately reflect packet loss, enabled by sv_pingFix, also force minimum ping for humans to 1
 #define INCLUDE_SV_PINGFIX
 

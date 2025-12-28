@@ -52,10 +52,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define UDP_DOWNLOAD_NO_DOUBLE_LOAD
 #endif
 
-//improve udp download rate control for better performance, especially on slower or less stable connections
-//supports larger downloads
-#define UDP_DOWNLOAD_OPTIMIZE
-
 //avoid sending reliable commands to loading clients, testing needed
 #define SKIP_PRE_ACTIVE_COMMANDS
 
