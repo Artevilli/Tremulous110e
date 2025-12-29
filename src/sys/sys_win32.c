@@ -390,20 +390,39 @@ Sys_Mkfifo(const qchar *ospath)
 
 /*
 ==============
-Sys_Cwd
+Sys_Pwd
 ==============
 */
 const qchar *
-Sys_Cwd(void)
+Sys_Pwd(void)
 {
-  static char cwd[MAX_OSPATH];
+  static char pwd[MAX_OSPATH];
+  TCHAR buffer[MAX_OSPATH];
+  char *s;
 
-  if (getcwd(cwd, sizeof(cwd) - 1) == NULL)
+  if (pwd[0])
   {
-    return "";
+    return pwd;
   }
 
-  return cwd;
+  GetModuleFileName(NULL, buffer, ARRAY_LEN(buffer));
+  buffer[ARRAY_LEN(buffer) - 1] = '\0';
+
+  Q_strncpyz(pwd, WtoA(buffer), sizeof(pwd));
+
+  s = Q_strrchr(pwd, PATH_SEP);
+
+  if (s)
+  {
+    *s = '\0';
+  }
+  else //bogus case?
+  {
+    _getcwd(pwd, sizeof(pwd) - 1);
+    pwd[sizeof(pwd) - 1] = '\0';
+  }
+
+  return pwd;
 }
 
 /*
@@ -414,7 +433,7 @@ Sys_DefaultBasePath
 const qchar *
 Sys_DefaultBasePath(void)
 {
-  return Sys_Cwd();
+  return Sys_Pwd();
 }
 
 /*
@@ -511,128 +530,58 @@ static qbool strgtr(const char *s0, const char *s1)
 Sys_ListFiles
 ==============
 */
-char **Sys_ListFiles( const char *directory, const char *extension, const char *filter, int *numfiles, qbool wantsubs )
+char **
+Sys_ListFiles(const char *directory, const char *extension, const char *filter, int *numfiles, int subdirs)
 {
-	char		search[MAX_OSPATH];
-	int			nfiles;
-	char		**listCopy;
-	char		*list[MAX_FOUND_FILES];
-	struct _finddata_t findinfo;
-	intptr_t			findhandle;
-	int			flag;
-	qint extLen;
-	qint length;
-	int			i;
-	const qchar *x;
-	qbool hasPatterns;
+  char **listCopy;
+  char *list[MAX_FOUND_FILES];
+  int i;
+  int nfiles;
 
-	if (filter) {
+  if (extension == NULL)
+  {
+    extension = "";
+  }
 
-		nfiles = 0;
-		Sys_ListFilteredFiles( directory, "", filter, list, &nfiles );
+  nfiles = Sys_ListExtFiles(directory, "", extension, filter, list, ARRAY_LEN(list), subdirs);
 
-		list[ nfiles ] = NULL;
-		*numfiles = nfiles;
+  //copy list from stack, reserve extra space for NULL
+  listCopy = Z_Malloc((nfiles + 1) * sizeof(listCopy[0]));
 
-		if (!nfiles)
-			return NULL;
+  for(i = 0;i < nfiles;i++)
+  {
+    listCopy[i] = list[i];
+  }
 
-		listCopy = Z_Malloc( ( nfiles + 1 ) * sizeof( listCopy[0] ) );
-		for ( i = 0 ; i < nfiles ; i++ ) {
-			listCopy[i] = list[i];
-		}
-		listCopy[i] = NULL;
+  listCopy[i] = NULL;
 
-		return listCopy;
-	}
+  if (nfiles > 1)
+  {
+    Com_SortList(listCopy, nfiles - 1);
 
-	if ( !extension) {
-		extension = "";
-	}
+    if (nfiles > 2)
+    {
+      if (Q_streq(listCopy[0], ".") && Q_streq(listCopy[1], ".."))
+      {
+        //emulate old strgtr() function sort behavior for special entries
+        char *dot1 = listCopy[0];
+        char *dot2 = listCopy[1];
 
-	// passing a slash as extension will find directories
-	if ( extension[0] == '/' && extension[1] == 0 ) {
-		extension = "";
-		flag = 0;
-	} else {
-		flag = _A_SUBDIR;
-	}
-
-	Com_sprintf( search, sizeof(search), "%s\\*%s", directory, extension );
-
-	findhandle = _findfirst(search, &findinfo);
-
-	if (findhandle == -1)
-	{
-          *numfiles = 0;
-          return NULL;
-	}
-
-	extLen = (qint)strlen(extension);
-	hasPatterns = Com_HasPatterns(extension);
-
-	if (hasPatterns && extension[0] == '.' && extension[1] != '\0')
+        for(i = 0;i < nfiles - 2;i++)
         {
-          extension++;
+          listCopy[i] = listCopy[i + 2];
         }
 
-	// search
-	nfiles = 0;
+        listCopy[nfiles - 2] = dot1;
+        listCopy[nfiles - 1] = dot2;
+      }
+    }
+  }
 
-	do {
-		if ( (!wantsubs && flag ^ ( findinfo.attrib & _A_SUBDIR )) || (wantsubs && findinfo.attrib & _A_SUBDIR) ) {
-			if ( nfiles == MAX_FOUND_FILES - 1 ) {
-				break;
-			}
-
-			if (*extension)
-			{
-                          if (hasPatterns)
-                          {
-                            x = Q_strrchr(findinfo.name, '.');
-
-                            if (!x || !Com_FilterExt(extension, x + 1))
-                            {
-                              continue;
-                            }
-                          }
-                          else
-                          {
-                            length = strlen(findinfo.name);
-
-                            if (length < extLen || Q_stricmp(findinfo.name + length - extLen, extension))
-                            {
-                              continue;
-                            }
-                          }
-			}
-
-			list[ nfiles ] = FS_CopyString( findinfo.name );
-			nfiles++;
-		}
-	} while ( _findnext (findhandle, &findinfo) != -1 );
-
-	list[ nfiles ] = NULL;
-
-	_findclose (findhandle);
-
-	// return a copy of the list
-	*numfiles = nfiles;
-
-	if ( !nfiles ) {
-		return NULL;
-	}
-
-	listCopy = Z_Malloc( ( nfiles + 1 ) * sizeof( listCopy[0] ) );
-	for ( i = 0 ; i < nfiles ; i++ ) {
-		listCopy[i] = list[i];
-	}
-	listCopy[i] = NULL;
-
-        Com_SortFileList(listCopy, nfiles, extension[0] != '\0');
-
-	return listCopy;
+  *numfiles = nfiles;
+  return listCopy;
 }
+
 
 /*
 ==============

@@ -78,6 +78,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #undef QDECL
 #define QDECL __cdecl
+#define Q_NEWLINE "\n"
 
 #if defined( _MSC_VER )
 #define OS_STRING "win_msvc64"
@@ -103,6 +104,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #undef QDECL
 #define QDECL __cdecl
+#define Q_NEWLINE "\r\n"
 
 #if defined( _MSC_VER )
 #define OS_STRING "win_msvc"
@@ -137,6 +139,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define OS_STRING "macosx"
 #define ID_INLINE inline
+#define Q_NEWLINE "\n"
 #define PATH_SEP '/'
 
 #ifdef __ppc__
@@ -167,6 +170,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 #define ID_INLINE inline
+#define Q_NEWLINE "\n"
 #define PATH_SEP '/'
 #define PATH_SEP_FOREIGN '\\'
 
@@ -232,6 +236,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 #define ID_INLINE inline
+#define Q_NEWLINE "\n"
 #define PATH_SEP '/'
 #define PATH_SEP_FOREIGN '\\'
 
@@ -262,6 +267,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define OS_STRING "solaris"
 #define ID_INLINE inline
+#define Q_NEWLINE "\n"
 #define PATH_SEP '/'
 
 #ifdef __i386__
@@ -286,6 +292,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define OS_STRING "irix"
 #define ID_INLINE __inline
+#define Q_NEWLINE "\n"
 #define PATH_SEP '/'
 
 #define ARCH_STRING "mips"
@@ -302,6 +309,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define OS_STRING "q3vm"
 #define ID_INLINE
+#define Q_NEWLINE "\n"
 #define PATH_SEP '/'
 
 #define ARCH_STRING "bytecode"
@@ -323,6 +331,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #ifndef ID_INLINE
 #error "ID_INLINE not defined"
+#endif
+
+#ifndef Q_NEWLINE
+#error "Q_NEWLINE not defined"
 #endif
 
 #ifndef PATH_SEP

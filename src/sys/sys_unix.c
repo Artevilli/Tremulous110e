@@ -329,20 +329,33 @@ Sys_Mkfifo(const qchar *ospath)
 
 /*
 ==============
-Sys_Cwd
+Sys_Pwd
 ==============
 */
 const qchar *
-Sys_Cwd(void)
+Sys_Pwd(void)
 {
-  static qchar cwd[MAX_OSPATH];
+  static qchar pwd[MAX_OSPATH];
 
-  if (getcwd(cwd, sizeof(cwd) - 1) == NULL)
+  if (pwd[0])
   {
-    return "";
+    return pwd;
   }
 
-  return cwd;
+  //more reliable, linux-specific
+  if (readlink("/proc/self/exe", pwd, sizeof(pwd) - 1) != -1)
+  {
+    pwd[sizeof(pwd) - 1] = '\0';
+    dirname(pwd);
+    return pwd;
+  }
+
+  if (!getcwd(pwd, sizeof(pwd)))
+  {
+    pwd[0] = '\0';
+  }
+
+  return pwd;
 }
 
 /*
@@ -353,7 +366,7 @@ Sys_DefaultBasePath
 const qchar *
 Sys_DefaultBasePath(void)
 {
-  return Sys_Cwd();
+  return Sys_Pwd();
 }
 
 /*
@@ -488,7 +501,28 @@ qchar** Sys_ListFiles( const qchar *directory, const qchar *extension, const qch
 	}
 	listCopy[i] = NULL;
 
-	Com_SortFileList( listCopy, nfiles, *extension != '\0' );
+        if (nfiles > 1)
+        {
+          Com_SortList(listCopy, nfiles - 1);
+
+          if (nfiles > 2)
+          {
+            if (Q_streq(listCopy[0], ".") && Q_streq(listCopy[1], ".."))
+            {
+              //emulate old strgtr() function sort behavior for special entries
+              qchar *dot1 = listCopy[0];
+              qchar *dot2 = listCopy[1];
+
+              for(i = 0;i < nfiles - 2;i++)
+              {
+                listCopy[i] = listCopy[i + 2];
+              }
+
+              listCopy[nfiles - 2] = dot1;
+              listCopy[nfiles - 1] = dot2;
+            }
+          }
+        }
 
 	*numfiles = nfiles;
 	return listCopy;

@@ -1090,7 +1090,7 @@ Com_SkipCharset(const qchar *s, const qchar *sep);
 void Com_RandomBytes( byte *string, qint len );
 
 void
-Com_SortFileList(qchar **list, qint nfiles, qbool fastSort);
+Com_SortList(qchar **list, qint n);
 
 // mode parm for FS_FOpenFile
 typedef enum {

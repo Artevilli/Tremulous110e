@@ -1340,7 +1340,7 @@ Sys_ResetReadOnlyAttribute(const qchar *ospath);
 FILE *
 Sys_Mkfifo(const qchar *ospath);
 const qchar *
-Sys_Cwd(void);
+Sys_Pwd(void);
 const qchar *
 Sys_DefaultBasePath(void);
 void	Sys_SetDefaultInstallPath(const qchar *path);
