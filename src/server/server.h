@@ -607,7 +607,7 @@ sv_mysql_reconnect(void);
 //sv_init.c
 //
 const void
-SV_SetConfigstring(qint index, const qchar *val);
+SV_SetConfigstring(const qint index, const qchar *val);
 const void
 SV_GetConfigstring(const qint index, qchar *buffer, const qint bufferSize);
 const void

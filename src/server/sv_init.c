@@ -123,7 +123,7 @@ SV_SetConfigstring
 ===============
 */
 const void
-SV_SetConfigstring(qint index, const qchar *val)
+SV_SetConfigstring(const qint index, const qchar *val)
 {
   qint i;
   client_t *client;
@@ -131,7 +131,7 @@ SV_SetConfigstring(qint index, const qchar *val)
   //Chey: FIXME: what the fuck?
   if (index > MAX_CONFIGSTRINGS - 1)
   {
-    index = MAX_CONFIGSTRINGS - 1;
+    return;
   }
 
   if (index < 0 || index >= MAX_CONFIGSTRINGS)
