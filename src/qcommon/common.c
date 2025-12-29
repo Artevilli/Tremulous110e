@@ -70,33 +70,38 @@ cvar_t *com_speeds;
 cvar_t *com_developer;
 cvar_t *com_dedicated;
 cvar_t *com_timescale;
-cvar_t *com_fixedtime;
+static cvar_t *com_fixedtime;
 cvar_t *com_journal;
 cvar_t *com_homepath;
+#if !defined(DEDICATED)
 cvar_t *com_maxfps;
-cvar_t *com_altivec;
+cvar_t *com_maxfpsUnfocused;
+cvar_t *com_yieldCPU;
 cvar_t *com_timedemo;
+#endif
+cvar_t *com_altivec;
 cvar_t *com_sv_running;
 cvar_t *com_cl_running;
 #if defined(_WIN32) && defined(_DEBUG)
 cvar_t *com_noErrorInterrupt;
 #endif
-cvar_t *com_logfile;		// 1 = buffer log, 2 = flush after each print
+static cvar_t *com_logfile;		// 1 = buffer log, 2 = flush after each print
 cvar_t *com_pipefile;
-cvar_t *com_showtrace;
+static cvar_t *com_showtrace;
 cvar_t *com_version;
 cvar_t *com_blood;
-cvar_t *com_buildScript;	// for automated data building scripts
+static cvar_t *com_buildScript;	// for automated data building scripts
 cvar_t *com_busyWait;
+#if !defined(DEDICATED)
 cvar_t *cl_paused;
-cvar_t *sv_paused;
 cvar_t *cl_packetdelay;
+#endif
+cvar_t *sv_paused;
 cvar_t *cl_packetloss;
 cvar_t *sv_packetdelay;
 cvar_t *sv_packetloss;
 cvar_t *com_cameraMode;
 cvar_t *com_ansiColor;
-cvar_t *com_maxfpsUnfocused;
 cvar_t *com_abnormalExit;
 cvar_t *com_homepath;
 
@@ -3272,12 +3277,16 @@ void Com_Init( qchar *commandLine ) {
 	com_fixedtime = Cvar_Get ("fixedtime", "0", CVAR_CHEAT);
 	com_showtrace = Cvar_Get ("com_showtrace", "0", CVAR_CHEAT);
 	com_speeds = Cvar_Get ("com_speeds", "0", 0);
+#if !defined(DEDICATED)
 	com_timedemo = Cvar_Get ("timedemo", "0", CVAR_CHEAT);
+#endif
 	com_cameraMode = Cvar_Get ("com_cameraMode", "0", CVAR_CHEAT);
 
+#if !defined(DEDICATED)
 	cl_paused = Cvar_Get ("cl_paused", "0", CVAR_ROM);
-	sv_paused = Cvar_Get ("sv_paused", "0", CVAR_ROM);
 	cl_packetdelay = Cvar_Get("cl_packetdelay", "0", CVAR_CHEAT);
+#endif
+	sv_paused = Cvar_Get ("sv_paused", "0", CVAR_ROM);
 	cl_packetloss = Cvar_Get("cl_packetloss", "0", CVAR_CHEAT);
 	sv_packetdelay = Cvar_Get("sv_packetdelay", "0", CVAR_CHEAT);
 	sv_packetloss = Cvar_Get("sv_packetloss", "0", CVAR_CHEAT);
@@ -3832,6 +3841,12 @@ Com_Shutdown(void)
   {
     FS_FCloseFile(com_journalFile);
     com_journalFile = FS_INVALID_HANDLE;
+  }
+
+  if (com_journalDataFile != FS_INVALID_HANDLE)
+  {
+    FS_FCloseFile(com_journalDataFile);
+    com_journalDataFile = FS_INVALID_HANDLE;
   }
 
   if (pipefile)

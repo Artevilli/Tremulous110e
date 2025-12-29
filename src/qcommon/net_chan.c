@@ -788,12 +788,13 @@ NET_SendPacket(netsrc_t sock, qint length, const void *data, const netadr_t *to)
   {
     return;
   }
-
+#if !defined(DEDICATED)
   if (sock == NS_CLIENT && cl_packetdelay->integer > 0)
   {
     NET_QueuePacket(sock, length, data, to, cl_packetdelay->integer);
-  }
-  else if (sock == NS_SERVER && sv_packetdelay->integer > 0)
+  } else
+#endif
+  if (sock == NS_SERVER && sv_packetdelay->integer > 0)
   {
     NET_QueuePacket(sock, length, data, to, sv_packetdelay->integer);
   }

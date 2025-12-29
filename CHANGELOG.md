@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--12/29/2025--**
 
+* qcommon:<br />properly shut down com_journalDataFile, code cleanup
+
 * qcommon/sys:<br />cleaner and more optimized Com_Frame() including reduced CPU usage if not dedicated
 
 * tremded:<br />slightly less hacky SV_SetConfigstring
