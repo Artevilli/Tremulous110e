@@ -707,7 +707,7 @@ main(int argc, char **argv)
 #endif
 
     IN_Frame();
-    Com_Frame();
+    Com_Frame(qfalse);
   }
 
   return 0;

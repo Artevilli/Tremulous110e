@@ -1074,11 +1074,11 @@ extern	cvar_t	*sv_packetdelay;
 extern  cvar_t  *sv_packetloss;
 
 // com_speeds times
-extern	uint64_t		time_game;
-extern	uint64_t		time_frontend;
-extern	uint64_t		time_backend;		// renderer backend time
+extern	qint		time_game;
+extern	qint		time_frontend;
+extern	qint		time_backend;		// renderer backend time
 
-extern	uint64_t		com_frameTime;
+extern	qint		com_frameTime;
 
 extern	qbool	com_errorEntered;
 
@@ -1160,7 +1160,7 @@ Com_Init(qchar *commandLine);
 void
 Com_FrameInit(void);
 void
-Com_Frame(void);
+Com_Frame(qbool noDelay);
 
 
 /*

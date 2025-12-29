@@ -96,24 +96,27 @@ cvar_t *sv_packetdelay;
 cvar_t *sv_packetloss;
 cvar_t *com_cameraMode;
 cvar_t *com_ansiColor;
-cvar_t *com_unfocused;
 cvar_t *com_maxfpsUnfocused;
-cvar_t *com_minimized;
-cvar_t *com_maxfpsMinimized;
 cvar_t *com_abnormalExit;
 cvar_t *com_homepath;
 
 //com_speeds times
-uint64_t time_game;
-uint64_t time_frontend; //renderer frontend time
-uint64_t time_backend; //renderer backend time
+qint time_game;
+qint time_frontend; //renderer frontend time
+qint time_backend; //renderer backend time
 
-static uint64_t lastTime;
-uint64_t com_frameTime;
-uint64_t com_frameNumber;
+static qint lastTime;
+qint com_frameTime;
+static qint com_frameNumber;
 
 qbool com_errorEntered = qfalse;
 qbool com_fullyInitialized = qfalse;
+
+//renderer window states
+qbool gw_minimized = qfalse; //this will always be true for dedicated servers
+#if !defined(DEDICATED)
+qbool gw_active = qtrue;
+#endif
 
 qchar com_errorMessage[MAXPRINTMSG];
 
@@ -3234,6 +3237,16 @@ void Com_Init( qchar *commandLine ) {
 	com_dedicated = Cvar_Get ("dedicated", "0", CVAR_LATCH);
 	Cvar_CheckRange( com_dedicated, "0", "2", CV_INTEGER );
 #endif
+
+        if (com_dedicated->integer)
+        {
+          gw_minimized = qtrue;
+        }
+        else
+        {
+          gw_minimized = qfalse;
+        }
+
 	// allocate the stack based hunk allocator
 	Com_InitHunkMemory();
 
@@ -3245,7 +3258,6 @@ void Com_Init( qchar *commandLine ) {
 	// init commands and vars
 	//
 	com_altivec = Cvar_Get ("com_altivec", "1", CVAR_ARCHIVE);
-	com_maxfps = Cvar_Get ("com_maxfps", "85", CVAR_ARCHIVE);
 	com_blood = Cvar_Get ("com_blood", "1", CVAR_ARCHIVE);
 
 	com_logfile = Cvar_GetAndDescribe("logfile", "0", CVAR_TEMP, "System console logging:\n"
@@ -3277,10 +3289,15 @@ void Com_Init( qchar *commandLine ) {
 
         Cvar_Get("com_errorMessage", "", CVAR_ROM);
 
-	com_unfocused = Cvar_Get( "com_unfocused", "0", CVAR_ROM );
-	com_maxfpsUnfocused = Cvar_Get( "com_maxfpsUnfocused", "0", CVAR_ARCHIVE );
-	com_minimized = Cvar_Get( "com_minimized", "0", CVAR_ROM );
-	com_maxfpsMinimized = Cvar_Get( "com_maxfpsMinimized", "0", CVAR_ARCHIVE );
+#if !defined(DEDICATED)
+        com_maxfps = Cvar_GetAndDescribe("com_maxfps", "125", 0, "Sets maximum frames per second."); //try to force that in some light way
+        Cvar_CheckRange(com_maxfps, "0", "1000", CV_INTEGER);
+	com_maxfpsUnfocused = Cvar_GetAndDescribe("com_maxfpsUnfocused", "60", CVAR_ARCHIVE, "Sets maximum frames per second in unfocused game window.");
+	Cvar_CheckRange(com_maxfpsUnfocused, "0", "1000", CV_INTEGER);
+	com_yieldCPU = Cvar_GetAndDescribe("com_yieldCPU", "1", CVAR_ARCHIVE, "Attempt to sleep specified amount of time between rendered frames when game is active, this will greatly reduce CPU load. Use 0 only if you're experiencing some lag.");
+	Cvar_CheckRange(com_yieldCPU, "0", "16", CV_INTEGER);
+#endif
+
 	com_abnormalExit = Cvar_Get("com_abnormalExit", "0", CVAR_ROM);
 
 	Cmd_AddCommand("game_restart", Com_GameRestart_f);
@@ -3554,33 +3571,40 @@ Com_Frame
 =================
 */
 void
-Com_Frame(void)
+Com_Frame(qbool noDelay)
 {
-  uint64_t msec;
-  uint64_t minMsec;
-  uint64_t sleepMsec;
-  uint64_t timeVal;
-  uint64_t timeValSV;
-  static uint64_t bias = 0;
-  uint64_t timeBeforeFirstEvents;
-  uint64_t timeBeforeServer;
-  uint64_t timeBeforeEvents;
-  uint64_t timeBeforeClient;
-  uint64_t timeAfter;
-  uint64_t all;
-  uint64_t sv;
-  uint64_t ev;
-  uint64_t cl;
-  extern uint64_t c_traces;
-  extern uint64_t c_brush_traces;
-  extern uint64_t c_patch_traces;
-  extern uint64_t c_pointcontents;
+  qint msec;
+  qint realMsec;
+  qint minMsec;
+  qint sleepMsec;
+  qint timeVal;
+  qint timeValSV;
+#if !defined(DEDICATED)
+  static qint bias = 0;
+#endif
+  qint timeBeforeFirstEvents;
+  qint timeBeforeServer;
+  qint timeBeforeEvents;
+  qint timeBeforeClient;
+  qint timeAfter;
+  qint all;
+  qint sv;
+  qint ev;
+  qint cl;
+  extern qint c_traces;
+  extern qint c_brush_traces;
+  extern qint c_patch_traces;
+  extern qint c_pointcontents;
 
-  if (setjmp(abortframe))
+  if (Q_setjmp(abortframe))
   {
-    return; //err drop was thrown
+    return; //an ERR_DROP was thrown
   }
 
+  minMsec = 0; //silent compiler warning
+
+  //bk001204 - init to zero.
+  //also: might be clobbered by 'longjmp' or 'vfork'
   timeBeforeFirstEvents = 0;
   timeBeforeServer = 0;
   timeBeforeEvents = 0;
@@ -3598,20 +3622,25 @@ Com_Frame(void)
     timeBeforeFirstEvents = Sys_Milliseconds();
   }
 
-  //figure out time remaining
-  if (!com_timedemo->integer)
+  //we may want to spin here if things are going too fast
+  if (com_dedicated->integer)
   {
-    if (com_dedicated->integer)
+    minMsec = SV_FrameMsec();
+#if !defined(DEDICATED)
+    bias = 0;
+#endif
+  }
+  else
+  {
+#if !defined(DEDICATED)
+    if (noDelay)
     {
-      minMsec = SV_FrameMsec();
+      minMsec = 0;
+      bias = 0;
     }
     else
     {
-      if (com_minimized->integer && com_maxfpsMinimized->integer > 0)
-      {
-        minMsec = 1000 / com_maxfpsMinimized->integer;
-      }
-      else if (com_unfocused->integer && com_maxfpsUnfocused->integer > 0)
+      if (!gw_active && com_maxfpsUnfocused->integer > 0)
       {
         minMsec = 1000 / com_maxfpsUnfocused->integer;
       }
@@ -3632,52 +3661,58 @@ Com_Frame(void)
         bias = minMsec;
       }
 
-      //adjust minmsec if prior frame took to long so framerate is stable
+      //adjust minMsec if previous frame took too long to render so
+      //that framerate is stable at the requested value
       minMsec -= bias;
     }
-  }
-  else
-  {
-    minMsec = 1;
+#endif
   }
 
-  timeVal = 0;
-
-  do
+  //waiting for incoming packets
+  if (noDelay == qfalse)
   {
-    if (com_sv_running->integer)
+    do
     {
-      timeValSV = SV_SendQueuedPackets();
-      timeVal = Com_TimeVal(minMsec);
-
-      if (timeValSV < timeVal)
+      if (com_sv_running->integer)
       {
-        timeVal = timeValSV;
-      }
-    }
-    else
-    {
-      timeVal = Com_TimeVal(minMsec);
-    }
+        timeValSV = SV_SendQueuedPackets();
+        timeVal = Com_TimeVal(minMsec);
 
-    sleepMsec = timeVal;
-    NET_Sleep(sleepMsec * 1000 - 500);
+        if (timeValSV < timeVal)
+        {
+          timeVal = timeValSV;
+        }
+      }
+      else
+      {
+        timeVal = Com_TimeVal(minMsec);
+      }
+
+      sleepMsec = timeVal;
+#if !defined(DEDICATED)
+      if (!gw_minimized && timeVal > com_yieldCPU->integer)
+      {
+        sleepMsec = com_yieldCPU->integer;
+      }
+
+      if (timeVal > sleepMsec)
+      {
+        Com_EventLoop();
+      }
+#endif
+      NET_Sleep(sleepMsec * 1000 - 500);
+    }
+    while(Com_TimeVal(minMsec));
   }
-  while(Com_TimeVal(minMsec));
 
   lastTime = com_frameTime;
   com_frameTime = Com_EventLoop();
-  msec = com_frameTime - lastTime;
+  realMsec = com_frameTime - lastTime;
+
   Cbuf_Execute();
 
-  if (com_altivec->modified)
-  {
-    Com_DetectAltivec();
-    com_altivec->modified = qfalse;
-  }
-
-  //mess with msec
-  msec = Com_ModifyMsec(msec);
+  //mess with msec if needed
+  msec = Com_ModifyMsec(realMsec);
 
   //serverside
   if (com_speeds->integer)
@@ -3698,12 +3733,35 @@ Com_Frame(void)
     {
       SV_Shutdown("dedicated set to zero");
       SV_RemoveDedicatedCommands();
+#if !defined(DEDICATED)
+      CL_Init();
+#endif
+#if !defined(DEDICATED)
+      gw_minimized = qfalse;
+      CL_StartHunkUsers();
+#endif
+    }
+    else
+    {
+#if !defined(DEDICATED)
+      CL_Shutdown();
       CL_FlushMemory();
+#endif
+      gw_minimized = qtrue;
     }
   }
 
-  #ifndef DEDICATED
+#if defined(DEDICATED)
+  if (com_speeds->integer)
+  {
+    timeAfter = Sys_Milliseconds();
+    timeBeforeEvents = timeAfter;
+    timeBeforeClient = timeAfter;
+  }
+#else
     //client system, run event loop a second time for server to client packets with no latency
+  if (!com_dedicated->integer)
+  {
     if (com_speeds->integer)
     {
       timeBeforeEvents = Sys_Milliseconds();
@@ -3724,14 +3782,8 @@ Com_Frame(void)
     {
       timeAfter = Sys_Milliseconds();
     }
-  #else
-    if (com_speeds->integer)
-    {
-      timeAfter = Sys_Milliseconds();
-      timeBeforeEvents = timeAfter;
-      timeBeforeClient = timeAfter;
-    }
-  #endif //DEDICATED
+  }
+#endif
 
   NET_FlushPacketQueue(0);
 
@@ -3746,13 +3798,13 @@ Com_Frame(void)
     cl = timeAfter - timeBeforeClient;
     sv -= time_game;
     cl -= time_frontend + time_backend;
-    Com_Printf("frame %lu all %3lu sv %3lu ev %3lu cl %3lu gm %3lu rf %3lu bk %3lu\n", com_frameNumber, all, sv, ev, cl, time_game, time_frontend, time_backend);
+    Com_Printf("frame %i all %3i sv %3i ev %3i cl %3i gm %3i rf %3i bk %3i\n", com_frameNumber, all, sv, ev, cl, time_game, time_frontend, time_backend);
   }
 
   //trace optimization tracking
   if (com_showtrace->integer)
   {
-    Com_Printf("%4lu traces (%lub %lup) %4lu points\n", c_traces, c_brush_traces, c_patch_traces, c_pointcontents);
+    Com_Printf("%4i traces (%ib %ip) %4i points\n", c_traces, c_brush_traces, c_patch_traces, c_pointcontents);
     c_traces = 0;
     c_brush_traces = 0;
     c_patch_traces = 0;
