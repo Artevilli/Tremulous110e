@@ -45,32 +45,26 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 qint demo_protocols[] =
 { PROTOCOL_VERSION, 0 };
 
-#define MAX_NUM_ARGVS 50
-
 #define USE_MULTI_SEGMENT //allocate additional zone segments on demand
 
-#define MIN_DEDICATED_COMHUNKMEGS 1
 #define MIN_COMHUNKMEGS 96
 #define DEF_COMHUNKMEGS 256
 #if defined(USE_MULTI_SEGMENT)
-#define DEF_COMZONEMEGS 9
+#define DEF_COMZONEMEGS 12
 #else
-#define DEF_COMZONEMEGS 512
+#define DEF_COMZONEMEGS 25
 #endif
-#define DEF_COMHUNKMEGS_S XSTRING(DEF_COMHUNKMEGS)
-#define DEF_COMZONEMEGS_S XSTRING(DEF_COMZONEMEGS)
 
 qint com_argc;
-qchar *com_argv[MAX_NUM_ARGVS + 1];
 
-static jmp_buf abortframe;		// an ERR_DROP occured, exit the entire frame
+static jmp_buf abortframe; //an ERR_DROP occured, exit the entire frame
 
 
 FILE *debuglogfile;
 static fileHandle_t pipefile = FS_INVALID_HANDLE;
 static fileHandle_t logfile = FS_INVALID_HANDLE;
-fileHandle_t	com_journalFile = FS_INVALID_HANDLE;			// events are written here
-fileHandle_t	com_journalDataFile = FS_INVALID_HANDLE;		// config files are written here
+fileHandle_t com_journalFile = FS_INVALID_HANDLE; //events are written here
+fileHandle_t com_journalDataFile = FS_INVALID_HANDLE; //config files are written here
 
 cvar_t *com_speeds;
 cvar_t *com_developer;
@@ -2082,8 +2076,7 @@ static void Com_InitZoneMemory( void ) {
 	// configure the memory manager.
 
 	// allocate the random block zone
-	cv = Cvar_Get( "com_zoneMegs", XSTRING( DEF_COMZONEMEGS ), CVAR_LATCH | CVAR_ARCHIVE );
-	Cvar_SetDescription( cv, "Initial amount of memory (RAM) allocated for the main block zone (in MB)." );
+	cv = Cvar_GetAndDescribe( "com_zoneMegs", XSTRING( DEF_COMZONEMEGS ), CVAR_LATCH | CVAR_ARCHIVE, "Initial amount of memory (RAM) allocated for the main block zone (in MB)." );
 
 #ifndef USE_MULTI_SEGMENT
 	if ( cv->integer < DEF_COMZONEMEGS )
@@ -2199,8 +2192,8 @@ static void Com_InitHunkMemory( void ) {
 	}
 
 	// allocate the stack based hunk allocator
-	cv = Cvar_Get( "com_hunkMegs", XSTRING( DEF_COMHUNKMEGS ), CVAR_LATCH | CVAR_ARCHIVE );
-	Cvar_SetDescription( cv, "The size of the hunk memory segment." );
+	cv = Cvar_GetAndDescribe( "com_hunkMegs", XSTRING( DEF_COMHUNKMEGS ), CVAR_LATCH | CVAR_ARCHIVE, "The size of the hunk memory segment." );
+	Cvar_CheckRange(cv, XSTRING(MIN_COMHUNKMEGS), NULL, CV_INTEGER);
 
 	s_hunkTotal = cv->integer * 1024 * 1024;
 
