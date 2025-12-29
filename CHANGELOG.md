@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--12/29/2025--**
 
+* qcommon:<br />misc fixes to a few extension functions in shared code
+
 * qcommon/sys:<br />various fixes and optimizations to both common.c and sys, implementation of per-platform newline handling, cleanup
 
 * qcommon:<br />properly shut down com_journalDataFile, code cleanup
