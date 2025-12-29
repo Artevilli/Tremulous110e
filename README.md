@@ -2,6 +2,21 @@ XserverX Tremded
 ==================
 Many of the XserverX community mods require a customized tremded which supplies support for MySQL, among other items.
 
+This is a modern idTech 3 Tremulous server aimed to be fast, secure, and (hopefully) compatible with all existing Tremulous mods. It is based on the latest non-SDL source dump of [ioquake3](https://github.com/ioquake/ioq3) with latest upstream fixes applied, and is a continuation of the [work](https://github.com/AlienHoboken/Tremulous-xserverx-tremded) uploaded by [AlienHoboken](https://github.com/AlienHoboken).
+
+*This repository does not contain any game content so in order to play you must download the [original Tremulous files](https://sourceforge.net/projects/tremulous/files/tremulous/1.1/) and set it up the same way you would any other 1.1 server.*
+
+**Key features**:
+* integrated ACEBot navigation logic through syscalls
+* up to 128 clients, including bots
+* significantly reworked QVM (Quake Virtual Machine)
+* improved server-side DoS protection, much reduced memory usage
+* raised filesystem limits (up to 20,000 maps can be handled in a single directory)
+* reworked Zone memory allocator, no more out-of-memory errors
+* network handling has been greatly optimized
+* much improved state for server downloads
+* tons of bug fixes and other improvements
+
 Extra Dependencies
 -----------------------
 The tremded depends on MySQL/MySQL development libraries. Ensure these are installed before attempting to build.
