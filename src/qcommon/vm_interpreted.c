@@ -221,8 +221,9 @@ VM_CallInterpreted2(vm_t *vm, qint nargs, qint *args)
   //qint stack[MAX_OPSTACK_SIZE];
   qint stack[OPSTACK_SIZE];
   qint *opStack;
-  qint programStack;
-  qint stackOnEntry;
+  qint *opStackTop;
+  unsigned programStack;
+  unsigned stackOnEntry;
   byte *image;
   qint v1;
   qint v0;
@@ -249,9 +250,11 @@ VM_CallInterpreted2(vm_t *vm, qint nargs, qint *args)
   //leave a free spot at start of stack so
   //that as long as opStack is valid, opStack - 1 will
   //not corrupt anything
-  opStack = stack;
+  opStack = &stack[1];
+  opStackTop = stack + ARRAY_LEN(stack) - 1;
 
-  vm->programStack -= 256; //reserve entire frame for effective compile-time LOCAL + LOAD* checks
+  programStack -= 256; //reserve entire frame for effective compile-time LOCAL + LOAD* checks
+  programStack -= (MAX_VMMAIN_CALL_ARGS + 2) * 4;
   img = (qint *)&image[programStack];
 
   for(i = 0;i < nargs;i++)
@@ -264,6 +267,8 @@ VM_CallInterpreted2(vm_t *vm, qint nargs, qint *args)
 
   ci = inst;
 
+  //main interpreter loop, will exit when a LEAVE instruction
+  //grabs the -1 program counter
   while(1)
   {
     r0.i = opStack[0];
@@ -289,7 +294,12 @@ nextInstruction2:
 
         if (programStack <= vm->stackBottom)
         {
-          Com_Error(ERR_DROP, "VM stack overflow");
+          Com_Error(ERR_DROP, "VM programStack overflow");
+        }
+
+        if (opStack + ((ci - 1)->opStack / 4) >= opStackTop)
+        {
+          Com_Error(ERR_DROP, "VM opStack overflow");
         }
 
         break;
@@ -307,7 +317,7 @@ nextInstruction2:
         {
           goto done;
         }
-        else if ((unsigned)v1 >= vm->codeLength)
+        else if ((unsigned)v1 >= vm->instructionCount)
         {
           Com_Error(ERR_DROP, "VM program counter out of range in OP_LEAVE");
         }
@@ -580,12 +590,12 @@ nextInstruction2:
 
       case
       OP_LOAD2:
-        r0.i = *opStack = *(unsigned short *)&image[r0.i & (dataMask & ~1)];
+        r0.i = *opStack = *(unsigned short *)&image[r0.i & dataMask];
         goto nextInstruction2;
 
       case
       OP_LOAD4:
-        r0.i = *opStack = *(qint *)&image[r0.i & (dataMask & ~3)];
+        r0.i = *opStack = *(qint *)&image[r0.i & dataMask];
         goto nextInstruction2;
 
       case
@@ -596,13 +606,13 @@ nextInstruction2:
 
       case
       OP_STORE2:
-        *(short *)&image[r1.i & (dataMask & ~1)] = r0.i;
+        *(short *)&image[r1.i & dataMask] = r0.i;
         opStack -= 2;
         break;
 
       case
       OP_STORE4:
-        *(qint *)&image[r1.i & (dataMask & ~3)] = r0.i;
+        *(qint *)&image[r1.i & dataMask] = r0.i;
         opStack -= 2;
         break;
 
@@ -784,7 +794,7 @@ nextInstruction2:
 done:
   //vm->currentlyInterpreting = qfalse;
 
-  if (opStack != &stack[1])
+  if (opStack != &stack[2])
   {
     Com_Error(ERR_DROP, "Interpreter error: opStack = %ld", (long)(opStack - stack));
   }

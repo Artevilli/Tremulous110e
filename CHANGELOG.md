@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--12/30/2025--**
+
+* qcommon:<br />fixed a few problems with the new VM interpreter, better security
+
 **--12/29/2025--**
 
 * qcommon:<br />misc fixes to a few extension functions in shared code
