@@ -1051,98 +1051,95 @@ VM_CallCompiled
 This function is called directly by the generated code
 ==============
 */
+qint
+VM_CallCompiled(vm_t *vm, qint nargs, qint *args)
+{
+  qint programStack;
+  qint stackOnEntry;
+  qint opStackRet;
+  byte *image;
+  void *entryPoint;
+  void *opStack;
+  qint stack[OPSTACK_SIZE + 3] = {0xDEADBEEF};
 
-#ifdef DEBUG_VM
-static qchar* memData;
-#endif
-
-qint	VM_CallCompiled( vm_t *vm, qint nargs, qint *args ) {
-	qint		programStack;
-	qint		stackOnEntry;
-	qint		opStackRet;
-	byte	*image;
-	void	*entryPoint;
-	void	*opStack;
-	qint stack[OPSTACK_SIZE + 3] = { 0xDEADBEEF };
-
-	currentVM = vm;
+  currentVM = vm;
 	
-//	Com_Printf("entering %s level %d, call %d, arg1 = 0x%x\n", vm->name, vm->callLevel, args[0], args[1]);
+  //Com_Printf("entering %s level %d, call %d, arg1 = 0x%x\n", vm->name, vm->callLevel, args[0], args[1]);
 
-	// interpret the code
-	//vm->currentlyInterpreting = qtrue;
+  //interpret the code
+  //vm->currentlyInterpreting = qtrue;
 
-//	callMask = vm->dataMask;
+  //callMask = vm->dataMask;
 
-	// we might be called recursively, so this might not be the very top
-	programStack = vm->programStack;
+  //we might be called recursively, so this might not be the very top
+  programStack = vm->programStack;
 
-        if (programStack < 256)
-        {
-          Com_Error(ERR_DROP, "VM stack underflow in compiled code");
-        }
+  if (programStack < 256)
+  {
+    Com_Error(ERR_DROP, "VM stack underflow in compiled code");
+  }
 
-	stackOnEntry = programStack;
+  stackOnEntry = programStack;
 
-	// set up the stack frame 
-	image = vm->dataBase;
-#ifdef DEBUG_VM
-	memData = (qchar*)image;
-#endif
+  //set up the stack frame 
+  image = vm->dataBase;
 
-        if (!vm->dataBase)
-        {
-          Com_Error(ERR_DROP, "VM dataBase is NULL");
-        }
+  if (!vm->dataBase)
+  {
+    Com_Error(ERR_DROP, "VM dataBase is NULL");
+  }
 
-	programStack -= 256;
+  programStack -= 256;
 
-	*(qint *)&image[ programStack + 44] = args[9];
-	*(qint *)&image[ programStack + 40] = args[8];
-	*(qint *)&image[ programStack + 36] = args[7];
-	*(qint *)&image[ programStack + 32] = args[6];
-	*(qint *)&image[ programStack + 28] = args[5];
-	*(qint *)&image[ programStack + 24] = args[4];
-	*(qint *)&image[ programStack + 20] = args[3];
-	*(qint *)&image[ programStack + 16] = args[2];
-	*(qint *)&image[ programStack + 12] = args[1];
-	*(qint *)&image[ programStack + 8 ] = args[0];
-	*(qint *)&image[ programStack + 4 ] = 0x77777777;	// return stack
-	*(qint *)&image[ programStack ] = -1;	// will terminate the loop on return
+  *(qint *)&image[programStack + 44] = args[9];
+  *(qint *)&image[programStack + 40] = args[8];
+  *(qint *)&image[programStack + 36] = args[7];
+  *(qint *)&image[programStack + 32] = args[6];
+  *(qint *)&image[programStack + 28] = args[5];
+  *(qint *)&image[programStack + 24] = args[4];
+  *(qint *)&image[programStack + 20] = args[3];
+  *(qint *)&image[programStack + 16] = args[2];
+  *(qint *)&image[programStack + 12] = args[1];
+  *(qint *)&image[programStack + 8] = args[0];
+  *(qint *)&image[programStack + 4] = 0x77777777; //return stack
+  *(qint *)&image[programStack] = -1; //will terminate the loop on return
 
-        __asm__ __volatile__ ("" ::: "memory");
+  __asm__ __volatile__ ("" ::: "memory");
 
-	// off we go into generated code...
-	entryPoint = getentrypoint(vm);
-	opStack = PADP(stack, 4);
+  //off we go into generated code...
+  entryPoint = getentrypoint(vm);
+  opStack = PADP(stack, 4);
 
-	__asm__ __volatile__ (
-		"	movl $0,%%esi		\r\n" \
-		"	movl %5,%%edi		\r\n" \
-		"	movq %4,%%r8		\r\n" \
-		"	movq %3,%%r9		\r\n" \
-		"	movq %2,%%r10		\r\n" \
-		"       subq $24, %%rsp # fix alignment as call pushes one value \r\n" \
-		"	callq *%%r10		\r\n" \
-		"       addq $24, %%rsp          \r\n" \
-		"	movl %%edi, %0		\r\n" \
-		"	movl %%esi, %1		\r\n" \
-		: "=m" (programStack), "=m" (opStackRet)
-		: "m" (entryPoint), "m" (opStack), "m" (vm->dataBase), "m" (programStack)
-		: "%rsi", "%rdi", "%rax", "%rbx", "%rcx", "%rdx", "%r8", "%r9", "%r10", "%r15", "%xmm0"
-	);
+  __asm__ __volatile__(
+    "	movl $0,%%esi		\r\n" \
+    "	movl %5,%%edi		\r\n" \
+    "	movq %4,%%r8		\r\n" \
+    "	movq %3,%%r9		\r\n" \
+    "	movq %2,%%r10		\r\n" \
+    "	subq $24, %%rsp # fix alignment as call pushes one value \r\n" \
+    "	callq *%%r10		\r\n" \
+    "	addq $24, %%rsp          \r\n" \
+    "	movl %%edi, %0		\r\n" \
+    "	movl %%esi, %1		\r\n" \
+    : "=m" (programStack), "=m" (opStackRet)
+    : "m" (entryPoint), "m" (opStack), "m" (vm->dataBase), "m" (programStack)
+    : "%rsi", "%rdi", "%rax", "%rbx", "%rcx", "%rdx", "%r8", "%r9", "%r10", "%r15", "%xmm0"
+  );
 
-	if(opStackRet != 4)
-		Com_Error(ERR_DROP, "opStack corrupted in compiled code (offset %d)\n", opStackRet);
+  if (opStackRet != 4)
+  {
+    Com_Error(ERR_DROP, "opStack corrupted in compiled code (offset %d)\n", opStackRet);
+  }
 
 #if defined(DEBUG_VM)
-	if ( programStack != stackOnEntry - CALL_PSTACK ) { //FIXME
-		Com_Error( ERR_DROP, "programStack corrupted in compiled code\n" );
-	}
+  if (programStack != stackOnEntry - CALL_PSTACK) //FIXME
+  {
+    Com_Error(ERR_DROP, "programStack corrupted in compiled code\n");
+  }
 #endif
 
-//	Com_Printf("exiting %s level %d\n", vm->name, vm->callLevel);
-	vm->programStack = stackOnEntry;
+  //Com_Printf("exiting %s level %d\n", vm->name, vm->callLevel);
+  vm->programStack = stackOnEntry;
 
-	return stack[1];
+  return stack[1];
 }
