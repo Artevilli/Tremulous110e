@@ -1983,7 +1983,7 @@ replaces content of find by replace in dest
 =============
 */
 qbool
-Q_strreplace(const qchar *dest, qint destsize, const qchar *find, const qchar *replace)
+Q_strreplace(qchar *dest, qint destsize, const qchar *find, const qchar *replace)
 {
   qint lstart;
   const qint lfind = strlen(find);

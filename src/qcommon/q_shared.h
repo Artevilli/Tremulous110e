@@ -874,11 +874,8 @@ static ID_INLINE void VectorInverse( vec3_t v ){
 	v[2] = -v[2];
 }
 
-static ID_INLINE void CrossProduct( const vec3_t v1, const vec3_t v2, vec3_t cross ) {
-	cross[0] = v1[1]*v2[2] - v1[2]*v2[1];
-	cross[1] = v1[2]*v2[0] - v1[0]*v2[2];
-	cross[2] = v1[0]*v2[1] - v1[1]*v2[0];
-}
+void
+CrossProduct(const vec3_t v1, const vec3_t v2, vec3_t cross);
 
 #else
 qint VectorCompare( const vec3_t v1, const vec3_t v2 );
@@ -1136,7 +1133,7 @@ qchar *
 Q_strncpy(qchar *dest, qchar *src, qint destsize);
 void	Q_strcat( qchar *dest, qint size, const qchar *src );
 qbool
-Q_strreplace(const qchar *dest, qint destsize, const qchar *find, const qchar *replace);
+Q_strreplace(qchar *dest, qint destsize, const qchar *find, const qchar *replace);
 
 // strlen that discounts Quake color sequences
 qint Q_PrintStrlen( const qchar *string );

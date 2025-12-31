@@ -518,7 +518,15 @@ void VM_Compile( vm_t *vm, vmHeader_t *header ) {
 
 		if(op_argsize[op] == 4)
 		{
-			iarg = *(qint*)(code+pc);
+		        union
+		        {
+		          qint val;
+		          byte b[4];
+		        }
+		        u;
+
+			Com_Memcpy(u.b, code + pc, 4);
+			iarg = u.val;
 			pc += 4;
 			Dfprintf(qdasmout, "%s %8u\n", opnames[op], iarg);
 		}

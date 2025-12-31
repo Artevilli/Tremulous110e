@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--12/30/2025--**
 
+* qcommon:<br />fixed some misc and memory problems
+
 * qcommon:<br />fixed a few problems with the new VM interpreter, better security
 
 **--12/29/2025--**
