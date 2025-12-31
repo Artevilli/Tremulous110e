@@ -345,11 +345,11 @@ nextInstruction2:
             //the vm has qints on the stack, we expect
             //longs so we have to convert it
             intptr_t argarr[16];
-            qint i;
+            qint j;
 
-            for(i = 0;i < 16;++i)
+            for(j = 0;j < 16;++j)
             {
-              argarr[i] = *(qint *)&image[programStack + 4 + 4*i];
+              argarr[j] = *(qint *)&image[programStack + 4 + 4*j];
             }
 
             argptr = argarr;

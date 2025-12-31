@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--12/31/2025--**
 
+* qcommon:<br />large cleanup to q_platform.h, fixed errors in affinity masking
+
 * qcommon/sys:<br />affinity masking
 
 * qcommon:<br />format VM_CallCompiled()

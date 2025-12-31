@@ -3166,7 +3166,7 @@ CPUID_EX(qint func, qint param, unsigned *regs)
     "=a"(regs[0]),
     "=b"(regs[1]),
     "=c"(regs[2]),
-    "=d"(regs[3]), :
+    "=d"(regs[3]) :
     "a"(func),
     "c"(param));
 }
@@ -3183,7 +3183,7 @@ Sys_GetProcessorId(qchar *vendor)
 
   //setup initial features
 #if idx64
-  CPU_Flags |= CPU_SEE | CPU_SEE2 | CPU_FCOM;
+  CPU_Flags |= CPU_SSE | CPU_SSE2 | CPU_FCOM;
 #else
   CPU_Flags = 0;
 #endif
