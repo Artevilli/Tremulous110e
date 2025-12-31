@@ -41,6 +41,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 #endif
 
+#if defined(_WIN32) || defined(__linux__)
+#define USE_AFFINITY_MASK
+#endif
+
 #define DELAY_WRITECONFIG
 
 //============================================================================
@@ -969,6 +973,21 @@ MISC
 ==============================================================
 */
 
+extern qint CPU_Flags;
+
+//x86 flags
+#define CPU_FCOM 0x01
+#define CPU_MMX 0x02
+#define CPU_SSE 0x04
+#define CPU_SSE2 0x08
+#define CPU_SSE3 0x10
+#define CPU_SSE41 0x20
+
+//ARM flags
+#define CPU_ARMv7 0x01
+#define CPU_IDIVA 0x02
+#define CPU_VFPv3 0x04
+
 // returned by Sys_GetProcessorFeatures
 typedef enum
 {
@@ -1051,6 +1070,9 @@ extern	cvar_t	*com_speeds;
 extern	cvar_t	*com_timescale;
 extern	cvar_t	*com_sv_running;
 extern	cvar_t	*com_cl_running;
+#if defined(USE_AFFINITY_MASK)
+extern  cvar_t  *com_affinityMask;
+#endif
 extern	cvar_t	*com_version;
 extern	cvar_t	*com_blood;
 //extern	cvar_t	*com_buildScript;		// for building release pak files
@@ -1308,6 +1330,13 @@ void	Sys_Quit (void);
 qchar	*Sys_GetClipboardData( void );	// note that this isn't journaled...
 
 void	Sys_Print( const qchar *msg );
+
+#if defined(USE_AFFINITY_MASK)
+uint64_t
+Sys_GetAffinityMask(void);
+qbool
+Sys_SetAffinityMask(const uint64_t mask);
+#endif
 
 // Sys_Milliseconds should only be used for profiling purposes,
 // any game related timing information should come from event timestamps

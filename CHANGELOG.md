@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--12/31/2025--**
 
+* qcommon/sys:<br />affinity masking
+
 * qcommon:<br />format VM_CallCompiled()
 
 * qcommon:<br />add range check to VM_CallCompiled and make the memory volatile to further ensure segfaulting will not happen on newer GCC versions

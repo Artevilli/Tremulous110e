@@ -39,6 +39,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <wincrypt.h>
 #include <shlobj.h>
 #include <psapi.h>
+#include <intrin.h>
 
 // Used to determine where to store user-specific files
 static char homePath[ MAX_OSPATH ] = { 0 };
@@ -932,3 +933,51 @@ Sys_PIDIsRunning(qint pid)
 
   return qfalse;
 }
+
+/*
+================
+Sys_SetAffinityMask
+================
+*/
+#if defined(USE_AFFINITY_MASK)
+static HANDLE hCurrentProcess = 0;
+
+uint64_t
+Sys_GetAffinityMask(void)
+{
+  DWORD_PTR dwProcessAffinityMask;
+  DWORD_PTR dwSystemAffinityMask;
+
+  if (hCurrentProcess == 0)
+  {
+    hCurrentProcess = GetCurrentProcess();
+  }
+
+  if (GetProcessAffinityMask(hCurrentProcess, &dwProcessAffinityMask, &dwSystemAffinityMask))
+  {
+    return (uint64_t)dwProcessAffinityMask;
+  }
+
+  return 0;
+}
+
+
+qbool
+Sys_SetAffinityMask(const uint64_t mask)
+{
+  DWORD_PTR dwProcessAffinityMask = (DWORD_PTR)mask;
+
+  if (hCurrentProcess == 0)
+  {
+    hCurrentProcess = GetCurrentProcess();
+  }
+
+  if (SetProcessAffinityMask(hCurrentProcess, dwProcessAffinityMask))
+  {
+    //Sleep(0);
+    return qtrue;
+  }
+
+  return qfalse;
+}
+#endif //USE_AFFINITY_MASK

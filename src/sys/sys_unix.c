@@ -20,10 +20,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#include "../qcommon/q_shared.h"
-#include "../qcommon/qcommon.h"
-#include "sys_local.h"
-
+#define _GNU_SOURCE
+#include <sched.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -34,8 +32,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <pwd.h>
+#include <dlfcn.h>
 #include <libgen.h>
 #include <fcntl.h>
+
+#include "../qcommon/q_shared.h"
+#include "../qcommon/qcommon.h"
+#include "sys_local.h"
 
 qbool stdinIsATTY;
 
@@ -927,3 +930,63 @@ Sys_PIDIsRunning(qint pid)
 {
   return !kill(pid, 0);
 }
+
+#if defined(USE_AFFINITY_MASK)
+/*
+=================
+Sys_GetAffinityMask
+=================
+*/
+uint64_t
+Sys_GetAffinityMask(void)
+{
+  cpu_set_t cpu_set;
+
+  if (sched_getaffinity(getpid(), sizeof(cpu_set), &cpu_set) == 0)
+  {
+    uint64_t mask = 0;
+    qint cpu;
+
+    for(cpu = 0;cpu < sizeof(mask) * 8;cpu++)
+    {
+      if (CPU_ISSET(cpu, &cpu_set))
+      {
+        mask |= (1ULL << cpu);
+      }
+    }
+
+    return mask;
+  }
+
+  return 0;
+}
+
+/*
+=================
+Sys_SetAffinityMask
+=================
+*/
+qbool
+Sys_SetAffinityMask(const uint64_t mask)
+{
+  cpu_set_t cpu_set;
+  qint cpu;
+
+  CPU_ZERO(&cpu_set);
+
+  for(cpu = 0;cpu < sizeof(mask) * 8;cpu++)
+  {
+    if (mask & (1ULL << cpu))
+    {
+      CPU_SET(cpu, &cpu_set);
+    }
+  }
+
+  if (sched_setaffinity(getpid(), sizeof(cpu_set), &cpu_set) == 0)
+  {
+    return qtrue;
+  }
+
+  return qfalse;
+}
+#endif //USE_AFFINITY_MASK

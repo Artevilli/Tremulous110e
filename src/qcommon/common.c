@@ -59,6 +59,7 @@ qint com_argc;
 
 static jmp_buf abortframe; //an ERR_DROP occured, exit the entire frame
 
+qint CPU_Flags = 0;
 
 FILE *debuglogfile;
 static fileHandle_t pipefile = FS_INVALID_HANDLE;
@@ -78,6 +79,9 @@ cvar_t *com_maxfps;
 cvar_t *com_maxfpsUnfocused;
 cvar_t *com_yieldCPU;
 cvar_t *com_timedemo;
+#endif
+#if defined(USE_AFFINITY_MASK)
+cvar_t *com_affinityMask;
 #endif
 cvar_t *com_altivec;
 cvar_t *com_sv_running;
@@ -3092,6 +3096,604 @@ Com_GameRestart_f(void)
   Com_GameRestart(0, qtrue);
 }
 
+/*
+** --------------------------------------------------------------------------------
+**
+** PROCESSOR STUFF
+**
+** --------------------------------------------------------------------------------
+*/
+
+#if defined(USE_AFFINITY_MASK)
+static uint64_t eCoreMask;
+static uint64_t pCoreMask;
+static uint64_t affinityMask; //saved at startup
+#endif
+
+#if (idx64 || id386)
+
+#if defined(_MSC_VER)
+#include <intrin.h>
+
+static void
+CPUID(qint func, unsigned *regs)
+{
+  __cpuid((qint *)regs, func);
+}
+
+#if defined(USE_AFFINITY_MASK)
+#if idx64
+extern void
+CPUID_EX(qint func, qint param, unsigned *regs);
+#else
+void
+CPUID_EX(qint func, qint param, unsigned *regs)
+{
+  __asm {
+    push edi
+    mov eax, func
+    mov ecx, param
+    cpuid
+    mov edi, regs
+    mov [edi + 0], eax
+    mov [edi + 4], ebx
+    mov [edi + 8], ecx
+    mov [edi + 12], edx
+    pop edi
+  }
+}
+#endif //!idx64
+#endif //USE_AFFINITY_MASK
+
+#else //clang/gcc/mingw
+
+static void
+CPUID(qint func, unsigned *regs)
+{
+  __asm__ __volatile__("cpuid" :
+    "=a"(regs[0]),
+    "=b"(regs[1]),
+    "=c"(regs[2]),
+    "=d"(regs[3]) :
+    "a"(func));
+}
+
+#if defined(USE_AFFINITY_MASK)
+static void
+CPUID_EX(qint func, qint param, unsigned *regs)
+{
+  __asm__ __volatile__("cpuid" :
+    "=a"(regs[0]),
+    "=b"(regs[1]),
+    "=c"(regs[2]),
+    "=d"(regs[3]), :
+    "a"(func),
+    "c"(param));
+}
+#endif //USE_AFFINITY_MASK
+
+#endif //clang/gcc/mingw
+
+static void
+Sys_GetProcessorId(qchar *vendor)
+{
+  uint32_t regs[4]; //EAX, EBX, ECX, EDX
+  uint32_t cpuid_level_ex;
+  qchar vendor_str[12 + 1]; //short CPU vendor string
+
+  //setup initial features
+#if idx64
+  CPU_Flags |= CPU_SEE | CPU_SEE2 | CPU_FCOM;
+#else
+  CPU_Flags = 0;
+#endif
+  vendor[0] = '\0';
+
+  CPUID(0x80000000, regs);
+  cpuid_level_ex = regs[0];
+
+  //get CPUID level & short CPU vendor string
+  CPUID(0x0, regs);
+  Com_Memcpy(vendor_str + 0, (qchar *)&regs[1], 4);
+  Com_Memcpy(vendor_str + 4, (qchar *)&regs[3], 4);
+  Com_Memcpy(vendor_str + 8, (qchar *)&regs[2], 4);
+  vendor_str[12] = '\0';
+
+  //get CPU feature bits
+  CPUID(0x1, regs);
+
+  //bit 15 of EDX denotes CMOV/FCMOV/FCOMI existence
+  if (regs[3] & (BIT(15)))
+  {
+    CPU_Flags |= CPU_FCOM;
+  }
+
+  //bit 23 of EDX denotes MMX existence
+  if (regs[3] & (BIT(23)))
+  {
+    CPU_Flags |= CPU_MMX;
+  }
+
+  //bit 25 of EDX denotes SSE existence
+  if (regs[3] & (BIT(25)))
+  {
+    CPU_Flags |= CPU_SSE;
+  }
+
+  //bit 26 of EDX denotes SSE2 existence
+  if (regs[3] & (BIT(26)))
+  {
+    CPU_Flags |= CPU_SSE2;
+  }
+
+  //bit 0 of ECX denotes SSE3 existence
+  //if (regs[2] & (BIT(0)))
+  //{
+    //CPU_Flags |= CPU_SSE3;
+  //}
+
+  //bit 19 of ECX denotes SSE41 existence
+  if (regs[2] & (BIT(19)))
+  {
+    CPU_Flags |= CPU_SSE41;
+  }
+
+  if (vendor)
+  {
+    if (cpuid_level_ex >= 0x80000004)
+    {
+      //read CPU Brand string
+      uint32_t i;
+
+      for(i = 0x80000002;i <= 0x80000004;i++)
+      {
+        CPUID(i, regs);
+        Com_Memcpy(vendor + 0, (qchar *)&regs[0], 4);
+        Com_Memcpy(vendor + 4, (qchar *)&regs[1], 4);
+        Com_Memcpy(vendor + 8, (qchar *)&regs[2], 4);
+        Com_Memcpy(vendor + 12, (qchar *)&regs[3], 4);
+        vendor[16] = '\0';
+        vendor += strlen(vendor);
+      }
+    }
+    else
+    {
+      const qint print_flags = CPU_Flags;
+
+      vendor = Q_stradd(vendor, vendor_str);
+
+      if (print_flags)
+      {
+        //print features
+        Q_strcat(vendor, sizeof(vendor), " w/");
+
+        if (print_flags & CPU_FCOM)
+        {
+          Q_strcat(vendor, sizeof(vendor), " CMOV");
+        }
+
+        if (print_flags & CPU_MMX)
+        {
+          Q_strcat(vendor, sizeof(vendor), " MMX");
+        }
+
+        if (print_flags & CPU_SSE)
+        {
+          Q_strcat(vendor, sizeof(vendor), " SSE");
+        }
+
+        if (print_flags & CPU_SSE2)
+        {
+          Q_strcat(vendor, sizeof(vendor), " SSE2");
+        }
+
+        //if (CPU_Flags & CPU_SSE3)
+        //{
+          //Q_strcat(vendor, sizeof(vendor), " SSE3");
+        //}
+
+        if (print_flags & CPU_SSE41)
+        {
+          Q_strcat(vendor, sizeof(vendor), " SSE4.1");
+        }
+      }
+    }
+  }
+}
+
+#if defined(USE_AFFINITY_MASK)
+static void
+DetectCPUCoresConfig(void)
+{
+  uint32_t regs[4];
+  uint32_t i;
+
+  //get highest function parameter and vendor id
+  CPUID(0x0, regs);
+
+  if (regs[1] != 0x756E6547 || regs[2] != 0x6C65746E || regs[3] != 0x49656E69 || regs[0] < 0x1A)
+  {
+    //non-intel signature or too low cpuid level - unsupported
+    eCoreMask = pCoreMask = affinityMask;
+    return;
+  }
+
+  eCoreMask = 0;
+  pCoreMask = 0;
+
+  for(i = 0;i < sizeof(affinityMask) * 8;i++)
+  {
+    const uint64_t mask = 1ULL << i;
+
+    if ((mask & affinityMask) && Sys_SetAffinityMask(mask))
+    {
+      CPUID_EX(0x1A, 0x0, regs);
+
+      switch((regs[0] >> 24) & 0xFF)
+      {
+        case
+        0x20:
+          eCoreMask |= mask;
+          break;
+
+        case
+        0x40:
+          pCoreMask |= mask;
+          break;
+
+        default: //non-existing leaf
+          eCoreMask = pCoreMask = 0;
+          break;
+      }
+    }
+  }
+
+  //restore original affinity
+  Sys_SetAffinityMask(affinityMask);
+
+  if (pCoreMask == 0 || eCoreMask == 0)
+  {
+    //if either mask is empty - assume non-hybrid configuration
+    eCoreMask = pCoreMask = affinityMask;
+  }
+}
+#endif //USE_AFFINITY_MASK
+
+#else //non-x86
+
+#if !defined(__linux__)
+
+static void
+Sys_GetProcessorId(qchar *vendor)
+{
+  Com_sprintf(vendor, 100, "%s", ARCH_STRING);
+}
+
+#else //__linux__
+
+#include <sys/auxv.h>
+
+#if arm32
+#include <asm/hwcap.h>
+#endif
+
+static void
+Sys_GetProcessorId(qchar *vendor)
+{
+#if arm32
+  const qchar *platform;
+  long hwcaps;
+  CPU_Flags = 0;
+
+  platform = (const qchar *)getauxval(AT_PLATFORM);
+
+  if (!platform || *platform == '\0')
+  {
+    platform = "(unknown)";
+  }
+
+  if (platform[0] == 'v' || platform[0] == 'V')
+  {
+    if (Q_atoi(platform + 1) >= 7)
+    {
+      CPU_Flags |= CPU_ARMv7;
+    }
+  }
+
+  Com_sprintf(vendor, 100, "ARM %s", platform);
+  hwcaps = getauxval(AT_HWCAP);
+
+  if (hwcaps & (HWCAP_IDIVA | HWCAP_VFPv3))
+  {
+    Q_strcat(vendor, sizeof(vendor), " /w");
+
+    if (hwcaps & HWCAP_IDIVA)
+    {
+      CPU_Flags |= CPU_IDIVA;
+      Q_strcat(vendor, sizeof(vendor), " IDIVA");
+    }
+
+    if (hwcaps & HWCAP_VFPv3)
+    {
+      CPU_Flags |= CPU_VFPv3;
+      Q_strcat(vendor, sizeof(vendor), " VFPv3");
+    }
+
+    if ((CPU_Flags & (CPU_ARMv7 | CPU_VFPv3)) == (CPU_ARMv7 | CPU_VFPv3))
+    {
+      Q_strcat(vendor, sizeof(vendor), " QVM-bytecode");
+    }
+  }
+#else //!arm32
+  CPU_Flags = 0;
+#if arm64
+  Com_sprintf(vendor, 100, "%s", ARCH_STRING);
+#else
+  Com_sprintf(vendor, 128, "%s %s", ARCH_STRING, (const qchar *)getauxval(AT_PLATFORM));
+#endif
+#endif //!arm32
+}
+
+#endif //__linux__
+
+#endif //non-x86
+
+/*
+================
+Com_SnapVector
+================
+*/
+#if defined(_MSC_VER)
+#if idx64
+void
+Com_SnapVector(float *vector)
+{
+  __m128 vf0;
+  __m128 vf1;
+  __m128 vf2;
+  DWORD mxcsr;
+
+  mxcsr = _mm_getcsr();
+  vf0 = _mm_setr_ps(vector[0], vector[1], vector[2], 0.0f);
+
+  _mm_setcsr(mxcsr & ~0x6000); //enforce rounding mode to "round to nearest"
+
+  vi = _mm_cvtps_epi32(vf0);
+  vf0 = _mm_cvtepi32_ps(vi);
+
+  vf1 = _mm_shuffle_ps(vf0, vf0, _MM_SHUFFLE(1, 1, 1, 1));
+  vf2 = _mm_shuffle_ps(vf0, vf0, _MM_SHUFFLE(2, 2, 2, 2));
+
+  _mm_setcsr(mxcsr); //restore rounding mode
+
+  _mm_store_ss(&vector[0], vf0);
+  _mm_store_ss(&vector[1], vf1);
+  _mm_store_ss(&vector[2], vf2);
+}
+#endif //idx64
+
+#if id386
+void
+Com_SnapVector(float *vector)
+{
+  static const DWORD cw037F = 0x037F;
+  DWORD cwCurr;
+
+  __asm {
+    fnstcw word ptr [cwCurr]
+    mov ecx, vector
+    fldcw word ptr [cw037F]
+
+    fld dword ptr[ecx + 8]
+    fistp dword ptr[ecx + 8]
+    fild dword ptr[ecx + 8]
+    fstp dword ptr[ecx + 8]
+
+    fld dword ptr[ecx + 4]
+    fistp dword ptr[ecx + 4]
+    fild dword ptr[ecx + 4]
+    fstp dword ptr[ecx + 4]
+
+    fld dword ptr[ecx + 0]
+    fistp dword ptr[ecx + 0]
+    fild dword ptr[ecx + 0]
+    fstp dword ptr[ecx + 0]
+
+    fldcw word ptr cwCurr
+  }; //__asm
+}
+#endif //id386
+
+#if arm64
+void
+Com_SnapVector(float *vector)
+{
+  vector[0] = rint(vector[0]);
+  vector[1] = rint(vector[1]);
+  vector[2] = rint(vector[2]);
+}
+#endif
+
+#else //clang/gcc/mingw
+
+#if id386
+
+#define QROUNDX87(src) \
+  "flds " src "\n" \
+  "fistpl " src "\n" \
+  "fildl " src "\n" \
+  "fstps " src "\n"
+
+void
+Com_SnapVector(float *vector)
+{
+  static const unsigned short cw037F = 0x037F;
+  unsigned short cwCurr;
+
+  __asm__ volatile
+  (
+    "fnstcw %1\n" \
+    "fldcw %2\n" \
+    QROUNDX87("0(%0)")
+    QROUNDX87("4(%0)")
+    QROUNDX87("8(%0)")
+    "fldcw %1\n" \
+    :
+    : "r" (vector), "m"(cwCurr), "m"(cw037F)
+    : "memory", "st"
+  );
+}
+
+#else //idx64, non-x86
+
+void
+Com_SnapVector(float *vector)
+{
+  vector[0] = rint(vector[0]);
+  vector[1] = rint(vector[1]);
+  vector[2] = rint(vector[2]);
+}
+
+#endif
+
+#endif //clang/gcc/mingw
+
+#if defined(USE_AFFINITY_MASK)
+
+static qint
+hex_code(const qint code)
+{
+  if (code >= '0' && code <= '9')
+  {
+    return code - '0';
+  }
+
+  if (code >= 'A' && code <= 'F')
+  {
+    return code - 'A' + 10;
+  }
+
+  if (code >= 'a' && code <= 'f')
+  {
+    return code - 'a' + 10;
+  }
+
+  return -1;
+}
+
+static const qchar *
+parseAffinityMask(const qchar *str, uint64_t *outv, qint level)
+{
+  uint64_t v;
+  uint64_t mask = 0;
+
+  while(*str != '\0')
+  {
+    if (*str == 'A' || *str == 'a')
+    {
+      mask = affinityMask;
+      ++str;
+      continue;
+    }
+    else if (*str == 'P' || *str == 'p')
+    {
+      mask = pCoreMask;
+      ++str;
+      continue;
+    }
+    else if (*str == 'E' || *str == 'e')
+    {
+      mask = eCoreMask;
+      ++str;
+      continue;
+    }
+    else if (*str == '0' && (str[1] == 'x' || str[1] == 'X') && (v = hex_code(str[2])) >= 0)
+    {
+      qint hex;
+
+      str += 3; //0xH
+
+      while((hex = hex_code(*str)) >= 0)
+      {
+        v = v * 16 + hex;
+        str++;
+      }
+
+      mask = v;
+      continue;
+    }
+    else if (*str >= '0' && *str <= '9')
+    {
+      mask = *str++ - '0';
+
+      while(*str >= '0' && *str <= '9')
+      {
+        mask = mask * 10 + *str - '0';
+        ++str;
+      }
+
+      continue;
+    }
+
+    if (level == 0)
+    {
+      while(*str == '+' || *str == '-')
+      {
+        str = parseAffinityMask(str + 1, &v, level + 1);
+
+        switch(*str)
+        {
+          case
+          '+':
+            mask |= v;
+            break;
+
+          case
+          '-':
+            mask &= ~v;
+            break;
+
+          default:
+            str = "";
+            break;
+        }
+      }
+
+      if (*str != '\0')
+      {
+        ++str; //skip unknown characters
+      }
+    }
+    else
+    {
+      break;
+    }
+  }
+
+  *outv = mask;
+  return str;
+}
+
+//parse and set affinity mask
+static void
+Com_SetAffinityMask(const qchar *str)
+{
+  uint64_t mask = 0;
+
+  parseAffinityMask(str, &mask, 0);
+
+  if ((mask & affinityMask) == 0)
+  {
+    mask = affinityMask; //reset to default
+  }
+
+  if (mask != 0)
+  {
+    Sys_SetAffinityMask(mask);
+  }
+}
+#endif //USE_AFFINITY_MASK
+
 static void Com_DetectAltivec(void)
 {
 	// Only detect if user hasn't forcibly disabled it.
@@ -3307,6 +3909,12 @@ void Com_Init( qchar *commandLine ) {
 	Cvar_CheckRange(com_yieldCPU, "0", "16", CV_INTEGER);
 #endif
 
+#if defined(USE_AFFINITY_MASK)
+        com_affinityMask = Cvar_GetAndDescribe("com_affinityMask", "", CVAR_ARCHIVE, "Bind game process to bitmask-specified CPU core(s), special characters:\n A or a - all default cores\n P or p - performance cores\n E or e - efficiency cores\n 0x<value> - use hexadecimal notation\n + or - can be used to add or exclude particular cores");
+        com_affinityMask->modified = qfalse;
+#endif
+
+
 	com_abnormalExit = Cvar_Get("com_abnormalExit", "0", CVAR_ROM);
 
 	Cmd_AddCommand("game_restart", Com_GameRestart_f);
@@ -3315,6 +3923,33 @@ void Com_Init( qchar *commandLine ) {
 	com_version = Cvar_Get ("version", s, CVAR_ROM | CVAR_SERVERINFO );
 
 	Sys_Init();
+
+        //CPU detection
+        Cvar_Get("sys_cpustring", "detect", CVAR_PROTECTED | CVAR_ROM);
+
+        if (!Q_stricmp(Cvar_VariableString("sys_cpustring"), "detect"))
+        {
+          qchar vendor[128];
+
+          Com_Printf("...detecting CPU, found ");
+          Sys_GetProcessorId(vendor);
+          Cvar_Set("sys_cpustring", vendor);
+        }
+
+        Com_Printf("%s\n", Cvar_VariableString("sys_cpustring"));
+
+#if defined(USE_AFFINITY_MASK)
+        //get initial process affinity - we will respect it when setting custom affinity mask
+        eCoreMask = pCoreMask = affinityMask = Sys_GetAffinityMask();
+#if (idx64 || id386)
+        DetectCPUCoresConfig();
+#endif
+        if (com_affinityMask->string[0] != '\0')
+        {
+          Com_SetAffinityMask(com_affinityMask->string);
+          com_affinityMask->modified = qfalse;
+        }
+#endif
 
         if (Sys_WritePIDFile())
         {
@@ -3623,6 +4258,14 @@ Com_Frame(qbool noDelay)
   //write config file if anything changed
 #if !defined(DELAY_WRITECONFIG)
   Com_WriteConfiguration();
+#endif
+
+#if defined(USE_AFFINITY_MASK)
+  if (com_affinityMask->modified)
+  {
+    Com_SetAffinityMask(com_affinityMask->string);
+    com_affinityMask->modified = qfalse;
+  }
 #endif
 
   //main event loop
