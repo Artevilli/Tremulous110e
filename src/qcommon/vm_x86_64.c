@@ -1076,6 +1076,12 @@ qint	VM_CallCompiled( vm_t *vm, qint nargs, qint *args ) {
 
 	// we might be called recursively, so this might not be the very top
 	programStack = vm->programStack;
+
+        if (programStack < 256)
+        {
+          Com_Error(ERR_DROP, "VM stack underflow in compiled code");
+        }
+
 	stackOnEntry = programStack;
 
 	// set up the stack frame 
@@ -1083,6 +1089,11 @@ qint	VM_CallCompiled( vm_t *vm, qint nargs, qint *args ) {
 #ifdef DEBUG_VM
 	memData = (qchar*)image;
 #endif
+
+        if (!vm->dataBase)
+        {
+          Com_Error(ERR_DROP, "VM dataBase is NULL");
+        }
 
 	programStack -= 256;
 
@@ -1098,6 +1109,8 @@ qint	VM_CallCompiled( vm_t *vm, qint nargs, qint *args ) {
 	*(qint *)&image[ programStack + 8 ] = args[0];
 	*(qint *)&image[ programStack + 4 ] = 0x77777777;	// return stack
 	*(qint *)&image[ programStack ] = -1;	// will terminate the loop on return
+
+        __asm__ __volatile__ ("" ::: "memory");
 
 	// off we go into generated code...
 	entryPoint = getentrypoint(vm);

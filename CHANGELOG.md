@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--12/31/2025--**
+
+* qcommon:<br />add range check to VM_CallCompiled and make the memory volatile to further ensure segfaulting will not happen on newer GCC versions
+
 **--12/30/2025--**
 
 * server:<br />reduced the range check for sv_dlRate
