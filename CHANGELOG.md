@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--12/30/2025--**
 
+* server:<br />reduced the range check for sv_dlRate
+
 * qcommon:<br />fixed some misc and memory problems
 
 * qcommon:<br />fixed a few problems with the new VM interpreter, better security
@@ -20,7 +22,7 @@ Changes
 
 * qcommon/sys:<br />cleaner and more optimized Com_Frame() including reduced CPU usage if not dedicated
 
-* tremded:<br />slightly less hacky SV_SetConfigstring
+* server:<br />slightly less hacky SV_SetConfigstring
 
 * qcommon:<br />increased default com_zoneMegs to 12
 
@@ -28,17 +30,17 @@ Changes
 
 * readme:<br />added info
 
-* qcommon/tremded:<br />use more instances of Cvar_SetIntegerValue to avoid potential rounding errors
+* qcommon/server:<br />use more instances of Cvar_SetIntegerValue to avoid potential rounding errors
 
-* qcommon/tremded:<br />fixed 32-bit calling convention
+* qcommon/server:<br />fixed 32-bit calling convention
 
-* qcommon/tremded:<br />using explicit argument count for each VM_Call() which is more clear than implicit static *vmMainArgs tables
+* qcommon/server:<br />using explicit argument count for each VM_Call() which is more clear than implicit static *vmMainArgs tables
 
-* tremded:<br />the 'unreferenced' check for valid pk3 downloads no longer exists
+* server:<br />the 'unreferenced' check for valid pk3 downloads no longer exists
 
-* tremded:<br />removed a redundant check in SV_ExecuteClientMessage, moved outgoing sequence incrementing to post client qport sending
+* server:<br />removed a redundant check in SV_ExecuteClientMessage, moved outgoing sequence incrementing to post client qport sending
 
-* qcommon/tremded:<br />properly null out some qchars
+* qcommon/server:<br />properly null out some qchars
 
 * qcommon:<br />fixed a bad issue where cached pk3s did not have their cache references reset
 
