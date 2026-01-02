@@ -699,7 +699,7 @@ static const qchar *Com_StringContains(const qchar *str1, const qchar *str2, qin
 		for (j = 0; str2[j]; j++) {
 			if (locase[(byte)str1[j]] != locase[(byte)str2[j]])
 			{
-			  break;;
+			  break;
 			}
 		}
 		if (!str2[j]) {
