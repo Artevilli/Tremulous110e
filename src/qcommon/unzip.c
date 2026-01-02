@@ -1470,6 +1470,15 @@ static void unzlocal_DosDateToTmuDate (uLong ulDosDate, tm_unz* ptm)
 }
 
 /*
+  Unaligned little endian 32 bit fetch
+*/
+static inline uint32_t
+U32_LE(const uint8_t *p)
+{
+  return ((uint32_t)p[0] | (uint32_t)p[1] << 8 | (uint32_t)p[2] << 16 | (uint32_t)p[3] << 24);
+}
+
+/*
   Get Info about the current file in the zipfile, with internal only info
 */
 static int unzlocal_GetCurrentFileInfoInternal (unzFile file,
@@ -1520,8 +1529,8 @@ static int unzlocal_GetCurrentFileInfoInternal (unzFile file,
 	file_info.size_file_comment = LittleShort( *(short*)(buf+32) );
 	file_info.disk_num_start = LittleShort( *(short*)(buf+34) );
 	file_info.internal_fa = LittleShort( *(short*)(buf+36) );
-	file_info.external_fa = LittleLong( *(int*)(buf+38) );
-	file_info_internal.offset_curfile = LittleLong( *(int*)(buf+42) );
+	file_info.external_fa = U32_LE((uint8_t *)buf + 38); //LittleLong( *(int*)(buf+38) );
+	file_info_internal.offset_curfile = U32_LE((uint8_t *)buf + 42); //LittleLong( *(int*)(buf+42) );
 #else
 
 	/* we check the magic */
