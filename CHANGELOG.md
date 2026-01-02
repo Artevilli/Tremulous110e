@@ -5,6 +5,9 @@ Please note that this is not a complete list of every change. It will be continu
 Changes
 -----------------------
 **--01/02/2026--**
+
+* qcommon/server:<br />fix bad syscalls placement
+
 * makefile/qcommon/server/sys:<br />drop x86_64 vm and merge into x86, optimize and harden vm security, vms are now on par speed wise to native libraries
 
 **--12/31/2025--**

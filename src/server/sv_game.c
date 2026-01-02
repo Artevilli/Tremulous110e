@@ -798,7 +798,7 @@ SV_GameSystemCalls(intptr_t *args)
       return xglobal_flags(VMA(1));
 
     default:
-      return -1; //Com_Error(ERR_DROP, "Bad game system trap: %ld", (long qint) args[0]);
+      Com_Error(ERR_DROP, "Bad game system trap: %ld", (long qint) args[0]);
   }
 
   return -1;
