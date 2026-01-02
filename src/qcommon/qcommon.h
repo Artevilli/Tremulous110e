@@ -163,7 +163,7 @@ NET
 #define	FRAGMENT_SIZE			(MAX_PACKETLEN - 100)
 #define	PACKET_HEADER			10			// two ints and a short
 
-#define	FRAGMENT_BIT	(1<<31)
+#define	FRAGMENT_BIT	(1U<<31)
 
 typedef enum {
 	NA_BAD = 0,					// an address lookup failed

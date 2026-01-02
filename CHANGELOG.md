@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/02/2026--**
 
+* qcommon/server:<br />`FRAGMENT_BIT` memory fix and fix bitvector overflows in `SV_AddEntitiesVisibleFromPoint`
+
 * tremded:<br />accompanying the increased sv_dlRate range, increase the last package acknowledge time to 12 seconds
 
 * qcommon:<br />flag `com_affinityMask` and `vm_rtChecks` as `CVAR_SERVERINFO` for transparency 
