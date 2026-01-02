@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/02/2026--**
 
+* qcommon/server:<br />formatting
+
 * qcommon:<br />copyright
 
 * server:<br />increase sv_dlRate's max range again

@@ -664,12 +664,16 @@ void 	Cvar_WriteVariables( fileHandle_t f );
 
 void	Cvar_Init( void );
 
-const qchar	*Cvar_InfoString( qint bit, qbool *truncated );
-const qchar	*Cvar_InfoString_Big( qint bit, qbool *truncated );
+const qchar *
+Cvar_InfoString(qint bit, qbool *truncated);
+const qchar *
+Cvar_InfoString_Big(qint bit, qbool *truncated);
 // returns an info string containing all the cvars that have the given bit set
-// in their flags ( CVAR_USERINFO, CVAR_SERVERINFO, CVAR_SYSTEMINFO, etc )
-void	Cvar_InfoStringBuffer( qint bit, qchar *buff, qint buffsize );
-void Cvar_CheckRange(cvar_t *cv, const char *minVal, const char *maxVal, cvarValidator_t type);
+// in their flags (CVAR_USERINFO, CVAR_SERVERINFO, CVAR_SYSTEMINFO, etc)
+void
+Cvar_InfoStringBuffer(qint bit, qchar *buff, qint buffsize);
+void
+Cvar_CheckRange(cvar_t *cv, const char *minVal, const char *maxVal, cvarValidator_t type);
 const void
 Cvar_SetDescription(cvar_t *var, const qchar *var_description);
 cvar_t *
@@ -681,13 +685,14 @@ Cvar_Restart(qbool unsetVM);
 void
 Cvar_CompleteCvarName(const qchar *args, qint argNum);
 
-extern	qint			cvar_modifiedFlags;
+extern qint cvar_modifiedFlags;
 // whenever a cvar is modifed, its flags will be OR'd into this, so
 // a single check can determine if any CVAR_USERINFO, CVAR_SERVERINFO,
 // etc, variables have been modified since the last check.  The bit
 // can then be cleared to allow another change detection.
 
-unsigned int crc32_buffer( const byte *buf, unsigned int len );
+unsigned
+crc32_buffer(const byte *buf, unsigned len);
 
 /*
 ==============================================================
@@ -1085,80 +1090,88 @@ void		Com_StartupVariable( const qchar *match );
 void
 Com_WriteConfiguration(void);
 
-static ID_INLINE unsigned int log2pad( unsigned int v, int roundup )
+static ID_INLINE unsigned
+log2pad(unsigned v, qint roundup)
 {
-	unsigned int x = 1;
+  unsigned x = 1;
 
-	while ( x < v ) x <<= 1;
+  while(x < v)
+  {
+    x <<= 1;
+  }
 
-	if ( roundup == 0 ) {
-		if ( x > v ) {
-			x >>= 1;
-		}
-	}
+  if (roundup == 0)
+  {
+    if (x > v)
+    {
+      x >>= 1;
+    }
+  }
 
-	return x;
+  return x;
 }
 
-extern	cvar_t	*com_developer;
-extern	cvar_t	*com_dedicated;
-extern	cvar_t	*com_speeds;
-extern	cvar_t	*com_timescale;
-extern	cvar_t	*com_sv_running;
-extern	cvar_t	*com_cl_running;
+extern cvar_t *com_developer;
+extern cvar_t *com_dedicated;
+extern cvar_t *com_speeds;
+extern cvar_t *com_timescale;
+extern cvar_t *com_sv_running;
+extern cvar_t *com_cl_running;
 #if defined(USE_AFFINITY_MASK)
-extern  cvar_t  *com_affinityMask;
+extern cvar_t *com_affinityMask;
 #endif
-extern	cvar_t	*com_version;
-extern	cvar_t	*com_blood;
-//extern	cvar_t	*com_buildScript;		// for building release pak files
-extern	cvar_t	*com_journal;
-extern	cvar_t	*com_cameraMode;
-extern	cvar_t	*com_ansiColor;
-extern	cvar_t	*com_unfocused;
-extern	cvar_t	*com_maxfpsUnfocused;
-extern	cvar_t	*com_minimized;
-extern	cvar_t	*com_maxfpsMinimized;
-extern	cvar_t	*com_altivec;
-extern  cvar_t  *com_homepath;
+extern cvar_t *com_version;
+extern cvar_t *com_blood;
+//extern cvar_t *com_buildScript; //for building release pak files
+extern cvar_t *com_journal;
+extern cvar_t *com_cameraMode;
+extern cvar_t *com_ansiColor;
+extern cvar_t *com_unfocused;
+extern cvar_t *com_maxfpsUnfocused;
+extern cvar_t *com_minimized;
+extern cvar_t *com_maxfpsMinimized;
+extern cvar_t *com_altivec;
+extern cvar_t *com_homepath;
 
-// both client and server must agree to pause
-extern	cvar_t	*cl_paused;
-extern	cvar_t	*sv_paused;
+//both client and server must agree to pause
+extern cvar_t *cl_paused;
+extern cvar_t *sv_paused;
 
-extern	cvar_t	*cl_packetdelay;
-extern  cvar_t  *cl_packetloss;
-extern	cvar_t	*sv_packetdelay;
-extern  cvar_t  *sv_packetloss;
+extern cvar_t *cl_packetdelay;
+extern cvar_t *cl_packetloss;
+extern cvar_t *sv_packetdelay;
+extern cvar_t *sv_packetloss;
 
-extern  cvar_t  *vm_rtChecks;
+extern cvar_t *vm_rtChecks;
 
-// com_speeds times
-extern	qint		time_game;
-extern	qint		time_frontend;
-extern	qint		time_backend;		// renderer backend time
+//com_speeds times
+extern qint time_game;
+extern qint time_frontend;
+extern qint time_backend; //renderer backend time
 
-extern	qint		com_frameTime;
+extern qint com_frameTime;
 
-extern	qbool	com_errorEntered;
+extern qbool com_errorEntered;
 
-extern	fileHandle_t	com_journalFile;
-extern	fileHandle_t	com_journalDataFile;
+extern fileHandle_t com_journalFile;
+extern fileHandle_t com_journalDataFile;
 
-typedef enum {
-	TAG_FREE,
-	TAG_GENERAL,
-	TAG_PACK,
-	TAG_SEARCH_PATH,
-	TAG_SEARCH_PACK,
-	TAG_SEARCH_DIR,
-	TAG_BOTLIB,
-	TAG_RENDERER,
-	TAG_CLIENTS,
-	TAG_SMALL,
-	TAG_STATIC,
-	TAG_COUNT
-} memtag_t;
+typedef enum
+{
+  TAG_FREE,
+  TAG_GENERAL,
+  TAG_PACK,
+  TAG_SEARCH_PATH,
+  TAG_SEARCH_PACK,
+  TAG_SEARCH_DIR,
+  TAG_BOTLIB,
+  TAG_RENDERER,
+  TAG_CLIENTS,
+  TAG_SMALL,
+  TAG_STATIC,
+  TAG_COUNT
+}
+memtag_t;
 
 /*
 
@@ -1180,13 +1193,13 @@ temp file loading
 */
 
 #if defined(_DEBUG) && !defined(BSPC)
-	#define ZONE_DEBUG
+#define ZONE_DEBUG
 #endif
 
 #ifdef ZONE_DEBUG
-#define Z_TagMalloc(size, tag)			Z_TagMallocDebug(size, tag, #size, __FILE__, __LINE__)
-#define Z_Malloc(size)					Z_MallocDebug(size, #size, __FILE__, __LINE__)
-#define S_Malloc(size)					S_MallocDebug(size, #size, __FILE__, __LINE__)
+#define Z_TagMalloc(size, tag) Z_TagMallocDebug(size, tag, #size, __FILE__, __LINE__)
+#define Z_Malloc(size) Z_MallocDebug(size, #size, __FILE__, __LINE__)
+#define S_Malloc(size) S_MallocDebug(size, #size, __FILE__, __LINE__)
 void *Z_TagMallocDebug( qint size, memtag_t tag, qchar *label, qchar *file, qint line );	// NOT 0 filled memory
 void *Z_MallocDebug( qint size, qchar *label, qchar *file, qint line );			// returns 0 filled memory
 void *S_MallocDebug( qint size, qchar *label, qchar *file, qint line );			// returns 0 filled memory
@@ -1393,10 +1406,13 @@ void	Sys_SendPacket( qint length, const void *data, const netadr_t *to );
 qbool	Sys_StringToAdr( const qchar *s, netadr_t *a, netadrtype_t family );
 //Does NOT parse port numbers, only base addresses.
 
-qbool	Sys_IsLANAddress (const netadr_t *adr);
-void		Sys_ShowIP(void);
+qbool
+Sys_IsLANAddress(const netadr_t *adr);
+void
+Sys_ShowIP(void);
 
-qbool	Sys_Mkdir( const qchar *path );
+qbool
+Sys_Mkdir(const qchar *path);
 FILE *
 Sys_FOpen(const qchar *ospath, const qchar *mode);
 qbool
@@ -1407,22 +1423,29 @@ const qchar *
 Sys_Pwd(void);
 const qchar *
 Sys_DefaultBasePath(void);
-void	Sys_SetDefaultInstallPath(const qchar *path);
+void
+Sys_SetDefaultInstallPath(const qchar *path);
 
-#ifdef MACOS_X
-qchar    *Sys_DefaultAppPath(void);
+#if defined(MACOS_X)
+qchar *
+Sys_DefaultAppPath(void);
 #endif
 
-void  Sys_SetDefaultHomePath(const qchar *path);
+void
+Sys_SetDefaultHomePath(const qchar *path);
 const qchar *
 Sys_DefaultHomePath(void);
 const qchar *
 Sys_TempPath(void);
-const qchar *Sys_Dirname( qchar *path );
-const qchar *Sys_Basename( qchar *path );
-qchar *Sys_ConsoleInput(void);
+const qchar *
+Sys_Dirname(qchar *path);
+const qchar *
+Sys_Basename(qchar *path);
+qchar *
+Sys_ConsoleInput(void);
 
-qchar **Sys_ListFiles( const qchar *directory, const qchar *extension, const qchar *filter, qint *numfiles, qint subdirs );
+qchar **
+Sys_ListFiles(const qchar *directory, const qchar *extension, const qchar *filter, qint *numfiles, qint subdirs);
 void	Sys_FreeFileList( qchar **list );
 
 qbool
@@ -1431,16 +1454,23 @@ Sys_GetFileStats(const qchar *filename, fileOffset_t *size, fileTime_t *mtime, f
 void
 Sys_SendKeyEvents(void);
 
-void	Sys_Sleep(qint msec);
+void
+Sys_Sleep(qint msec);
 
-qbool Sys_LowPhysicalMemory( void );
+qbool
+Sys_LowPhysicalMemory(void);
 
-int Sys_MonkeyShouldBeSpanked( void );
+qint
+Sys_MonkeyShouldBeSpanked(void);
 
-void *Sys_LoadLibrary( const char *name );
-void *Sys_LoadFunction( void *handle, const char *name );
-int   Sys_LoadFunctionErrors( void );
-void  Sys_UnloadLibrary( void *handle );
+void *
+Sys_LoadLibrary(const qchar *name);
+void *
+Sys_LoadFunction(void *handle, const qchar *name);
+qint
+Sys_LoadFunctionErrors(void);
+void
+Sys_UnloadLibrary(void *handle);
 
 void
 Sys_SetEnv(const qchar *name, const qchar *value);
@@ -1486,18 +1516,23 @@ HuffmanGetBit(const byte* buffer, qint bitIndex);
 qint
 HuffmanGetSymbol(unsigned *symbol, const byte* buffer, qint bitIndex);
 
-qint		Parse_AddGlobalDefine(qchar *string);
-qint		Parse_LoadSourceHandle(const qchar *filename);
-qint		Parse_FreeSourceHandle(qint handle);
-qint		Parse_ReadTokenHandle(qint handle, pc_token_t *pc_token);
-qint		Parse_SourceFileAndLine(qint handle, qchar *filename, qint *line);
+qint
+Parse_AddGlobalDefine(qchar *string);
+qint
+Parse_LoadSourceHandle(const qchar *filename);
+qint
+Parse_FreeSourceHandle(qint handle);
+qint
+Parse_ReadTokenHandle(qint handle, pc_token_t *pc_token);
+qint
+Parse_SourceFileAndLine(qint handle, qchar *filename, qint *line);
 
-#define	SV_ENCODE_START		4
-#define SV_DECODE_START		12
-#define	CL_ENCODE_START		12
-#define CL_DECODE_START		4
+#define	SV_ENCODE_START 4
+#define SV_DECODE_START 12
+#define	CL_ENCODE_START 12
+#define CL_DECODE_START 4
 
-// flags for sv_allowDownload and cl_allowDownload
+//flags for sv_allowDownload and cl_allowDownload
 #define DLF_ENABLE 1
 #define DLF_NO_REDIRECT 2
 #define DLF_NO_UDP 4
