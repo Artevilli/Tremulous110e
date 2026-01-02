@@ -425,7 +425,7 @@ SV_GameSystemCalls
 The module is making a system call
 ====================
 */
-intptr_t
+static intptr_t
 SV_GameSystemCalls(intptr_t *args)
 {
   switch(args[0])
@@ -465,6 +465,7 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_CVAR_VARIABLE_STRING_BUFFER:
+      VM_CHECKBOUNDS(sv.gvm, args[2], args[3]);
       Cvar_VariableStringBuffer(VMA(1), VMA(2), args[3]);
       return 0;
 
@@ -474,6 +475,7 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_ARGV:
+      VM_CHECKBOUNDS(sv.gvm, args[2], args[3]);
       Cmd_ArgvBuffer(args[1], VMA(2), args[3]);
       return 0;
 
@@ -488,10 +490,17 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_FS_READ:
+      if (args[3] == 0) //UrT may pass this with args[2]=-1 and cause false bounds check error
+      {
+        return 0;
+      }
+
+      VM_CheckBounds(sv.gvm, args[1], args[2]);
       return FS_VM_ReadFile(VMA(1), args[2], args[3], H_GAME);
 
     case
     G_FS_WRITE:
+      VM_CHECKBOUNDS(sv.gvm, args[1], args[2]);
       FS_VM_WriteFile(VMA(1), args[2], args[3], H_GAME);
       return 0;
 
@@ -506,6 +515,7 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_FS_GETFILELIST:
+      VM_CHECKBOUNDS(sv.gvm, args[3], args[4]);
       return FS_GetFileList(VMA(1), VMA(2), VMA(3), args[4]);
 
     case
@@ -535,6 +545,7 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_ENTITIES_IN_BOX:
+      VM_CHECKBOUNDS(sv.gvm, args[3], args[4] * sizeof(qint));
       return SV_AreaEntities(VMA(1), VMA(2), VMA(3), args[4]);
 
     case
@@ -579,6 +590,7 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_GET_CONFIGSTRING:
+      VM_CHECKBOUNDS(sv.gvm, args[2], args[3]);
       SV_GetConfigstring(args[1], VMA(2), args[3]);
       return 0;
 
@@ -589,11 +601,13 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_GET_USERINFO:
+      VM_CHECKBOUNDS(sv.gvm, args[2], args[3]);
       SV_GetUserinfo(args[1], VMA(2), args[3]);
       return 0;
 
     case
     G_GET_SERVERINFO:
+      VM_CHECKBOUNDS(sv.gvm, args[1], args[2]);
       SV_GetServerinfo(VMA(1), args[2]);
       return 0;
 
@@ -616,6 +630,7 @@ SV_GameSystemCalls(intptr_t *args)
       qchar *s;
 
       s = (qchar *)COM_Parse(&sv.entityParsePoint);
+      VM_CHECKBOUNDS(sv.gvm, args[1], args[2]);
       //Q_strncpyz(VMA(1), s, args[2]);
       //we can't use our optimized Q_strncpyz() function
       //because of uninitialized memory bug in defrag mod
@@ -684,17 +699,20 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     TRAP_MEMSET:
+      VM_CHECKBOUNDS(sv.gvm, args[1], args[3]);
       Com_Memset(VMA(1), args[2], args[3]);
-      return 0;
+      return args[1];
 
     case
     TRAP_MEMCPY:
+      VM_CHECKBOUNDS2(sv.gvm, args[1], args[2], args[3]);
       Com_Memcpy(VMA(1), VMA(2), args[3]);
-      return 0;
+      return args[1];
 
     case
     TRAP_STRNCPY:
-      strncpy(VMA(1), VMA(2), args[3]);
+      VM_CHECKBOUNDS(sv.gvm, args[1], args[3]);
+      Q_strncpy(VMA(1), VMA(2), args[3]);
       return args[1];
 
     case
@@ -714,27 +732,35 @@ SV_GameSystemCalls(intptr_t *args)
       return FloatAsInt(sqrt(VMF(1)));
 
     case
-    TRAP_MATRIXMULTIPLY:
+    G_MATRIXMULTIPLY:
       MatrixMultiply(VMA(1), VMA(2), VMA(3));
       return 0;
 
     case
-    TRAP_ANGLEVECTORS:
+    G_ANGLEVECTORS:
       AngleVectors(VMA(1), VMA(2), VMA(3), VMA(4));
       return 0;
 
     case
-    TRAP_PERPENDICULARVECTOR:
+    G_PERPENDICULARVECTOR:
       PerpendicularVector(VMA(1), VMA(2));
       return 0;
 
     case
-    TRAP_FLOOR:
+    G_FLOOR:
       return FloatAsInt(floor(VMF(1)));
 
     case
-    TRAP_CEIL:
+    G_CEIL:
       return FloatAsInt(ceil(VMF(1)));
+
+    case
+    G_TESTPRINTINT:
+      return sprintf(VMA(1), "%li", args[2]);
+
+    case
+    G_TESTPRINTFLOAT:
+      return sprintf(VMA(1), "%f", VMF(2));
 
     case G_SQL_RUNQUERY:
       return sv_mysql_runquery(VMA(1));
@@ -772,7 +798,7 @@ SV_GameSystemCalls(intptr_t *args)
       return xglobal_flags(VMA(1));
 
     default:
-      Com_Error(ERR_DROP, "Bad game system trap: %ld", (long qint) args[0]);
+      return -1; //Com_Error(ERR_DROP, "Bad game system trap: %ld", (long qint) args[0]);
   }
 
   return -1;

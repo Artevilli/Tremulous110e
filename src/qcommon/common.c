@@ -3797,6 +3797,9 @@ void Com_Init( qchar *commandLine ) {
 	// get the developer cvar set as early as possible
 	com_developer = Cvar_Get("developer", "0", CVAR_TEMP);
 
+	Com_StartupVariable("vm_rtChecks");
+	vm_rtChecks = Cvar_GetAndDescribe("vm_rtChecks", "15", CVAR_INIT | CVAR_PROTECTED, "Runtime checks in compiled vm code, bitmask:\n1 - program stack overflow\n2 - opcode stack overflow\n4 - jump target range\n8 - data read/write range");
+
 	Com_StartupVariable( "journal" );
 	com_journal = Cvar_Get( "journal", "0", CVAR_INIT | CVAR_PROTECTED );
 	Cvar_CheckRange(com_journal, "0", "2", CV_INTEGER);
@@ -4939,3 +4942,44 @@ Com_SortFileList(qchar **list, qint nfiles, qbool fastSort)
   }
 }
 #endif
+
+/* 
+==================
+crc32_buffer
+==================
+*/
+unsigned
+crc32_buffer(const byte *buf, unsigned len)
+{
+  static unsigned crc32_table[256];
+  static qbool crc32_inited = qfalse;
+  unsigned crc = 0xFFFFFFFFUL;
+
+  if (!crc32_inited)  
+  {
+    unsigned int c;
+    qint i;
+    qint j;
+
+    for(i = 0;i < 256;i++)
+    {
+      c = i;
+
+      for(j = 0;j < 8;j++)
+      {
+        c = c & 1 ? (c >> 1) ^ 0xEDB88320UL : c >> 1;
+      }
+
+      crc32_table[i] = c;
+    }
+
+    crc32_inited = qtrue;
+  }
+
+  while(len--) 
+  {
+    crc = crc32_table[(crc ^ *buf++) & 0xFF] ^ (crc >> 8);
+  }
+
+  return crc ^ 0xFFFFFFFFUL;
+}

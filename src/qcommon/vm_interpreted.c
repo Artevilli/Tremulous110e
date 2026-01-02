@@ -1,171 +1,136 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2000-2006 Tim Angus
+Copyright (C) 2012-2020 Quake3e project
 
-This file is part of Tremulous.
+This file is part of Quake III Arena source code.
 
-Tremulous is free software; you can redistribute it
+Quake III Arena source code is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Quake III Arena source code is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 #include "vm_local.h"
 
-//#define	DEBUG_VM
-#ifdef DEBUG_VM
-static qchar	*opnames[256] = {
-	"OP_UNDEF", 
 
-	"OP_IGNORE", 
+qchar *
+VM_Indent(vm_t *vm)
+{
+  static qchar *string = "                                        ";
 
-	"OP_BREAK",
+  if (vm->callLevel > 20)
+  {
+    return string;
+  }
 
-	"OP_ENTER",
-	"OP_LEAVE",
-	"OP_CALL",
-	"OP_PUSH",
-	"OP_POP",
-
-	"OP_CONST",
-
-	"OP_LOCAL",
-
-	"OP_JUMP",
-
-	//-------------------
-
-	"OP_EQ",
-	"OP_NE",
-
-	"OP_LTI",
-	"OP_LEI",
-	"OP_GTI",
-	"OP_GEI",
-
-	"OP_LTU",
-	"OP_LEU",
-	"OP_GTU",
-	"OP_GEU",
-
-	"OP_EQF",
-	"OP_NEF",
-
-	"OP_LTF",
-	"OP_LEF",
-	"OP_GTF",
-	"OP_GEF",
-
-	//-------------------
-
-	"OP_LOAD1",
-	"OP_LOAD2",
-	"OP_LOAD4",
-	"OP_STORE1",
-	"OP_STORE2",
-	"OP_STORE4",
-	"OP_ARG",
-
-	"OP_BLOCK_COPY",
-
-	//-------------------
-
-	"OP_SEX8",
-	"OP_SEX16",
-
-	"OP_NEGI",
-	"OP_ADD",
-	"OP_SUB",
-	"OP_DIVI",
-	"OP_DIVU",
-	"OP_MODI",
-	"OP_MODU",
-	"OP_MULI",
-	"OP_MULU",
-
-	"OP_BAND",
-	"OP_BOR",
-	"OP_BXOR",
-	"OP_BCOM",
-
-	"OP_LSH",
-	"OP_RSHI",
-	"OP_RSHU",
-
-	"OP_NEGF",
-	"OP_ADDF",
-	"OP_SUBF",
-	"OP_DIVF",
-	"OP_MULF",
-
-	"OP_CVIF",
-	"OP_CVFI"
-};
-#endif
-
-#if idppc
-
-//FIXME: these, um... look the same to me
-#if defined(__GNUC__)
-static ID_INLINE unsigned qint loadWord(void *addr) {
-	unsigned qint word;
-
-	asm("lwbrx %0,0,%1" : "=r" (word) : "r" (addr));
-	return word;
-}
-#else
-static ID_INLINE unsigned qint __lwbrx(register void *addr,
-		register qint offset) {
-	register unsigned qint word;
-
-	asm("lwbrx %0,%2,%1" : "=r" (word) : "r" (addr), "b" (offset));
-	return word;
-}
-#define loadWord(addr) __lwbrx(addr,0)
-#endif
-
-#else
-    static ID_INLINE qint loadWord(void *addr) {
-	qint word;
-	memcpy(&word, addr, 4);
-	return LittleLong(word);
-    }
-#endif
-
-qchar *VM_Indent( vm_t *vm ) {
-	static qchar	*string = "                                        ";
-	if ( vm->callLevel > 20 ) {
-		return string;
-	}
-	return string + 2 * ( 20 - vm->callLevel );
+  return string + 2 * (20 - vm->callLevel);
 }
 
-void VM_StackTrace( vm_t *vm, qint programCounter, qint programStack ) {
-	qint		count;
 
-	count = 0;
-	do {
-		Com_Printf( "%s\n", VM_ValueToSymbol( vm, programCounter ) );
-		programStack =  *(qint *)&vm->dataBase[programStack+4];
-		programCounter = *(qint *)&vm->dataBase[programStack];
-	} while ( programCounter != -1 && ++count < 32 );
+void
+VM_StackTrace(vm_t *vm, qint programCounter, qint programStack)
+{
+  qint count;
+
+  count = 0;
+
+  do
+  {
+    Com_Printf("%s\n", VM_ValueToSymbol(vm, programCounter));
+    programStack =  *(qint *)&vm->dataBase[programStack+4];
+    programCounter = *(qint *)&vm->dataBase[programStack];
+  }
+  while(programCounter != -1 && ++count < 32);
 
 }
+
+//macro opcode sequences
+typedef enum
+{
+  MOP_LOCAL_LOAD4 = OP_MAX,
+  MOP_LOCAL_LOAD4_CONST,
+  MOP_LOCAL_LOCAL,
+  MOP_LOCAL_LOCAL_LOAD4,
+}
+macro_op_t;
+
 
 /*
-==============
+=================
+VM_FindMOps
+
+Search for known macro-op sequences
+=================
+*/
+static void
+VM_FindMOps(instruction_t *buf, qint instructionCount)
+{
+  qint i;
+  qint op0;
+  instruction_t *ci;
+
+  ci = buf;
+  i = 0;
+
+  while(i < instructionCount)
+  {
+    op0 = ci->op;
+
+    if (op0 == OP_LOCAL)
+    {
+      if ((ci + 1)->op == OP_LOAD4 && (ci + 2)->op == OP_CONST)
+      {
+        ci->op = MOP_LOCAL_LOAD4_CONST;
+        ci += 3;
+        i += 3;
+        continue;
+      }
+
+      if ((ci + 1)->op == OP_LOAD4)
+      {
+        ci->op = MOP_LOCAL_LOAD4;
+        ci += 2;
+        i += 2;
+        continue;
+      }
+
+      if ((ci + 1)->op == OP_LOCAL && (ci + 2)->op == OP_LOAD4)
+      {
+        ci->op = MOP_LOCAL_LOCAL_LOAD4;
+        ci += 3;
+        i += 3;
+        continue;
+      }
+
+      if ((ci + 1)->op == OP_LOCAL)
+      {
+        ci->op = MOP_LOCAL_LOCAL;
+        ci += 2;
+        i += 2;
+        continue;
+      }
+    }
+
+    ci++;
+    i++;
+  }
+}
+
+
+/*
+====================
 VM_PrepareInterpreter2
-==============
+====================
 */
 qbool
 VM_PrepareInterpreter2(vm_t *vm, vmHeader_t *header)
@@ -175,11 +140,11 @@ VM_PrepareInterpreter2(vm_t *vm, vmHeader_t *header)
 
   buf = (instruction_t *)Hunk_Alloc((vm->instructionCount + 8) * sizeof(instruction_t), h_high);
 
-  errMsg = VM_LoadInstructions(header, buf);
+  errMsg = VM_LoadInstructions((byte *)header + header->codeOffset, header->codeLength, header->instructionCount, buf);
 
   if (!errMsg)
   {
-    errMsg = VM_CheckInstructions(buf, vm->instructionCount, vm->jumpTableTargets, vm->numJumpTableTargets, vm->dataLength);
+    errMsg = VM_CheckInstructions(buf, vm->instructionCount, vm->jumpTableTargets, vm->numJumpTableTargets, vm->exactDataLength);
   }
 
   if (errMsg)
@@ -188,9 +153,14 @@ VM_PrepareInterpreter2(vm_t *vm, vmHeader_t *header)
     return qfalse;
   }
 
+  VM_ReplaceInstructions(vm, buf);
+
+  VM_FindMOps(buf, vm->instructionCount);
+
   vm->codeBase.ptr = (void *)buf;
   return qtrue;
 }
+
 
 /*
 ==============
@@ -216,24 +186,23 @@ locals from sp
 ==============
 */
 qint
-VM_CallInterpreted2(vm_t *vm, qint nargs, qint *args)
+VM_CallInterpreted2(vm_t *vm, qint nargs, int32_t *args)
 {
-  //qint stack[MAX_OPSTACK_SIZE];
-  qint stack[OPSTACK_SIZE];
-  qint *opStack;
-  qint *opStackTop;
-  unsigned programStack;
-  unsigned stackOnEntry;
+  int32_t stack[MAX_OPSTACK_SIZE];
+  int32_t *opStack;
+  int32_t *opStackTop;
+  int32_t programStack;
+  int32_t stackOnEntry;
   byte *image;
-  qint v1;
-  qint v0;
+  int32_t v1;
+  int32_t v0;
   qint dataMask;
   instruction_t *inst;
   instruction_t *ci;
   floatint_t r0;
   floatint_t r1;
   qint opcode;
-  qint *img;
+  int32_t *img;
   qint i;
 
   //interpret the code
@@ -248,13 +217,12 @@ VM_CallInterpreted2(vm_t *vm, qint nargs, qint *args)
   dataMask = vm->dataMask;
 
   //leave a free spot at start of stack so
-  //that as long as opStack is valid, opStack - 1 will
+  //that as long as opStack is valid, opStack-1 will
   //not corrupt anything
   opStack = &stack[1];
   opStackTop = stack + ARRAY_LEN(stack) - 1;
 
-  programStack -= 256; //reserve entire frame for effective compile-time LOCAL + LOAD* checks
-  programStack -= (MAX_VMMAIN_CALL_ARGS + 2) * 4;
+  programStack -= (MAX_VMMAIN_CALL_ARGS + 2) * sizeof(int32_t);
   img = (qint *)&image[programStack];
 
   for(i = 0;i < nargs;i++)
@@ -263,12 +231,13 @@ VM_CallInterpreted2(vm_t *vm, qint nargs, qint *args)
   }
 
   img[1] = 0; //return stack
-  img[0] = -1; //will terminate loop on return
+  img[0] = -1; //will terminate the loop on return
 
   ci = inst;
 
   //main interpreter loop, will exit when a LEAVE instruction
   //grabs the -1 program counter
+
   while(1)
   {
     r0.i = opStack[0];
@@ -283,6 +252,11 @@ nextInstruction2:
     switch(opcode)
     {
       case
+      OP_IGNORE:
+        ci += v0;
+        goto nextInstruction2;
+
+      case
       OP_BREAK:
         vm->breakCount++;
         goto nextInstruction2;
@@ -292,7 +266,7 @@ nextInstruction2:
         //get size of stack frame
         programStack -= v0;
 
-        if (programStack <= vm->stackBottom)
+        if (programStack < vm->stackBottom)
         {
           Com_Error(ERR_DROP, "VM programStack overflow");
         }
@@ -310,7 +284,7 @@ nextInstruction2:
         programStack += v0;
 
         //grab the saved program counter
-        v1 = *(qint *)&image[programStack];
+        v1 = *(int32_t *)&image[programStack];
 
         //check for leaving the VM
         if (v1 == -1)
@@ -325,7 +299,6 @@ nextInstruction2:
         ci = inst + v1;
         break;
 
-
       case
       OP_CALL:
         //save current program counter
@@ -336,34 +309,35 @@ nextInstruction2:
         {
           //system call
           //save the stack to allow recursive VM entry
-          vm->programStack = programStack - 4;
-          *(qint *)&image[programStack + 4] = ~r0.i;
+          //vm->programStack = programStack - 4;
+          vm->programStack = programStack - 8;
+          *(int32_t *)&image[programStack + 4] = ~r0.i;
           {
-            intptr_t *argptr = (intptr_t *)&image[programStack + 4];
-
-#if idx64 //__WORDSIZE == 64
+#if __WORDSIZE == 64
             //the vm has qints on the stack, we expect
             //longs so we have to convert it
             intptr_t argarr[16];
-            qint j;
+            qint argn;
 
-            for(j = 0;j < 16;++j)
+            for(argn = 0; argn < ARRAY_LEN(argarr); ++argn)
             {
-              argarr[j] = *(qint *)&image[programStack + 4 + 4*j];
+              argarr[argn] = *(int32_t *)&image[programStack + 4 + 4*argn];
             }
 
-            argptr = argarr;
+            v0 = vm->systemCall(&argarr[0]);
+#else
+            v0 = vm->systemCall((intptr_t *)&image[programStack + 4]);
 #endif
-            v0 = vm->systemCall(argptr);
           }
 
           //save return value
           //opStack++;
-          ci = inst + *(qint *)&image[programStack];
+          ci = inst + *(int32_t *)&image[programStack];
           *opStack = v0;
         }
         else if (r0.u < vm->instructionCount)
         {
+          //vm call
           ci = inst + r0.i;
           opStack--;
         }
@@ -571,6 +545,17 @@ nextInstruction2:
         break;
 
       case
+      OP_GTF:
+        opStack -= 2;
+
+        if (r1.f > r0.f)
+        {
+          ci = inst + v0;
+        }
+
+        break;
+
+      case
       OP_GEF:
         opStack -= 2;
 
@@ -595,7 +580,7 @@ nextInstruction2:
 
       case
       OP_LOAD4:
-        r0.i = *opStack = *(qint *)&image[r0.i & dataMask];
+        r0.i = *opStack = *(int32_t *)&image[r0.i & dataMask];
         goto nextInstruction2;
 
       case
@@ -619,12 +604,13 @@ nextInstruction2:
       case
       OP_ARG:
         //single byte offset from programStack
-        *(qint *)&image[(v0 + programStack) /*& (dataMask & ~3)*/] = r0.i;
+        *(int32_t *)&image[(v0 + programStack) /*& (dataMask & ~3)*/] = r0.i;
         opStack--;
         break;
 
       case
       OP_BLOCK_COPY:
+      {
         qint *src;
         qint *dest;
         qint count;
@@ -642,9 +628,11 @@ nextInstruction2:
         src = (qint *)&image[srci];
         dest = (qint *)&image[desti];
 
-        memcpy(dest, src, count);
+        Com_Memcpy(dest, src, count);
         opStack -= 2;
-        break;
+      }
+
+      break;
 
       case
       OP_SEX8:
@@ -653,7 +641,7 @@ nextInstruction2:
 
       case
       OP_SEX16:
-        *opStack = (short)*opStack;
+        *opStack = (signed short)*opStack;
         break;
 
       case
@@ -663,131 +651,146 @@ nextInstruction2:
 
       case
       OP_ADD:
-        opStack[-1] = r1.i + r0.i;
-        opStack--;
+        *(--opStack) = r1.i + r0.i;
         break;
 
       case
       OP_SUB:
-        opStack[-1] = r1.i - r0.i;
-        opStack--;
+        *(--opStack) = r1.i - r0.i;
         break;
 
       case
       OP_DIVI:
-        opStack[-1] = r1.i / r0.i;
-        opStack--;
+        *(--opStack) = r1.i / r0.i;
         break;
 
       case
       OP_DIVU:
-        opStack[-1] = r1.u / r0.u;
-        opStack--;
+        *(--opStack) = r1.u / r0.u;
         break;
 
       case
       OP_MODI:
-        opStack[-1] = r1.i % r0.i;
-        opStack--;
+        *(--opStack) = r1.i % r0.i;
         break;
 
       case
       OP_MODU:
-        opStack[-1] = r1.u % r0.u;
-        opStack--;
+        *(--opStack) = r1.u % r0.u;
         break;
 
       case
       OP_MULI:
-        opStack[-1] = r1.i * r0.i;
-        opStack--;
+        *(--opStack) = r1.i * r0.i;
         break;
 
       case
       OP_MULU:
-        opStack[-1] = r1.u * r0.u;
-        opStack--;
+        *(--opStack) = r1.u * r0.u;
         break;
 
       case
       OP_BAND:
-        opStack[-1] = r1.u & r0.u;
-        opStack--;
+        *(--opStack) = r1.u & r0.u;
         break;
 
       case
       OP_BOR:
-        opStack[-1] = r1.u | r0.u;
-        opStack--;
+        *(--opStack) = r1.u | r0.u;
         break;
 
       case
       OP_BXOR:
-        opStack[-1] = r1.u ^ r0.u;
-        opStack--;
+        *(--opStack) = r1.u ^ r0.u;
         break;
 
       case
       OP_BCOM:
-        *opStack = ~r0.u;
+        *opStack = ~ r0.u;
         break;
 
       case
       OP_LSH:
-        opStack[-1] = r1.i << r0.i;
-        opStack--;
+        *(--opStack) = r1.i << r0.i;
         break;
 
       case
       OP_RSHI:
-        opStack[-1] = r1.i >> r0.i;
-        opStack--;
+        *(--opStack) = r1.i >> r0.i;
         break;
 
       case
       OP_RSHU:
-        opStack[-1] = r1.u >> r0.i;
-        opStack--;
+        *(--opStack) = r1.u >> r0.i;
         break;
 
       case
       OP_NEGF:
-        *(float *)opStack = -r0.f;
+        *(float *)opStack =  - r0.f;
         break;
 
       case
       OP_ADDF:
-        *(float *)(opStack - 1) = r1.f + r0.f;
-        opStack--;
+        *(float *)(--opStack) = r1.f + r0.f;
         break;
 
       case
       OP_SUBF:
-        *(float *)(opStack - 1) = r1.f - r0.f;
-        opStack--;
+        *(float *)(--opStack) = r1.f - r0.f;
         break;
 
       case
       OP_DIVF:
-        *(float *)(opStack - 1) = r1.f / r0.f;
-        opStack--;
+        *(float *)(--opStack) = r1.f / r0.f;
         break;
 
       case
       OP_MULF:
-        *(float *)(opStack - 1) = r1.f * r0.f;
-        opStack--;
+        *(float *)(--opStack) = r1.f * r0.f;
         break;
 
       case
       OP_CVIF:
-        *(float *)opStack = (float)r0.i;
+        *(float *)opStack = (float) r0.i;
         break;
 
       case
       OP_CVFI:
-        *opStack = (qint)r0.f;
+        *opStack = (qint) r0.f;
         break;
+
+      case
+      MOP_LOCAL_LOAD4:
+        ci++;
+        opStack++;
+        r1.i = r0.i;
+        r0.i = *opStack = *(int32_t *)&image[v0 + programStack];
+        goto nextInstruction2;
+
+      case
+      MOP_LOCAL_LOAD4_CONST:
+        r1.i = opStack[1] = *(int32_t *)&image[v0 + programStack];
+        r0.i = opStack[2] = (ci + 1)->value;
+        opStack += 2;
+        ci += 2;
+        goto nextInstruction2;
+
+      case
+      MOP_LOCAL_LOCAL:
+        r1.i = opStack[1] = v0 + programStack;
+        r0.i = opStack[2] = ci->value + programStack;
+        opStack += 2;
+        ci++;
+        goto nextInstruction2;
+
+      case
+      MOP_LOCAL_LOCAL_LOAD4:
+        r1.i = opStack[1] = v0 + programStack;
+        r0.i /*= opStack[2]*/ = ci->value + programStack;
+        r0.i = opStack[2] = *(int32_t *)&image[ r0.i /*& dataMask*/ ];
+        opStack += 2;
+        ci += 2;
+        goto nextInstruction2;
     }
   }
 
@@ -796,7 +799,7 @@ done:
 
   if (opStack != &stack[2])
   {
-    Com_Error(ERR_DROP, "Interpreter error: opStack = %ld", (long)(opStack - stack));
+    Com_Error(ERR_DROP, "Interpreter error: opStack = %ld", (long qint) (opStack - stack));
   }
 
   vm->programStack = stackOnEntry;

@@ -350,32 +350,27 @@ VIRTUAL MACHINE
 
 ==============================================================
 */
-
 typedef struct vm_s vm_t;
 
-typedef enum {
-	VMI_NATIVE,
-	VMI_BYTECODE,
-	VMI_COMPILED
-} vmInterpret_t;
+typedef enum
+{
+  VMI_NATIVE,
+  VMI_BYTECODE,
+  VMI_COMPILED
+}
+vmInterpret_t;
 
-typedef enum {
-	TRAP_MEMSET = 100,
-	TRAP_MEMCPY,
-	TRAP_STRNCPY,
-	TRAP_SIN,
-	TRAP_COS,
-	TRAP_ATAN2,
-	TRAP_SQRT,
-	TRAP_MATRIXMULTIPLY,
-	TRAP_ANGLEVECTORS,
-	TRAP_PERPENDICULARVECTOR,
-	TRAP_FLOOR,
-	TRAP_CEIL,
-
-	TRAP_TESTPRINTINT,
-	TRAP_TESTPRINTFLOAT
-} sharedTraps_t;
+typedef enum
+{
+  TRAP_MEMSET = 100,
+  TRAP_MEMCPY,
+  TRAP_STRNCPY,
+  TRAP_SIN,
+  TRAP_COS,
+  TRAP_ATAN2,
+  TRAP_SQRT,
+}
+sharedTraps_t;
 
 typedef enum
 {
@@ -389,22 +384,48 @@ typedef enum
 }
 vmIndex_t;
 
+//we don't need more than 4 arguments (counting callnum) for vmMain, at least in Tremulous
+#define MAX_VMMAIN_CALL_ARGS 4
+
+typedef intptr_t (QDECL *vmMainFunc_t)(qint command, qint arg0, qint arg1, qint arg2);
+
+typedef intptr_t (*syscall_t)(intptr_t *parms);
+typedef intptr_t (QDECL *dllSyscall_t)(intptr_t callNum, ...);
+typedef void (QDECL *dllEntry_t)(dllSyscall_t syscallptr);
+
 void
 VM_Init(void);
 vm_t *
 VM_Create(vmIndex_t index, syscall_t systemCalls, dllSyscall_t dllSyscalls, vmInterpret_t interpret);
-// module should be bare: "cgame", not "cgame.dll" or "vm/cgame.qvm"
 
-void	VM_Free( vm_t *vm );
-void	VM_Clear(void);
-void	VM_Forced_Unload_Start(void);
-void	VM_Forced_Unload_Done(void);
-vm_t	*VM_Restart( vm_t *vm );
+void
+VM_Free(vm_t *vm);
+void
+VM_Clear(void);
+void
+VM_Forced_Unload_Start(void);
+void
+VM_Forced_Unload_Done(void);
+vm_t *
+VM_Restart(vm_t *vm);
 
-intptr_t QDECL __attribute__((no_sanitize_address))
-VM_Call(vm_t *vm, qint nargs, qint callnum, ...);
+intptr_t QDECL
+VM_Call(vm_t *vm, int nargs, int callNum, ...);
 
-void	VM_Debug( qint level );
+void
+VM_Debug(qint level);
+void
+VM_CheckBounds(const vm_t *vm, unsigned address, unsigned length);
+void
+VM_CheckBounds2(const vm_t *vm, unsigned addr1, unsigned addr2, unsigned length);
+
+#if 1
+#define VM_CHECKBOUNDS VM_CheckBounds
+#define VM_CHECKBOUNDS2 VM_CheckBounds2
+#else //for performance evaluation purposes
+#define VM_CHECKBOUNDS(vm, a, b)
+#define VM_CHECKBOUNDS2(vm, a, b, c)
+#endif
 
 void *
 GVM_ArgPtr(intptr_t intValue);
@@ -418,7 +439,7 @@ _vmf(intptr_t x)
   v.i = (qint)x;
   return v.f;
 }
-#define	VMF(x)	_vmf(args[x])
+#define	VMF(x) _vmf(args[x])
 
 
 /*
@@ -666,6 +687,8 @@ extern	qint			cvar_modifiedFlags;
 // etc, variables have been modified since the last check.  The bit
 // can then be cleared to allow another change detection.
 
+unsigned int crc32_buffer( const byte *buf, unsigned int len );
+
 /*
 ==============================================================
 
@@ -903,10 +926,8 @@ FS_StripExt(qchar *filename, const qchar *ext);
 qbool
 FS_AllowedExtension(const qchar *fileName, qbool allowPk3s, const qchar **ext);
 
-#if 0 //FIXME: use this at some point
 void *
 FS_LoadLibrary(const qchar *name);
-#endif
 
 typedef qbool (*fnamecallback_f)(const qchar *filename, qint length);
 
@@ -1064,6 +1085,21 @@ void		Com_StartupVariable( const qchar *match );
 void
 Com_WriteConfiguration(void);
 
+static ID_INLINE unsigned int log2pad( unsigned int v, int roundup )
+{
+	unsigned int x = 1;
+
+	while ( x < v ) x <<= 1;
+
+	if ( roundup == 0 ) {
+		if ( x > v ) {
+			x >>= 1;
+		}
+	}
+
+	return x;
+}
+
 extern	cvar_t	*com_developer;
 extern	cvar_t	*com_dedicated;
 extern	cvar_t	*com_speeds;
@@ -1094,6 +1130,8 @@ extern	cvar_t	*cl_packetdelay;
 extern  cvar_t  *cl_packetloss;
 extern	cvar_t	*sv_packetdelay;
 extern  cvar_t  *sv_packetloss;
+
+extern  cvar_t  *vm_rtChecks;
 
 // com_speeds times
 extern	qint		time_game;
@@ -1306,9 +1344,6 @@ typedef enum {
 void	Sys_Init (void);
 
 // general development dll loading for virtual machine testing
-void *
-Sys_LoadDll(const qchar *name, dllSyscall_t *entryPoint, dllSyscall_t systemcalls);
-void	Sys_UnloadDll( void *dllHandle );
 
 void	Sys_UnloadGame( void );
 void	*Sys_GetGameAPI( void *parms );
@@ -1399,6 +1434,13 @@ Sys_SendKeyEvents(void);
 void	Sys_Sleep(qint msec);
 
 qbool Sys_LowPhysicalMemory( void );
+
+int Sys_MonkeyShouldBeSpanked( void );
+
+void *Sys_LoadLibrary( const char *name );
+void *Sys_LoadFunction( void *handle, const char *name );
+int   Sys_LoadFunctionErrors( void );
+void  Sys_UnloadLibrary( void *handle );
 
 void
 Sys_SetEnv(const qchar *name, const qchar *value);

@@ -127,14 +127,7 @@ typedef enum
   UI_PARSE_READ_TOKEN,
   UI_PARSE_SOURCE_FILE_AND_LINE,
 
-  UI_MEMSET = 100,
-  UI_MEMCPY,
-  UI_STRNCPY,
-  UI_SIN,
-  UI_COS,
-  UI_ATAN2,
-  UI_SQRT,
-  UI_FLOOR,
+  UI_FLOOR = 107,
   UI_CEIL
 }
 uiImport_t;

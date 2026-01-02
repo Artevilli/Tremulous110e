@@ -6788,7 +6788,6 @@ FS_PipeClose(fileHandle_t f)
   Com_Memset(&fsh[f], 0, sizeof(fsh[f]));
 }
 
-#if 0 //FIXME: use this at some point
 /*
 =================
 FS_LoadLibrary
@@ -6830,7 +6829,6 @@ FS_LoadLibrary(const qchar *name)
 
   return libHandle;
 }
-#endif
 
 /*
   Compared request pak against the names as we built them in FS_ReferencedPakNames

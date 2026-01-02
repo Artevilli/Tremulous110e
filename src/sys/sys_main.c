@@ -42,7 +42,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 #include "sys_local.h"
-#include "sys_loadlib.h"
 
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
@@ -463,76 +462,6 @@ Sys_FileTime(char *path)
   }
 
   return buf.st_mtime;
-}
-
-/*
-=================
-Sys_UnloadDll
-=================
-*/
-void
-Sys_UnloadDll(void *dllHandle)
-{
-  if (!dllHandle)
-  {
-    Com_Printf("Sys_UnloadDll(NULL)\n");
-    return;
-  }
-
-  Sys_UnloadLibrary(dllHandle);
-}
-
-/*
-=================
-Sys_LoadDll
-
-Used to load a development dll instead of a virtual machine
-#1 look in fs_homepath
-#2 look in fs_basepath
-=================
-*/
-void *
-Sys_LoadDll(const qchar *name, dllSyscall_t *entryPoint, dllSyscall_t systemcalls)
-{
-  void *libHandle;
-  dllEntry_t dllEntry;
-  char fname[MAX_OSPATH];
-  char *netpath;
-
-  assert(name);
-  Com_sprintf(fname, sizeof(fname), "%s" ARCH_STRING DLL_EXT, name);
-
-  netpath = FS_FindDll(fname);
-
-  if (!netpath)
-  {
-    Com_Printf("Sys_LoadDll(%s) could not be found\n", fname);
-    return NULL;
-  }
-
-  Com_Printf("Loading DLL file: %s\n", netpath);
-  libHandle = Sys_LoadLibrary(netpath);
-
-  if (!libHandle)
-  {
-    Com_Printf("Sys_LoadDll(%s) failed to load library:\n\"%s\"\n", netpath, Sys_LibraryError());
-    return NULL;
-  }
-
-  dllEntry = Sys_LoadFunction(libHandle, "dllEntry");
-  *entryPoint = Sys_LoadFunction(libHandle, "vmMain");
-
-  if (!*entryPoint || !dllEntry)
-  {
-    Com_Printf("Sys_LoadDll(%s) failed to find vmMain function:\n\"%s\" !\n", name, Sys_LibraryError());
-    Sys_UnloadLibrary(libHandle);
-    return NULL;
-  }
-
-  Com_Printf("Sys_LoadDll(%s) found **vmMain** function at %p\n", name, *entryPoint);
-  dllEntry(systemcalls);
-  Com_Printf("Sys_LoadDll(%s) succeeded!\n", name);
-  return libHandle;
 }
 
 /*

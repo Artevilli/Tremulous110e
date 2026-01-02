@@ -931,6 +931,115 @@ Sys_PIDIsRunning(qint pid)
   return !kill(pid, 0);
 }
 
+/*
+========================================================================
+
+LOAD/UNLOAD DLL
+
+========================================================================
+*/
+
+
+static qint dll_err_count = 0;
+
+
+/*
+=================
+Sys_LoadLibrary
+=================
+*/
+void *
+Sys_LoadLibrary(const qchar *name)
+{
+  const qchar *ext;
+  void *handle;
+
+  if (FS_AllowedExtension(name, qfalse, &ext))
+  {
+    Com_Error(ERR_FATAL, "Sys_LoadLibrary: Unable to load library with '%s' extension", ext);
+  }
+
+  handle = dlopen(name, RTLD_NOW);
+  return handle;
+}
+
+
+/*
+=================
+Sys_UnloadLibrary
+=================
+*/
+void
+Sys_UnloadLibrary(void *handle)
+{
+  if (handle != NULL)
+  {
+    dlclose(handle);
+  }
+}
+
+
+/*
+=================
+Sys_LoadFunction
+=================
+*/
+void *
+Sys_LoadFunction(void *handle, const qchar *name)
+{
+  const qchar *error;
+  qchar buf[1024];
+  void *symbol;
+  size_t nlen;
+
+  if (handle == NULL || name == NULL || *name == '\0') 
+  {
+    dll_err_count++;
+    return NULL;
+  }
+
+  dlerror(); /*clear old error state*/
+  symbol = dlsym(handle, name);
+  error = dlerror();
+
+  if (error != NULL)
+  {
+    nlen = strlen(name) + 1;
+
+    if (nlen >= sizeof(buf))
+    {
+      return NULL;
+    }
+
+    buf[0] = '_';
+    strcpy(buf + 1, name);
+    dlerror(); /*clear old error state*/
+    symbol = dlsym(handle, buf);
+  }
+
+  if (!symbol)
+  {
+    dll_err_count++;
+  }
+
+  return symbol;
+}
+
+
+/*
+=================
+Sys_LoadFunctionErrors
+=================
+*/
+qint
+Sys_LoadFunctionErrors(void)
+{
+  qint result = dll_err_count;
+
+  dll_err_count = 0;
+  return result;
+}
+
 #if defined(USE_AFFINITY_MASK)
 /*
 =================
