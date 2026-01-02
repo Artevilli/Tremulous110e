@@ -282,7 +282,7 @@ void
 VM_Init(void)
 {
 #if !defined(DEDICATED)
-  Cvar_Get("vm_ui", "2", CVAR_ROM | CVAR_PROTECTED ); //!@# SHIP WITH SET TO 2
+  Cvar_Get("vm_ui", "2", CVAR_ROM | CVAR_PROTECTED); //!@# SHIP WITH SET TO 2
   Cvar_Get("vm_cgame", "2", CVAR_ROM | CVAR_PROTECTED); //!@# SHIP WITH SET TO 2
 #endif
   Cvar_Get("vm_game", "2", CVAR_ROM | CVAR_PROTECTED); //!@# SHIP WITH SET TO 2
@@ -491,7 +491,7 @@ VM_LoadSymbols(vm_t *vm)
   }
 
   COM_StripExtension(vm->name, name, sizeof(name));
-  Com_sprintf(symbols, sizeof(symbols), "vm/%s.map", name );
+  Com_sprintf(symbols, sizeof(symbols), "vm/%s.map", name);
   FS_ReadFile(symbols, &mapfile.v);
 
   if (!mapfile.c)
@@ -697,7 +697,7 @@ Load_JTS(vm_t *vm, uint32_t crc32, void *data, qint vmPakIndex)
     return -1;
   }
 
-  if (FS_Read(header, sizeof(header ), fh) != sizeof(header))
+  if (FS_Read(header, sizeof(header), fh) != sizeof(header))
   {
     if (data)
     {
@@ -1355,7 +1355,7 @@ VM_LoadInstructions(const byte *code_pos, qint codeLength, qint instructionCount
 
     if (op0 < 0 || op0 >= OP_MAX)
     {
-      sprintf(errBuf, "bad opcode %02X at offset %d", op0, (qint)(code_pos - code_start) );
+      sprintf(errBuf, "bad opcode %02X at offset %d", op0, (qint)(code_pos - code_start));
       return errBuf;
     }
 
@@ -1399,7 +1399,7 @@ VM_LoadInstructions(const byte *code_pos, qint codeLength, qint instructionCount
     }
 
     ci->opStack = opStack;
-    opStack += ops[ op0 ].stack;
+    opStack += ops[op0].stack;
   }
 
   return NULL;
@@ -1804,7 +1804,7 @@ VM_CheckInstructions(instruction_t *buf, qint instructionCount, const int32_t *j
 
       if (proc == NULL)
       {
-        sprintf(errBuf, "missing proc frame for %s %i at %i", opname[ ci->op ], v, i);
+        sprintf(errBuf, "missing proc frame for %s %i at %i", opname[ci->op], v, i);
         return errBuf;
       }
 
@@ -1812,7 +1812,7 @@ VM_CheckInstructions(instruction_t *buf, qint instructionCount, const int32_t *j
       {
         if (!safe_address(ci, proc, dataLength))
         {
-          sprintf(errBuf, "bad %s address %i at %i", opname[ ci->op ], v, i);
+          sprintf(errBuf, "bad %s address %i at %i", opname[ci->op], v, i);
           return errBuf;
         }
       }
@@ -2106,7 +2106,7 @@ VM_ReplaceInstructions(vm_t *vm, instruction_t *buf)
         memcpy(vm->dataBase + 0x3D2E, "dm_??", 5);
       }
 
-      if (memcmp(vm->dataBase + 0x3D50, "\"%s.%s\"\n", 8 ) == 0)
+      if (memcmp(vm->dataBase + 0x3D50, "\"%s.%s\"\n", 8) == 0)
       {
         memcpy(vm->dataBase + 0x3D50, "\"%s\"\n", 6);
       }

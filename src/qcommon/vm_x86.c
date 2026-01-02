@@ -151,7 +151,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
   | loc4 | +24  \ - locals, accessible only from local scope
   | loc8 | +28  /
   | lc12 | +32 /
-  |------| vm->programStack -= 24 ( 8 + MAX_VMMAIN_CALL_ARGS*4 ) // set by VM_CallCompiled()
+  |------| vm->programStack -= 24 (8 + MAX_VMMAIN_CALL_ARGS*4) // set by VM_CallCompiled()
   | ???? | +0 - unused, reserved for interpreter
   | ???? | +4 - unused, reserved for interpreter
   | arg0 | +8  \
@@ -458,7 +458,7 @@ emit_modrm_base_offset(uint32_t reg, uint32_t base, int32_t offset)
       Emit1(0x24); // SIB: 00:100:100
     }
 
-    Emit4( offset );
+    Emit4(offset);
   }
 }
 
@@ -728,9 +728,10 @@ emit_lea_base_index_offset(uint32_t reg, uint32_t base, uint32_t index, int32_t 
   emit_op_reg_base_index(0, 0x8D, reg, base, index, 1, offset);
 }
 
-static void emit_mov_rx( uint32_t base, uint32_t reg )
+static void
+emit_mov_rx(uint32_t base, uint32_t reg)
 {
-	emit_op_reg( 0, 0x89, base, reg );
+  emit_op_reg(0, 0x89, base, reg);
 }
 
 static void
@@ -1037,7 +1038,7 @@ emit_store2_imm16(qint imm16, uint32_t base, int32_t offset)
 }
 
 static void
-emit_store2_imm16_index( qint imm16, uint32_t base, uint32_t index )
+emit_store2_imm16_index(qint imm16, uint32_t base, uint32_t index)
 {
   Emit1(0x66);
   emit_op_reg_base_index(0, 0xC7, 0x0, base, index, 1, 0);
@@ -2135,7 +2136,7 @@ unmask_sx(uint32_t reg)
 
 
 static void
-mov_sx_imm( uint32_t reg, uint32_t imm32 )
+mov_sx_imm(uint32_t reg, uint32_t imm32)
 {
   if (imm32 == 0)
   {
@@ -2353,7 +2354,7 @@ inc_opstack(void)
   opstack += 1;
 
 #if defined(DEBUG_VM)
-  if (opstackv[ opstack ].type != TYPE_RAW)
+  if (opstackv[opstack].type != TYPE_RAW)
   {
     DROP("bad item type %i at opstack %i", opstackv[opstack].type, opstack * 4);
   }
@@ -2865,7 +2866,7 @@ dyn_alloc_sx(uint32_t pref)
     if (reg->type_mask != RTYPE_UNUSED)
     {
       //mark least used item
-      if (!used || reg->refcnt < used->refcnt || ( reg->refcnt == used->refcnt && reg->ip < used->ip))
+      if (!used || reg->refcnt < used->refcnt || (reg->refcnt == used->refcnt && reg->ip < used->ip))
       {
         used = reg;
       }
@@ -3539,7 +3540,7 @@ Emit2(int16_t v)
 static void
 Emit4(int32_t v)
 {
-  Emit1(v & 255 );
+  Emit1(v & 255);
   Emit1((v >> 8) & 255);
   Emit1((v >> 16) & 255);
   Emit1((v >> 24) & 255);
@@ -3845,7 +3846,7 @@ EmitJump(instruction_t *i, qint op, qint addr)
 
     if (shouldNaNCheck)
     {
-      Emit1( 0x02 ); //target for NaN branch
+      Emit1(0x02); //target for NaN branch
     }
 
     EmitString(NearJumpStr(op));
@@ -3942,7 +3943,7 @@ emit_CheckReg(vm_t *vm, uint32_t reg, func_t func)
 static void
 emit_CheckJump(vm_t *vm, uint32_t reg, int32_t proc_base, int32_t proc_len)
 {
-  if ((vm_rtChecks->integer & VM_RTCHECK_JUMP ) == 0)
+  if ((vm_rtChecks->integer & VM_RTCHECK_JUMP) == 0)
   {
     return;
   }
@@ -3982,7 +3983,7 @@ emit_CheckProc(vm_t *vm, instruction_t *ins)
 #else
     emit_op_rx_imm32(X_CMP, R_PSTACK, vm->stackBottom); //cmp programStack, vm->stackBottom
 #endif
-    EmitString("0F 8C"); //jl +funcOffset[ FUNC_PSOF ]
+    EmitString("0F 8C"); //jl +funcOffset[FUNC_PSOF]
     Emit4(funcOffset[FUNC_PSOF] - compiledOfs - 6);
   }
 
@@ -4476,7 +4477,7 @@ ConstOptimize(vm_t *vm, instruction_t *ci, instruction_t *ni)
         dec_opstack();
 
         emit_CheckReg(vm, rx, FUNC_DATW);
-        emit_store1_imm8_index( ci->value, R_DATABASE, rx ); //(qchar *)dataBase[eax] = 0x12345678
+        emit_store1_imm8_index(ci->value, R_DATABASE, rx); //(qchar *)dataBase[eax] = 0x12345678
         unmask_rx(rx);
         wipe_vars();
       }
@@ -4540,7 +4541,7 @@ ConstOptimize(vm_t *vm, instruction_t *ci, instruction_t *ni)
         if ((ni + 2)->op == OP_EQ || (ni + 2)->op == OP_NE)
         {
           dec_opstack();
-          emit_test_rx_imm32( rx, ci->value ); //test eax, mask
+          emit_test_rx_imm32(rx, ci->value); //test eax, mask
           EmitJump(ni + 2, (ni + 2)->op, (ni + 2)->value); //jcc
           unmask_rx(rx);
           ip += 3; //OP_BAND + OP_CONST + OP_EQ/OP_NE
@@ -5313,7 +5314,7 @@ __compile:
 #else
         emit_jump_index_offset((intptr_t)instructionPointers, rx[0]); //jmp dword ptr [instructionPointers + eax*4]
 #endif
-        unmask_rx( rx[0] );
+        unmask_rx(rx[0]);
         break;
 
       case
@@ -6316,7 +6317,7 @@ __compile:
     }
   }
 #endif
-  } //for( pass = 0; pass < n; pass++ )
+  } //for(pass = 0; pass < n; pass++)
 
   n = header->instructionCount * sizeof(intptr_t);
 

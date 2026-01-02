@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/02/2026--**
 
+* qcommon:<br />some more formatting
+
 * qcommon:<br />remove accidental ;
 
 * qcommon/server:<br />formatting
