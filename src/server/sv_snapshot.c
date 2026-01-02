@@ -1420,8 +1420,8 @@ SV_SendClientMessages(void)
 
     if (*c->downloadName)
     {
-      //if the client is downloading via netchan and has not acknowledged a package in 4 seconds, drop it
-      if (c->download && (svs.time - c->downloadAckTime) > 4000)
+      //if the client is downloading via netchan and has not acknowledged a package in 12 seconds, drop it
+      if (c->download && (svs.time - c->downloadAckTime) > 12000)
       {
         SV_DropClient(c, "Download failed");
       }
