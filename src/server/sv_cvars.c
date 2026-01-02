@@ -141,7 +141,7 @@ SV_InitCvars(void)
   Cvar_CheckRange(sv_maxOOBRateIP, "1", "1000", CV_INTEGER);
   sv_dlRate = Cvar_GetAndDescribe("sv_dlRate", "1000", CVAR_ARCHIVE | CVAR_SERVERINFO, "Bandwidth allotted to PK3 file downloads via UDP, in kbyte/s.");
 #if defined(UDP_DOWNLOAD_OPTIMIZE)
-  Cvar_CheckRange(sv_dlRate, "0", "500", CV_INTEGER);
+  Cvar_CheckRange(sv_dlRate, "0", "1500", CV_INTEGER);
 #else
   Cvar_CheckRange(sv_dlRate, "0", "500", CV_INTEGER);
 #endif

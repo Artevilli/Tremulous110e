@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/02/2026--**
 
+* server:<br />increase sv_dlRate's max range again
+
 * qcommon/server:<br />fix bad syscalls placement
 
 * makefile/qcommon/server/sys:<br />drop x86_64 vm and merge into x86, optimize and harden vm security, vms are now on par speed wise to native libraries
