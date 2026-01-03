@@ -138,7 +138,7 @@ NET
 
 ==============================================================
 */
-
+//#define USE_IPV6
 #define NET_ENABLEV4            0x01
 #define NET_ENABLEV6            0x02
 //if this flag is set, always attempt ipv6 connections instead of ipv4 if a v6 address is found.
@@ -171,8 +171,10 @@ typedef enum {
 	NA_LOOPBACK,
 	NA_BROADCAST,
 	NA_IP,
+#if defined(USE_IPV6)
 	NA_IP6,
 	NA_MULTICAST6,
+#endif
 	NA_UNSPEC
 } netadrtype_t;
 
@@ -189,12 +191,16 @@ typedef struct {
 	union
 	{
 	  byte _4[4];
+#if defined(USE_IPV6)
 	  byte _6[16];
+#endif
 	}
 	ipv;
 
 	uint16_t port;
+#if defined(USE_IPV6)
 	unsigned long scope_id; //needed for IPv6 link-local addresses
+#endif
 } netadr_t;
 
 void		NET_Init( void );
@@ -219,8 +225,10 @@ qint		NET_StringToAdr ( const qchar *s, netadr_t *a, netadrtype_t family);
 #if !defined(DEDICATED)
 qbool	NET_GetLoopPacket (netsrc_t sock, netadr_t *net_from, msg_t *net_message);
 #endif
+#if defined(USE_IPV6)
 void		NET_JoinMulticast6(void);
 void		NET_LeaveMulticast6(void);
+#endif
 qbool
 NET_Sleep(qint timeout);
 

@@ -425,7 +425,7 @@ Com_MD5Addr(const netadr_t *addr, qint timestamp)
     NA_IP:
       MD5Update(&ctx_in, addr->ipv._4, 4);
       break;
-
+#if defined(USE_IPV6)
     case
     NA_IP6:
 
@@ -433,7 +433,7 @@ Com_MD5Addr(const netadr_t *addr, qint timestamp)
     NA_MULTICAST6:
       MD5Update(&ctx_in, addr->ipv._6, 16);
       break;
-
+#endif
     default:
       break;
   }

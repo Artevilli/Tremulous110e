@@ -397,7 +397,7 @@ SV_MasterHeartbeat(const qchar *message)
           Com_Printf("%s has no IPv4 address.\n", sv_master[i]->string);
         }
       }
-
+#if defined(USE_IPV6)
       if (netenabled & NET_ENABLEV6)
       {
         Com_Printf("Resolving %s (IPv6)\n", sv_master[i]->string);
@@ -418,7 +418,7 @@ SV_MasterHeartbeat(const qchar *message)
           Com_Printf("%s has no IPv6 address.\n", sv_master[i]->string);
         }
       }
-
+#endif
       if (adr[i][0].type == NA_BAD && adr[i][1].type == NA_BAD)
       {
         //if the address failed to resolve, clear it to avoid taking repeated dns hits
@@ -539,13 +539,13 @@ SVC_HashForAddress(const netadr_t *address)
       ip = address->ipv._4;
       size = 4;
       break;
-
+#if defined(USE_IPV6)
     case
     NA_IP6:
       ip = address->ipv._6;
       size = 16;
       break;
-
+#endif
     default:
       break;
   }
@@ -640,7 +640,7 @@ SVC_BucketForAddress(const netadr_t *address, const unsigned burst, const unsign
         }
 
         break;
-
+#if defined(USE_IPV6)
       case
       NA_IP6:
         if (!(memcmp(bucket->ipv._6, address->ipv._6, 16)))
@@ -654,7 +654,7 @@ SVC_BucketForAddress(const netadr_t *address, const unsigned burst, const unsign
         }
 
         break;
-
+#endif
       default:
         return &dummy;
     }
@@ -702,12 +702,12 @@ SVC_BucketForAddress(const netadr_t *address, const unsigned burst, const unsign
         NA_IP:
           Com_Memcpy(bucket->ipv._4, address->ipv._4, 4);
           break;
-
+#if defined(USE_IPV6)
         case
         NA_IP6:
           Com_Memcpy(bucket->ipv._6, address->ipv._6, 16);
           break;
-
+#endif
         default:
           break;
       }
@@ -1338,10 +1338,12 @@ SVC_CheckDRDoS(const netadr_t *from)
   {
     modifiedFrom.ipv._4[3] = 0; //xx.xx.xx.0
   }
+#if defined(USE_IPV6)
   else if (modifiedFrom.type == NA_IP6)
   {
     Com_Memset(modifiedFrom.ipv._6 + 7, 0, 9); //mask to /56
   }
+#endif
   else
   {
     //Chey: i have no idea what this could possibly be
@@ -1835,12 +1837,12 @@ SV_IsValidNetwork(const netadr_t *from)
   {
     return qtrue;
   }
-
+#if defined(USE_IPV6)
   if (from->type == NA_IP6)
   {
     return qtrue;
   }
-
+#endif
   return qfalse;
 }
 
@@ -2696,15 +2698,14 @@ SV_RateMsec(const client_t *client)
       rate = sv_minRate->integer;
     }
   }
-
+#if defined(USE_IPV6)
   if (client->netchan.remoteAddress.type == NA_IP6)
   {
     messageSize += UDPIP6_HEADER_SIZE;
   }
   else
-  {
+#endif
     messageSize += UDPIP_HEADER_SIZE;
-  }
 
   rateMsec = messageSize * 1000 / ((qint)(rate * com_timescale->value));
   rate = Sys_Milliseconds() - client->netchan.lastSentTime;
