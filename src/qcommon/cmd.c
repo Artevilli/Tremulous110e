@@ -748,11 +748,6 @@ Cmd_Args_Sanitize(void)
   {
     qchar *c = cmd_argv[i];
 
-    if (strlen(c) > MAX_CVAR_VALUE_STRING - 1)
-    {
-      c[MAX_CVAR_VALUE_STRING - 1] = '\0';
-    }
-
     while((c = strpbrk(c, "\n\r;")) != NULL)
     {
       *c = ' ';
@@ -774,11 +769,6 @@ Cmd_Args_Sanitize2(size_t length, const qchar *strip, const qchar *repl)
   for(i = 1;i < cmd_argc;i++)
   {
     qchar *c = cmd_argv[i];
-
-    if (length > 0 && strlen(c) >= length)
-    {
-      c[length - 1] = '\0';
-    }
 
     if (VALIDSTRING(strip) && VALIDSTRING(repl))
     {

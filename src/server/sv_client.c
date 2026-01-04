@@ -3478,8 +3478,8 @@ SV_UserinfoChanged(client_t *cl, const qbool updateUserinfo, const qbool runFilt
   //name for C code
   val = Info_ValueForKey(cl->userinfo, "name");
 
-  //truncate if it is too long as it may cause memory corruption
-  if (strlen(val) >= sizeof(buf))
+  //truncate if it is too long as it may cause memory corruption in OSP mod
+  if (sv.gvm->forceDataMask && strlen(val) >= sizeof(buf))
   {
     Q_strncpyz(buf, val, sizeof(buf));
     Info_SetValueForKey(cl->userinfo, "name", buf);
@@ -3764,13 +3764,13 @@ SV_ExecuteClientCommand(client_t *cl, const qchar *s)
 
       Cmd_Args_Sanitize();
 
-      if (sv_filterCommands->integer)
+      if (sv.gvm->forceDataMask || sv_filterCommands->integer)
       {
         Cmd_Args_Sanitize2(MAX_CVAR_VALUE_STRING, "\n\r", "  ");
 
-        if (sv_filterCommands->integer >= 2)
+        if (sv.gvm->forceDataMask || sv_filterCommands->integer >= 2)
         {
-          Cmd_Args_Sanitize2(MAX_CVAR_VALUE_STRING, ";", " ");
+          Cmd_Args_Sanitize2(MAX_CVAR_VALUE_STRING, ";", " "); //handle ';' for OSP
         }
       }
 
