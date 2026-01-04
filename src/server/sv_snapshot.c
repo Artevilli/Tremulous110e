@@ -617,7 +617,7 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
     {
       l = svEnt->clusternums[i];
 
-      if (bitvector[l >> 3] & (1U << (l & 7)))
+      if (bitvector[l >> 3] & UBIT(l & 7))
       {
         break;
       }
@@ -631,7 +631,7 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
       {
         for(;l <= svEnt->lastCluster;l++)
         {
-          if (bitvector[l >> 3] & (1U << (l & 7)))
+          if (bitvector[l >> 3] & UBIT(l & 7))
           {
             break;
           }

@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/03/2026--**
 
+* qcommon/server:<br />introduction of UBIT()
+
 * server:<br />proper utilization of gvm->forceDataMask
 
 * qcommon:<br />use `#if defined()` instead of `#ifdef`

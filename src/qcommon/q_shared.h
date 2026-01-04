@@ -283,7 +283,11 @@ typedef float net_float;
 #endif
 
 #if !defined(BIT)
-#define BIT(x) (1 << x)
+#define BIT(x) (1 << (x))
+#endif
+
+#if !defined(UBIT)
+#define UBIT(x) (1U << (x))
 #endif
 
 #define	MAX_QINT			0x7fffffff

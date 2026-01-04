@@ -607,7 +607,7 @@ NET_CompareBaseAdrMask(const netadr_t *a, const netadr_t *b, unsigned netmask)
 
   if (netmask)
   {
-    cmpmask = (1 << netmask) - 1;
+    cmpmask = (BIT(netmask)) - 1;
     cmpmask <<= 8 - netmask;
 
     if ((addra[curbyte] & cmpmask) == (addrb[curbyte] & cmpmask))

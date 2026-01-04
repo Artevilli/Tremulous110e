@@ -262,7 +262,7 @@ MSG_ReadBits(msg_t *msg, qint bits)
 
   if (sgn && bits < 32)
   {
-    if (value & (1 << (bits - 1)))
+    if (value & (BIT(bits - 1)))
     {
       value |= -1 ^ ((BIT(bits)) - 1);
     }
@@ -835,7 +835,7 @@ static const netField_t entityStateFields[] =
 // if (qint)f == f and (qint)f + ( 1<<(FLOAT_INT_BITS-1) ) < ( 1 << FLOAT_INT_BITS )
 // the float will be sent with FLOAT_INT_BITS, otherwise all 32 bits will be sent
 #define	FLOAT_INT_BITS	13
-#define	FLOAT_INT_BIAS	(1<<(FLOAT_INT_BITS-1))
+#define	FLOAT_INT_BIAS	(BIT(FLOAT_INT_BITS - 1))
 
 /*
 ==================
@@ -928,7 +928,7 @@ void MSG_WriteDeltaEntity( msg_t *msg, const entityState_t *from, const entitySt
 			} else {
 				MSG_WriteBits( msg, 1, 1 );
 				if ( trunc == fullFloat && trunc + FLOAT_INT_BIAS >= 0 && 
-					trunc + FLOAT_INT_BIAS < ( 1 << FLOAT_INT_BITS ) ) {
+					trunc + FLOAT_INT_BIAS < ( BIT(FLOAT_INT_BITS) ) ) {
 					// send as small integer
 					MSG_WriteBits( msg, 0, 1 );
 					MSG_WriteBits( msg, trunc + FLOAT_INT_BIAS, FLOAT_INT_BITS );
@@ -1201,7 +1201,7 @@ MSG_WriteDeltaSharedEntity(msg_t *msg, void *from, void *to, qbool force, qint n
       {
         MSG_WriteBits(msg, 1, 1);
         
-        if (trunc == fullFloat && trunc + FLOAT_INT_BIAS >= 0 && trunc + FLOAT_INT_BIAS < (1 << FLOAT_INT_BITS))
+        if (trunc == fullFloat && trunc + FLOAT_INT_BIAS >= 0 && trunc + FLOAT_INT_BIAS < (BIT(FLOAT_INT_BITS)))
         {
           //send as small integer
           MSG_WriteBits(msg, 0, 1);
@@ -1432,7 +1432,7 @@ void MSG_WriteDeltaPlayerstate( msg_t *msg, const playerState_t *from, const pla
 			trunc = (qint)fullFloat;
 
 			if ( trunc == fullFloat && trunc + FLOAT_INT_BIAS >= 0 && 
-				trunc + FLOAT_INT_BIAS < ( 1 << FLOAT_INT_BITS ) ) {
+				trunc + FLOAT_INT_BIAS < ( BIT(FLOAT_INT_BITS) ) ) {
 				// send as small integer
 				MSG_WriteBits( msg, 0, 1 );
 				MSG_WriteBits( msg, trunc + FLOAT_INT_BIAS, FLOAT_INT_BITS );

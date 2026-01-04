@@ -284,7 +284,7 @@ static void vimm(unsigned int val, int bits, int shift, int sgned, int arg_index
 		val = (unsigned int) x;
 		bits--;
 	}
-	if (val & ~((1U << bits) - 1U)) {
+	if (val & ~(UBIT(bits) - 1U)) {
 		Com_Printf("VM ERROR: immediate value 0x%08x out of %d bit range\n",
 			   orig_val, orig_bits);
 		DIE("sparc VM bug");

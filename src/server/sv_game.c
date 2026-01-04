@@ -216,7 +216,7 @@ SV_inPVS(const vec3_t p1, const vec3_t p2)
   cluster = CM_LeafCluster(leafnum);
   area2 = CM_LeafArea(leafnum);
 
-  if (mask && (!(mask[cluster >> 3] & (1 << (cluster & 7)))))
+  if (mask && (!(mask[cluster >> 3] & (BIT(cluster & 7)))))
   {
     return qfalse;
   }
@@ -251,7 +251,7 @@ SV_inPVSIgnorePortals(const vec3_t p1, const vec3_t p2)
   leafnum = CM_PointLeafnum(p2);
   cluster = CM_LeafCluster(leafnum);
 
-  if (mask && (!(mask[cluster >> 3] & (1 << (cluster & 7)))))
+  if (mask && (!(mask[cluster >> 3] & (BIT(cluster & 7)))))
   {
     return qfalse;
   }

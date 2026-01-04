@@ -952,7 +952,7 @@ VM_LoadQVM(vm_t *vm, qbool alloc)
   //reserve some space for effective LOCAL+LOAD* checks
   dataAlloc = dataLength + VM_DATA_GUARD_SIZE;
 
-  if (dataLength >= (1U << 31) || dataAlloc >= (1U << 31))
+  if (dataLength >= UBIT(31) || dataAlloc >= UBIT(31))
   {
     //dataLenth is negative int32
     VM_Free(vm);
