@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/03/2026--**
 
+* qcommon:<br />add cvar_trim to trim all unused cvars
+
 * qcommon:<br />add varfunc to change specified cvars in different manners
 
 * qcommon/server:<br />private flag for VM modules
