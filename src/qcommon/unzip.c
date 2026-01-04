@@ -87,16 +87,16 @@
  */
 
 
-#if !defined(_ZCONF_H)
+#ifndef _ZCONF_H
 #define _ZCONF_H
 
 /* Maximum value for memLevel in deflateInit2 */
-#if !defined(MAX_MEM_LEVEL)
-#if defined(MAXSEG_64K)
-#define MAX_MEM_LEVEL 8
-#else
-#define MAX_MEM_LEVEL 9
-#endif
+#ifndef MAX_MEM_LEVEL
+#  ifdef MAXSEG_64K
+#    define MAX_MEM_LEVEL 8
+#  else
+#    define MAX_MEM_LEVEL 9
+#  endif
 #endif
 
 /* Maximum value for windowBits in deflateInit2 and inflateInit2.
@@ -104,8 +104,8 @@
  * created by gzip. (Files created by minigzip can still be extracted by
  * gzip.)
  */
-#if !defined(MAX_WBITS)
-#define MAX_WBITS   15 /* 32K LZ77 window */
+#ifndef MAX_WBITS
+#  define MAX_WBITS   15 /* 32K LZ77 window */
 #endif
 
 /* The memory requirements for deflate are (in bytes):
@@ -123,7 +123,7 @@
 
                         /* Type declarations */
 
-#if !defined(OF) /* function prototypes */
+#ifndef OF /* function prototypes */
 #define OF(args)  args
 #endif
 
@@ -132,10 +132,10 @@ typedef unsigned int   uInt;  /* 16 bits or more */
 typedef unsigned long  uLong; /* 32 bits or more */
 typedef Byte    *voidp;
 
-#if !defined(SEEK_SET)
-#define SEEK_SET        0       /* Seek from beginning of file.  */
-#define SEEK_CUR        1       /* Seek from current position.  */
-#define SEEK_END        2       /* Set file pointer to EOF plus "offset" */
+#ifndef SEEK_SET
+#  define SEEK_SET        0       /* Seek from beginning of file.  */
+#  define SEEK_CUR        1       /* Seek from current position.  */
+#  define SEEK_END        2       /* Set file pointer to EOF plus "offset" */
 #endif
 
 #endif /* _ZCONF_H */
@@ -972,8 +972,8 @@ typedef unsigned long  ulg;
 
         /* common constants */
 
-#if !defined(DEF_WBITS)
-#define DEF_WBITS MAX_WBITS
+#ifndef DEF_WBITS
+#  define DEF_WBITS MAX_WBITS
 #endif
 /* default windowBits for decompression. MAX_WBITS is for compression only */
 
@@ -999,17 +999,17 @@ typedef unsigned long  ulg;
 
         /* Common defaults */
 
-#if !defined(OS_CODE)
+#ifndef OS_CODE
 #  define OS_CODE  0x03  /* assume Unix */
 #endif
 
-#if !defined(F_OPEN)
+#ifndef F_OPEN
 #  define F_OPEN(name, mode) Sys_FOpen((name), (mode))
 #endif
 
          /* functions */
 
-#if defined(HAVE_STRERROR)
+#ifdef HAVE_STRERROR
    extern char *strerror OF((int));
 #  define zstrerror(errnum) strerror(errnum)
 #else
@@ -1021,7 +1021,7 @@ typedef unsigned long  ulg;
 #define zmemzero(dest, len) Com_Memset(dest, 0, len)
 
 /* Diagnostic functions */
-#if defined(_ZIP_DEBUG_)
+#ifdef _ZIP_DEBUG_
    int z_verbose = 0;
 #  define Assert(cond,msg) assert(cond);
    //{if(!(cond)) Sys_Error(msg);}
@@ -1056,19 +1056,19 @@ static void   zcfree  OF((voidp opaque, voidp ptr));
 #endif
 
 
-#if !defined(UNZ_BUFSIZE)
+#ifndef UNZ_BUFSIZE
 #define UNZ_BUFSIZE (65536)
 #endif
 
-#if !defined(UNZ_MAXFILENAMEINZIP)
+#ifndef UNZ_MAXFILENAMEINZIP
 #define UNZ_MAXFILENAMEINZIP (256)
 #endif
 
-#if !defined(ALLOC)
-#define ALLOC(size) (Z_Malloc(size))
+#ifndef ALLOC
+# define ALLOC(size) (Z_Malloc(size))
 #endif
-#if !defined(TRYFREE)
-#define TRYFREE(p) {if (p) Z_Free(p);}
+#ifndef TRYFREE
+# define TRYFREE(p) {if (p) Z_Free(p);}
 #endif
 
 #define SIZECENTRALDIRITEM (0x2e)
@@ -1212,13 +1212,13 @@ static int strcmpcasenosensitive_internal (const char* fileName1,const char* fil
 }
 
 
-#if defined(CASESENSITIVITYDEFAULT_NO)
+#ifdef  CASESENSITIVITYDEFAULT_NO
 #define CASESENSITIVITYDEFAULTVALUE 2
 #else
 #define CASESENSITIVITYDEFAULTVALUE 1
 #endif
 
-#if !defined(STRCMPCASENOSENTIVEFUNCTION)
+#ifndef STRCMPCASENOSENTIVEFUNCTION
 #define STRCMPCASENOSENTIVEFUNCTION strcmpcasenosensitive_internal
 #endif
 
@@ -2449,7 +2449,7 @@ static  void inflate_codes_free OF((
    subject to change. Applications should only use zlib.h.
  */
 
-#if !defined(_INFUTIL_H)
+#ifndef _INFUTIL_H
 #define _INFUTIL_H
 
 typedef enum {
@@ -2728,7 +2728,7 @@ int inflate_blocks(inflate_blocks_statef *s, z_streamp z, int r)
     case TABLE:
       NEEDBITS(14)
       s->sub.trees.table = t = (uInt)b & 0x3fff;
-#if !defined(PKZIP_BUG_WORKAROUND)
+#ifndef PKZIP_BUG_WORKAROUND
       if ((t & 0x1f) > 29 || ((t >> 5) & 0x1f) > 29)
       {
         s->mode = BAD;
@@ -3325,7 +3325,7 @@ int inflate_trees_dynamic(uInt nl, uInt nd, uInt *c, uInt *bl, uInt *bd, inflate
     if (r == Z_DATA_ERROR)
       z->msg = (char*)"oversubscribed distance tree";
     else if (r == Z_BUF_ERROR) {
-#if defined(PKZIP_BUG_WORKAROUND)
+#ifdef PKZIP_BUG_WORKAROUND
       r = Z_OK;
     }
 #else
@@ -3768,7 +3768,7 @@ int inflate_codes(inflate_blocks_statef *s, z_streamp z, int r)
   while (1) switch (c->mode)
   {             /* waiting for "i:"=input, "o:"=output, "x:"=nothing */
     case START:         /* x: set up for LEN */
-#if !defined(SLOW)
+#ifndef SLOW
       if (m >= 258 && n >= 10)
       {
         UPDATE
@@ -3902,7 +3902,7 @@ int inflate_codes(inflate_blocks_statef *s, z_streamp z, int r)
       r = Z_STREAM_ERROR;
       LEAVE
   }
-#if defined(NEED_DUMMY_RETURN)
+#ifdef NEED_DUMMY_RETURN
   return Z_STREAM_ERROR;  /* Some dumb compilers complain without this */
 #endif
 }
@@ -4252,7 +4252,7 @@ int inflate(z_streamp z, int f)
     default:
       return Z_STREAM_ERROR;
   }
-#if defined(NEED_DUMMY_RETURN)
+#ifdef NEED_DUMMY_RETURN
   return Z_STREAM_ERROR;  /* Some dumb compilers complain without this */
 #endif
 }

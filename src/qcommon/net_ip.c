@@ -45,7 +45,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif //WINVER >= 0x501
 
 typedef qint socklen_t;
-#if defined(ADDRESS_FAMILY)
+#ifdef ADDRESS_FAMILY
 #define sa_family_t ADDRESS_FAMILY
 #else
 typedef unsigned short sa_family_t;
@@ -248,7 +248,7 @@ NET_ErrorString
 ====================
 */
 static qchar *NET_ErrorString( void ) {
-#if defined(_WIN32)
+#ifdef _WIN32
 	//FIXME: replace with FormatMessage?
 	switch( socketError ) {
 		case WSAEINTR: return "WSAEINTR";
@@ -1222,7 +1222,7 @@ static SOCKET NET_IP6Socket( const qchar *net_interface, qint port, struct socka
 		return INVALID_SOCKET;
 	}
 
-#if defined(IPV6_V6ONLY)
+#ifdef IPV6_V6ONLY
 	{
 		qint i;
 
@@ -1292,7 +1292,7 @@ static void NET_SetMulticast6(void)
 
 	if(*net_mcast6iface->string)
 	{
-#if defined(_WIN32)
+#ifdef _WIN32
 		curgroup.ipv6mr_interface = net_mcast6iface->integer;
 #else
 		curgroup.ipv6mr_interface = if_nametoindex(net_mcast6iface->string);
@@ -1923,7 +1923,7 @@ NET_Init
 ====================
 */
 void NET_Init( void ) {
-#if defined(_WIN32)
+#ifdef _WIN32
 	qint		r;
 
 	r = WSAStartup( MAKEWORD( 2, 0 ), &winsockdata );
@@ -1961,7 +1961,7 @@ void NET_Shutdown( void ) {
 
 	NET_Config( qfalse );
 
-#if defined(_WIN32)
+#ifdef _WIN32
 	WSACleanup();
 	winsockInitialized = qfalse;
 #endif

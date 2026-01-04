@@ -21,7 +21,7 @@
 #include "qcommon.h"
 #include "md5.h"
 
-#if !defined(Q3_BIG_ENDIAN)
+#ifndef Q3_BIG_ENDIAN
 	#define byteReverse(buf, len)	/* Nothing */
 #else
 	static void byteReverse(unsigned qchar *buf, unsigned longs);

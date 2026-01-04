@@ -26,8 +26,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../qcommon/cm_public.h"
 
 //Ignore __attribute__ on non-gcc platforms
-#if !defined(__GNUC__)
-#if !defined(__attribute__)
+#ifndef __GNUC__
+#ifndef __attribute__
 #define __attribute__(x)
 #endif
 #endif
@@ -301,7 +301,7 @@ PROTOCOL
 extern qint demo_protocols[];
 
 // override on command line, config files etc.
-#if !defined(MASTER_SERVER_NAME)
+#ifndef MASTER_SERVER_NAME
 #define MASTER_SERVER_NAME	"master.tremulous.net"
 #endif
 
@@ -746,7 +746,7 @@ handleOwner_t;
 
 #define BASEGAME "base"
 
-#if defined(DEDICATED)
+#ifdef DEDICATED
 #	define Q3CONFIG_CFG "autogen_server.cfg"
 #else
 #	define Q3CONFIG_CFG "autogen.cfg"
@@ -1204,7 +1204,7 @@ temp file loading
 #define ZONE_DEBUG
 #endif
 
-#if defined(ZONE_DEBUG)
+#ifdef ZONE_DEBUG
 #define Z_TagMalloc(size, tag) Z_TagMallocDebug(size, tag, #size, __FILE__, __LINE__)
 #define Z_Malloc(size) Z_MallocDebug(size, #size, __FILE__, __LINE__)
 #define S_Malloc(size) S_MallocDebug(size, #size, __FILE__, __LINE__)

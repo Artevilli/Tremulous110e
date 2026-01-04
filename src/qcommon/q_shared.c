@@ -1572,7 +1572,7 @@ qbool Q_isintegral( float f )
 	return (qint)f == f;
 }
 
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
 /*
 =============
 Q_vsnprintf

@@ -957,7 +957,7 @@ void CM_AddFacetBevels( facet_t *facet ) {
 	}
 	FreeWinding( w );
 
-#if !defined(BSPC)
+#ifndef BSPC
 	//add opposite plane
 	facet->borderPlanes[facet->numBorders] = facet->surfacePlane;
 	facet->borderNoAdjust[facet->numBorders] = 0;
@@ -1239,11 +1239,11 @@ void CM_TracePointThroughPatchCollide( traceWork_t *tw, const struct patchCollid
 	qint			i, j, k;
 	float		offset;
 	float		d1, d2;
-#if !defined(BSPC)
+#ifndef BSPC
 	static cvar_t *cv;
 #endif //BSPC
 
-#if !defined(BSPC)
+#ifndef BSPC
 	if ( !cm_playerCurveClip->integer || !tw->isPoint ) {
 		return;
 	}
@@ -1298,7 +1298,7 @@ void CM_TracePointThroughPatchCollide( traceWork_t *tw, const struct patchCollid
 		}
 		if ( j == facet->numBorders ) {
 			// we hit this facet
-#if !defined(BSPC)
+#ifndef BSPC
 			if (!cv) {
 				cv = Cvar_Get( "r_debugSurfaceUpdate", "1", 0 );
 			}
@@ -1383,7 +1383,7 @@ void CM_TraceThroughPatchCollide( traceWork_t *tw, const struct patchCollide_s *
 	facet_t	*facet;
 	float plane[4] = {0, 0, 0, 0}, bestplane[4] = {0, 0, 0, 0};
 	vec3_t startp, endp;
-#if !defined(BSPC)
+#ifndef BSPC
 	static cvar_t *cv;
 #endif //BSPC
 
@@ -1485,7 +1485,7 @@ void CM_TraceThroughPatchCollide( traceWork_t *tw, const struct patchCollide_s *
 				//if (enterFrac < 0) {
 					//enterFrac = 0;
 				//}
-#if !defined(BSPC)
+#ifndef BSPC
 				if (!cv) {
 					cv = Cvar_Get( "r_debugSurfaceUpdate", "1", 0 );
 				}
@@ -1618,7 +1618,7 @@ Called from the renderer
 */
 void CM_DrawDebugSurface( void (*drawPoly)(qint color, qint numPoints, float *points) ) {
 	static cvar_t	*cv;
-#if !defined(BSPC)
+#ifndef BSPC
 	static cvar_t	*cv2;
 #endif
 	const patchCollide_t	*pc;
@@ -1631,7 +1631,7 @@ void CM_DrawDebugSurface( void (*drawPoly)(qint color, qint numPoints, float *po
 	//vec3_t mins = {0, 0, 0}, maxs = {0, 0, 0};
 	vec3_t v1, v2;
 
-#if !defined(BSPC)
+#ifndef BSPC
 	if ( !cv2 )
 	{
 		cv2 = Cvar_Get( "r_debugSurface", "0", 0 );
@@ -1647,7 +1647,7 @@ void CM_DrawDebugSurface( void (*drawPoly)(qint color, qint numPoints, float *po
 		return;
 	}
 
-#if !defined(BSPC)
+#ifndef BSPC
 	if ( !cv ) {
 		cv = Cvar_Get( "cm_debugSize", "2", 0 );
 	}

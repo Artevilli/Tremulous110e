@@ -4792,7 +4792,7 @@ VM_FindMOps(instruction_t *buf, qint instructionCount)
   {
     if (i->op == OP_LOCAL)
     {
-#if defined(MACRO_OPTIMIZE)
+#ifdef MACRO_OPTIMIZE
       //OP_LOCAL + OP_LOCAL + OP_LOAD4 + OP_CONST + OP_XXX + OP_STORE4
       if ((i + 1)->op == OP_LOCAL && i->value == (i + 1)->value && (i + 2)->op == OP_LOAD4 && (i + 3)->op == OP_CONST && (i + 4)->op != OP_UNDEF && (i + 5)->op == OP_STORE4)
       {

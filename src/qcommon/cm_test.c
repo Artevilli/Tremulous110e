@@ -417,7 +417,7 @@ CM_AreasConnected
 ====================
 */
 qbool	CM_AreasConnected( qint area1, qint area2 ) {
-#if !defined(BSPC)
+#ifndef BSPC
 	if ( cm_noAreas->integer ) {
 		return qtrue;
 	}
@@ -460,7 +460,7 @@ qint CM_WriteAreaBits (byte *buffer, qint area)
 
 	bytes = (cm.numAreas+7)>>3;
 
-#if !defined(BSPC)
+#ifndef BSPC
 	if (cm_noAreas->integer || area == -1)
 #else
 	if (area == -1)

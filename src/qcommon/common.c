@@ -32,7 +32,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 #include <setjmp.h>
-#if !defined(_WIN32)
+#ifndef _WIN32
 #include <netinet/in.h>
 #include <sys/stat.h> // umask
 #else
@@ -989,7 +989,7 @@ all big things are allocated on the hunk.
 #define	ZONEID	0x1d4a11
 #define MINFRAGMENT	64
 
-#if defined(USE_MULTI_SEGMENT)
+#ifdef USE_MULTI_SEGMENT
 #if 1 // forward lookup, faster allocation
 #define DIRECTION next
 // we may have up to 4 lists to group free blocks by size
@@ -1007,7 +1007,7 @@ all big things are allocated on the hunk.
 #define USE_STATIC_TAGS
 #define USE_TRASH_TEST
 
-#if defined(ZONE_DEBUG)
+#ifdef ZONE_DEBUG
 typedef struct zonedebug_s {
 	const qchar *label;
 	const qchar *file;
@@ -1021,7 +1021,7 @@ typedef struct memblock_s {
 	qint			size;	// including the header and possibly tiny fragments
 	memtag_t	tag;	// a tag of 0 is a free block
 	qint			id;		// should be ZONEID
-#if defined(ZONE_DEBUG)
+#ifdef ZONE_DEBUG
 	zonedebug_t d;
 #endif
 } memblock_t;
@@ -1035,7 +1035,7 @@ typedef struct memzone_s {
 	qint		size;			// total bytes malloced, including header
 	qint		used;			// total bytes used
 	memblock_t	blocklist;	// start / end cap for linked list
-#if defined(USE_MULTI_SEGMENT)
+#ifdef USE_MULTI_SEGMENT
 	memblock_t	dummy0;		// just to allocate some space before freelist
 	freeblock_t	freelist_tiny;
 	memblock_t	dummy1;
@@ -1059,7 +1059,7 @@ static memzone_t *mainzone;
 static memzone_t *smallzone;
 
 
-#if defined(USE_MULTI_SEGMENT)
+#ifdef USE_MULTI_SEGMENT
 
 static void InitFree( freeblock_t *fb )
 {
@@ -1074,7 +1074,7 @@ static void RemoveFree( memblock_t *block )
 	freeblock_t *prev;
 	freeblock_t *next;
 
-#if defined(ZONE_DEBUG)
+#ifdef ZONE_DEBUG
 	if ( fb->next == NULL || fb->prev == NULL || fb->next == fb || fb->prev == fb ) {
 		Com_Error( ERR_FATAL, "RemoveFree: bad pointers fb->next: %p, fb->prev: %p\n", fb->next, fb->prev );
 	}
@@ -1092,17 +1092,17 @@ static void InsertFree( memzone_t *zone, memblock_t *block )
 {
 	freeblock_t *fb = (freeblock_t*)( block + 1 );
 	freeblock_t *prev, *next;
-#if defined(TINY_SIZE)
+#ifdef TINY_SIZE
 	if ( block->size <= TINY_SIZE )
 		prev = &zone->freelist_tiny;
 	else
 #endif
-#if defined(SMALL_SIZE)
+#ifdef SMALL_SIZE
 	if ( block->size <= SMALL_SIZE )
 		prev = &zone->freelist_small;
 	else
 #endif
-#if defined(MEDIUM_SIZE)
+#ifdef MEDIUM_SIZE
 	if ( block->size <= MEDIUM_SIZE )
 		prev = &zone->freelist_medium;
 	else
@@ -1111,7 +1111,7 @@ static void InsertFree( memzone_t *zone, memblock_t *block )
 
 	next = prev->next;
 
-#if defined(ZONE_DEBUG)
+#ifdef ZONE_DEBUG
 	if ( block->size < sizeof( *fb ) + sizeof( *block ) ) {
 		Com_Error( ERR_FATAL, "InsertFree: bad block size: %i\n", block->size );
 	}
@@ -1192,17 +1192,17 @@ static memblock_t *SearchFree( memzone_t *zone, qint size )
 	const freeblock_t *fb;
 	memblock_t *base;
 
-#if defined(TINY_SIZE)
+#ifdef TINY_SIZE
 	if ( size <= TINY_SIZE )
 		fb = zone->freelist_tiny.DIRECTION;
 	else
 #endif
-#if defined(SMALL_SIZE)
+#ifdef SMALL_SIZE
 	if ( size <= SMALL_SIZE )
 		fb = zone->freelist_small.DIRECTION;
 	else
 #endif
-#if defined(MEDIUM_SIZE)
+#ifdef MEDIUM_SIZE
 	if ( size <= MEDIUM_SIZE )
 		fb = zone->freelist_medium.DIRECTION;
 	else
@@ -1214,19 +1214,19 @@ static memblock_t *SearchFree( memzone_t *zone, qint size )
 		if ( fb == &zone->freelist ) {
 			fb = NewBlock( zone, size );
 		} else {
-#if defined(TINY_SIZE)
+#ifdef TINY_SIZE
 			if ( fb == &zone->freelist_tiny ) {
 				fb = zone->freelist_small.DIRECTION;
 				continue;
 			}
 #endif
-#if defined(SMALL_SIZE)
+#ifdef SMALL_SIZE
 			if ( fb == &zone->freelist_small ) {
 				fb = zone->freelist_medium.DIRECTION;
 				continue;
 			}
 #endif
-#if defined(MEDIUM_SIZE)
+#ifdef MEDIUM_SIZE
 			if ( fb == &zone->freelist_medium ) {
 				fb = zone->freelist.DIRECTION;
 				continue;
@@ -1253,7 +1253,7 @@ static void Z_ClearZone( memzone_t *zone, memzone_t *head, qint size, qint segnu
 	memblock_t	*block;
 	qint min_fragment;
 
-#if defined(USE_MULTI_SEGMENT)
+#ifdef USE_MULTI_SEGMENT
 	min_fragment = sizeof( memblock_t ) + sizeof( freeblock_t );
 #else
 	min_fragment = sizeof( memblock_t );
@@ -1270,7 +1270,7 @@ static void Z_ClearZone( memzone_t *zone, memzone_t *head, qint size, qint segnu
 	zone->blocklist.tag = TAG_GENERAL; // in use block
 	zone->blocklist.id = -ZONEID;
 	zone->blocklist.size = 0;
-#if !defined(USE_MULTI_SEGMENT)
+#ifndef USE_MULTI_SEGMENT
 	zone->rover = block;
 #endif
 	zone->size = size;
@@ -1282,7 +1282,7 @@ static void Z_ClearZone( memzone_t *zone, memzone_t *head, qint size, qint segnu
 
 	block->size = size - sizeof(memzone_t);
 
-#if defined(USE_MULTI_SEGMENT)
+#ifdef USE_MULTI_SEGMENT
 	InitFree( &zone->freelist );
 	zone->freelist.next = zone->freelist.prev = &zone->freelist;
 
@@ -1306,7 +1306,7 @@ Z_AvailableZoneMemory
 ========================
 */
 static qint Z_AvailableZoneMemory( const memzone_t *zone ) {
-#if defined(USE_MULTI_SEGMENT)
+#ifdef USE_MULTI_SEGMENT
 	return (1024*1024*1024); // unlimited
 #else
 	return zone->size - zone->used;
@@ -1355,14 +1355,14 @@ void Z_Free( void *ptr ) {
 	}
 
 	// if static memory
-#if defined(USE_STATIC_TAGS)
+#ifdef USE_STATIC_TAGS
 	if (block->tag == TAG_STATIC) {
 		return;
 	}
 #endif
 
 	// check the memory trash tester
-#if defined(USE_TRASH_TEST)
+#ifdef USE_TRASH_TEST
 	if ( *(qint *)((byte *)block + block->size - 4 ) != ZONEID ) {
 		Com_Error( ERR_FATAL, "Z_Free: memory block wrote past end" );
 	}
@@ -1385,12 +1385,12 @@ void Z_Free( void *ptr ) {
 
 	other = block->prev;
 	if ( other->tag == TAG_FREE ) {
-#if defined(USE_MULTI_SEGMENT)
+#ifdef USE_MULTI_SEGMENT
 		RemoveFree( other );
 #endif
 		// merge with previous free block
 		MergeBlock( other, block );
-#if !defined(USE_MULTI_SEGMENT)
+#ifndef USE_MULTI_SEGMENT
 		if ( block == zone->rover ) {
 			zone->rover = other;
 		}
@@ -1398,20 +1398,20 @@ void Z_Free( void *ptr ) {
 		block = other;
 	}
 
-#if !defined(USE_MULTI_SEGMENT)
+#ifndef USE_MULTI_SEGMENT
 	zone->rover = block;
 #endif
 
 	other = block->next;
 	if ( other->tag == TAG_FREE ) {
-#if defined(USE_MULTI_SEGMENT)
+#ifdef USE_MULTI_SEGMENT
 		RemoveFree( other );
 #endif
 		// merge the next free block onto the end
 		MergeBlock( block, other );
 	}
 
-#if defined(USE_MULTI_SEGMENT)
+#ifdef USE_MULTI_SEGMENT
 	InsertFree( zone, block );
 #endif
 }
@@ -1462,14 +1462,14 @@ qint Z_FreeTags( memtag_t tag ) {
 Z_TagMalloc
 ================
 */
-#if defined(ZONE_DEBUG)
+#ifdef ZONE_DEBUG
 void *Z_TagMallocDebug( qint size, memtag_t tag, qchar *label, qchar *file, qint line ) {
 	qint		allocSize;
 #else
 void *Z_TagMalloc( qint size, memtag_t tag ) {
 #endif
 	qint		extra;
-#if !defined(USE_MULTI_SEGMENT)
+#ifndef USE_MULTI_SEGMENT
 	memblock_t	*start, *rover;
 #endif
 	memblock_t *base;
@@ -1485,11 +1485,11 @@ void *Z_TagMalloc( qint size, memtag_t tag ) {
 		zone = mainzone;
 	}
 
-#if defined(ZONE_DEBUG)
+#ifdef ZONE_DEBUG
 	allocSize = size;
 #endif
 
-#if defined(USE_MULTI_SEGMENT)
+#ifdef USE_MULTI_SEGMENT
 	if ( size < (sizeof( freeblock_t ) ) ) {
 		size = (sizeof( freeblock_t ) );
 	}
@@ -1500,13 +1500,13 @@ void *Z_TagMalloc( qint size, memtag_t tag ) {
 	// of sufficient size
 	//
 	size += sizeof( *base );	// account for size of block header
-#if defined(USE_TRASH_TEST)
+#ifdef USE_TRASH_TEST
 	size += 4;					// space for memory trash tester
 #endif
 
 	size = PAD(size, sizeof(intptr_t));		// align to 32/64 bit boundary
 
-#if defined(USE_MULTI_SEGMENT)
+#ifdef USE_MULTI_SEGMENT
 	base = SearchFree( zone, size );
 
 	RemoveFree( base );
@@ -1518,7 +1518,7 @@ void *Z_TagMalloc( qint size, memtag_t tag ) {
 	do {
 		if ( rover == start ) {
 			// scanned all the way around the list
-#if defined(ZONE_DEBUG)
+#ifdef ZONE_DEBUG
 			Z_LogHeap();
 			Com_Error( ERR_FATAL, "Z_Malloc: failed on allocation of %i bytes from the %s zone: %s, line: %d (%s)",
 								size, zone == smallzone ? "small" : "main", file, line, label );
@@ -1552,12 +1552,12 @@ void *Z_TagMalloc( qint size, memtag_t tag ) {
 		fragment->next->prev = fragment;
 		base->next = fragment;
 		base->size = size;
-#if defined(USE_MULTI_SEGMENT)
+#ifdef USE_MULTI_SEGMENT
 		InsertFree( zone, fragment );
 #endif
 	}
 
-#if !defined(USE_MULTI_SEGMENT)
+#ifndef USE_MULTI_SEGMENT
 	zone->rover = base->next;	// next allocation will start looking here
 #endif
 	zone->used += base->size;
@@ -1565,14 +1565,14 @@ void *Z_TagMalloc( qint size, memtag_t tag ) {
 	base->tag = tag;			// no longer a free block
 	base->id = ZONEID;
 
-#if defined(ZONE_DEBUG)
+#ifdef ZONE_DEBUG
 	base->d.label = label;
 	base->d.file = file;
 	base->d.line = line;
 	base->d.allocSize = allocSize;
 #endif
 
-#if defined(USE_TRASH_TEST)
+#ifdef USE_TRASH_TEST
 	// marker for memory trash testing
 	*(qint *)((byte *)base + base->size - 4) = ZONEID;
 #endif
@@ -1586,7 +1586,7 @@ void *Z_TagMalloc( qint size, memtag_t tag ) {
 Z_Malloc
 ========================
 */
-#if defined(ZONE_DEBUG)
+#ifdef ZONE_DEBUG
 void *Z_MallocDebug( qint size, qchar *label, qchar *file, qint line ) {
 #else
 void *Z_Malloc( qint size ) {
@@ -1595,7 +1595,7 @@ void *Z_Malloc( qint size ) {
 
   //Z_CheckHeap ();	// DEBUG
 
-#if defined(ZONE_DEBUG)
+#ifdef ZONE_DEBUG
 	buf = Z_TagMallocDebug( size, TAG_GENERAL, label, file, line );
 #else
 	buf = Z_TagMalloc( size, TAG_GENERAL );
@@ -1611,7 +1611,7 @@ void *Z_Malloc( qint size ) {
 S_Malloc
 ========================
 */
-#if defined(ZONE_DEBUG)
+#ifdef ZONE_DEBUG
 void *S_MallocDebug( qint size, qchar *label, qchar *file, qint line ) {
 	return Z_TagMallocDebug( size, TAG_SMALL, label, file, line );
 }
@@ -1637,7 +1637,7 @@ static void Z_CheckHeap( void ) {
 			break;	// all blocks have been hit
 		}
 		if ( (byte *)block + block->size != (byte *)block->next) {
-#if defined(USE_MULTI_SEGMENT)
+#ifdef USE_MULTI_SEGMENT
 			const memblock_t *next = block->next;
 			if ( next->size == 0 && next->id == -ZONEID && next->tag == TAG_GENERAL ) {
 				block = next; // new zone segment
@@ -1662,7 +1662,7 @@ Z_LogZoneHeap
 ========================
 */
 static void Z_LogZoneHeap( memzone_t *zone, const qchar *name ) {
-#if defined(ZONE_DEBUG)
+#ifdef ZONE_DEBUG
 	qchar dump[32], *ptr;
 	qint  i, j;
 #endif
@@ -1675,14 +1675,14 @@ static void Z_LogZoneHeap( memzone_t *zone, const qchar *name ) {
 		return;
 
 	size = numBlocks = 0;
-#if defined(ZONE_DEBUG)
+#ifdef ZONE_DEBUG
 	allocSize = 0;
 #endif
 	len = Com_sprintf( buf, sizeof(buf), "\r\n================\r\n%s log\r\n================\r\n", name );
 	FS_Write( buf, len, logfile );
 	for ( block = zone->blocklist.next ; ; ) {
 		if ( block->tag != TAG_FREE ) {
-#if defined(ZONE_DEBUG)
+#ifdef ZONE_DEBUG
 			ptr = ((qchar *) block) + sizeof(memblock_t);
 			j = 0;
 			for (i = 0; i < 20 && i < block->d.allocSize; i++) {
@@ -1706,7 +1706,7 @@ static void Z_LogZoneHeap( memzone_t *zone, const qchar *name ) {
 		}
 		block = block->next;
 	}
-#if defined(ZONE_DEBUG)
+#ifdef ZONE_DEBUG
 	// subtract debug memory
 	size -= numBlocks * sizeof(zonedebug_t);
 #else
@@ -1730,7 +1730,7 @@ void Z_LogHeap( void ) {
 	Z_LogZoneHeap( smallzone, "SMALL" );
 }
 
-#if defined(USE_STATIC_TAGS)
+#ifdef USE_STATIC_TAGS
 
 // static mem blocks to reduce a lot of small zone overhead
 typedef struct memstatic_s {
@@ -1767,7 +1767,7 @@ CopyString
 */
 qchar *CopyString( const qchar *in ) {
 	qchar *out;
-#if defined(USE_STATIC_TAGS)
+#ifdef USE_STATIC_TAGS
 	if ( in[0] == '\0' ) {
 		return ((qchar *)&emptystring) + sizeof(memblock_t);
 	}
@@ -1916,7 +1916,7 @@ static void Zone_Stats( const qchar *name, const memzone_t *z, qbool printDetail
 			break; // all blocks have been hit
 		}
 		if ( (byte *)block + block->size != (byte *)block->next) {
-#if defined(USE_MULTI_SEGMENT)
+#ifdef USE_MULTI_SEGMENT
 			const memblock_t *next = block->next;
 			if ( next->size == 0 && next->id == -ZONEID && next->tag == TAG_GENERAL ) {
 				st.zoneSegments++;
@@ -2090,7 +2090,7 @@ static void Com_InitZoneMemory( void ) {
 	// allocate the random block zone
 	cv = Cvar_GetAndDescribe( "com_zoneMegs", XSTRING( DEF_COMZONEMEGS ), CVAR_LATCH | CVAR_ARCHIVE, "Initial amount of memory (RAM) allocated for the main block zone (in MB)." );
 
-#if !defined(USE_MULTI_SEGMENT)
+#ifndef USE_MULTI_SEGMENT
 	if ( cv->integer < DEF_COMZONEMEGS )
 		mainZoneSize = 1024 * 1024 * DEF_COMZONEMEGS;
 	else
@@ -2123,7 +2123,7 @@ void Hunk_Log( void ) {
 	Com_sprintf(buf, sizeof(buf), "\r\n================\r\nHunk log\r\n================\r\n");
 	FS_Write(buf, strlen(buf), logfile);
 	for (block = hunkblocks ; block; block = block->next) {
-#if defined(HUNK_DEBUG)
+#ifdef HUNK_DEBUG
 		Com_sprintf(buf, sizeof(buf), "size = %8d: %s, line: %d (%s)\r\n", block->size, block->file, block->line, block->label);
 		FS_Write(buf, strlen(buf), logfile);
 #endif
@@ -2142,7 +2142,7 @@ void Hunk_Log( void ) {
 Hunk_SmallLog
 =================
 */
-#if defined(HUNK_DEBUG)
+#ifdef HUNK_DEBUG
 void Hunk_SmallLog( void ) {
 	hunkblock_t	*block, *block2;
 	qchar		buf[4096];
@@ -2219,10 +2219,10 @@ static void Com_InitHunkMemory( void ) {
 	Hunk_Clear();
 
 	Cmd_AddCommand( "meminfo", Com_Meminfo_f );
-#if defined(ZONE_DEBUG)
+#ifdef ZONE_DEBUG
 	Cmd_AddCommand( "zonelog", Z_LogHeap );
 #endif
-#if defined(HUNK_DEBUG)
+#ifdef HUNK_DEBUG
 	Cmd_AddCommand( "hunklog", Hunk_Log );
 	Cmd_AddCommand( "hunksmalllog", Hunk_SmallLog );
 #endif
@@ -2295,12 +2295,12 @@ The server calls this before shutting down or loading a new map
 */
 void Hunk_Clear( void ) {
 
-#if !defined(DEDICATED)
+#ifndef DEDICATED
 	CL_ShutdownCGame();
 	CL_ShutdownUI();
 #endif
 	SV_ShutdownGameProgs();
-#if !defined(DEDICATED)
+#ifndef DEDICATED
 	CIN_CloseAllVideos();
 #endif
 	hunk_low.mark = 0;
@@ -2318,7 +2318,7 @@ void Hunk_Clear( void ) {
 
 	Com_Printf( "Hunk_Clear: reset the hunk ok\n" );
 	VM_Clear();
-#if defined(HUNK_DEBUG)
+#ifdef HUNK_DEBUG
 	hunkblocks = NULL;
 #endif
 }
@@ -2350,7 +2350,7 @@ Hunk_Alloc
 Allocate permanent (until the hunk is cleared) memory
 =================
 */
-#if defined(HUNK_DEBUG)
+#ifdef HUNK_DEBUG
 void *Hunk_AllocDebug( qint size, ha_pref preference, qchar *label, qchar *file, qint line ) {
 #else
 void *Hunk_Alloc( qint size, ha_pref preference ) {
@@ -2373,7 +2373,7 @@ void *Hunk_Alloc( qint size, ha_pref preference ) {
 		}
 	}
 
-#if defined(HUNK_DEBUG)
+#ifdef HUNK_DEBUG
 	size += sizeof(hunkblock_t);
 #endif
 
@@ -2381,7 +2381,7 @@ void *Hunk_Alloc( qint size, ha_pref preference ) {
 	size = PAD( size, 64 );
 
 	if ( hunk_low.temp + hunk_high.temp + size > s_hunkTotal ) {
-#if defined(HUNK_DEBUG)
+#ifdef HUNK_DEBUG
 		Hunk_Log();
 		Hunk_SmallLog();
 
@@ -2403,7 +2403,7 @@ void *Hunk_Alloc( qint size, ha_pref preference ) {
 
 	Com_Memset( buf, 0, size );
 
-#if defined(HUNK_DEBUG)
+#ifdef HUNK_DEBUG
 	{
 		hunkblock_t *block;
 
@@ -3840,7 +3840,7 @@ void Com_Init( qchar *commandLine ) {
 	Com_StartupVariable( NULL );
 
   // get dedicated here for proper hunk megs initialization
-#if defined(DEDICATED)
+#ifdef DEDICATED
 	com_dedicated = Cvar_Get ("dedicated", "1", CVAR_INIT);
 	Cvar_CheckRange( com_dedicated, "1", "2", CV_INTEGER );
 #else
@@ -4640,7 +4640,7 @@ static qbool Field_Complete( void )
 	return qfalse;
 }
 
-#if !defined(DEDICATED)
+#ifndef DEDICATED
 /*
 ===============
 Field_CompleteKeyname
