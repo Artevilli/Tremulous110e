@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/03/2026--**
 
+* qcommon:<br />use `#if defined()` instead of `#ifdef`
+
 * qcommon/server:<br />IPv6 is now optional
 
 **--01/02/2026--**

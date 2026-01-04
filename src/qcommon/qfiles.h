@@ -28,8 +28,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //
 
 //Ignore __attribute__ on non-gcc platforms
-#ifndef __GNUC__
-#ifndef __attribute__
+#if !defined(__GNUC__)
+#if !defined(__attribute__)
 #define __attribute__(x)
 #endif
 #endif
@@ -285,7 +285,7 @@ typedef struct {
 // line.
 //#define RAVENMD4
 
-#ifdef RAVENMD4
+#if defined(RAVENMD4)
 
 #define MDR_IDENT	(('5'<<24)+('M'<<16)+('D'<<8)+'R')
 #define MDR_VERSION	2

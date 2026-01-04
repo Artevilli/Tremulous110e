@@ -770,7 +770,7 @@ static qint Parse_ReadNumber(script_t *script, token_t *token)
     }
     token->subtype |= TT_HEX;
   }
-#ifdef BINARYNUMBERS
+#if defined(BINARYNUMBERS)
   //check for a binary number
   else if (*script->script_p == '0' &&
     (*(script->script_p + 1) == 'b' ||

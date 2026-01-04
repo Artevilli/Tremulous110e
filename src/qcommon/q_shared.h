@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define PRODUCT_NAME_UPPPER     "XreaL" //case, no spaces
 #define PRODUCT_NAME_LOWER      "xreal" //no case, no spaces
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 #define PRODUCT_VERSION          "0.8.1"
 #endif
 
@@ -74,7 +74,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define qint int
 #define qchar char
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 
 #pragma warning(disable : 4018)     // signed/unsigned mismatch
 #pragma warning(disable : 4032)
@@ -101,8 +101,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 //Ignore __attribute__ on non-gcc platforms
-#ifndef __GNUC__
-#ifndef __attribute__
+#if !defined(__GNUC__)
+#if !defined(__attribute__)
 #define __attribute__(x)
 #endif
 #endif
@@ -158,7 +158,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
  **********************************************************************/
 
-#ifdef Q3_VM
+#if defined(Q3_VM)
 
 #include "../game/bg_lib.h"
 
@@ -178,7 +178,7 @@ typedef qint intptr_t;
 
 #endif
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #define Q_snprintf _snprintf
 #else
 #define Q_snprintf snprintf
@@ -193,10 +193,10 @@ float FloatSwap(const float *f);
 
 //=============================================================
 
-#ifdef Q3_VM
+#if defined(Q3_VM)
 	typedef int intptr_t;
 #else
-	#ifdef _MSC_VER
+#if defined(_MSC_VER)
 		#include <io.h>
 		typedef __int64 int64_t;
 		typedef __int32 int32_t;
@@ -209,10 +209,10 @@ float FloatSwap(const float *f);
 		// vsnprintf is ISO/IEC 9899:1999
 		// abstracting this to make it portable
 		int Q_vsnprintf(char *str, size_t size, const char *format, va_list ap);
-	#else
+#else
 		#include <stdint.h>
 		#define Q_vsnprintf vsnprintf
-	#endif
+#endif
 #endif
 
 #if defined(_WIN32) && !defined(_MSC_VER)
@@ -264,25 +264,25 @@ typedef float net_float;
 
 #define PADP(base, alignment) ((void *) PAD((intptr_t) (base), (alignment)))
 
-#ifdef __GNUC__
+#if defined(__GNUC__)
 #define QALIGN(x) __attribute__((aligned(x)))
 #else
 #define QALIGN(x)
 #endif
 
-#ifndef NULL
+#if !defined(NULL)
 #define NULL ((void *)0)
 #endif
 
-#ifndef STRING
+#if !defined(STRING)
 #define STRING(s) #s
 #endif
 //expand constants before stringifying them
-#ifndef XSTRING
+#if !defined(XSTRING)
 #define XSTRING(s) STRING(s)
 #endif
 
-#ifndef BIT
+#if !defined(BIT)
 #define BIT(x) (1 << x)
 #endif
 
@@ -313,7 +313,7 @@ typedef float net_float;
 
 
 #define	MAX_QPATH			64		// max length of a quake game pathname
-#ifdef PATH_MAX
+#if defined(PATH_MAX)
 #define MAX_OSPATH			PATH_MAX
 #else
 #define	MAX_OSPATH			256		// max length of a filesystem pathname
@@ -350,7 +350,7 @@ typedef enum {
 } printParm_t;
 
 
-#ifdef ERR_FATAL
+#if defined(ERR_FATAL)
 #undef ERR_FATAL			// this is be defined in malloc.h
 #endif
 
@@ -396,7 +396,7 @@ typedef enum {
 	h_dontcare
 } ha_pref;
 
-#ifdef HUNK_DEBUG
+#if defined(HUNK_DEBUG)
 #define Hunk_Alloc( size, preference )				Hunk_AllocDebug(size, preference, #size, __FILE__, __LINE__)
 void *Hunk_AllocDebug( qint size, ha_pref preference, qchar *label, qchar *file, qint line );
 #else
@@ -436,19 +436,19 @@ typedef	qint	fixed4_t;
 typedef	qint	fixed8_t;
 typedef	qint	fixed16_t;
 
-#ifndef M_PI
+#if !defined(M_PI)
 #define M_PI		3.14159265358979323846f	// matches value in gcc v2 math.h
 #endif
 
-#ifndef M_LN2
+#if !defined(M_LN2)
 #define M_LN2 0.693147180559945309417f
 #endif
 
-#ifndef M_SQRT2
+#if !defined(M_SQRT2)
 #define M_SQRT2 1.414213562f
 #endif
 
-#ifndef M_ROOT3
+#if !defined(M_ROOT3)
 #define M_ROOT3 1.732050808f
 #endif
 
@@ -708,7 +708,7 @@ extern	vec3_t	axisDefault[3];
 static ID_INLINE float Q_rsqrt( float number ) {
 		float x = 0.5f * number;
                 float y;
-#ifdef __GNUC__            
+#if defined(__GNUC__)            
                 asm("frsqrte %0,%1" : "=f" (y) : "f" (number));
 #else
 		y = __frsqrte( number );
@@ -716,7 +716,7 @@ static ID_INLINE float Q_rsqrt( float number ) {
 		return y * (1.5f - (x * y * y));
 	}
 
-#ifdef __GNUC__            
+#if defined(__GNUC__)            
 static ID_INLINE float Q_fabs(float x) {
     float abs_x;
     
@@ -771,8 +771,8 @@ void ByteToDir( qint b, vec3_t dir );
 
 #endif
 
-#ifdef Q3_VM
-#ifdef VectorCopy
+#if defined(Q3_VM)
+#if defined(VectorCopy)
 #undef VectorCopy
 // this is a little hack to get more efficient copies in our interpreter
 typedef struct {
@@ -973,11 +973,11 @@ vec_t DistanceBetweenLineSegments(
     const vec3_t tP0, const vec3_t tP1,
     float *s, float *t );
 
-#ifndef MAX
+#if !defined(MAX)
 #define MAX(x,y) ((x)>(y)?(x):(y))
 #endif
 
-#ifndef MIN
+#if !defined(MIN)
 #define MIN(x,y) ((x)<(y)?(x):(y))
 #endif
 
