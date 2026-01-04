@@ -1277,6 +1277,335 @@ Cvar_Reset_f(void)
   Cvar_Reset(Cmd_Argv(1));
 }
 
+//returns NULL for non-existent "-" argument
+static const qchar *
+GetValue(qint index, qint *ival, float *fval)
+{
+  static qchar buf[MAX_CVAR_VALUE_STRING];
+  const qchar *cmd;
+  cvar_t *var;
+
+  cmd = Cmd_Argv(index);
+
+  if ((*cmd == '-' && *(cmd + 1) == '\0') || *cmd == '\0')
+  {
+    *ival = 0;
+    *fval = 0.0f;
+    buf[0] = '\0';
+    return NULL;
+  }
+
+  var = Cvar_FindVar(cmd);
+
+  if (!var) //cvar not found, return string
+  {
+    *ival = Q_atoi(cmd);
+    *fval = Q_atof(cmd);
+    Q_strncpyz(buf, cmd, sizeof(buf));
+    return buf;
+  }
+  else //found cvar, extract values
+  {
+    *ival = var->integer;
+    *fval = var->value;
+    Q_strncpyz(buf, var->string, sizeof(buf));
+    return buf;
+  }
+}
+
+typedef enum
+{
+  FT_BAD = 0,
+  FT_ADD,
+  FT_SUB,
+  FT_MUL,
+  FT_DIV,
+  FT_MOD,
+  FT_SIN,
+  FT_COS,
+  FT_RAND,
+}
+funcType_t;
+
+static funcType_t
+GetFuncType(void)
+{
+  const qchar *cmd;
+
+  cmd = Cmd_Argv(1);
+
+  if (!Q_stricmp(cmd, "add"))
+  {
+    return FT_ADD;
+  }
+
+  if (!Q_stricmp(cmd, "sub"))
+  {
+    return FT_SUB;
+  }
+
+  if (!Q_stricmp(cmd, "mul"))
+  {
+    return FT_MUL;
+  }
+
+  if (!Q_stricmp(cmd, "div"))
+  {
+    return FT_DIV;
+  }
+
+  if (!Q_stricmp(cmd, "mod"))
+  {
+    return FT_MOD;
+  }
+
+  if (!Q_stricmp(cmd, "sin"))
+  {
+    return FT_SIN;
+  }
+
+  if (!Q_stricmp(cmd, "cos"))
+  {
+    return FT_COS;
+  }
+
+  if (!Q_stricmp(cmd, "rand"))
+  {
+    return FT_RAND;
+  }
+
+  return FT_BAD;
+}
+
+static qbool
+AllowEmptyCvar(funcType_t ftype)
+{
+  switch(ftype)
+  {
+    case
+    FT_ADD:
+
+    case
+    FT_SUB:
+
+    case
+    FT_MUL:
+
+    case
+    FT_DIV:
+
+    case
+    FT_MOD:
+      return qfalse;
+
+    default:
+      return qtrue;
+  }
+}
+
+static void
+Cvar_Op(funcType_t ftype, qint *ival, float *fval)
+{
+  qint icap;
+  qint imod;
+  float fcap;
+  float fmod;
+
+  GetValue(3, &imod, &fmod); //index 3: value
+
+  switch(ftype)
+  {
+    case
+    FT_ADD:
+      *ival += imod;
+      *fval += fmod;
+      break;
+
+    case
+    FT_SUB:
+      *ival -= imod;
+      *fval -= fmod;
+      break;
+
+    case
+    FT_MUL:
+      *ival *= imod;
+      *fval *= fmod;
+      break;
+
+    case
+    FT_DIV:
+      if (imod)
+      {
+        *ival /= imod;
+      }
+
+      if (fmod)
+      {
+        *ival /= fmod;
+      }
+
+      break;
+
+    case
+    FT_MOD:
+      if (imod)
+      {
+        *ival %= imod;
+        *fval = (float)((qint)*fval % imod); //FIXME: use float
+      }
+
+      break;
+
+    case
+    FT_SIN:
+      *ival = sin(imod);
+      *fval = sin(fmod);
+      break;
+
+    case
+    FT_COS:
+      *ival = cos(imod);
+      *fval = cos(fmod);
+      break;
+
+    default:
+      break;
+  }
+
+  if (Cmd_Argc() > 4) //low bound
+  {
+    if (GetValue(4, &icap, &fcap))
+    {
+      if (*ival > icap)
+      {
+        *ival = icap;
+      }
+
+      if (*fval > fcap)
+      {
+        *fval = fcap;
+      }
+    }
+  }
+}
+
+static void
+Cvar_Rand(qint *ival, float *fval)
+{
+  qint icap;
+  float fcap;
+
+  *ival = rand();
+  *fval = *ival;
+
+  if (Cmd_Argc() > 3) //base
+  {
+    if (GetValue(3, &icap, &fcap))
+    {
+      *ival += icap;
+      *fval = *ival;
+    }
+  }
+
+  if (Cmd_Argc() > 4) //modulus
+  {
+    if (GetValue(4, &icap, &fcap))
+    {
+      if (icap)
+      {
+        *ival %= icap;
+        *fval = *ival;
+      }
+    }
+  }
+}
+
+static void
+Cvar_Func_f(void)
+{
+  funcType_t ftype;
+  const qchar *cvar_name;
+  qchar value[64];
+  cvar_t *cvar;
+  qint ival;
+  float fval;
+
+  if (Cmd_Argc() < 3)
+  {
+    Com_Printf("usage:\n \\varfunc <add|sub|mul|div|mod|sin|cos> <cvar> <value> [lo.cap] [hi.cap]\n \\varfunc rand <cvar> [base] [modulus]\n");
+    return;
+  }
+
+  //    0     1     2      3      4        5
+  //\varfunc <op> <cvar> <val> [lo-cap] [hi-cap]
+
+  //\varfunc rand <cvar> [base] [modulus]
+
+  ftype = GetFuncType(); //index 1: function type
+
+  if (ftype == FT_BAD)
+  {
+    Com_Printf("%s: unknown function %s\n", Cmd_Argv(0), Cmd_Argv(1));
+    return;
+  }
+
+  cvar_name = Cmd_Argv(2); //index 2: cvar name
+  cvar = Cvar_FindVar(cvar_name);
+
+  if (!cvar)
+  {
+    if (!AllowEmptyCvar(ftype))
+    {
+      Com_Printf("Cvar '%s' does not exist.\n", cvar_name);
+      return; //FIXME: allow cvar creation for some functions?
+    }
+  }
+  else if (cvar->flags & (CVAR_INIT | CVAR_ROM | CVAR_PROTECTED))
+  {
+    Com_Printf("Cvar '%s' is write-protected.\n", cvar_name);
+    return;
+  }
+
+  if (cvar)
+  {
+    fval = cvar->value;
+    ival = cvar->integer;
+  }
+  else
+  {
+    fval = 0.0;
+    ival = 0;
+  }
+
+  if (ftype == FT_RAND)
+  {
+    Cvar_Rand(&ival, &fval);
+  }
+  else
+  {
+    Cvar_Op(ftype, &ival, &fval); //apply modification
+  }
+
+  if (cvar && cvar->validator == CV_INTEGER)
+  {
+    sprintf(value, "%i", ival);
+  }
+  else
+  {
+    if ((qint)fval == fval)
+    {
+      sprintf(value, "%i", (qint)fval);
+    }
+    else
+    {
+      sprintf(value, "%f", fval);
+    }
+  }
+
+  Cvar_Set2(cvar_name, value, qfalse);
+}
+
 /*
 ============
 Cvar_WriteVariables
@@ -2120,6 +2449,8 @@ Cvar_Init(void)
   Cmd_SetCommandCompletionFunc("reset", Cvar_CompleteCvarName);
   Cmd_AddCommand("unset", Cvar_Unset_f);
   Cmd_SetCommandCompletionFunc("unset", Cvar_CompleteCvarName);
+
+  Cmd_AddCommand("varfunc", Cvar_Func_f);
 
   Cmd_AddCommand("cvarlist", Cvar_List_f);
   Cmd_AddCommand("cvar_modified", Cvar_ListModified_f);
