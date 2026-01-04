@@ -730,9 +730,9 @@ void CM_LoadMap( const qchar *name, qbool clientload, qint *checksum ) {
 	}
 
 #if !defined(BSPC)
-	cm_noAreas = Cvar_Get ("cm_noAreas", "0", CVAR_CHEAT);
-	cm_noCurves = Cvar_Get ("cm_noCurves", "0", CVAR_CHEAT);
-	cm_playerCurveClip = Cvar_Get ("cm_playerCurveClip", "1", CVAR_ARCHIVE|CVAR_CHEAT );
+	cm_noAreas = Cvar_GetAndDescribe("cm_noAreas", "0", CVAR_CHEAT, "Do not use areaportals, all areas are connected.");
+	cm_noCurves = Cvar_GetAndDescribe("cm_noCurves", "0", CVAR_CHEAT, "Do not collide against curves.");
+	cm_playerCurveClip = Cvar_GetAndDescribe("cm_playerCurveClip", "1", CVAR_ARCHIVE | CVAR_CHEAT, "Collide against player curves.");
 #endif
 	Com_DPrintf( "CM_LoadMap( %s, %i )\n", name, clientload );
 

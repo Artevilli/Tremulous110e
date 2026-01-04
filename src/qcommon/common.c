@@ -95,7 +95,6 @@ static cvar_t *com_showtrace;
 cvar_t *com_version;
 cvar_t *com_blood;
 static cvar_t *com_buildScript;	// for automated data building scripts
-cvar_t *com_busyWait;
 #if !defined(DEDICATED)
 cvar_t *cl_paused;
 cvar_t *cl_packetdelay;
@@ -3801,7 +3800,7 @@ void Com_Init( qchar *commandLine ) {
 	vm_rtChecks = Cvar_GetAndDescribe("vm_rtChecks", "15", CVAR_INIT | CVAR_PROTECTED | CVAR_SERVERINFO, "Runtime checks in compiled vm code, bitmask:\n1 - program stack overflow\n2 - opcode stack overflow\n4 - jump target range\n8 - data read/write range");
 
 	Com_StartupVariable( "journal" );
-	com_journal = Cvar_Get( "journal", "0", CVAR_INIT | CVAR_PROTECTED );
+	com_journal = Cvar_GetAndDescribe("journal", "0", CVAR_INIT | CVAR_PROTECTED, "When enabled, writes events and its data to 'journal.dat' and 'journaldata.dat'.");
 	Cvar_CheckRange(com_journal, "0", "2", CV_INTEGER);
 
         com_homepath = Cvar_Get("com_homepath", "", CVAR_INIT | CVAR_PROTECTED);
@@ -3841,7 +3840,7 @@ void Com_Init( qchar *commandLine ) {
 
   // get dedicated here for proper hunk megs initialization
 #if defined(DEDICATED)
-	com_dedicated = Cvar_Get ("dedicated", "1", CVAR_INIT);
+	com_dedicated = Cvar_GetAndDescribe("dedicated", "1", CVAR_INIT, "Enables dedicated server mode.\n 0: Listen server\n 1: Unlisted dedicated server\n 2: Listed dedicated server");
 	Cvar_CheckRange( com_dedicated, "1", "2", CV_INTEGER );
 #else
 	com_dedicated = Cvar_Get ("dedicated", "0", CVAR_LATCH);
@@ -3878,28 +3877,29 @@ void Com_Init( qchar *commandLine ) {
 		" 4 - append mode, synced\n");
 	Cvar_CheckRange(com_logfile, "0", "4", CV_INTEGER);
 
-	com_timescale = Cvar_Get ("timescale", "1", CVAR_CHEAT | CVAR_SYSTEMINFO );
-	com_fixedtime = Cvar_Get ("fixedtime", "0", CVAR_CHEAT);
-	com_showtrace = Cvar_Get ("com_showtrace", "0", CVAR_CHEAT);
-	com_speeds = Cvar_Get ("com_speeds", "0", 0);
+	com_timescale = Cvar_GetAndDescribe("timescale", "1", CVAR_CHEAT | CVAR_SYSTEMINFO, "System timing factor:\n < 1: Slows the game down\n = 1: Regular speed\n > 1: Speeds the game up");
+	Cvar_CheckRange(com_timescale, "0", NULL, CV_FLOAT);
+	com_fixedtime = Cvar_GetAndDescribe("fixedtime", "0", CVAR_CHEAT, "Toggle the rendering of every frame the game will wait until each frame is completely rendered before sending the next frame.");
+	com_showtrace = Cvar_GetAndDescribe("com_showtrace", "0", CVAR_CHEAT, "Debugging tool that prints out trace information.");
+	com_speeds = Cvar_GetAndDescribe("com_speeds", "0", 0, "Prints speed information per frame to the console. Used for debugging.");
 #if !defined(DEDICATED)
-	com_timedemo = Cvar_Get ("timedemo", "0", CVAR_CHEAT);
+	com_timedemo = Cvar_GetAndDescribe("timedemo", "0", CVAR_CHEAT, "When set to '1' times a demo and returns frames per second like a benchmark.");
+	Cvar_CheckRange(com_timedemo, "0", "1", CV_INTEGER);
 #endif
 	com_cameraMode = Cvar_Get ("com_cameraMode", "0", CVAR_CHEAT);
 
 #if !defined(DEDICATED)
-	cl_paused = Cvar_Get ("cl_paused", "0", CVAR_ROM);
-	cl_packetdelay = Cvar_Get("cl_packetdelay", "0", CVAR_CHEAT);
+	cl_paused = Cvar_GetAndDescribe("cl_paused", "0", CVAR_ROM, "Read-only CVAR to toggle functionality of paused games (the variable holds the status of the paused flag on the client side).");
+	cl_packetdelay = Cvar_GetAndDescribe("cl_packetdelay", "0", CVAR_CHEAT, "Artificially set the client's latency. Simulates packet delay, which can lead to packet loss.");
+	com_cl_running = Cvar_GetAndDescribe("cl_running", "0", CVAR_ROM, "Can be used to check the status of the client game.");
 #endif
 	sv_paused = Cvar_Get ("sv_paused", "0", CVAR_ROM);
 	cl_packetloss = Cvar_Get("cl_packetloss", "0", CVAR_CHEAT);
-	sv_packetdelay = Cvar_Get("sv_packetdelay", "0", CVAR_CHEAT);
+	sv_packetdelay = Cvar_GetAndDescribe("sv_packetdelay", "0", CVAR_CHEAT, "Simulates packet delay, which can lead to packet loss. Server side.");
 	sv_packetloss = Cvar_Get("sv_packetloss", "0", CVAR_CHEAT);
-	com_sv_running = Cvar_Get ("sv_running", "0", CVAR_ROM);
-	com_cl_running = Cvar_Get ("cl_running", "0", CVAR_ROM);
-	com_buildScript = Cvar_Get( "com_buildScript", "0", 0 );
-	com_busyWait = Cvar_Get("com_busyWait", "0", CVAR_ARCHIVE);
-	com_ansiColor = Cvar_Get( "com_ansiColor", "0", CVAR_ARCHIVE );
+	com_sv_running = Cvar_GetAndDescribe("sv_running", "0", CVAR_ROM, "Communicates to game modules if there is a server currently running.");
+	com_buildScript = Cvar_GetAndDescribe("com_buildScript", "0", 0, "Loads all game assets, regardless whether they are required or not.");
+	com_ansiColor = Cvar_GetAndDescribe("com_ansiColor", "0", CVAR_ARCHIVE, "Use ANSI color in the terminal window instead of color codes");
 
         Cvar_Get("com_errorMessage", "", CVAR_ROM);
 
@@ -3923,7 +3923,7 @@ void Com_Init( qchar *commandLine ) {
 	Cmd_AddCommand("game_restart", Com_GameRestart_f);
 
 	const qchar *s = va(NULL, "%s %s %s", Q3_VERSION, PLATFORM_STRING, __DATE__ );
-	com_version = Cvar_Get ("version", s, CVAR_ROM | CVAR_SERVERINFO );
+	com_version = Cvar_GetAndDescribe("version", s, CVAR_PROTECTED | CVAR_ROM | CVAR_SERVERINFO, "Read-only CVAR to see the version of the game.");
 
 	Sys_Init();
 

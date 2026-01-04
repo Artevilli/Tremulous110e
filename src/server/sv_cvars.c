@@ -183,8 +183,8 @@ SV_InitCvars(void)
   sv_referencedPakNames = Cvar_GetAndDescribe("sv_referencedPakNames", "", CVAR_SYSTEMINFO | CVAR_ROM, "Variable holds a list of all the pk3 files the server loaded data from.");
   //server vars
 #if defined(INCLUDE_REMOTE_COMMANDS)
-  sv_rconPassword = Cvar_Get("rconPassword", "", CVAR_TEMP);
-  sv_rconLog = Cvar_Get("sv_rconLog", "", CVAR_ARCHIVE);
+  sv_rconPassword = Cvar_GetAndDescribe("rconPassword", "", CVAR_TEMP, "Password for remote server commands.");
+  sv_rconLog = Cvar_GetAndDescribe("sv_rconLog", "", CVAR_ARCHIVE, "Name for the file which stores logs of all rcon commands, double quote to disable.");
   sv_rconWhitelist = Cvar_GetAndDescribe("sv_rconWhitelist", "whitelist.dat", CVAR_ARCHIVE, "Sets the file which contains ip addresses allowed to execute rcon commands, NOTE: use double quotes to disable!");
 #endif
   sv_privatePassword = Cvar_Get("sv_privatePassword", "", CVAR_TEMP);
@@ -203,7 +203,7 @@ SV_InitCvars(void)
   Cvar_CheckRange(sv_timeout, "4", NULL, CV_INTEGER);
   sv_zombietime = Cvar_GetAndDescribe("sv_zombietime", "2", CVAR_TEMP, "Seconds to sink messages after disconnect.");
   Cvar_CheckRange(sv_zombietime, "1", NULL, CV_INTEGER);
-  sv_allowDownload = Cvar_Get("sv_allowDownload", "0", CVAR_SERVERINFO);
+  sv_allowDownload = Cvar_GetAndDescribe("sv_allowDownload", "0", CVAR_SERVERINFO, "Toggle the ability for clients to download files maps etc. from server.");
   sv_cl_allowDownload = Cvar_GetAndDescribe("cl_allowDownload", "1", CVAR_SYSTEMINFO, "Force enable downloading for 1.1 clients");
   sv_hidden = Cvar_GetAndDescribe("sv_hidden", "0", CVAR_ARCHIVE, "Hide the server from queries and from master servers.");
   Cvar_GetAndDescribe("sv_dlURL", "", CVAR_SERVERINFO | CVAR_ARCHIVE, "Disconnects clients and redirects them to download paks from this URL instead of the server. When the download finishes, the client will automatically be reconnected.\nNOTE: if the URL does not have the correct paks, is missing some, or the checksum is mismatched, clients will get dropped!");
@@ -224,10 +224,10 @@ SV_InitCvars(void)
   Cvar_CheckRange(sv_reconnectlimit, "0", "12", CV_INTEGER);
 #endif
   sv_showloss = Cvar_Get("sv_showloss", "0", 0);
-  sv_padPackets = Cvar_Get("sv_padPackets", "0", 0);
-  sv_killserver = Cvar_Get("sv_killserver", "0", 0);
+  sv_padPackets = Cvar_GetAndDescribe("sv_padPackets", "0", 0, "Possibly toggles the padding of network packets on the server PAD - Packet Assembler/Disassembler.");
+  sv_killserver = Cvar_GetAndDescribe("sv_killserver", "0", 0, "Debugging tool to kill the server.");
   sv_mapChecksum = Cvar_GetAndDescribe("sv_mapChecksum", "", CVAR_ROM, "Allows check for client server map to match.");
-  sv_lanForceRate = Cvar_Get("sv_lanForceRate", "1", CVAR_ARCHIVE);
+  sv_lanForceRate = Cvar_GetAndDescribe("sv_lanForceRate", "1", CVAR_ARCHIVE, "Forces LAN clients to the maximum rate instead of accepting client setting.");
   sv_dequeuePeriod = Cvar_Get("sv_dequeuePeriod", "500", CVAR_ARCHIVE);
   sv_protect = Cvar_GetAndDescribe("sv_protect", "7", CVAR_ARCHIVE | CVAR_SERVERINFO, "Sets the desired networking protection level and whether or not to print logs to the console.\n1 is equal to 0001 in binary, enabling SVP_XREAL.\n2 is equal to 0010 in binary, enabling SVP_OWOLF.\n4 is equal to 0100 in binary, enabling SVP_CONSOLE (console print)\nIf this is set to 3, 0011 in binary, it enables both SVP_XREAL and SVP_OWOLF, and does not print to console.\nIf this is set to 5, 0101 in binary, it enables SVP_XREAL and SVP_CONSOLE.\nIf this is set to 6, 0110 in binary, it enables SVP_OWOLF and SVP_CONSOLE.\nIf this is set to 7, 0111 in binary, it enables SVP_XREAL, SVP_OWOLF, and SVP_CONSOLE for all functionality.");
   sv_protectLog = Cvar_GetAndDescribe("sv_protectLog", "sv_protect.log", CVAR_ARCHIVE | CVAR_SERVERINFO, "Sets the desired name of the sv_protect log file. To disable for developer print output, set to \"\".");
