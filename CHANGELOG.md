@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/03/2026--**
 
+* qcommon:<br />alphabetical cvar sorting
+
 * qcommon/server:<br />introduction of UBIT()
 
 * server:<br />proper utilization of gvm->forceDataMask
