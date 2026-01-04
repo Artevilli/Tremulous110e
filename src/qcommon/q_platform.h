@@ -67,7 +67,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define Q3_LITTLE_ENDIAN
 #undef id386
 #define id386 1
-#ifndef __WORDSIZE
+#if !defined(__WORDSIZE)
 #define __WORDSIZE 32
 #endif
 #endif
@@ -78,7 +78,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #undef idx64
 #define idx64 1
 //#define UNICODE
-#ifndef __WORDSIZE
+#if !defined(__WORDSIZE)
 #define __WORDSIZE 64
 #endif
 #endif
@@ -88,7 +88,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define Q3_LITTLE_ENDIAN
 #undef arm64
 #define arm64 1
-#ifndef __WORDSIZE
+#if !defined(__WORDSIZE)
 #define __WORDSIZE 64
 #endif
 #endif
@@ -215,19 +215,19 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #error "Architecture not supported"
 #endif
 
-#ifndef ID_INLINE
+#if !defined(ID_INLINE)
 #error "ID_INLINE not defined"
 #endif
 
-#ifndef PATH_SEP
+#if !defined(PATH_SEP)
 #error "PATH_SEP not defined"
 #endif
 
-#ifndef PATH_SEP_FOREIGN
+#if !defined(PATH_SEP_FOREIGN)
 #error "PATH_SEP_FOREIGN not defined"
 #endif
 
-#ifndef DLL_EXT
+#if !defined(DLL_EXT)
 #error "DLL_EXT not defined"
 #endif
 

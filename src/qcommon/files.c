@@ -295,7 +295,7 @@ static qchar fs_gamedir[MAX_OSPATH]; //this will be a single file name with no s
 static cvar_t *fs_debug;
 static cvar_t *fs_homepath;
 
-#ifdef MACOS_X
+#if defined(MACOS_X)
 //Also search the .app bundle for .pk3 files
 static cvar_t *fs_apppath;
 #endif

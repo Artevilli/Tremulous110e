@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "cm_local.h"
 
-#ifdef BSPC
+#if defined(BSPC)
 
 #include "../bspc/l_qfiles.h"
 
@@ -59,7 +59,7 @@ uint64_t			c_traces, c_brush_traces, c_patch_traces;
 
 byte		*cmod_base;
 
-#ifndef BSPC
+#if !defined(BSPC)
 cvar_t		*cm_noAreas;
 cvar_t		*cm_noCurves;
 cvar_t		*cm_playerCurveClip;
@@ -729,7 +729,7 @@ void CM_LoadMap( const qchar *name, qbool clientload, qint *checksum ) {
 		Com_Error( ERR_DROP, "CM_LoadMap: NULL name" );
 	}
 
-#ifndef BSPC
+#if !defined(BSPC)
 	cm_noAreas = Cvar_Get ("cm_noAreas", "0", CVAR_CHEAT);
 	cm_noCurves = Cvar_Get ("cm_noCurves", "0", CVAR_CHEAT);
 	cm_playerCurveClip = Cvar_Get ("cm_playerCurveClip", "1", CVAR_ARCHIVE|CVAR_CHEAT );
@@ -757,7 +757,7 @@ void CM_LoadMap( const qchar *name, qbool clientload, qint *checksum ) {
 	//
 	// load the file
 	//
-#ifndef BSPC
+#if !defined(BSPC)
 	length = FS_ReadFile( name, &buf.v );
 #else
 	length = LoadQuakeFile((quakefile_t *) name, &buf.v);

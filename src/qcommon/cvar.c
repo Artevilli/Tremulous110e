@@ -612,7 +612,7 @@ Cvar_Print(const cvar_t *v)
     }
   }
 
-#ifdef _DEBUG
+#if defined(_DEBUG)
   if (v_modified)
   {
     Com_Printf(" (modified)");

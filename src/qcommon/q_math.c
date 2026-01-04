@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // Some of the vector functions are static inline in q_shared.h. q3asm
 // doesn't understand static functions though, so we only want them in
 // one file. That's what this is about.
-#ifdef Q3_VM
+#if defined(Q3_VM)
 #define __Q3_VM_MATH
 #endif
 
@@ -622,7 +622,7 @@ void ProjectPointOnPlane( vec3_t dst, const vec3_t p, const vec3_t normal )
 	float inv_denom;
 
 	inv_denom = 1.0f / DotProduct( normal, normal );
-#ifndef Q3_VM
+#if !defined(Q3_VM)
 	assert( Q_fabs(inv_denom) != 0.0f ); // zero vectors get here
 #endif
 	inv_denom = 1.0f / inv_denom;

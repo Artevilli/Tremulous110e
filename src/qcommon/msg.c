@@ -280,7 +280,7 @@ MSG_ReadBits(msg_t *msg, qint bits)
 //
 
 void MSG_WriteChar( msg_t *sb, qint c ) {
-#ifdef PARANOID
+#if defined(PARANOID)
 	if (c < -128 || c > 127)
 		Com_Error (ERR_FATAL, "MSG_WriteChar: range error");
 #endif
@@ -289,7 +289,7 @@ void MSG_WriteChar( msg_t *sb, qint c ) {
 }
 
 void MSG_WriteByte( msg_t *sb, qint c ) {
-#ifdef PARANOID
+#if defined(PARANOID)
 	if (c < 0 || c > 255)
 		Com_Error (ERR_FATAL, "MSG_WriteByte: range error");
 #endif
@@ -305,7 +305,7 @@ void MSG_WriteData( msg_t *buf, const void *data, qint length ) {
 }
 
 void MSG_WriteShort( msg_t *sb, qint c ) {
-#ifdef PARANOID
+#if defined(PARANOID)
 	if (c < ((short)0x8000) || c > (short)0x7fff)
 		Com_Error (ERR_FATAL, "MSG_WriteShort: range error");
 #endif
