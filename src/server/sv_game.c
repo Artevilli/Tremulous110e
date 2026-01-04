@@ -446,12 +446,12 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_CVAR_REGISTER:
-      Cvar_Register(VMA(1), VMA(2), VMA(3), args[4]); 
+      Cvar_Register(VMA(1), VMA(2), VMA(3), args[4], sv.gvm->privateFlag); 
       return 0;
 
     case
     G_CVAR_UPDATE:
-      Cvar_Update(VMA(1));
+      Cvar_Update(VMA(1), sv.gvm->privateFlag);
       return 0;
 
     case
@@ -466,7 +466,7 @@ SV_GameSystemCalls(intptr_t *args)
     case
     G_CVAR_VARIABLE_STRING_BUFFER:
       VM_CHECKBOUNDS(sv.gvm, args[2], args[3]);
-      Cvar_VariableStringBuffer(VMA(1), VMA(2), args[3]);
+      Cvar_VariableStringBufferSafe(VMA(1), VMA(2), args[3], sv.gvm->privateFlag);
       return 0;
 
     case

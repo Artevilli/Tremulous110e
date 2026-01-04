@@ -2267,7 +2267,7 @@ VM_Create(vmIndex_t index, syscall_t systemCalls, dllSyscall_t dllSyscalls, vmIn
   vm->index = index;
   vm->systemCall = systemCalls;
   vm->dllSyscall = dllSyscalls;
-  //vm->privateFlag = CVAR_PRIVATE;
+  vm->privateFlag = CVAR_PRIVATE;
 
   //never allow dll loading with a demo
   if (interpret == VMI_NATIVE)
@@ -2286,7 +2286,7 @@ VM_Create(vmIndex_t index, syscall_t systemCalls, dllSyscall_t dllSyscalls, vmIn
 
     if (vm->dllHandle)
     {
-      //vm->privateFlag = 0; //allow reading private cvars
+      vm->privateFlag = 0; //allow reading private cvars
       vm->dataAlloc = ~0U;
       vm->dataMask = ~0U;
       vm->dataBase = 0;

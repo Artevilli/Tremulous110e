@@ -217,10 +217,32 @@ Cvar_VariableStringBuffer(const qchar *var_name, qchar *buffer, qint bufsize)
 
 /*
 ============
+Cvar_VariableStringBufferSafe
+============
+*/
+void
+Cvar_VariableStringBufferSafe(const qchar *var_name, qchar *buffer, qint bufsize, qint flag)
+{
+  cvar_t *var;
+
+  var = Cvar_FindVar(var_name);
+
+  if (!var || var->flags & flag)
+  {
+    *buffer = '\0';
+  }
+  else
+  {
+    Q_strncpyz(buffer, var->string, bufsize);
+  }
+}
+
+/*
+============
 Cvar_Flags
 ============
 */
-qint
+unsigned
 Cvar_Flags(const qchar *var_name)
 {
   cvar_t *var;
@@ -777,6 +799,27 @@ Cvar_Set2(const qchar *var_name, const qchar *value, qbool force)
     }
   }
 
+  if (var->flags & (CVAR_ROM | CVAR_INIT | CVAR_CHEAT) && !force)
+  {
+    if (var->flags & CVAR_ROM)
+    {
+      Com_Printf("%s is read only.\n", var_name);
+      return var;
+    }
+
+    if (var->flags & CVAR_INIT)
+    {
+      Com_Printf("%s is write protected.\n", var_name);
+      return var;
+    }
+
+    if ((var->flags & CVAR_CHEAT) && !cvar_cheats->integer)
+    {
+      Com_Printf("%s is cheat protected.\n", var_name);
+      return var;
+    }
+  }
+
   if (!value)
   {
     value = var->resetString;
@@ -808,18 +851,6 @@ Cvar_Set2(const qchar *var_name, const qchar *value, qbool force)
 
   if (!force)
   {
-    if (var->flags & CVAR_ROM)
-    {
-      Com_Printf("%s is read only.\n", var_name);
-      return var;
-    }
-
-    if (var->flags & CVAR_INIT)
-    {
-      Com_Printf("%s is write protected.\n", var_name);
-      return var;
-    }
-
     if (var->flags & CVAR_LATCH)
     {
       if (var->latchedString)
@@ -843,12 +874,6 @@ Cvar_Set2(const qchar *var_name, const qchar *value, qbool force)
       var->latchedString = CopyString(value);
       var->modified = qtrue;
       var->modificationCount++;
-      return var;
-    }
-
-    if ((var->flags & CVAR_CHEAT) && !cvar_cheats->integer)
-    {
-      Com_Printf("%s is cheat protected.\n", var_name);
       return var;
     }
   }
@@ -896,23 +921,33 @@ Cvar_SetSafe
 void
 Cvar_SetSafe(const qchar *var_name, const qchar *value)
 {
-  qint flags = Cvar_Flags(var_name);
+  unsigned flags = Cvar_Flags(var_name);
+  qbool force = qtrue;
 
-  if (flags != CVAR_NONEXISTENT && (flags & CVAR_PROTECTED))
+  if (flags != CVAR_NONEXISTENT)
   {
-    if (value)
+    if (flags & (CVAR_PROTECTED | CVAR_PRIVATE))
     {
-      Com_Error(ERR_DROP, "Restricted source tried to set \"%s\" to \"%s\"\n", var_name, value);
-    }
-    else
-    {
-      Com_Error(ERR_DROP, "Restricted source tried to modify \"%s\"\n", var_name);
+      if (value)
+      {
+        Com_Error(ERR_DROP, "Restricted source tried to set \"%s\" to \"%s\"\n", var_name, value);
+      }
+      else
+      {
+        Com_Error(ERR_DROP, "Restricted source tried to modify \"%s\"\n", var_name);
+      }
+
+      return;
     }
 
-    return;
+    //don't let VMs or server change engine latched cvars instantly
+    //if ((flags & CVAR_LATCH) && !(flags & CVAR_VM_CREATED))
+    //{
+      //force = qfalse;
+    //}
   }
 
-  Cvar_Set(var_name, value);
+  Cvar_Set2(var_name, value, force);
 }
 
 /*
@@ -1112,7 +1147,7 @@ Toggles a cvar for easy single key binding, optionally through a list of
 given values
 ============
 */
-void
+static void
 Cvar_Toggle_f(void)
 {
   qint i;
@@ -1166,7 +1201,7 @@ void
 Cvar_Set_f(void)
 {
   qint c;
-  qchar *cmd;
+  const qchar *cmd;
   cvar_t *v;
 
   c = Cmd_Argc();
@@ -1230,7 +1265,7 @@ Cvar_Set_f(void)
 Cvar_Reset_f
 ============
 */
-void
+static void
 Cvar_Reset_f(void)
 {
   if (Cmd_Argc() != 2)
@@ -1927,8 +1962,9 @@ Cvar_Register
 basically a slightly modified Cvar_Get for the interpreted modules
 =====================
 */
+#define INVALID_FLAGS (CVAR_USER_CREATED | CVAR_SERVER_CREATED | CVAR_PROTECTED | CVAR_PRIVATE | CVAR_NONEXISTENT)
 void
-Cvar_Register(vmCvar_t * vmCvar, const qchar *varName, const qchar *defaultValue, qint flags)
+Cvar_Register(vmCvar_t * vmCvar, const qchar *varName, const qchar *defaultValue, qint flags, qint privateFlag)
 {
   cvar_t *cv;
 
@@ -1942,12 +1978,27 @@ Cvar_Register(vmCvar_t * vmCvar, const qchar *varName, const qchar *defaultValue
     flags &= ~CVAR_ROM;
   }
 
+  //don't allow VM to specify a different creator or other internal flags
+  if (flags & INVALID_FLAGS)
+  {
+    Com_DPrintf(S_COLOR_YELLOW "WARNING: VM tried to set invalid flags 0x%02x on cvar '%s'\n", (flags & INVALID_FLAGS), varName);
+    flags &= ~INVALID_FLAGS;
+  }
+
   cv = Cvar_FindVar(varName);
 
   //dont modify cvar if it's protected
-  if (cv && (cv->flags & CVAR_PROTECTED))
+  if (cv && (cv->flags & (CVAR_PROTECTED | CVAR_PRIVATE)))
   {
     Com_DPrintf(S_COLOR_YELLOW "WARNING: VM tried to register protected cvar '%s' with value '%s'%s\n", varName, defaultValue, (flags & ~cv->flags) != 0 ? " and new flags":"");
+
+    if (cv->flags & CVAR_PRIVATE)
+    {
+      if (privateFlag)
+      {
+        return;
+      }
+    }
   }
   else
   {
@@ -1961,7 +2012,7 @@ Cvar_Register(vmCvar_t * vmCvar, const qchar *varName, const qchar *defaultValue
 
   vmCvar->handle = cv - cvar_indexes;
   vmCvar->modificationCount = -1;
-  Cvar_Update(vmCvar);
+  Cvar_Update(vmCvar, 0);
 }
 
 
@@ -1973,8 +2024,9 @@ updates an interpreted modules' version of a cvar
 =====================
 */
 void
-Cvar_Update(vmCvar_t * vmCvar)
+Cvar_Update(vmCvar_t *vmCvar, qint privateFlag)
 {
+  size_t len;
   cvar_t *cv = NULL;
 
   assert(vmCvar);
@@ -1996,11 +2048,21 @@ Cvar_Update(vmCvar_t * vmCvar)
     return; //variable might have been cleared by a cvar_restart
   }
 
+  if (cv->flags & CVAR_PRIVATE)
+  {
+    if (privateFlag)
+    {
+      return;
+    }
+  }
+
   vmCvar->modificationCount = cv->modificationCount;
 
-  if (strlen(cv->string) + 1 > MAX_CVAR_VALUE_STRING)
+  len = strlen(cv->string);
+
+  if (len + 1 > MAX_CVAR_VALUE_STRING)
   {
-    Com_Error(ERR_DROP, "Cvar_Update: src %s length %u exceeds MAX_CVAR_VALUE_STRING", cv->string, (unsigned)strlen(cv->string));
+    Com_Error(ERR_DROP, "Cvar_Update: src %s length %u exceeds MAX_CVAR_VALUE_STRING", cv->string, (qint)len);
   }
 
   Q_strncpyz(vmCvar->string, cv->string, sizeof(vmCvar->string));

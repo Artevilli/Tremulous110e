@@ -231,7 +231,7 @@ vm_s
 
   qbool forceDataMask;
 
-  //qint privateFlag;
+  qint privateFlag;
 };
 
 qbool

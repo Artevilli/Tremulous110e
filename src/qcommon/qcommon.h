@@ -614,10 +614,10 @@ cvar_t *Cvar_Get( const qchar *var_name, const qchar *value, qint flags );
 // that allows variables to be unarchived without needing bitflags
 // if value is "", the value will not override a previously set value.
 
-void	Cvar_Register( vmCvar_t *vmCvar, const qchar *varName, const qchar *defaultValue, qint flags );
+void	Cvar_Register( vmCvar_t *vmCvar, const qchar *varName, const qchar *defaultValue, qint flags, qint privateFlag );
 // basically a slightly modified Cvar_Get for the interpreted modules
 
-void	Cvar_Update( vmCvar_t *vmCvar );
+void	Cvar_Update( vmCvar_t *vmCvar, qint privateFlag );
 // updates an interpreted modules' version of a cvar
 
 void 	Cvar_Set( const qchar *var_name, const qchar *value );
@@ -647,9 +647,11 @@ qint		Cvar_VariableIntegerValue( const qchar *var_name );
 
 qchar	*Cvar_VariableString( const qchar *var_name );
 void	Cvar_VariableStringBuffer( const qchar *var_name, qchar *buffer, qint bufsize );
+void
+Cvar_VariableStringBufferSafe(const qchar *var_name, qchar *buffer, qint bufsize, qint flag);
 // returns an empty string if not defined
 
-qint	Cvar_Flags(const qchar *var_name);
+unsigned	Cvar_Flags(const qchar *var_name);
 // returns CVAR_NONEXISTENT if cvar doesn't exist or the flags of that particular CVAR.
 
 void	Cvar_CommandCompletion( void(*callback)(const qchar *s) );

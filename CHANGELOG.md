@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/03/2026--**
 
+* qcommon/server:<br />private flag for VM modules
+
 * qcommon:<br />alphabetical cvar sorting
 
 * qcommon/server:<br />introduction of UBIT()
