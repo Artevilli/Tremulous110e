@@ -894,7 +894,7 @@ CM_LoadMap(const qchar *name, qbool clientload, qint *checksum)
 
   if (!name || !name[0])
   {
-    Com_Error(ERR_DROP, "CM_LoadMap: NULL name");
+    Com_Error(ERR_DROP, "%s: NULL name", __func__);
   }
 
 #if !defined(BSPC)
@@ -902,7 +902,7 @@ CM_LoadMap(const qchar *name, qbool clientload, qint *checksum)
   cm_noCurves = Cvar_GetAndDescribe("cm_noCurves", "0", CVAR_CHEAT, "Do not collide against curves.");
   cm_playerCurveClip = Cvar_GetAndDescribe("cm_playerCurveClip", "1", CVAR_ARCHIVE_ND | CVAR_CHEAT, "Collide against player curves.");
 #endif
-  Com_DPrintf("CM_LoadMap('%s', %i)\n", name, clientload);
+  Com_DPrintf("%s('%s', %i)\n", __func__, name, clientload);
 
   if (!strcmp(cm.name, name) && clientload)
   {
@@ -936,7 +936,12 @@ CM_LoadMap(const qchar *name, qbool clientload, qint *checksum)
 
   if (!buf)
   {
-    Com_Error(ERR_DROP, "Couldn't load %s", name);
+    Com_Error(ERR_DROP, "%s: couldn't load %s", __func__, name);
+  }
+
+  if (length < sizeof(dheader_t))
+  {
+    Com_Error(ERR_DROP, "%s: %s has truncated header", __func__, name);
   }
 
   *checksum = cm.checksum = LittleLong(Com_BlockChecksum(buf, length));
@@ -945,12 +950,23 @@ CM_LoadMap(const qchar *name, qbool clientload, qint *checksum)
 
   for(i = 0;i < sizeof(dheader_t) / 4;i++)
   {
-    ((qint *)&header)[i] = LittleLong (((qint *)&header)[i]);
+    ((int32_t *)&header)[i] = LittleLong (((int32_t *)&header)[i]);
   }
 
   if (header.version != BSP_VERSION)
   {
-    Com_Error(ERR_DROP, "CM_LoadMap: %s has wrong version number (%i should be %i)", name, header.version, BSP_VERSION);
+    Com_Error(ERR_DROP, "%s: %s has wrong version number (%i should be %i)", __func__, name, header.version, BSP_VERSION);
+  }
+
+  for(i = 0;i < HEADER_LUMPS;i++)
+  {
+    int32_t ofs = header.lumps[i].fileofs;
+    int32_t len = header.lumps[i].filelen;
+
+    if ((uint32_t)ofs > MAX_QINT || (uint32_t)len > MAX_QINT || ofs + len > length || ofs + len < 0)
+    {
+      Com_Error(ERR_DROP, "%s: %s has wrong lump[%i] size/offset", __func__, name, i);
+    }
   }
 
   cmod_base = (byte *)buf;

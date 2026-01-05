@@ -450,9 +450,12 @@ typedef struct {
 //=============================================================================
 
 
-typedef struct {
-	qint		fileofs, filelen;
-} lump_t;
+typedef struct
+{
+  int32_t fileofs;
+  int32_t filelen;
+}
+lump_t;
 
 #define	LUMP_ENTITIES		0
 #define	LUMP_SHADERS		1

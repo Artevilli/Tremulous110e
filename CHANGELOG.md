@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/05/2026--**
 
+* qcommon:<br />validate loaded bsp header
+
 * qcommon:<br />cm code cleanup
 
 * qcommon:<br />fix incorrect leaf brushes causing an engine crash
