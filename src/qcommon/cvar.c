@@ -253,7 +253,14 @@ Cvar_Flags(const qchar *var_name)
   }
   else
   {
-    return var->flags;
+    if (var->modified)
+    {
+      return var->flags | CVAR_MODIFIED;
+    }
+    else
+    {
+      return var->flags;
+    }
   }
 }
 
@@ -1928,6 +1935,9 @@ Cvar_Unset(cvar_t * cv)
 {
   cvar_t *next = cv->next;
 
+  //note what types of cvars have been modified (userinfo, archive, serverinfo, systeminfo)
+  cvar_modifiedFlags |= cv->flags;
+
   if (cv->name)
   {
     Z_Free(cv->name);
@@ -2370,7 +2380,7 @@ Cvar_Register
 basically a slightly modified Cvar_Get for the interpreted modules
 =====================
 */
-#define INVALID_FLAGS (CVAR_USER_CREATED | CVAR_SERVER_CREATED | CVAR_PROTECTED | CVAR_PRIVATE | CVAR_NONEXISTENT)
+#define INVALID_FLAGS (CVAR_USER_CREATED | CVAR_SERVER_CREATED | CVAR_PROTECTED | CVAR_PRIVATE | CVAR_MODIFIED | CVAR_NONEXISTENT)
 void
 Cvar_Register(vmCvar_t * vmCvar, const qchar *varName, const qchar *defaultValue, qint flags, qint privateFlag)
 {
@@ -2382,7 +2392,7 @@ Cvar_Register(vmCvar_t * vmCvar, const qchar *varName, const qchar *defaultValue
   //baseq3) sets both flags. We unset CVAR_ROM for such cvars.
   if ((flags & (CVAR_ARCHIVE | CVAR_ROM)) == (CVAR_ARCHIVE | CVAR_ROM))
   {
-    Com_DPrintf(S_COLOR_YELLOW "WARNING: Unsetting CVAR_ROM cvar '%s', " "since it is also CVAR_ARCHIVE\n", varName);
+    Com_DPrintf(S_COLOR_YELLOW "WARNING: Unsetting CVAR_ROM cvar '%s', since it is also CVAR_ARCHIVE\n", varName);
     flags &= ~CVAR_ROM;
   }
 

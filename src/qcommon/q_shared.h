@@ -1248,6 +1248,9 @@ cvar_flags_s
   CVAR_NODEFAULT = BIT(15),
   CVAR_PRIVATE = BIT(16), //can't be read from VM
   CVAR_ARCHIVE_ND = (CVAR_ARCHIVE | CVAR_NODEFAULT),
+
+  //these flags are only returned by the Cvar_Flags() function
+  CVAR_MODIFIED = BIT(17), //cvar was modified
   CVAR_NONEXISTENT = 0xFFFFFFFF //cvar doesn't exist
 }
 cvar_flags_t;
