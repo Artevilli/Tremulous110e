@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/05/2026--**
 
+* qcommon:<br />fix overlapping strings in parse
+
 * qcommon:<br />add CVAR_MODIFIED to properly flag any modified cvar
 
 * server:<br />better handling of sv_protect flags
