@@ -140,6 +140,7 @@ typedef struct {
 
 	qint			floodvalid;
 	qint			checkcount;					// incremented on each trace
+	unsigned checksum;
 } clipMap_t;
 
 

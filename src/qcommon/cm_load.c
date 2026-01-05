@@ -99,8 +99,8 @@ CM_FloodAreaConnections(void);
 CMod_LoadShaders
 =================
 */
-void
-CMod_LoadShaders(lump_t *l)
+static void
+CMod_LoadShaders(const lump_t *l)
 {
   dshader_t *in;
   dshader_t *out;
@@ -111,14 +111,14 @@ CMod_LoadShaders(lump_t *l)
 
   if (l->filelen % sizeof(*in))
   {
-    Com_Error(ERR_DROP, "CMod_LoadShaders: funny lump size");
+    Com_Error(ERR_DROP, "%s: funny lump size", __func__);
   }
 
   count = l->filelen / sizeof(*in);
 
   if (count < 1)
   {
-    Com_Error (ERR_DROP, "Map with no shaders");
+    Com_Error(ERR_DROP, "%s: map with no shaders", __func__);
   }
 
   cm.shaders = Hunk_Alloc(count * sizeof(*cm.shaders), h_high);
@@ -141,8 +141,8 @@ CMod_LoadShaders(lump_t *l)
 CMod_LoadSubmodels
 =================
 */
-void
-CMod_LoadSubmodels(lump_t *l)
+static void
+CMod_LoadSubmodels(const lump_t *l)
 {
   dmodel_t *in;
   cmodel_t *out;
@@ -155,14 +155,14 @@ CMod_LoadSubmodels(lump_t *l)
 
   if (l->filelen % sizeof(*in))
   {
-    Com_Error(ERR_DROP, "CMod_LoadSubmodels: funny lump size");
+    Com_Error(ERR_DROP, "%s: funny lump size", __func__);
   }
 
   count = l->filelen / sizeof(*in);
 
   if (count < 1)
   {
-    Com_Error(ERR_DROP, "Map with no models");
+    Com_Error(ERR_DROP, "%s: map with no models", __func__);
   }
 
   cm.cmodels = Hunk_Alloc(count * sizeof(*cm.cmodels), h_high);
@@ -170,7 +170,7 @@ CMod_LoadSubmodels(lump_t *l)
 
   if (count > MAX_SUBMODELS)
   {
-    Com_Error(ERR_DROP, "MAX_SUBMODELS exceeded");
+    Com_Error(ERR_DROP, "%s: MAX_SUBMODELS exceeded", __func__);
   }
 
   for(i = 0;i < count;i++, in++)
@@ -215,8 +215,8 @@ CMod_LoadSubmodels(lump_t *l)
 CMod_LoadNodes
 =================
 */
-void
-CMod_LoadNodes(lump_t *l)
+static void
+CMod_LoadNodes(const lump_t *l)
 {
   dnode_t *in;
   qint child;
@@ -225,18 +225,18 @@ CMod_LoadNodes(lump_t *l)
   qint j;
   qint count;
 
-  in = (void *)(cmod_base + l->fileofs);
+  in = (dnode_t *)(cmod_base + l->fileofs);
 
   if (l->filelen % sizeof(*in))
   {
-    Com_Error(ERR_DROP, "MOD_LoadBmodel: funny lump size");
+    Com_Error(ERR_DROP, "%s: funny lump size", __func__);
   }
 
   count = l->filelen / sizeof(*in);
 
   if (count < 1)
   {
-    Com_Error(ERR_DROP, "Map has no nodes");
+    Com_Error(ERR_DROP, "%s: map has no nodes", __func__);
   }
 
   cm.nodes = Hunk_Alloc(count * sizeof(*cm.nodes), h_high);
@@ -278,11 +278,10 @@ CM_BoundBrush(cbrush_t *b)
 /*
 =================
 CMod_LoadBrushes
-
 =================
 */
-void
-CMod_LoadBrushes(lump_t *l)
+static void
+CMod_LoadBrushes(const lump_t *l)
 {
   dbrush_t *in;
   cbrush_t *out;
@@ -293,7 +292,7 @@ CMod_LoadBrushes(lump_t *l)
 
   if (l->filelen % sizeof(*in))
   {
-    Com_Error(ERR_DROP, "MOD_LoadBmodel: funny lump size");
+    Com_Error(ERR_DROP, "%s: funny lump size", __func__);
   }
 
   count = l->filelen / sizeof(*in);
@@ -312,7 +311,7 @@ CMod_LoadBrushes(lump_t *l)
 
     if (out->shaderNum < 0 || out->shaderNum >= cm.numShaders)
     {
-      Com_Error(ERR_DROP, "CMod_LoadBrushes: bad shaderNum: %i", out->shaderNum);
+      Com_Error(ERR_DROP, "%s: bad shaderNum: %i", __func__, out->shaderNum);
     }
 
     out->contents = cm.shaders[out->shaderNum].contentFlags;
@@ -326,8 +325,8 @@ CMod_LoadBrushes(lump_t *l)
 CMod_LoadLeafs
 =================
 */
-void
-CMod_LoadLeafs(lump_t *l)
+static void
+CMod_LoadLeafs(const lump_t *l)
 {
   qint i;
   cLeaf_t *out;
@@ -338,14 +337,14 @@ CMod_LoadLeafs(lump_t *l)
 
   if (l->filelen % sizeof(*in))
   {
-    Com_Error(ERR_DROP, "MOD_LoadBmodel: funny lump size");
+    Com_Error(ERR_DROP, "%s: funny lump size", __func__);
   }
 
   count = l->filelen / sizeof(*in);
 
   if (count < 1)
   {
-    Com_Error(ERR_DROP, "Map with no leafs");
+    Com_Error(ERR_DROP, "%s: map with no leafs", __func__);
   }
 
   cm.leafs = Hunk_Alloc((BOX_LEAFS + count) * sizeof(*cm.leafs), h_high);
@@ -396,14 +395,14 @@ CMod_LoadPlanes(const lump_t *l)
 
   if (l->filelen % sizeof(*in))
   {
-    Com_Error(ERR_DROP, "MOD_LoadBmodel: funny lump size");
+    Com_Error(ERR_DROP, "%s: funny lump size", __func__);
   }
 
   count = l->filelen / sizeof(*in);
 
   if (count < 1)
   {
-    Com_Error(ERR_DROP, "Map with no planes");
+    Com_Error(ERR_DROP, "%s: map with no planes", __func__);
   }
 
   cm.planes = Hunk_Alloc((BOX_PLANES + count) * sizeof(*cm.planes), h_high);
@@ -436,7 +435,7 @@ CMod_LoadPlanes(const lump_t *l)
 CMod_LoadLeafBrushes
 =================
 */
-void
+static void
 CMod_LoadLeafBrushes(const lump_t *l)
 {
   qint i;
@@ -448,7 +447,7 @@ CMod_LoadLeafBrushes(const lump_t *l)
 
   if (l->filelen % sizeof(*in))
   {
-    Com_Error(ERR_DROP, "MOD_LoadBmodel: funny lump size");
+    Com_Error(ERR_DROP, "%s: funny lump size", __func__);
   }
 
   count = l->filelen / sizeof(*in);
@@ -469,7 +468,7 @@ CMod_LoadLeafBrushes(const lump_t *l)
 CMod_LoadLeafSurfaces
 =================
 */
-void
+static void
 CMod_LoadLeafSurfaces(const lump_t *l)
 {
   qint i;
@@ -481,7 +480,7 @@ CMod_LoadLeafSurfaces(const lump_t *l)
 
   if (l->filelen % sizeof(*in))
   {
-    Com_Error(ERR_DROP, "MOD_LoadBmodel: funny lump size");
+    Com_Error(ERR_DROP, "%s: funny lump size", __func__);
   }
 
   count = l->filelen / sizeof(*in);
@@ -502,7 +501,7 @@ CMod_LoadLeafSurfaces(const lump_t *l)
 CMod_CheckLeafBrushes
 =================
 */
-void
+static void
 CMod_CheckLeafBrushes(void)
 {
   qint i;
@@ -522,8 +521,8 @@ CMod_CheckLeafBrushes(void)
 CMod_LoadBrushSides
 =================
 */
-void
-CMod_LoadBrushSides(lump_t *l)
+static void
+CMod_LoadBrushSides(const lump_t *l)
 {
   qint i;
   cbrushside_t *out;
@@ -531,11 +530,11 @@ CMod_LoadBrushSides(lump_t *l)
   qint count;
   qint num;
 
-  in = (void *)(cmod_base + l->fileofs);
+  in = (dbrushside_t *)(cmod_base + l->fileofs);
 
   if (l->filelen % sizeof(*in))
   {
-    Com_Error(ERR_DROP, "MOD_LoadBmodel: funny lump size");
+    Com_Error(ERR_DROP, "%s: funny lump size", __func__);
   }
 
   count = l->filelen / sizeof(*in);
@@ -554,7 +553,7 @@ CMod_LoadBrushSides(lump_t *l)
 
     if (out->shaderNum < 0 || out->shaderNum >= cm.numShaders)
     {
-      Com_Error(ERR_DROP, "CMod_LoadBrushSides: bad shaderNum: %i", out->shaderNum);
+      Com_Error(ERR_DROP, "%s: bad shaderNum: %i", __func__, out->shaderNum);
     }
 
     out->surfaceFlags = cm.shaders[out->shaderNum].surfaceFlags;
@@ -726,8 +725,8 @@ CMod_CreateBrushSideWindings(void)
 CMod_LoadEntityString
 =================
 */
-void
-CMod_LoadEntityString(lump_t *l)
+static void
+CMod_LoadEntityString(const lump_t *l)
 {
   cm.entityString = Hunk_Alloc(l->filelen, h_high);
   cm.numEntityChars = l->filelen;
@@ -740,8 +739,8 @@ CMod_LoadVisibility
 =================
 */
 #define VIS_HEADER 8
-void
-CMod_LoadVisibility(lump_t *l)
+static void
+CMod_LoadVisibility(const lump_t *l)
 {
   qint len;
   byte *buf;
@@ -775,8 +774,8 @@ CMod_LoadPatches
 =================
 */
 #define MAX_PATCH_VERTS 1024
-void
-CMod_LoadPatches(lump_t *surfs, lump_t *verts)
+static void
+CMod_LoadPatches(const lump_t *surfs, const lump_t *verts)
 {
   drawVert_t *dv;
   drawVert_t *dv_p;
@@ -795,7 +794,7 @@ CMod_LoadPatches(lump_t *surfs, lump_t *verts)
 
   if (surfs->filelen % sizeof(*in))
   {
-    Com_Error (ERR_DROP, "MOD_LoadBmodel: funny lump size");
+    Com_Error (ERR_DROP, "%s: funny lump size", __func__);
   }
 
   cm.numSurfaces = count = surfs->filelen / sizeof(*in);
@@ -805,7 +804,7 @@ CMod_LoadPatches(lump_t *surfs, lump_t *verts)
 
   if (verts->filelen % sizeof(*dv))
   {
-    Com_Error(ERR_DROP, "MOD_LoadBmodel: funny lump size");
+    Com_Error(ERR_DROP, "%s: funny lump size", __func__);
   }
 
   //scan through all the surfaces, but only load patches,
@@ -828,7 +827,7 @@ CMod_LoadPatches(lump_t *surfs, lump_t *verts)
 
     if (c > MAX_PATCH_VERTS)
     {
-      Com_Error(ERR_DROP, "ParseMesh: MAX_PATCH_VERTS");
+      Com_Error(ERR_DROP, "%s: MAX_PATCH_VERTS", __func__);
     }
 
     dv_p = dv + LittleLong(in->firstVert);
@@ -850,17 +849,17 @@ CMod_LoadPatches(lump_t *surfs, lump_t *verts)
 }
 
 //==================================================================
-
-unsigned
-CM_LumpChecksum(lump_t *lump)
+#if 0
+static uint32_t
+CM_LumpChecksum(const lump_t *lump)
 {
   return LittleLong(Com_BlockChecksum(cmod_base + lump->fileofs, lump->filelen));
 }
 
-unsigned
-CM_Checksum(dheader_t *header)
+static uint32_t
+CM_Checksum(const dheader_t *header)
 {
-  unsigned checksums[16];
+  uint32_t checksums[11];
 
   checksums[0] = CM_LumpChecksum(&header->lumps[LUMP_SHADERS]);
   checksums[1] = CM_LumpChecksum(&header->lumps[LUMP_LEAFS]);
@@ -874,8 +873,9 @@ CM_Checksum(dheader_t *header)
   checksums[9] = CM_LumpChecksum(&header->lumps[LUMP_SURFACES]);
   checksums[10] = CM_LumpChecksum(&header->lumps[LUMP_DRAWVERTS]);
 
-  return LittleLong(Com_BlockChecksum(checksums, 11 * 4));
+  return LittleLong(Com_BlockChecksum(checksums, ARRAY_LEN(checksums) * 4));
 }
+#endif
 
 /*
 ==================
@@ -887,16 +887,10 @@ Loads in the map and all submodels
 void
 CM_LoadMap(const qchar *name, qbool clientload, qint *checksum)
 {
-  union
-  {
-    qint *i;
-    void *v;
-  }
-  buf;
+  void *buf;
   qint i;
   dheader_t header;
   qint length;
-  static unsigned last_checksum;
 
   if (!name || !name[0])
   {
@@ -908,18 +902,18 @@ CM_LoadMap(const qchar *name, qbool clientload, qint *checksum)
   cm_noCurves = Cvar_GetAndDescribe("cm_noCurves", "0", CVAR_CHEAT, "Do not collide against curves.");
   cm_playerCurveClip = Cvar_GetAndDescribe("cm_playerCurveClip", "1", CVAR_ARCHIVE_ND | CVAR_CHEAT, "Collide against player curves.");
 #endif
-  Com_DPrintf("CM_LoadMap(%s, %i)\n", name, clientload);
+  Com_DPrintf("CM_LoadMap('%s', %i)\n", name, clientload);
 
   if (!strcmp(cm.name, name) && clientload)
   {
-    *checksum = last_checksum;
+    *checksum = cm.checksum;
     return;
   }
 
   //free old stuff
-  Com_Memset(&cm, 0, sizeof(cm));
-  CM_ClearLevelPatches();
+  CM_ClearMap();
 
+#if 0
   if (!name[0])
   {
     cm.numLeafs = 1;
@@ -929,25 +923,25 @@ CM_LoadMap(const qchar *name, qbool clientload, qint *checksum)
     *checksum = 0;
     return;
   }
+#endif
 
   //
   //load the file
   //
 #if !defined(BSPC)
-  length = FS_ReadFile(name, &buf.v);
+  length = FS_ReadFile(name, &buf);
 #else
-  length = LoadQuakeFile((quakefile_t *) name, &buf.v);
+  length = LoadQuakeFile((quakefile_t *) name, &buf);
 #endif
 
-  if (!buf.i)
+  if (!buf)
   {
     Com_Error(ERR_DROP, "Couldn't load %s", name);
   }
 
-  last_checksum = LittleLong(Com_BlockChecksum(buf.i, length));
-  *checksum = last_checksum;
+  *checksum = cm.checksum = LittleLong(Com_BlockChecksum(buf, length));
 
-  header = *(dheader_t *)buf.i;
+  header = *(dheader_t *)buf;
 
   for(i = 0;i < sizeof(dheader_t) / 4;i++)
   {
@@ -959,7 +953,7 @@ CM_LoadMap(const qchar *name, qbool clientload, qint *checksum)
     Com_Error(ERR_DROP, "CM_LoadMap: %s has wrong version number (%i should be %i)", name, header.version, BSP_VERSION);
   }
 
-  cmod_base = (byte *)buf.i;
+  cmod_base = (byte *)buf;
 
   //load into heap
   CMod_LoadShaders(&header.lumps[LUMP_SHADERS]);
@@ -980,11 +974,11 @@ CM_LoadMap(const qchar *name, qbool clientload, qint *checksum)
   CMod_CheckLeafBrushes();
 
   //we are NOT freeing the file, because it is cached for the ref
-  FS_FreeFile (buf.v);
+  FS_FreeFile(buf);
 
-  CM_InitBoxHull ();
+  CM_InitBoxHull();
 
-  CM_FloodAreaConnections ();
+  CM_FloodAreaConnections();
 
   //allow this to be cached if it is loaded by the server
   if (!clientload)
