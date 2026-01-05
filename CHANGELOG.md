@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--01/05/2026--**
+
+* qcommon:<br />md4.c constants
+
 **--01/04/2026--**
 
 * qcommon:<br />add cvar_trim to trim all unused cvars
