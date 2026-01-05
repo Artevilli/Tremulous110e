@@ -525,7 +525,10 @@ void	Cmd_AddCommand( const qchar *cmd_name, xcommand_t function );
 // if function is NULL, the command will be forwarded to the server
 // as a clc_clientCommand instead of executed locally
 
-void	Cmd_RemoveCommand( const qchar *cmd_name );
+void
+Cmd_RemoveCommand(const qchar *cmd_name);
+void
+Cmd_RemoveCgameCommands(void);
 
 typedef void
 (*completionFunc_t)(const qchar *args, qint argNum);
@@ -542,13 +545,13 @@ void
 Cmd_SetCommandCompletionFunc(const qchar *command, completionFunc_t complete);
 qbool
 Cmd_CompleteArgument(const qchar *command, const qchar *args, qint argNum);
-xcommand_t
-Cmd_GetCommandFunction(const qchar *cmdName);
 void
 Cmd_CompleteWriteCfgName(const qchar *args, qint argNum);
 
 qint
 Cmd_Argc(void);
+void
+Cmd_Clear(void);
 qchar *
 Cmd_Argv(qint arg);
 void

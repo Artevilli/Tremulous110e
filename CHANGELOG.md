@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/05/2026--**
 
+* qcommon:<br />fixes and optimizations to cmd.c
+
 * qcommon:<br />md4.c constants
 
 **--01/04/2026--**

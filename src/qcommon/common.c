@@ -468,18 +468,29 @@ Both client and server can use this, and it will
 do the apropriate things.
 =============
 */
-void Com_Quit_f( void ) {
-	// don't try to shutdown if we are in a recursive error
-	qchar *p = Cmd_Args( );
-	if ( !com_errorEntered ) {
-		SV_Shutdown (p[0] ? p : "Server quit");
+void
+Com_Quit_f(void)
+{
+  const qchar *p = Cmd_ArgsFrom(1);
+
+  //don't try to shutdown if we are in a recursive error
+  if (!com_errorEntered)
+  {
+    //some VMs might execute "quit" command directly,
+    //which would trigger an unload of active VM error.
+    //Sys_Quit will kill this process anyways, so
+    //a corrupt call stack makes no difference
+    VM_Forced_Unload_Start();
+    SV_Shutdown(p[0] ? p:"Server quit");
 #if !defined(DEDICATED)
-		CL_Shutdown (p[0] ? p:"Client quit");
+    CL_Shutdown(p[0] ? p:"Client quit");
 #endif
-		Com_Shutdown ();
-		FS_Shutdown(qtrue);
-	}
-	Sys_Quit ();
+    VM_Forced_Unload_Done();
+    Com_Shutdown();
+    FS_Shutdown(qtrue);
+  }
+
+  Sys_Quit();
 }
 
 
