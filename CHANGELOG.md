@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/05/2026--**
 
+* qcommon:<br />actually use CVAR_NORESTART
+
 * qcommon:<br />fix overlapping strings in parse
 
 * qcommon:<br />add CVAR_MODIFIED to properly flag any modified cvar

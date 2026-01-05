@@ -3915,7 +3915,7 @@ void Com_Init( qchar *commandLine ) {
 	com_buildScript = Cvar_GetAndDescribe("com_buildScript", "0", 0, "Loads all game assets, regardless whether they are required or not.");
 	com_ansiColor = Cvar_GetAndDescribe("com_ansiColor", "0", CVAR_ARCHIVE, "Use ANSI color in the terminal window instead of color codes");
 
-        Cvar_Get("com_errorMessage", "", CVAR_ROM);
+        Cvar_Get("com_errorMessage", "", CVAR_ROM | CVAR_NORESTART);
 
 #if !defined(DEDICATED)
         com_maxfps = Cvar_GetAndDescribe("com_maxfps", "125", 0, "Sets maximum frames per second."); //try to force that in some light way
@@ -3942,7 +3942,7 @@ void Com_Init( qchar *commandLine ) {
 	Sys_Init();
 
         //CPU detection
-        Cvar_Get("sys_cpustring", "detect", CVAR_PROTECTED | CVAR_ROM);
+        Cvar_Get("sys_cpustring", "detect", CVAR_PROTECTED | CVAR_ROM | CVAR_NORESTART);
 
         if (!Q_stricmp(Cvar_VariableString("sys_cpustring"), "detect"))
         {

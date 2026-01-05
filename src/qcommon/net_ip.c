@@ -1695,11 +1695,11 @@ static void NET_OpenIP( void ) {
 #endif
 
 	net_ip = Cvar_GetAndDescribe("net_ip", "0.0.0.0", CVAR_LATCH, "Specifies network interface address client should use for outgoing UDP connections using IPv4.");
-	net_port = Cvar_GetAndDescribe("net_port", va(NULL, "%i", PORT_SERVER), CVAR_LATCH, "The network port to use (IPv4).");
+	net_port = Cvar_GetAndDescribe("net_port", va(NULL, "%i", PORT_SERVER), CVAR_LATCH | CVAR_NORESTART, "The network port to use (IPv4).");
 	Cvar_CheckRange(net_port, "0", "65535", CV_INTEGER);
 #if defined(USE_IPV6)
 	net_ip6 = Cvar_GetAndDescribe("net_ip6", "::", CVAR_LATCH, "Specifies network interface address client should use for outgoing UDP connections using IPv6.");
-	net_port6 = Cvar_GetAndDescribe("net_port6", va(NULL, "%i", PORT_SERVER), CVAR_LATCH, "The network port to use (IPv6).");
+	net_port6 = Cvar_GetAndDescribe("net_port6", va(NULL, "%i", PORT_SERVER), CVAR_LATCH | CVAR_NORESTART, "The network port to use (IPv6).");
 	Cvar_CheckRange(net_port6, "0", "65535", CV_INTEGER);
 #endif
 	
@@ -1778,11 +1778,11 @@ static qbool NET_GetCvars( void ) {
 	
 #if defined(DEDICATED) || !defined(USE_IPV6)
 	// I want server owners to explicitly turn on ipv6 support.
-	net_enabled = Cvar_GetAndDescribe( "net_enabled", "1", CVAR_LATCH | CVAR_ARCHIVE_ND, "Networking options, bitmask:\n 1 - enable IPv4" );
+	net_enabled = Cvar_GetAndDescribe( "net_enabled", "1", CVAR_LATCH | CVAR_ARCHIVE_ND | CVAR_NORESTART, "Networking options, bitmask:\n 1 - enable IPv4" );
 #else
 	/* End users have it enabled so they can connect to ipv6-only hosts, but ipv4 will be
 	 * used if available due to ping */
-	net_enabled = Cvar_GetAndDescribe( "net_enabled", "3", CVAR_LATCH | CVAR_ARCHIVE_ND, "Networking options, bitmask:\n 1 - enable IPv4\n 2 - enable IPv6\n 4 - prioritize IPv6 connections over IPv4\n 8 - disable IPv6 multicast" );
+	net_enabled = Cvar_GetAndDescribe( "net_enabled", "3", CVAR_LATCH | CVAR_ARCHIVE_ND | CVAR_NORESTART, "Networking options, bitmask:\n 1 - enable IPv4\n 2 - enable IPv6\n 4 - prioritize IPv6 connections over IPv4\n 8 - disable IPv6 multicast" );
 #endif
 
 #if defined(USE_IPV6)
