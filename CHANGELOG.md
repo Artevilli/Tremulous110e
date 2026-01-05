@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/05/2026--**
 
+* qcommon:<br />fix incorrect leaf brushes causing an engine crash
+
 * qcommon/server:<br />allow overriding sv_master from command line
 
 * qcommon/server:<br />added experimental CVAR_NODEFAULT flag
