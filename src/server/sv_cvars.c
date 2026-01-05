@@ -209,10 +209,11 @@ SV_InitCvars(void)
   Cvar_GetAndDescribe("sv_dlURL", "", CVAR_SERVERINFO | CVAR_ARCHIVE, "Disconnects clients and redirects them to download paks from this URL instead of the server. When the download finishes, the client will automatically be reconnected.\nNOTE: if the URL does not have the correct paks, is missing some, or the checksum is mismatched, clients will get dropped!");
   Cvar_Get("sv_wwwDownload", "1", CVAR_SYSTEMINFO | CVAR_ARCHIVE);
   Cvar_Get("sv_wwwBaseURL", "", CVAR_SYSTEMINFO | CVAR_ARCHIVE);
-  //master servers
-  sv_master[0] = Cvar_Get("sv_master1", MASTER_SERVER_NAME, CVAR_ARCHIVE_ND | CVAR_PROTECTED);
+  //moved to Com_Init()
+  //sv_master[0] = Cvar_Get("sv_master1", MASTER_SERVER_NAME, CVAR_ARCHIVE_ND | CVAR_PROTECTED);
 
-  for(index = 1;index < MAX_MASTER_SERVERS;index++)
+  //master servers
+  for(index = 0;index < MAX_MASTER_SERVERS;index++)
   {
     sv_master[index] = Cvar_Get(va(NULL, "sv_master%d", index + 1), "", CVAR_ARCHIVE_ND | CVAR_PROTECTED);
   }

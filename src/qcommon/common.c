@@ -3814,6 +3814,9 @@ void Com_Init( qchar *commandLine ) {
 	com_journal = Cvar_GetAndDescribe("journal", "0", CVAR_INIT | CVAR_PROTECTED, "When enabled, writes events and its data to 'journal.dat' and 'journaldata.dat'.");
 	Cvar_CheckRange(com_journal, "0", "2", CV_INTEGER);
 
+	Com_StartupVariable("sv_master1");
+	Cvar_Get("sv_master1", MASTER_SERVER_NAME, CVAR_ARCHIVE_ND | CVAR_PROTECTED);
+
         com_homepath = Cvar_Get("com_homepath", "", CVAR_INIT | CVAR_PROTECTED);
 
 #if !defined(DEDICATED)
