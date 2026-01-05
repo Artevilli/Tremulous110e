@@ -3917,9 +3917,9 @@ void Com_Init( qchar *commandLine ) {
 #if !defined(DEDICATED)
         com_maxfps = Cvar_GetAndDescribe("com_maxfps", "125", 0, "Sets maximum frames per second."); //try to force that in some light way
         Cvar_CheckRange(com_maxfps, "0", "1000", CV_INTEGER);
-	com_maxfpsUnfocused = Cvar_GetAndDescribe("com_maxfpsUnfocused", "60", CVAR_ARCHIVE, "Sets maximum frames per second in unfocused game window.");
+	com_maxfpsUnfocused = Cvar_GetAndDescribe("com_maxfpsUnfocused", "60", CVAR_ARCHIVE_ND, "Sets maximum frames per second in unfocused game window.");
 	Cvar_CheckRange(com_maxfpsUnfocused, "0", "1000", CV_INTEGER);
-	com_yieldCPU = Cvar_GetAndDescribe("com_yieldCPU", "1", CVAR_ARCHIVE, "Attempt to sleep specified amount of time between rendered frames when game is active, this will greatly reduce CPU load. Use 0 only if you're experiencing some lag.");
+	com_yieldCPU = Cvar_GetAndDescribe("com_yieldCPU", "1", CVAR_ARCHIVE_ND, "Attempt to sleep specified amount of time between rendered frames when game is active, this will greatly reduce CPU load. Use 0 only if you're experiencing some lag.");
 	Cvar_CheckRange(com_yieldCPU, "0", "16", CV_INTEGER);
 #endif
 

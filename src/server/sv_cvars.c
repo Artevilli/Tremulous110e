@@ -131,9 +131,9 @@ SV_InitCvars(void)
   sv_guidCheck = Cvar_GetAndDescribe("sv_guidCheck", "0", CVAR_ARCHIVE | CVAR_SERVERINFO, "More thorough GUID validity check for connecting players.\nNOTE: setting this to 1 bricks clients without a guid (notably stock 1.1)!\nNOTE: to bypass this, check sv_guidCheckAllowStock");
   sv_guidCheckAllowStock = Cvar_GetAndDescribe("sv_guidCheckAllowStock", "0", CVAR_ARCHIVE | CVAR_SERVERINFO, "Toggles whether or not to allow stock 1.1 to bypass the guid check set by sv_guidCheck.");
   sv_democlients = Cvar_GetAndDescribe("sv_democlients", "0", CVAR_SERVERINFO | CVAR_LATCH | CVAR_ARCHIVE, "Maximum number of people allowed to view serverside demos.");
-  sv_minRate = Cvar_GetAndDescribe("sv_minRate", "0", CVAR_ARCHIVE | CVAR_SERVERINFO, "Minimum server bandwidth (in bit per second) a client can use.");
+  sv_minRate = Cvar_GetAndDescribe("sv_minRate", "0", CVAR_ARCHIVE_ND | CVAR_SERVERINFO, "Minimum server bandwidth (in bit per second) a client can use.");
   Cvar_CheckRange(sv_minRate, "0", "100000", CV_INTEGER);
-  sv_maxRate = Cvar_GetAndDescribe("sv_maxRate", "0", CVAR_ARCHIVE | CVAR_SERVERINFO, "Maximum server bandwidth (in bit per second) a client can use.");
+  sv_maxRate = Cvar_GetAndDescribe("sv_maxRate", "0", CVAR_ARCHIVE_ND | CVAR_SERVERINFO, "Maximum server bandwidth (in bit per second) a client can use.");
   Cvar_CheckRange(sv_maxRate, "0", "100000", CV_INTEGER);
   sv_maxOOBRate = Cvar_GetAndDescribe("sv_maxOOBRate", "20", CVAR_ARCHIVE | CVAR_SERVERINFO, "Max out of band rate for handling incoming packets.\nNOTE: sv_protect & SVP_XREAL must be set!");
   Cvar_CheckRange(sv_maxOOBRate, "1", "1000", CV_INTEGER);
@@ -210,11 +210,11 @@ SV_InitCvars(void)
   Cvar_Get("sv_wwwDownload", "1", CVAR_SYSTEMINFO | CVAR_ARCHIVE);
   Cvar_Get("sv_wwwBaseURL", "", CVAR_SYSTEMINFO | CVAR_ARCHIVE);
   //master servers
-  sv_master[0] = Cvar_Get("sv_master1", MASTER_SERVER_NAME, CVAR_PROTECTED);
+  sv_master[0] = Cvar_Get("sv_master1", MASTER_SERVER_NAME, CVAR_ARCHIVE_ND | CVAR_PROTECTED);
 
   for(index = 1;index < MAX_MASTER_SERVERS;index++)
   {
-    sv_master[index] = Cvar_Get(va(NULL, "sv_master%d", index + 1), "", CVAR_ARCHIVE | CVAR_PROTECTED);
+    sv_master[index] = Cvar_Get(va(NULL, "sv_master%d", index + 1), "", CVAR_ARCHIVE_ND | CVAR_PROTECTED);
   }
 
   sv_reconnectlimit = Cvar_GetAndDescribe("sv_reconnectlimit", "3", 0, "Number of seconds a disconnected client should wait before next reconnect.");
@@ -227,7 +227,7 @@ SV_InitCvars(void)
   sv_padPackets = Cvar_GetAndDescribe("sv_padPackets", "0", 0, "Possibly toggles the padding of network packets on the server PAD - Packet Assembler/Disassembler.");
   sv_killserver = Cvar_GetAndDescribe("sv_killserver", "0", 0, "Debugging tool to kill the server.");
   sv_mapChecksum = Cvar_GetAndDescribe("sv_mapChecksum", "", CVAR_ROM, "Allows check for client server map to match.");
-  sv_lanForceRate = Cvar_GetAndDescribe("sv_lanForceRate", "1", CVAR_ARCHIVE, "Forces LAN clients to the maximum rate instead of accepting client setting.");
+  sv_lanForceRate = Cvar_GetAndDescribe("sv_lanForceRate", "1", CVAR_ARCHIVE_ND, "Forces LAN clients to the maximum rate instead of accepting client setting.");
   sv_dequeuePeriod = Cvar_Get("sv_dequeuePeriod", "500", CVAR_ARCHIVE);
   sv_protect = Cvar_GetAndDescribe("sv_protect", "7", CVAR_ARCHIVE | CVAR_SERVERINFO, "Sets the desired networking protection level and whether or not to print logs to the console.\n1 is equal to 0001 in binary, enabling SVP_XREAL.\n2 is equal to 0010 in binary, enabling SVP_OWOLF.\n4 is equal to 0100 in binary, enabling SVP_CONSOLE (console print)\nIf this is set to 3, 0011 in binary, it enables both SVP_XREAL and SVP_OWOLF, and does not print to console.\nIf this is set to 5, 0101 in binary, it enables SVP_XREAL and SVP_CONSOLE.\nIf this is set to 6, 0110 in binary, it enables SVP_OWOLF and SVP_CONSOLE.\nIf this is set to 7, 0111 in binary, it enables SVP_XREAL, SVP_OWOLF, and SVP_CONSOLE for all functionality.");
   sv_protectLog = Cvar_GetAndDescribe("sv_protectLog", "sv_protect.log", CVAR_ARCHIVE | CVAR_SERVERINFO, "Sets the desired name of the sv_protect log file. To disable for developer print output, set to \"\".");
@@ -235,7 +235,7 @@ SV_InitCvars(void)
   sv_owolfAffectsLan = Cvar_GetAndDescribe("sv_owolfAffectsLan", "0", CVAR_ARCHIVE, "Toggle whether or not sv_protect & SVP_OWOLF applies to lan clients.");
   sv_demoState = Cvar_Get("sv_demoState", "0", CVAR_ROM);
   sv_autoDemo = Cvar_Get("sv_autoDemo", "0", CVAR_ARCHIVE);
-  sv_levelTimeReset = Cvar_GetAndDescribe("sv_levelTimeReset", "0", CVAR_ARCHIVE, "Toggle whether or not to reset leveltime after a new map loads.");
+  sv_levelTimeReset = Cvar_GetAndDescribe("sv_levelTimeReset", "0", CVAR_ARCHIVE_ND, "Toggle whether or not to reset leveltime after a new map loads.");
   sv_filter = Cvar_GetAndDescribe("sv_filter", "filter.txt", CVAR_ARCHIVE, "Cvar that point on filter file, if it is \"\" then filtering will be disabled.");
   sv_antiWallhack = Cvar_GetAndDescribe("sv_antiWallhack", "0", CVAR_ARCHIVE, "Enables serverside wallhack protection\n0 - disabled\n1: players only\n2: items/structures only\n3: all");
   sv_sendNearbyEnts = Cvar_GetAndDescribe("sv_sendNearbyEnts", "0", CVAR_ARCHIVE, "Toggle whether or not to send nearby entities regardless of pvs or anti wallhack.\nNOTE: range is specified by sv_sendNearbyEntsRange.");

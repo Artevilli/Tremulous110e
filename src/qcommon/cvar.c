@@ -1618,7 +1618,8 @@ void
 Cvar_WriteVariables(fileHandle_t f)
 {
   cvar_t *var;
-  qchar buffer[1024];
+  qchar buffer[MAX_CMD_LINE];
+  const qchar *value;
 
   if (cvar_sort)
   {
@@ -1635,29 +1636,25 @@ Cvar_WriteVariables(fileHandle_t f)
 
     if (var->flags & CVAR_ARCHIVE)
     {
+      qint len;
+
       //write the latched value, even if it hasn't taken effect yet
-      if (var->latchedString)
-      {
-        if (strlen(var->name) + strlen(var->latchedString) + 10 > sizeof(buffer))
-        {
-          Com_Printf(S_COLOR_YELLOW "WARNING: value of variable " "\"%s\" too long to write to file\n", var->name);
-          continue;
-        }
+      value = var->latchedString ? var->latchedString:var->string;
 
-        Com_sprintf(buffer, sizeof(buffer), "seta %s \"%s\"\n", var->name, var->latchedString);
-      }
-      else
+      if (strlen(var->name) + strlen(value) + 10 > sizeof(buffer))
       {
-        if (strlen(var->name) + strlen(var->string) + 10 > sizeof(buffer))
-        {
-          Com_Printf(S_COLOR_YELLOW "WARNING: value of variable " "\"%s\" too long to write to file\n", var->name);
-          continue;
-        }
-
-        Com_sprintf(buffer, sizeof(buffer), "seta %s \"%s\"\n", var->name, var->string);
+        Com_Printf(S_COLOR_YELLOW "WARNING: %svalue of variable \"%s\" too long to write to file\n", value == var->latchedString ? "latched ":"", var->name);
+        continue;
       }
 
-      FS_Write(buffer, strlen(buffer), f);
+      if ((var->flags & CVAR_NODEFAULT) && !strcmp(value, var->resetString))
+      {
+        continue;
+      }
+
+      len = Com_sprintf(buffer, sizeof(buffer), "seta %s \"%s\"" Q_NEWLINE, var->name, value);
+
+      FS_Write(buffer, len, f);
     }
   }
 }

@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/05/2026--**
 
+* qcommon/server:<br />added experimental CVAR_NODEFAULT flag
+
 * qcommon:<br />fixes and optimizations to cmd.c
 
 * qcommon:<br />md4.c constants

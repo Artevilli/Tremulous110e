@@ -1245,7 +1245,9 @@ cvar_flags_s
   CVAR_PROTECTED = BIT(12), //prevent modifying this var from VMs or the server
   CVAR_VM_CREATED = BIT(13), //cvar was created exclusively in one of the VMs.
   CVAR_SHADER = BIT(14), //tell renderer to recompile shaders.
-  CVAR_PRIVATE = BIT(15), //can't be read from VM
+  CVAR_NODEFAULT = BIT(15),
+  CVAR_PRIVATE = BIT(16), //can't be read from VM
+  CVAR_ARCHIVE_ND = (CVAR_ARCHIVE | CVAR_NODEFAULT),
   CVAR_NONEXISTENT = 0xFFFFFFFF //cvar doesn't exist
 }
 cvar_flags_t;
