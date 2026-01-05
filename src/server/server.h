@@ -38,9 +38,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	PERS_SCORE 0 //!!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
 
 //server attack protection
-#define SVP_XREAL 0x0001 //1 xreal
-#define SVP_OWOLF 0x0002 //2 openwolf
-#define SVP_CONSOLE 0x0004 //4 console print
+typedef enum
+protect_flags_s
+{
+  SVP_XREAL = BIT(0), //1 xreal
+  SVP_OWOLF = BIT(1), //2 openwolf
+  SVP_CONSOLE = BIT(2), //4 console print
+}
+protect_flags_t;
 
 #define	MAX_ENT_CLUSTERS 16
 

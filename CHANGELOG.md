@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/05/2026--**
 
+* server:<br />better handling of sv_protect flags
+
 * qcommon:<br />validate loaded bsp header
 
 * qcommon:<br />cm code cleanup
