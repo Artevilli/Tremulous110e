@@ -4,7 +4,7 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
-**--01/03/2026--**
+**--01/04/2026--**
 
 * qcommon:<br />add cvar_trim to trim all unused cvars
 
@@ -17,6 +17,8 @@ Changes
 * qcommon/server:<br />introduction of UBIT()
 
 * server:<br />proper utilization of gvm->forceDataMask
+
+**--01/03/2026--**
 
 * qcommon:<br />use `#if defined()` instead of `#ifdef`
 
