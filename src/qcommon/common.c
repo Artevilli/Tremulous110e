@@ -3981,7 +3981,7 @@ void Com_Init( qchar *commandLine ) {
         }
 
         //pick a random port value
-        Com_RandomBytes((byte *)&qport, sizeof(qint));
+        Com_RandomBytes((byte *)&qport, sizeof(qport));
         Netchan_Init(qport & 0xffff);
 
 	VM_Init();

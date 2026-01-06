@@ -421,7 +421,7 @@ static const byte hash_locase[256] =
   0xff
 };
 
-long
+unsigned long
 Com_GenerateHashValue(const qchar *fname, const unsigned size) 
 {
   const byte *s;
@@ -437,7 +437,7 @@ Com_GenerateHashValue(const qchar *fname, const unsigned size)
   }
 	
   hash = (hash ^ (hash >> 10) ^ (hash >> 20));
-  hash &= (size-1);
+  hash &= (size - 1);
   return hash;
 }
 

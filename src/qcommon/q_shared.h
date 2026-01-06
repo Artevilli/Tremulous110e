@@ -996,7 +996,7 @@ qbool
 COM_CompareExtension(const qchar *in, const qchar *ext);
 void	COM_DefaultExtension( qchar *path, qint maxSize, const qchar *extension );
 
-long
+unsigned long
 Com_GenerateHashValue(const qchar *fname, const unsigned size);
 
 void

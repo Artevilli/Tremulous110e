@@ -105,7 +105,7 @@ void CM_ClearLevelPatches( void ) {
 CM_SignbitsForNormal
 =================
 */
-static qint CM_SignbitsForNormal( vec3_t normal ) {
+static qint CM_SignbitsForNormal( const vec3_t normal ) {
 	qint	bits, j;
 
 	bits = 0;
@@ -125,17 +125,17 @@ Returns false if the triangle is degenrate.
 The normal will point out of the clock for clockwise ordered points
 =====================
 */
-static qbool CM_PlaneFromPoints( vec4_t plane, vec3_t a, vec3_t b, vec3_t c ) {
+static qbool CM_PlaneFromPoints( vec4_t plane, const vec3_t a, const vec3_t b, const vec3_t c ) {
 	vec3_t	d1, d2;
 
 	VectorSubtract( b, a, d1 );
 	VectorSubtract( c, a, d2 );
-	CrossProduct( d2, d1, plane );
-	if ( VectorNormalize( plane ) == 0 ) {
+	CrossProductDP( d2, d1, plane );
+	if ( VectorNormalizeDP( plane ) == 0.0 ) {
 		return qfalse;
 	}
 
-	plane[3] = DotProduct( a, plane );
+	plane[3] = DotProductDPf( a, plane );
 	return qtrue;
 }
 
@@ -156,7 +156,7 @@ Returns true if the given quadratic curve is not flat enough for our
 collision detection purposes
 =================
 */
-static qbool	CM_NeedsSubdivision( vec3_t a, vec3_t b, vec3_t c ) {
+static qbool	CM_NeedsSubdivision( const vec3_t a, const vec3_t b, const vec3_t c ) {
 	vec3_t		cmid;
 	vec3_t		lmid;
 	vec3_t		delta;
@@ -188,7 +188,7 @@ a, b, and c are control points.
 the subdivided sequence will be: a, out1, out2, out3, c
 ===============
 */
-static void CM_Subdivide( vec3_t a, vec3_t b, vec3_t c, vec3_t out1, vec3_t out2, vec3_t out3 ) {
+static void CM_Subdivide( const vec3_t a, const vec3_t b, const vec3_t c, vec3_t out1, vec3_t out2, vec3_t out3 ) {
 	qint		i;
 
 	for ( i = 0 ; i < 3 ; i++ ) {
@@ -355,7 +355,7 @@ CM_ComparePoints
 ======================
 */
 #define	POINT_EPSILON	0.1f
-static qbool CM_ComparePoints( float *a, float *b ) {
+static qbool CM_ComparePoints( const float *a, const float *b ) {
 	float		d;
 
 	d = a[0] - b[0];
@@ -429,7 +429,7 @@ static	facet_t			facets[MAX_PATCH_PLANES]; //maybe MAX_FACETS ??
 CM_PlaneEqual
 ==================
 */
-qint CM_PlaneEqual(patchPlane_t *p, float plane[4], qint *flipped) {
+static qbool CM_PlaneEqual(const patchPlane_t *p, const float plane[4], qint *flipped) {
 	float invplane[4];
 
 	if (
@@ -463,7 +463,7 @@ qint CM_PlaneEqual(patchPlane_t *p, float plane[4], qint *flipped) {
 CM_SnapVector
 ==================
 */
-void CM_SnapVector(vec3_t normal) {
+static void CM_SnapVector(vec3_t normal) {
 	qint		i;
 
 	for (i=0 ; i<3 ; i++)
@@ -488,7 +488,7 @@ void CM_SnapVector(vec3_t normal) {
 CM_FindPlane2
 ==================
 */
-qint CM_FindPlane2(float plane[4], qint *flipped) {
+static qint CM_FindPlane2(const float plane[4], qint *flipped) {
 	qint i;
 
 	// see if the points are close enough to an existing plane
@@ -516,7 +516,7 @@ qint CM_FindPlane2(float plane[4], qint *flipped) {
 CM_FindPlane
 ==================
 */
-static qint CM_FindPlane( float *p1, float *p2, float *p3 ) {
+static qint CM_FindPlane( const float *p1, const float *p2, const float *p3 ) {
 	float	plane[4];
 	qint		i;
 	float	d;
@@ -568,16 +568,16 @@ static qint CM_FindPlane( float *p1, float *p2, float *p3 ) {
 CM_PointOnPlaneSide
 ==================
 */
-static qint CM_PointOnPlaneSide( float *p, qint planeNum ) {
-	float	*plane;
-	float	d;
+static qint CM_PointOnPlaneSide( const float *p, qint planeNum ) {
+	const float *plane;
+	double	d;
 
 	if ( planeNum == -1 ) {
 		return SIDE_ON;
 	}
 	plane = planes[ planeNum ].plane;
 
-	d = DotProduct( p, plane ) - plane[3];
+	d = DotProductDPf( p, plane ) - plane[3];
 
 	if ( d > PLANE_TRI_EPSILON ) {
 		return SIDE_FRONT;
@@ -617,8 +617,8 @@ static qint	CM_GridPlane( qint gridPlanes[MAX_GRID_SIZE][MAX_GRID_SIZE][2], qint
 CM_EdgePlaneNum
 ==================
 */
-static qint CM_EdgePlaneNum( cGrid_t *grid, qint gridPlanes[MAX_GRID_SIZE][MAX_GRID_SIZE][2], qint i, qint j, qint k ) {
-	float	*p1, *p2;
+static qint CM_EdgePlaneNum( const cGrid_t *grid, qint gridPlanes[MAX_GRID_SIZE][MAX_GRID_SIZE][2], qint i, qint j, qint k ) {
+	const float *p1, *p2;
 	vec3_t		up;
 	qint			p;
 
@@ -676,10 +676,10 @@ static qint CM_EdgePlaneNum( cGrid_t *grid, qint gridPlanes[MAX_GRID_SIZE][MAX_G
 CM_SetBorderInward
 ===================
 */
-static void CM_SetBorderInward( facet_t *facet, cGrid_t *grid, qint gridPlanes[MAX_GRID_SIZE][MAX_GRID_SIZE][2],
+static void CM_SetBorderInward( facet_t *facet, const cGrid_t *grid, qint gridPlanes[MAX_GRID_SIZE][MAX_GRID_SIZE][2],
 						  qint i, qint j, qint which ) {
 	qint		k, l;
-	float	*points[4];
+	const float	*points[4];
 	qint		numPoints;
 
 	switch ( which ) {
@@ -754,7 +754,7 @@ CM_ValidateFacet
 If the facet isn't bounded by its borders, we screwed up.
 ==================
 */
-static qbool CM_ValidateFacet( facet_t *facet ) {
+static qbool CM_ValidateFacet( const facet_t *facet ) {
 	float		plane[4];
 	qint			j;
 	winding_t	*w;
@@ -806,13 +806,16 @@ static qbool CM_ValidateFacet( facet_t *facet ) {
 CM_AddFacetBevels
 ==================
 */
-void CM_AddFacetBevels( facet_t *facet ) {
+static void CM_AddFacetBevels( facet_t *facet ) {
 
 	qint i, j, k, l;
 	qint axis, dir, order, flipped;
-	float plane[4], d, newplane[4];
+	float plane[4], newplane[4];
 	winding_t *w, *w2;
 	vec3_t mins, maxs, vec, vec2;
+	double d;
+	double d1[3];
+	double d2[3];
 
 	Vector4Copy( planes[ facet->surfacePlane ].plane, plane );
 
@@ -874,9 +877,11 @@ void CM_AddFacetBevels( facet_t *facet ) {
 	for ( j = 0 ; j < w->numpoints ; j++ )
 	{
 		k = (j+1)%w->numpoints;
-		VectorSubtract (w->p[j], w->p[k], vec);
+		VectorCopy(w->p[j], d1);
+		VectorCopy(w->p[k], d2);
+		VectorSubtractDP(d1, d2, vec);
 		//if it's a degenerate edge
-		if (VectorNormalize (vec) < 0.5f)
+		if (VectorNormalizeDP(vec) < 0.5f)
 			continue;
 		CM_SnapVector(vec);
 		for ( k = 0; k < 3 ; k++ )
@@ -893,16 +898,16 @@ void CM_AddFacetBevels( facet_t *facet ) {
 				// construct a plane
 				VectorClear (vec2);
 				vec2[axis] = dir;
-				CrossProduct (vec, vec2, plane);
-				if (VectorNormalize (plane) < 0.5f)
+				CrossProductDP(vec, vec2, plane);
+				if (VectorNormalizeDP(plane) < 0.5f)
 					continue;
-				plane[3] = DotProduct (w->p[j], plane);
+				plane[3] = DotProductDPf(w->p[j], plane);
 
 				// if all the points of the facet winding are
 				// behind this plane, it is a proper edge bevel
 				for ( l = 0 ; l < w->numpoints ; l++ )
 				{
-					d = DotProduct (w->p[l], plane) - plane[3];
+					d = DotProductDPf(w->p[l], plane) - plane[3];
 					if (d > 0.1f)
 						break;	// point in front
 				}
@@ -979,9 +984,9 @@ typedef enum {
 CM_PatchCollideFromGrid
 ==================
 */
-static void CM_PatchCollideFromGrid( cGrid_t *grid, patchCollide_t *pf ) {
+static void CM_PatchCollideFromGrid( const cGrid_t *grid, patchCollide_t *pf ) {
 	qint				i, j;
-	float			*p1, *p2, *p3;
+	const float			*p1, *p2, *p3;
 	qint				gridPlanes[MAX_GRID_SIZE][MAX_GRID_SIZE][2];
 	facet_t			*facet;
 	qint				borders[4];
@@ -1330,7 +1335,7 @@ void CM_TracePointThroughPatchCollide( traceWork_t *tw, const struct patchCollid
 CM_CheckFacetPlane
 ====================
 */
-qint CM_CheckFacetPlane(float *plane, vec3_t start, vec3_t end, float *enterFrac, float *leaveFrac, qint *hit) {
+static qint CM_CheckFacetPlane(const float *plane, const vec3_t start, const vec3_t end, float *enterFrac, float *leaveFrac, qint *hit) {
 	float d1, d2, f;
 
 	*hit = qfalse;
