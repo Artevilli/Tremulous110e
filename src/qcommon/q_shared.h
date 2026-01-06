@@ -1263,6 +1263,15 @@ typedef enum
 }
 cvarValidator_t;
 
+typedef enum
+{
+  CVG_NONE = 0,
+  CVG_RENDERER,
+  CVG_SERVER,
+  CVG_MAX,
+}
+cvarGroup_t;
+
 // nothing outside the Cvar_*() functions should modify these fields!
 typedef struct
 cvar_s
@@ -1286,6 +1295,7 @@ cvar_s
   struct cvar_s *hashNext;
   struct cvar_s *hashPrev;
   qint hashIndex;
+  cvarGroup_t group; //to track changes
 }
 cvar_t;
 

@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/06/2026--**
 
+* qcommon/server:<br />group cvars for better tracking
+
 * qcommon:<br />buffer and sock fixes to netchan
 
 **--01/05/2026--**

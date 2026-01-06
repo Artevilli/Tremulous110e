@@ -25,13 +25,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "q_shared.h"
 #include "qcommon.h"
 
-cvar_t *cvar_vars = NULL;
-cvar_t *cvar_cheats;
+static cvar_t *cvar_vars = NULL;
+static cvar_t *cvar_cheats;
 qint cvar_modifiedFlags;
 
 #define	MAX_CVARS 2048
-cvar_t cvar_indexes[MAX_CVARS];
-qint cvar_numIndexes;
+static cvar_t cvar_indexes[MAX_CVARS];
+static qint cvar_numIndexes;
+
+static qint cvar_group[CVG_MAX];
 
 #define FILE_HASH_SIZE 256
 static cvar_t *hashTable[FILE_HASH_SIZE];
@@ -588,6 +590,8 @@ Cvar_Get(const qchar *var_name, const qchar *var_value, qint flags)
   var->resetString = CopyString(var_value);
   var->validator = CV_NONE;
   var->description = NULL;
+  var->group = CVG_NONE;
+  cvar_group[var->group] = 1;
 
   //link the variable in
   var->next = cvar_vars;
@@ -881,6 +885,7 @@ Cvar_Set2(const qchar *var_name, const qchar *value, qbool force)
       var->latchedString = CopyString(value);
       var->modified = qtrue;
       var->modificationCount++;
+      cvar_group[var->group] = 1;
       return var;
     }
   }
@@ -900,6 +905,7 @@ Cvar_Set2(const qchar *var_name, const qchar *value, qbool force)
 
   var->modified = qtrue;
   var->modificationCount++;
+  cvar_group[var->group] = 1;
 
   Z_Free(var->string); //free the old value string
 
@@ -2371,6 +2377,67 @@ Cvar_GetAndDescribe(const qchar *varName, const qchar *value, const qint flags, 
 
   Cvar_SetDescription(tmp, description);
   return tmp;
+}
+
+/*
+=====================
+Cvar_SetGroup
+=====================
+*/
+void
+Cvar_SetGroup(cvar_t *var, cvarGroup_t group)
+{
+  if (group < CVG_MAX)
+  {
+    var->group = group;
+  }
+  else
+  {
+    Com_Error(ERR_DROP, "Bad group index %i for %s", group, var->name);
+  }
+}
+
+/*
+=====================
+Cvar_CheckGroup
+=====================
+*/
+qint
+Cvar_CheckGroup(cvarGroup_t group)
+{
+  if (group < CVG_MAX)
+  {
+    return cvar_group[group];
+  }
+
+  return 0;
+}
+
+/*
+=====================
+Cvar_ResetGroup
+=====================
+*/
+void
+Cvar_ResetGroup(cvarGroup_t group, qbool resetModifiedFlags)
+{
+  if (group < CVG_MAX)
+  {
+    cvar_group[group] = 0;
+
+    if (resetModifiedFlags)
+    {
+      qint i;
+
+      for(i = 0;i < cvar_numIndexes;i++)
+      {
+        if (cvar_indexes[i].group == group && cvar_indexes[i].name)
+        {
+          cvar_indexes[i].modified = qfalse;
+        }
+      }
+    }
+  }
 }
 
 /*

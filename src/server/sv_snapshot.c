@@ -1035,33 +1035,6 @@ SV_SnapshotRateMsec(const client_t *client, qint messageSize)
 
   qint rate = client->rate;
 
-  //low watermark for sv_maxRate, never 0 < sv_maxRate < 1000 (0 is no limitation)
-  if (sv_maxRate->integer)
-  {
-    if (sv_maxRate->integer < 1000)
-    {
-      Cvar_Set("sv_maxRate", "1000");
-    }
-
-    if (sv_maxRate->integer < rate)
-    {
-      rate = sv_maxRate->integer;
-    }
-  }
-
-  if (sv_minRate->integer)
-  {
-    if (sv_minRate->integer < 1000)
-    {
-      Cvar_Set("sv_minRate", "1000");
-    }
-
-    if (sv_minRate->integer > rate)
-    {
-      rate = sv_minRate->integer;
-    }
-  }
-
   return ((messageSize + HEADER_RATE_BYTES) * 1000 / (qint)(rate * com_timescale->value));
 }
 

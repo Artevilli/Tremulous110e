@@ -1058,6 +1058,16 @@ SV_Init(void)
 
   svs.serverLoad = 0;
 
+  //track group cvar changes
+  Cvar_SetGroup(sv_lanForceRate, CVG_SERVER);
+  Cvar_SetGroup(sv_minRate, CVG_SERVER);
+  Cvar_SetGroup(sv_maxRate, CVG_SERVER);
+  Cvar_SetGroup(sv_fps, CVG_SERVER);
+  Cvar_SetGroup(sv_cl_fps, CVG_SERVER);
+
+  //force initial check
+  SV_TrackCvarChanges();
+
 #if !defined(STATELESS_CHALLENGES_VERSION_ONE)
   SV_InitChallenger();
 #endif

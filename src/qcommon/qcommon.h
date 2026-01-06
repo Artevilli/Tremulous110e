@@ -693,6 +693,13 @@ cvar_t *
 Cvar_GetAndDescribe(const qchar *varName, const qchar *value, const qint flags, const qchar *description);
 
 void
+Cvar_SetGroup(cvar_t *var, cvarGroup_t group);
+qint
+Cvar_CheckGroup(cvarGroup_t group);
+void
+Cvar_ResetGroup(cvarGroup_t group, qbool resetModifiedFlags);
+
+void
 Cvar_Restart(qbool unsetVM);
 
 void
@@ -1332,6 +1339,8 @@ const void
 SV_Shutdown(const qchar *finalmsg);
 void
 SV_Frame(qint msec);
+void
+SV_TrackCvarChanges(void);
 void
 SV_ReadPackets(const netadr_t *from, msg_t *msg);
 qint
