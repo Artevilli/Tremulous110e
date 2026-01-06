@@ -211,7 +211,7 @@ void
 NET_QueuePacket(netsrc_t sock, qint length, const void *data, const netadr_t *to, qint offset);
 void		NET_SendPacket (netsrc_t sock, qint length, const void *data, const netadr_t *to);
 void		QDECL NET_OutOfBandPrint( netsrc_t net_socket, const netadr_t *adr, const qchar *format, ...) __attribute__ ((format (printf, 3, 4)));
-void		QDECL NET_OutOfBandData( netsrc_t sock, const netadr_t *adr, byte *data, qint len );
+void		QDECL NET_OutOfBandCompress( netsrc_t sock, const netadr_t *adr, const byte *data, qint len );
 
 qbool	NET_CompareAdr(const netadr_t *a, const netadr_t *b);
 qbool

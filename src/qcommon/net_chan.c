@@ -182,12 +182,12 @@ Send one fragment of the current message
 */
 void Netchan_TransmitNextFragment( netchan_t *chan ) {
 	msg_t		send;
-	byte		send_buf[MAX_PACKETLEN];
+	byte		send_buf[MAX_PACKETLEN + 8];
 	qint			fragmentLength;
 	qint outgoingSequence;
 
 	// write the packet header
-	MSG_InitOOB (&send, send_buf, sizeof(send_buf));				// <-- only do the oob here
+	MSG_InitOOB (&send, send_buf, sizeof(send_buf) - 8);				// <-- only do the oob here
 
         outgoingSequence = chan->outgoingSequence | FRAGMENT_BIT;
 	MSG_WriteLong( &send, outgoingSequence );
@@ -293,7 +293,7 @@ A 0 length will still generate a packet.
 */
 void Netchan_Transmit( netchan_t *chan, qint length, const byte *data ) {
 	msg_t		send;
-	byte		send_buf[MAX_PACKETLEN];
+	byte		send_buf[MAX_PACKETLEN + 8];
 
 	if ( length > MAX_MSGLEN ) {
 		Com_Error( ERR_DROP, "Netchan_Transmit: length = %i", length );
@@ -313,7 +313,7 @@ void Netchan_Transmit( netchan_t *chan, qint length, const byte *data ) {
 	}
 
 	// write the packet header
-	MSG_InitOOB (&send, send_buf, sizeof(send_buf));
+	MSG_InitOOB (&send, send_buf, sizeof(send_buf) - 8);
 
 	MSG_WriteLong( &send, chan->outgoingSequence );
 
@@ -415,7 +415,7 @@ qbool Netchan_Process( netchan_t *chan, msg_t *msg ) {
 
 	// read the qport if we are a server
 	if ( chan->sock == NS_SERVER ) {
-		MSG_ReadShort( msg );
+		/*qport =*/ MSG_ReadShort( msg );
 	}
 
 	// read the fragment information
@@ -525,7 +525,7 @@ qbool Netchan_Process( netchan_t *chan, msg_t *msg ) {
 		// copy the full message over the partial fragment
 
 		// make sure the sequence number is still there
-		*(qint *)msg->data = LittleLong( sequence );
+		*(int32_t *)msg->data = LittleLong( sequence );
 
 		Com_Memcpy( msg->data + 4, chan->fragmentBuffer, chan->fragmentLength );
 		msg->cursize = chan->fragmentLength + 4;
@@ -603,7 +603,7 @@ qbool	NET_GetLoopPacket (netsrc_t sock, netadr_t *net_from, msg_t *net_message)
 }
 
 
-void NET_SendLoopPacket (netsrc_t sock, qint length, const void *data, const netadr_t *to)
+void NET_SendLoopPacket (netsrc_t sock, qint length, const void *data)
 {
 	qint		i;
 	loopback_t	*loop;
@@ -616,7 +616,7 @@ void NET_SendLoopPacket (netsrc_t sock, qint length, const void *data, const net
 	Com_Memcpy (loop->msgs[i].data, data, length);
 	loop->msgs[i].datalen = length;
 }
-#endif
+#endif //!DEDICATED
 
 //=============================================================================
 
@@ -626,6 +626,7 @@ typedef struct packetQueue_s {
         qint length;
         byte *data;
         netadr_t to;
+        netsrc_t sock;
         qint release;
 } packetQueue_t;
 
@@ -740,11 +741,12 @@ NET_QueuePacket(netsrc_t sock, qint length, const void *data, const netadr_t *to
 	if(offset > 999)
 		offset = 999;
 
-	new = S_Malloc(sizeof(packetQueue_t));
-	new->data = S_Malloc(length);
+	new = S_Malloc(sizeof(*new) + length);
+	new->data = (byte *)(new + 1);
 	Com_Memcpy(new->data, data, length);
 	new->length = length;
 	new->to = *to;
+	new->sock = sock;
 	new->release = Sys_Milliseconds() + (qint)((float)offset / com_timescale->value);	
 	new->next = NULL;
 
@@ -841,12 +843,12 @@ NET_OutOfBandPrint(netsrc_t sock, const netadr_t *adr, const qchar *format, ...)
 
 /*
 ===============
-NET_OutOfBandPrint
+NET_OutOfBandCompress
 
 Sends a data message in an out-of-band datagram (only used for "connect")
 ================
 */
-void QDECL NET_OutOfBandData( netsrc_t sock, const netadr_t *adr, byte *data, qint len ) {
+void QDECL NET_OutOfBandCompress( netsrc_t sock, const netadr_t *adr, const byte *data, qint len ) {
 	byte		string[MAX_INFO_STRING*2];
 	qint			i;
 	msg_t		mbuf;
@@ -864,6 +866,7 @@ void QDECL NET_OutOfBandData( netsrc_t sock, const netadr_t *adr, byte *data, qi
 	mbuf.data = string;
 	mbuf.cursize = len+4;
 	Huff_Compress( &mbuf, 12);
+
 	// send the datagram
 	NET_SendPacket( sock, mbuf.cursize, mbuf.data, adr );
 }

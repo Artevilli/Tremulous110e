@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--01/06/2026--**
+
+* qcommon:<br />buffer and sock fixes to netchan
+
 **--01/05/2026--**
 
 * qcommon:<br />actually use CVAR_NORESTART
