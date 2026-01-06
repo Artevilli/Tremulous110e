@@ -6,7 +6,9 @@ Changes
 -----------------------
 **--01/06/2026--**
 
-* qcommon:<br />added client detection country code (needs external database) and fixed status formatting
+* qcommon:<br />allow VMs to specify systeminfo vars
+
+* server:<br />added client detection country code (needs external database) and fixed status formatting
 
 * qcommon:<br />added `CV_FSPATH` and `CV_MAX`
 

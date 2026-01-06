@@ -2476,7 +2476,7 @@ Cvar_Register
 basically a slightly modified Cvar_Get for the interpreted modules
 =====================
 */
-#define INVALID_FLAGS (CVAR_USER_CREATED | CVAR_SERVER_CREATED | CVAR_PROTECTED | CVAR_PRIVATE | CVAR_MODIFIED | CVAR_NONEXISTENT)
+#define INVALID_FLAGS ((CVAR_USER_CREATED | CVAR_SERVER_CREATED | CVAR_PROTECTED | CVAR_PRIVATE | CVAR_MODIFIED | CVAR_NONEXISTENT) & ~CVAR_SYSTEMINFO)
 void
 Cvar_Register(vmCvar_t * vmCvar, const qchar *varName, const qchar *defaultValue, qint flags, qint privateFlag)
 {
