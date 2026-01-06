@@ -5635,6 +5635,7 @@ FS_Startup(void)
 
   fs_homepath = Cvar_GetAndDescribe("fs_homepath", homePath, CVAR_INIT | CVAR_PROTECTED, "Directory to store user configuration and downloaded files.");
   fs_gamedirvar = Cvar_GetAndDescribe("fs_game", "", CVAR_INIT | CVAR_SYSTEMINFO, "Specify an alternate mod directory and run the game with this mod.");
+  Cvar_CheckRange(fs_gamedirvar, NULL, NULL, CV_FSPATH);
 
   if (FS_InvalidGameDir(fs_gamedirvar->string))
   {

@@ -405,8 +405,31 @@ Cvar_Validate(cvar_t * var, const qchar *value, qbool warn)
       }
     } //Q_isanumber
   } //CV_INTEGER || CV_FLOAT
-
   //TODO: stringlist
+  else if (var->validator == CV_FSPATH)
+  {
+    //check for directory traversal patterns
+    if (FS_InvalidGameDir(value))
+    {
+      if (warn)
+      {
+        Com_Printf("WARNING: cvar '%s' contains invalid patterns", var->name);
+      }
+
+      //try to use current value if it is valid
+      if (!FS_InvalidGameDir(var->string))
+      {
+        if (warn)
+        {
+          Com_Printf("\n");
+        }
+
+        return var->string;
+      }
+
+      limit = var->resetString;
+    }
+  }
 
   if (limit || value == intbuf)
   {
@@ -417,7 +440,7 @@ Cvar_Validate(cvar_t * var, const qchar *value, qbool warn)
 
     if (warn)
     {
-      Com_Printf(", setting to %s\n", limit);
+      Com_Printf(", setting to '%s'\n", limit);
     }
 
     return limit;
@@ -2303,6 +2326,12 @@ Cvar_CheckRange
 void
 Cvar_CheckRange(cvar_t *var, const char *minVal, const char *maxVal, cvarValidator_t type)
 {
+  if (type >= CV_MAX)
+  {
+    Com_Printf(S_COLOR_YELLOW "Invalid validation type %i for %s\n", type, var->name);
+    return;
+  }
+
   if (var->mins)
   {
     Z_Free(var->mins);
