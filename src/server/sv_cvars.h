@@ -71,6 +71,7 @@ extern cvar_t *sv_allowDownload;
 extern cvar_t *sv_cl_allowDownload;
 extern cvar_t *sv_maxclients;
 extern cvar_t *sv_maxclientsPerIP;
+extern cvar_t *sv_clientTLD;
 extern cvar_t *sv_guidCheck;
 extern cvar_t *sv_guidCheckAllowStock;
 extern cvar_t *sv_democlients; //number of slots reserved for playing a demo

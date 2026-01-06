@@ -620,6 +620,31 @@ SV_KickNum_f(void)
 }
 
 /*
+** SV_Strlen -- skips color escape codes
+*/
+qint
+SV_Strlen(const qchar *str)
+{
+  const qchar *s = str;
+  qint count = 0;
+
+  while(*s)
+  {
+    if (Q_IsColorString(s))
+    {
+      s += 2;
+    }
+    else
+    {
+      count++;
+      s++;
+    }
+  }
+
+  return count;
+}
+
+/*
 ================
 SV_Status_f
 ================
@@ -630,10 +655,19 @@ SV_Status_f(void)
   qint i;
   qint j;
   qint l;
-  client_t *cl;
-  playerState_t *ps;
+  const client_t *cl;
+  const playerState_t *ps;
   const qchar *s;
-  qint ping;
+  qint max_namelength;
+  qint max_addrlength;
+  qchar names[MAX_CLIENTS * MAX_NAME_LENGTH];
+  qchar *np[MAX_CLIENTS];
+  qchar nl[MAX_CLIENTS];
+  qchar *nc;
+  qchar addrs[MAX_CLIENTS * 48];
+  qchar *ap[MAX_CLIENTS];
+  qchar al[MAX_CLIENTS];
+  qchar *ac;
 
   //make sure server is running
   if (!com_sv_running->integer)
@@ -642,24 +676,120 @@ SV_Status_f(void)
     return;
   }
 
-  Com_Printf("cpu server utilization: %i%%\n"
-  "avg response time: %i ms\n"
-  "server load: %i\n"
-  "map: %s\n"
-  "num score ping name            lastmsg address               qport rate\n"
-  "--- ----- ---- --------------- ------- --------------------- ----- -----\n",
-  (qint)svs.stats.cpu, (qint)svs.stats.avg, (qint)svs.serverLoad, sv_mapname->string);
+  max_namelength = 4; //strlen("name")
+  max_addrlength = 7; //strlen("address")
+
+  nc = names;
+  *nc = '\0';
+
+  ac = addrs;
+  *ac = '\0';
+
+  Com_Memset(np, 0, sizeof(np));
+  Com_Memset(nl, 0, sizeof(nl));
+
+  Com_Memset(ap, 0, sizeof(ap));
+  Com_Memset(al, 0, sizeof(al));
+
+  //first pass: save and determine max.lengths of name/address fields
+  for(i = 0;i < sv.maxclients;i++)
+  {
+    cl = &svs.clients[i];
+
+    if (cl->state == CS_FREE)
+    {
+      continue;
+    }
+
+    l = strlen(cl->name) + 1;
+    strcpy(nc, cl->name);
+
+    //name pointer in name buffer
+    np[i] = nc;
+    nc += l;
+
+    if (com_ansiColor->integer)
+    {
+      //name length without color sequences
+      nl[i] = SV_Strlen(cl->name);
+    }
+    else
+    {
+      //name length with color sequences
+      nl[i] = strlen(cl->name);
+    }
+
+    if (nl[i] > max_namelength)
+    {
+      max_namelength = nl[i];
+    }
+
+    s = NET_AdrToString(&cl->netchan.remoteAddress);
+    l = strlen(s) + 1;
+    strcpy(ac, s);
+
+    //address pointer in address buffer
+    ap[i] = ac;
+    ac += l;
+
+    //address length
+    al[i] = l - 1;
+
+    if (al[i] > max_addrlength)
+    {
+      max_addrlength = al[i];
+    }
+  }
+
+  Com_Printf("cpu server utilization: %i%%\navg response time: %i ms\nserver load: %i\nmap: %s\n", (qint)svs.stats.cpu, (qint)svs.stats.avg, (qint)svs.serverLoad, sv_mapname->string);
+#if 0
+  Com_Printf("cl score ping name                        address                     rate\n");
+  Com_Printf("-- ----- ---- --------------------------- --------------------------- -----\n");
+#else //variable-length fields
+
+  Com_Printf("cl score ping name");
+
+  for(i = 0;i < max_namelength - 4;i++)
+  {
+    Com_Printf(" ");
+  }
+
+  Com_Printf(" address");
+
+  for(i = 0;i < max_addrlength - 7;i++)
+  {
+    Com_Printf(" ");
+  }
+
+  Com_Printf(" rate\n");
+
+  Com_Printf("-- ----- ---- ");
+
+  for(i = 0;i < max_namelength;i++)
+  {
+    Com_Printf("-");
+  }
+
+  Com_Printf(" ");
+
+  for(i = 0;i < max_addrlength;i++)
+  {
+    Com_Printf("-");
+  }
+
+  Com_Printf(" ----\n");
+#endif
 
   for(i = 0;i < sv.maxclients;i++)
   {
     cl = &svs.clients[i];
 
-    if (!cl->state)
+    if (cl->state == CS_FREE)
     {
       continue;
     }
 
-    Com_Printf("%3i ", i);
+    Com_Printf("%2i ", i); //id
     ps = SV_GameClientNum(i);
 #if defined(SUPPORT_STATUS_SCORES_OVERRIDE)
     Com_Printf("%5i ", SV_StatusScoresOverride_AdjustScore(ps->persistant[PERS_SCORE], i));
@@ -669,47 +799,52 @@ SV_Status_f(void)
 
     if (cl->state == CS_PRIMED)
     {
-      Com_Printf("PRME ");
+      Com_Printf(" PRM ");
     }
     else if (cl->state == CS_CONNECTED)
     {
-      Com_Printf("CNCT ");
+      Com_Printf(" CON ");
     }
     else if (cl->state == CS_ZOMBIE)
     {
-      Com_Printf("ZMBI ");
+      Com_Printf(" ZMB ");
     }
     else
     {
-      ping = cl->ping < 999 ? cl->ping : 999;
-      Com_Printf("%4i ", ping);
+      Com_Printf("%4i ", cl->ping < 999 ? cl->ping:999);
     }
 
-    Com_Printf("%s", cl->name);
-
-    //TTimo adding a ^7 to reset the color
-    //NOTE: colored names in status breaks the padding (WONTFIX)
-    Com_Printf("^7");
-    l = 16 - strlen(cl->name);
-
-    for(j = 0;j < l;j++)
-    {
-      Com_Printf(" ");
-    }
-
-    Com_Printf("%7i ", svs.time - cl->lastPacketTime);
-    s = NET_AdrToString(&cl->netchan.remoteAddress);
+    //variable-length name field
+    s = np[i];
     Com_Printf("%s", s);
-    l = 22 - strlen(s);
+    l = max_namelength - nl[i];
 
     for(j = 0;j < l;j++)
     {
       Com_Printf(" ");
     }
-		
-    Com_Printf("%5i", cl->netchan.qport);
-    Com_Printf(" %5i", cl->rate);
-    Com_Printf("\n");
+
+    //variable-length address field
+    s = ap[i];
+
+    if (com_ansiColor && com_ansiColor->integer)
+    {
+      Com_Printf(S_COLOR_WHITE " %s", s);
+    }
+    else
+    {
+      Com_Printf(" %s", s);
+    }
+
+    l = max_addrlength - al[i];
+
+    for(j = 0;j < l;j++)
+    {
+      Com_Printf(" ");
+    }
+
+    //rate
+    Com_Printf(" %5i\n", cl->rate);
   }
 
   Com_Printf("\n");
@@ -933,6 +1068,30 @@ static void
 SV_KillServer_f(void)
 {
   SV_Shutdown("killserver");
+}
+
+/*
+=================
+SV_Locations
+=================
+*/
+static void
+SV_Locations_f(void)
+{
+  //make sure server is running
+  if (!com_sv_running->integer)
+  {
+    Com_Printf("Server is not running.\n");
+    return;
+  }
+
+  if (!sv_clientTLD->integer)
+  {
+    Com_Printf("Disabled on this server.\n");
+    return;
+  }
+
+  SV_PrintLocations_f(NULL);
 }
 
 /*
@@ -1326,6 +1485,7 @@ SV_AddOperatorCommands(void)
   {
     Cmd_AddCommand("say", SV_ConSay_f);
     Cmd_AddCommand("tell", SV_ConTell_f);
+    Cmd_AddCommand("locations", SV_Locations_f);
   }
 }
 
@@ -1360,4 +1520,5 @@ SV_RemoveDedicatedCommands(void)
   Cmd_RemoveCommand("systeminfo");
   Cmd_RemoveCommand("tell");
   Cmd_RemoveCommand("say");
+  Cmd_RemoveCommand("locations");
 }

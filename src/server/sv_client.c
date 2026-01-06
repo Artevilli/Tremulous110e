@@ -224,6 +224,302 @@ SV_GetChallenge(const netadr_t *from)
 
 /*
 ==================
+SV_SetClientTLD
+==================
+*/
+#pragma pack(push, 1)
+
+typedef struct
+iprange_s
+{
+  uint32_t from;
+  uint32_t to;
+}
+iprange_t;
+
+typedef struct
+iprange_tld_s
+{
+  qchar tld[2];
+}
+iprange_tld_t;
+
+#pragma pack(pop)
+
+static qbool ipdb_loaded;
+static iprange_t *ipdb_range;
+static iprange_tld_t *ipdb_tld;
+static qint num_tlds;
+
+typedef struct
+tld_info_s
+{
+  const qchar *tld;
+  const qchar *country;
+}
+tld_info_t;
+
+static const tld_info_t tld_info[] =
+{
+  #include "tlds.h"
+};
+
+/*
+==================
+SV_FreeIP4DB
+==================
+*/
+void
+SV_FreeIP4DB(void)
+{
+  if (ipdb_range)
+  {
+    Z_Free(ipdb_range);
+  }
+
+  ipdb_loaded = qfalse;
+  ipdb_range = NULL;
+  ipdb_tld = NULL;
+}
+
+/*
+==================
+SV_LoadIP4DB
+
+Loads geoip database into memory
+==================
+*/
+static qbool
+SV_LoadIP4DB(const qchar *filename)
+{
+  fileHandle_t fh = FS_INVALID_HANDLE;
+  uint32_t last_ip;
+  void *buf;
+  qint len;
+  qint i;
+
+  len = FS_SV_FOpenFileRead(filename, &fh);
+
+  if (len <= 0)
+  {
+    if (fh != FS_INVALID_HANDLE)
+    {
+      FS_FCloseFile(fh);
+    }
+
+    return qfalse;
+  }
+
+  if (len % 10) //should be a power of IP4:IP4:TLD2
+  {
+    Com_DPrintf("%s(%s): invalid file size %i\n", __func__, filename, len);
+
+    if (fh != FS_INVALID_HANDLE)
+    {
+      FS_FCloseFile(fh);
+    }
+
+    return qfalse;
+  }
+
+  SV_FreeIP4DB();
+
+  buf = Z_Malloc(len);
+
+  FS_Read(buf, len, fh);
+  FS_FCloseFile(fh);
+
+  //check integrity of loaded database
+  last_ip = 0;
+  num_tlds = len / 10;
+
+  //database format:
+  //[range1][range2]...[rangeN]
+  //[tld1][tld2]...[tldN]
+
+  ipdb_range = (iprange_t *)buf;
+  ipdb_tld = (iprange_tld_t *)(ipdb_range + num_tlds);
+
+  for(i = 0;i < num_tlds;i++)
+  {
+#if defined(Q3_LITTLE_ENDIAN)
+    ipdb_range[i].from = LongSwap(ipdb_range[i].from);
+    ipdb_range[i].to = LongSwap(ipdb_range[i].to);
+#endif
+
+    if (last_ip && last_ip >= ipdb_range[i].from)
+    {
+      break;
+    }
+
+    if (ipdb_range[i].from > ipdb_range[i].to)
+    {
+      break;
+    }
+
+    if (ipdb_tld[i].tld[0] < 'A' || ipdb_tld[i].tld[0] > 'Z' || ipdb_tld[i].tld[1] < 'A' || ipdb_tld[i].tld[1] < 'Z')
+    {
+      break;
+    }
+
+    last_ip = ipdb_range[i].to;
+  }
+
+  if (i != num_tlds)
+  {
+    Com_Printf(S_COLOR_YELLOW "invalid ip4db entry #%i: range=[%08x..%08x], tld=%c%c\n", i, ipdb_range[i].from, ipdb_range[i].to, ipdb_tld[i].tld[0], ipdb_tld[i].tld[1]);
+    SV_FreeIP4DB();
+    return qtrue; //to not try to load it again
+  }
+
+  Com_Printf("ip4db: %i entries loaded\n", num_tlds);
+  return qtrue;
+}
+
+static void
+SV_SetTLD(qchar *str, const netadr_t *from, qbool isLAN)
+{
+  const iprange_t *e;
+  qint lo;
+  qint hi;
+  qint m;
+  uint32_t ip;
+
+  str[0] = '\0';
+
+  if (!sv_clientTLD->integer)
+  {
+    return;
+  }
+
+  if (isLAN)
+  {
+    strcpy(str, "**");
+    return;
+  }
+
+  if (from->type != NA_IP) //ipv4-only
+  {
+    return;
+  }
+
+  if (!ipdb_loaded)
+  {
+    ipdb_loaded = SV_LoadIP4DB("ip4db.dat");
+  }
+
+  if (!ipdb_range)
+  {
+    return;
+  }
+
+  lo = 0;
+  hi = num_tlds;
+
+  //big-endian to host-endian
+#if defined(Q3_LITTLE_ENDIAN)
+  ip = from->ipv._4[3] | from->ipv._4[2] << 8 | from->ipv._4[1] << 16 | from->ipv._4[0] << 24;
+#else
+  ip = from->ipv._4[0] | from->ipv._4[1] << 8 | from->ipv._4[2] << 16 | from->ipv._4[3] << 24;
+#endif
+
+  //binary search
+  while(lo <= hi)
+  {
+    m = (lo + hi) / 2;
+    e = ipdb_range + m;
+
+    if (ip >= e->from && ip <= e->to)
+    {
+      const iprange_tld_t *tld = ipdb_tld + m;
+      str[0] = tld->tld[0];
+      str[1] = tld->tld[1];
+      str[2] = '\0';
+      return;
+    }
+
+    if (e->from > ip)
+    {
+      hi = m - 1;
+    }
+    else
+    {
+      lo = m + 1;
+    }
+  }
+}
+
+static qint seqs[MAX_CLIENTS];
+
+static void
+SV_SaveSequences(void)
+{
+  qint i;
+
+  for(i = 0;i < sv.maxclients;i++)
+  {
+    seqs[i] = svs.clients[i].reliableSequence;
+  }
+}
+
+static void
+SV_InjectLocation(const char *tld, const char *country)
+{
+  qchar *cmd;
+  qchar *str;
+  qint i;
+  qint n;
+
+  for(i = 0;i < sv.maxclients;i++)
+  {
+    if (seqs[i] != svs.clients[i].reliableSequence)
+    {
+      for(n = seqs[i];n != svs.clients[i].reliableSequence + 1;n++)
+      {
+        cmd = svs.clients[i].reliableCommands[n & (MAX_RELIABLE_COMMANDS - 1)];
+        str = strstr(cmd, "connected\n\"");
+
+        if (str && str[11] == '\0' && str < cmd + 512)
+        {
+          if (*tld == '\0')
+          {
+            sprintf(str, S_COLOR_WHITE "connected (%s)\n\"", country);
+          }
+          else
+          {
+            sprintf(str, S_COLOR_WHITE "connected (" S_COLOR_RED "%s" S_COLOR_WHITE ", %s)\n\"", tld, country);
+          }
+
+          break;
+        }
+      }
+    }
+  }
+}
+
+static const qchar *
+SV_FindCountry(const qchar *tld)
+{
+  qint i;
+
+  if (*tld == '\0')
+  {
+    return "Unknown Location";
+  }
+
+  for(i = 0;i < ARRAY_LEN(tld_info);i++)
+  {
+    if (!strcmp(tld, tld_info[i].tld))
+    {
+      return tld_info[i].country;
+    }
+  }
+
+  return "Unknown Location";
+}
+
+/*
+==================
 SV_isValidGUID
 ==================
 */
@@ -457,6 +753,7 @@ SV_DirectConnect(const netadr_t *from)
   if (sv_legacyChallenge->integer)
   {
     qchar userinfo[MAX_INFO_STRING];
+    qchar tld[3];
     qint i;
     qint n;
     client_t *cl;
@@ -559,6 +856,8 @@ SV_DirectConnect(const netadr_t *from)
     }
 
     //run userinfo filter
+    SV_SetTLD(tld, from, Sys_IsLANAddress(from));
+    Info_SetValueForKey(userinfo, "tld", tld);
     v = SV_RunFilters(userinfo, from);
 
     if (*v != '\0')
@@ -858,7 +1157,15 @@ gotnewcl1:
     //filter name while connecting to server
     SV_FilterNameStringed(newcl->userinfo);
 
+    strcpy(newcl->tld, tld);
+    newcl->country = SV_FindCountry(newcl->tld);
+
     SV_UserinfoChanged(newcl, qtrue, qfalse); //update userinfo, do not run filter
+
+    if (sv_clientTLD->integer)
+    {
+      SV_SaveSequences();
+    }
 
     //get the game a chance to reject this connection or modify the userinfo
 #if defined(USE_JAVA)
@@ -883,6 +1190,11 @@ gotnewcl1:
       return;
     }
 #endif
+
+    if (sv_clientTLD->integer)
+    {
+      SV_InjectLocation(newcl->tld, newcl->country);
+    }
 
     //clear out firstPing now that client is connected
     svs.challenges[i].firstPing = 0;
@@ -931,6 +1243,7 @@ gotnewcl1:
   {
 #endif
     qchar userinfo[MAX_INFO_STRING];
+    qchar tld[3];
     qint i;
     qint n;
     client_t *cl;
@@ -1051,6 +1364,8 @@ gotnewcl1:
     }
 
     //run userinfo filter
+    SV_SetTLD(tld, from, Sys_IsLANAddress(from));
+    Info_SetValueForKey(userinfo, "tld", tld);
     v = SV_RunFilters(userinfo, from);
 
     if (*v != '\0')
@@ -1279,7 +1594,15 @@ gotnewcl2:
     //filter name while connecting to server
     SV_FilterNameStringed(newcl->userinfo);
 
+    strcpy(newcl->tld, tld);
+    newcl->country = SV_FindCountry(newcl->tld);
+
     SV_UserinfoChanged(newcl, qtrue, qfalse); //update userinfo, do not run filter
+
+    if (sv_clientTLD->integer)
+    {
+      SV_SaveSequences();
+    }
 
     //get the game a chance to reject this connection or modify the userinfo
 #if defined(USE_JAVA)
@@ -1304,6 +1627,11 @@ gotnewcl2:
       return;
     }
 #endif
+
+    if (sv_clientTLD->integer)
+    {
+      SV_InjectLocation(newcl->tld, newcl->country);
+    }
 
     //clear out firstPing now that client is connected
 #if defined(INCLUDE_LEGACY_CHALLENGE)
@@ -3517,6 +3845,8 @@ SV_UserinfoChanged(client_t *cl, const qbool updateUserinfo, const qbool runFilt
     SV_DropClient(cl, "userinfo string length exceeded");
   }
 
+  Info_SetValueForKey(cl->userinfo, "tld", cl->tld);
+
   if (runFilter)
   {
     val = SV_RunFilters(cl->userinfo, &cl->netchan.remoteAddress);
@@ -3596,6 +3926,133 @@ SV_UpdateUserinfo_f(client_t *cl)
   SV_GetConfigstring(CS_PLAYERS + (ARRAY_INDEX(svs.clients, cl)), info, sizeof(info));
   Info_SetValueForKey(cl->userinfo, "name", Info_ValueForKey(info, "n"));
   Q_strncpyz(cl->name, Info_ValueForKey(info, "n"), sizeof(cl->name));
+}
+
+extern qint
+SV_Strlen(const qchar *str);
+
+/*
+==================
+SV_PrintLocations_f
+==================
+*/
+void
+SV_PrintLocations_f(client_t *client)
+{
+  qint i;
+  qint len;
+  client_t *cl;
+  qint max_namelength;
+  qint max_ctrylength;
+  qchar line[128];
+  qchar buf[1400 - 4 - 8];
+  qchar *s;
+  qchar filln[MAX_NAME_LENGTH];
+  qchar fillc[64];
+
+  if (!svs.clients)
+  {
+    return;
+  }
+
+  max_namelength = 4; // strlen("name")
+  max_ctrylength = 7; // strlen("country")
+
+  //first pass: save and determine max.lengths of name/address fields
+  for(i = 0;i < sv.maxclients;i++)
+  {
+    cl = &svs.clients[i];
+
+    if (cl->state == CS_FREE)
+    {
+      continue;
+    }
+
+    if (com_ansiColor && com_ansiColor->integer)
+    {
+      len = SV_Strlen(cl->name); //name length without color sequences
+    }
+    else
+    {
+      len = (qint)strlen(cl->name); //name length with color sequences
+    }
+
+    if (len > max_namelength)
+    {
+      max_namelength = len;
+    }
+
+    len = strlen(cl->country);
+
+    if (len > max_ctrylength)
+    {
+      max_ctrylength = len;
+    }
+  }
+
+  s = buf;
+  *s = '\0';
+
+  Com_Memset(filln, '-',  max_namelength);
+  filln[max_namelength] = '\0';
+
+  Com_Memset(fillc, '-',  max_ctrylength);
+  fillc[max_ctrylength] = '\0';
+
+  //start this on a new line to be viewed properly in console
+  s = Q_stradd(s, "\n");
+  Com_sprintf(line, sizeof(line), "ID %-*s CC Country\n", max_namelength, "Name");
+  s = Q_stradd(s, line);
+  Com_sprintf(line, sizeof(line), "-- %s -- %s\n", filln, fillc);
+  s = Q_stradd(s, line);
+
+  for(i = 0;i < sv.maxclients;i++)
+  {
+    cl = &svs.clients[i];
+
+    if (cl->state == CS_FREE)
+    {
+      continue;
+    }
+
+    if (com_ansiColor && com_ansiColor->integer)
+    {
+      len = Com_sprintf(line, sizeof(line), "%2i %s%-*s" S_COLOR_WHITE " %2s %s\n", i, cl->name, max_namelength - SV_Strlen(cl->name), "", cl->tld, cl->country);
+    }
+    else
+    {
+      len = Com_sprintf(line, sizeof(line), "%2i %s%-*s %2s %s\n", i, cl->name, max_namelength - (qint)strlen(cl->name), "", cl->tld, cl->country);
+    }
+
+    if (s - buf + len >= sizeof(buf) - 1) //flush accumulated buffer
+    {
+      if (client)
+      {
+        NET_OutOfBandPrint(NS_SERVER, &client->netchan.remoteAddress, "print\n%s", buf);
+      }
+      else
+      {
+        Com_Printf("%s", buf);
+      }
+
+      s = buf;
+      *s = '\0';
+    }
+
+    s = Q_stradd(s, line);
+  }
+
+  if (buf[0])
+  {
+    if (client)
+    {
+      NET_OutOfBandPrint(NS_SERVER, &client->netchan.remoteAddress, "print\n%s", buf);
+    }
+    else
+    {
+      Com_Printf("%s", buf);
+    }
+  }
 }
 
 
@@ -3734,6 +4191,10 @@ SV_ExecuteClientCommand(client_t *cl, const qchar *s)
             }
           }
         }
+      }
+      else if (ucmd->func == SV_PrintLocations_f && !sv_clientTLD->integer)
+      {
+        continue; //bypass this command to the gamecode
       }
 
       ucmd->func(cl);

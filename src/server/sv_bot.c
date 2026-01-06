@@ -67,6 +67,9 @@ SV_BotAllocateClient(void)
   svs.clients[i].netchan.remoteAddress.type = NA_BOT;
   svs.clients[i].rate = 16384;
 
+  svs.clients[i].tld[0] = '\0';
+  svs.clients[i].country = "BOT";
+
   return i;
 }
 

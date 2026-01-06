@@ -405,12 +405,15 @@ client_s
   qint invalidValues; //checkedNumberType_t
   qint lastInvalidValuesWarning;
 
-  qbool justConnected;
-
   //flood protection
   rateLimit_t cmd_rate;
   rateLimit_t info_rate;
   rateLimit_t gamestate_rate;
+
+  qbool justConnected;
+
+  qchar tld[3]; //"XX\0"
+  const qchar *country;
 
 #if defined(GAMESTATE_OVERFLOW_FIX)
   qint maxEntityBaseline;
@@ -691,6 +694,11 @@ const qint
 SV_SendDownloadMessages(void);
 const qint
 SV_SendQueuedMessages(void);
+
+void
+SV_FreeIP4DB(void);
+void
+SV_PrintLocations_f(client_t *client);
 
 #if defined(USE_VOIP)
 void

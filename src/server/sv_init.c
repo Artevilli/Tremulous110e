@@ -1185,7 +1185,10 @@ SV_Shutdown(const qchar *finalmsg)
     SV_DemoStopPlayback();
   }
 
-  SV_ClearServer(); //free current level
+  //free current level
+  SV_ClearServer();
+
+  SV_FreeIP4DB();
 
   // free server static data
   if (svs.clients)
