@@ -4299,19 +4299,11 @@ Also called by bot code
 ==================
 */
 const void
-SV_ClientThink(qint client, usercmd_t *cmd)
+SV_ClientThink(client_t *cl, usercmd_t *cmd)
 {
-  client_t *cl;
   qchar info[MAX_INFO_STRING];
 
-  if (client < 0 || sv.maxclients <= client)
-  {
-    Com_DPrintf(S_COLOR_YELLOW "SV_ClientThink: bad clientNum %i\n", client);
-    return;
-  }
-
-  cl = &svs.clients[client];
-  svs.clients[client].lastUsercmd = *cmd;
+  cl->lastUsercmd = *cmd;
 
   if (cl->state != CS_ACTIVE)
   {
@@ -4485,7 +4477,7 @@ SV_UserMove(client_t *cl, msg_t *msg, qbool delta)
       continue;
     }
 
-    SV_ClientThink(ARRAY_INDEX(svs.clients, cl), &cmds[i]);
+    SV_ClientThink(cl, &cmds[i]);
   }
 }
 

@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/07/2026--**
 
+* server:<br />better client handling in `SV_UserMove` and `SV_ClientThink`
+
 * qcommon:<br />code cleanup
 
 **--01/06/2026--**

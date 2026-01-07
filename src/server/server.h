@@ -685,7 +685,7 @@ SV_SendClientGameState(client_t *client);
 qbool
 SV_ExecuteClientCommand(client_t *cl, const qchar *s);
 void
-SV_ClientThink(qint client, usercmd_t *cmd);
+SV_ClientThink(client_t *cl, usercmd_t *cmd);
 #if !defined(UDP_DOWNLOAD_OPTIMIZE)
 const qbool
 SV_WriteDownloadToClient(client_t *cl , msg_t *msg);
