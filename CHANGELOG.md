@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/07/2026--**
 
+* qcommon/server:<br />move `Q_strstrip` to `q_shared.c`, cleanup `Cmd_Args_Sanitize`
+
 * server:<br />clean up userinfo flood protection
 
 * server:<br />better client handling in `SV_UserMove` and `SV_ClientThink`

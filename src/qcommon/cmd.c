@@ -661,57 +661,6 @@ Cmd_ArgsBuffer(qchar *buffer, qint bufferLength)
 }
 
 /*
-  Description: Replace strip[x] in string with repl[x] or remove characters entirely
-  Mutates: string
-  Return: --
-  Examples: Q_strstrip("Bo\nb is h\rairy!!", "\n\r!", "123"); //"Bo1b is h2airy33"
-  Examples: Q_strstrip("Bo\nb is h\rairy!!", "\n\r!", "12"); //"Bo1b is h2airy"
-  Examples: Q_strstrip("Bo\nb is h\rairy!!", "\n\r!", NULL);	// "Bob is hairy"
-*/
-void
-Q_strstrip(qchar *string, const qchar *strip, const qchar *repl)
-{
-  qchar *out = string;
-  qchar *p = string;
-  qchar c;
-  const qchar *s = strip;
-  const qint replaceLen = repl ? strlen(repl):0;
-  qint offset = 0;
-  qbool recordChar = qtrue;
-
-  while((c = *p++) != '\0')
-  {
-    recordChar = qtrue;
-
-    for(s = strip;*s;s++)
-    {
-      offset = s - strip;
-
-      if (c == *s)
-      {
-        if (!repl || offset >= replaceLen)
-        {
-          recordChar = qfalse;
-        }
-        else
-        {
-          c = repl[offset];
-        }
-
-        break;
-      }
-    }
-
-    if (recordChar)
-    {
-      *out++ = c;
-    }
-  }
-
-  *out = '\0';
-}
-
-/*
 ============
 Cmd_Cmd
 
@@ -733,7 +682,7 @@ Cmd_Cmd(void)
   https://bugzilla.icculus.org/show_bug.cgi?id=4769
 */
 void
-Cmd_Args_Sanitize(void)
+Cmd_Args_Sanitize(const qchar *separators)
 {
   qint i;
 
@@ -741,31 +690,10 @@ Cmd_Args_Sanitize(void)
   {
     qchar *c = cmd_argv[i];
 
-    while((c = strpbrk(c, "\n\r;")) != NULL)
+    while((c = strpbrk(c, separators)) != NULL)
     {
       *c = ' ';
       ++c;
-    }
-  }
-}
-
-/*
-  Replace command separators with space to prevent interpretation
-  This is a hack to protect buggy qvms
-  https://bugzilla.icculus.org/show_bug.cgi?id=4769
-*/
-void
-Cmd_Args_Sanitize2(size_t length, const qchar *strip, const qchar *repl)
-{
-  qint i;
-
-  for(i = 1;i < cmd_argc;i++)
-  {
-    qchar *c = cmd_argv[i];
-
-    if (VALIDSTRING(strip) && VALIDSTRING(repl))
-    {
-      Q_strstrip(c, strip, repl);
     }
   }
 }

@@ -1126,6 +1126,8 @@ qint		Q_strncmp (const qchar *s1, const qchar *s2, qint n);
 qint		Q_stricmpn (const qchar *s1, const qchar *s2, qint n);
 qchar	*Q_strlwr( qchar *s1 );
 qchar	*Q_strupr( qchar *s1 );
+void
+Q_strstrip(qchar *string, const qchar *strip, const qchar *repl);
 qchar	*Q_strrchr( const qchar* string, qint c );
 qchar *
 Q_stradd(qchar *dst, const qchar *src);

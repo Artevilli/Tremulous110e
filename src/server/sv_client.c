@@ -4182,15 +4182,19 @@ SV_ExecuteClientCommand(client_t *cl, const qchar *s)
         return qfalse;
       }
 
-      Cmd_Args_Sanitize();
-
-      if (sv.gvm->forceDataMask || sv_filterCommands->integer)
+      if (sv.gvm->forceDataMask)
       {
-        Cmd_Args_Sanitize2(MAX_CVAR_VALUE_STRING, "\n\r", "  ");
-
-        if (sv.gvm->forceDataMask || sv_filterCommands->integer >= 2)
+        Cmd_Args_Sanitize("\n\r;"); //handle ';' for OSP
+      }
+      else if (sv_filterCommands->integer)
+      {
+        if (sv_filterCommands->integer >= 2)
         {
-          Cmd_Args_Sanitize2(MAX_CVAR_VALUE_STRING, ";", " "); //handle ';' for OSP
+          Cmd_Args_Sanitize("\n\r;");
+        }
+        else
+        {
+          Cmd_Args_Sanitize("\n\r");
         }
       }
 
