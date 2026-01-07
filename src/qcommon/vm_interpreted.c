@@ -752,12 +752,12 @@ nextInstruction2:
 
       case
       OP_CVIF:
-        *(float *)opStack = (float) r0.i;
+        *(float *)opStack = (float)r0.i;
         break;
 
       case
       OP_CVFI:
-        *opStack = (qint) r0.f;
+        *opStack = (qint)r0.f;
         break;
 
       case

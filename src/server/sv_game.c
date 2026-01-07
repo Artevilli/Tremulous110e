@@ -762,7 +762,8 @@ SV_GameSystemCalls(intptr_t *args)
     G_TESTPRINTFLOAT:
       return sprintf(VMA(1), "%f", VMF(2));
 
-    case G_SQL_RUNQUERY:
+    case
+    G_SQL_RUNQUERY:
       return sv_mysql_runquery(VMA(1));
 
     case

@@ -1603,7 +1603,7 @@ void *Z_Malloc( qint size ) {
 #endif
 	void	*buf;
 
-  //Z_CheckHeap ();	// DEBUG
+  //Z_CheckHeap();	// DEBUG
 
 #if defined(ZONE_DEBUG)
 	buf = Z_TagMallocDebug( size, TAG_GENERAL, label, file, line );
@@ -2813,13 +2813,13 @@ void Com_RunAndTimeServerPacket( const netadr_t *evFrom, msg_t *buf ) {
 	t1 = 0;
 
 	if ( com_speeds->integer ) {
-		t1 = Sys_Milliseconds ();
+		t1 = Sys_Milliseconds();
 	}
 
 	SV_ReadPackets( evFrom, buf );
 
 	if ( com_speeds->integer ) {
-		t2 = Sys_Milliseconds ();
+		t2 = Sys_Milliseconds();
 		msec = t2 - t1;
 		if ( com_speeds->integer == 3 ) {
 			Com_Printf( "SV_ReadPackets time: %i\n", msec );
@@ -3785,7 +3785,7 @@ void Com_Init( qchar *commandLine ) {
         Com_InitPushEvent();
 
 	Com_InitSmallZoneMemory();
-	Cvar_Init ();
+	Cvar_Init();
 
 #if defined(_WIN32) && defined(_DEBUG)
         com_noErrorInterrupt = Cvar_Get("com_noErrorInterrupt", "0", 0);
@@ -3795,8 +3795,8 @@ void Com_Init( qchar *commandLine ) {
 	// cvar and command buffer management
 	Com_ParseCommandLine( commandLine );
 
-//	Swap_Init ();
-	Cbuf_Init ();
+//	Swap_Init();
+	Cbuf_Init();
 
 	// override anything from the config files with command line args
 	Com_StartupVariable( NULL );
@@ -3830,6 +3830,8 @@ void Com_Init( qchar *commandLine ) {
 
 	Com_InitJournaling();
 
+        Com_ExecuteCfg();
+
         //FIXME: broken Com_CommandLineCheck(&Com_InitExecs);
 
         //add some commands here already so users can use them from config files
@@ -3846,8 +3848,6 @@ void Com_Init( qchar *commandLine ) {
         Cmd_AddCommand("changeVectors", MSG_ReportChangeVectors_f);
         Cmd_AddCommand("writeconfig", Com_WriteConfig_f);
         Cmd_SetCommandCompletionFunc("writeconfig", Cmd_CompleteWriteCfgName);
-
-	Com_ExecuteCfg();
 
 	// override anything from the config files with command line args
 	Com_StartupVariable( NULL );

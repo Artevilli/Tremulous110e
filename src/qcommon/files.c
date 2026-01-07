@@ -895,28 +895,14 @@ FS_FileExists(const qchar *file)
   FILE *f;
   qchar *testpath;
 
-  //search in homepath
   testpath = FS_BuildOSPath(fs_homepath->string, fs_gamedir, file);
+
   f = Sys_FOpen(testpath, "rb");
 
   if (f)
   {
     fclose(f);
     return qtrue;
-  }
-
-  //search in basepath
-  if (Q_stricmp(fs_homepath->string, fs_basepath->string))
-  {
-    testpath = FS_BuildOSPath(fs_basepath->string, file, "");
-    testpath[strlen(testpath) - 1] = '\0';
-    f = Sys_FOpen(testpath, "rb");
-
-    if (f)
-    {
-      fclose(f);
-      return qtrue;
-    }
   }
 
   return qfalse;

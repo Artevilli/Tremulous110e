@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--01/07/2026--**
+
+* qcommon:<br />code cleanup
+
 **--01/06/2026--**
 
 * qcommon:<br />allow VMs to specify serverinfo vars
