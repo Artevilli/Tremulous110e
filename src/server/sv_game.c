@@ -26,13 +26,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #if !defined(USE_JAVA)
 
-void
+static void
 SV_GameError(const qchar *string)
 {
   Com_Error(ERR_DROP, "%s", string);
 }
 
-void
+static void
 SV_GamePrint(const qchar *string)
 {
   Com_Printf("%s", string);
@@ -432,12 +432,12 @@ SV_GameSystemCalls(intptr_t *args)
   {
     case
     G_PRINT:
-      Com_Printf("%s", (const qchar*)VMA(1));
+      SV_GamePrint(VMA(1));
       return 0;
 
     case
     G_ERROR:
-      Com_Error(ERR_DROP, "%s", (const qchar*)VMA(1));
+      SV_GameError(VMA(1));
       return 0;
 
     case

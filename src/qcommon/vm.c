@@ -265,7 +265,7 @@ VM_CheckBounds2(const vm_t *vm, unsigned addr1, unsigned addr2, unsigned length)
 {
   //if (!vm->entryPoint)
   {
-    if ((addr1 | addr2 | length) > vm->dataMask || (addr1 + length) > vm->dataMask || (addr2+length) > vm->dataMask)
+    if ((addr1 | addr2 | length) > vm->dataMask || (addr1 + length) > vm->dataMask || (addr2 + length) > vm->dataMask)
     {
       Com_Error(ERR_DROP, "program tried to bypass data segment bounds");
     }
@@ -733,7 +733,7 @@ Load_JTS(vm_t *vm, uint32_t crc32, void *data, qint vmPakIndex)
     return -1;
   }
 
-  length -= sizeof(header); // skip header and filesize
+  length -= sizeof(header); //skip header and filesize
 
   //we need just filesize
   if (!data)

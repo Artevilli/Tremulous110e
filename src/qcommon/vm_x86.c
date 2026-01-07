@@ -455,7 +455,7 @@ emit_modrm_base_offset(uint32_t reg, uint32_t base, int32_t offset)
 
     if (modrm.s.r_m == 0x4 /*100*/)
     {
-      Emit1(0x24); // SIB: 00:100:100
+      Emit1(0x24); //SIB: 00:100:100
     }
 
     Emit4(offset);
@@ -847,7 +847,7 @@ mov_rx_imm32(uint32_t reg, int32_t imm32)
 }
 
 #if idx64
-// wrapper function
+//wrapper function
 static void
 mov_rx_imm64(uint32_t reg, int64_t imm64)
 {
@@ -3418,7 +3418,7 @@ load_sx_opstack(uint32_t pref)
     reg = alloc_sx(pref);
     rx = alloc_rx_local(R_ECX | RCONST, it->value);
 
-    emit_mov_sx_rx(reg, rx); // move from integer to scalar
+    emit_mov_sx_rx(reg, rx); //move from integer to scalar
 
     unmask_rx(rx);
 
@@ -4061,7 +4061,7 @@ EmitCallFunc(vm_t *vm)
   //allocate stack for shadow(win32)+parameters
   emit_op_rx_imm32(X_SUB, R_ESP | R_REX, SHADOW_BASE + PUSH_STACK + PARAM_STACK); //sub rsp, 200
 
-  emit_lea(R_EDX | R_REX, R_ESP, SHADOW_BASE); // lea rdx, [rsp + SHADOW_BASE]
+  emit_lea(R_EDX | R_REX, R_ESP, SHADOW_BASE); //lea rdx, [rsp + SHADOW_BASE]
 
   //save scratch registers
   emit_store_rx(R_ESI | R_REX, R_EDX, 0); //mov [rdx+00], rsi
@@ -4291,7 +4291,7 @@ EmitDATWFunc(vm_t *vm)
 {
   mov_rx_ptr(R_EAX, &badDataWritePtr); //mov eax, &badDataWritePtr
   EmitString("FF 10"); //call [eax]
-  emit_ret(); // ret
+  emit_ret(); //ret
 }
 
 
@@ -5097,7 +5097,7 @@ __compile:
 
   emit_load4(R_PSTACK, R_EAX, 0); //mov esi, dword ptr [rax]
 
-  emit_lea(R_OPSTACKTOP | R_REX, R_OPSTACK, sizeof(int32_t) * (MAX_OPSTACK_SIZE - 1)); // lea r15, [opStack + opStackSize - 4]
+  emit_lea(R_OPSTACKTOP | R_REX, R_OPSTACK, sizeof(int32_t) * (MAX_OPSTACK_SIZE - 1)); //lea r15, [opStack + opStackSize - 4]
 
   EmitCallOffset(FUNC_ENTR);
 
@@ -5129,7 +5129,7 @@ __compile:
   EmitCallOffset(FUNC_ENTR);
 
 #if defined(DEBUG_VM)
-  emit_store_rx_offset(R_PSTACK, (intptr_t)&vm->programStack); // mov [&vm->programStack], esi 
+  emit_store_rx_offset(R_PSTACK, (intptr_t)&vm->programStack); //mov [&vm->programStack], esi 
 #endif
 
   //emit_store_rx_offset(R_OPSTACK, (intptr_t)&vm->opStack); // // [&vm->opStack], edi
