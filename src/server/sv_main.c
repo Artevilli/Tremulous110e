@@ -2566,7 +2566,6 @@ SV_Frame(const qint msec)
   }
 
   SV_CheckTimeouts(); //check timeouts
-  SV_CheckClientUserinfoTimer(); //check user info buffer thingy
   SV_IssueNewSnapshot(); //reset current and build new snapshot on first query
   SV_SendClientMessages(); //send messages back to the clients
   SV_CheckCvars(); //Chey

@@ -1487,35 +1487,6 @@ SV_SendClientMessages(void)
 
 /*
 =======================
-SV_CheckClientUserinfoTimer
-=======================
-*/
-void
-SV_CheckClientUserinfoTimer(void)
-{
-  qint i;
-  client_t *cl;
-  qchar bigbuffer[MAX_INFO_STRING * 2];
-
-  for(i = 0, cl = svs.clients;i < sv.maxclients;i++, cl++)
-  {
-    if (!cl->state)
-    {
-      continue; //not connected
-    }
-
-    if (sv_userInfoFloodProtect->integer && svs.time >= cl->nextReliableUserTime && cl->state >= CS_ACTIVE && cl->userinfobuffer[0] != '\0')
-    {
-      //something in buffer so process it
-      Com_sprintf(bigbuffer, sizeof(bigbuffer), "userinfo \"%s\"", cl->userinfobuffer);
-      Cmd_TokenizeString(bigbuffer);
-      SV_UpdateUserinfo_f(cl);
-    }
-  }
-}
-
-/*
-=======================
 SV_IsValidClientSnapshot
 =======================
 */

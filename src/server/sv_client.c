@@ -2270,9 +2270,6 @@ SV_ClientEnterWorld(client_t *client)
   ent->s.number = clientNum;
   client->gentity = ent;
 
-  client->lastUserinfoChange = 0;
-  client->lastUserinfoCount = 0;
-
   client->deltaMessage = client->netchan.outgoingSequence - (PACKET_BACKUP + 1); //force delta reset
   //client->nextSnapshotTime = svs.time;	//generate a snapshot immediately
   client->lastSnapshotTime = svs.time - 9999; //generate a snapshot immediately
@@ -3869,63 +3866,25 @@ SV_UserinfoChanged(client_t *cl, const qbool updateUserinfo, const qbool runFilt
 SV_UpdateUserinfo_f
 ==================
 */
-#define INFO_CHANGE_MIN_INTERVAL 6000 //6 seconds is reasonable i suppose
-#define INFO_CHANGE_MAX_COUNT 3 //only 3 changes allowed in the 6 seconds
 const void
 SV_UpdateUserinfo_f(client_t *cl)
 {
-  qchar *arg = Cmd_Argv(1);
-  qchar info[MAX_INFO_STRING];
+  const qchar *info;
 
-  //stop random empty userinfo calls without hurting anything
-  if (!arg || !*arg)
+  info = Cmd_Argv(1);
+
+  if (Cmd_Argc() != 2 || *info == '\0')
   {
+    //this is something erroneous, client should never send that
     return;
   }
 
-  if (sv_userInfoFloodProtect->integer && cl->state >= CS_ACTIVE && svs.time < cl->nextReliableUserTime)
-  {
-    Q_strncpyz(cl->userinfobuffer, arg, sizeof(cl->userinfobuffer));
-    SV_SendServerCommand(cl, "print \"command delayed due to userinfo flood protection\n\"");
-    return;
-  }
+  Q_strncpyz(cl->userinfo, info, sizeof(cl->userinfo));
 
-  cl->userinfobuffer[0] = '\0';
-  cl->nextReliableUserTime = svs.time + 5000;
-
-  if (cl->lastUserinfoChange > svs.time)
-  {
-    cl->lastUserinfoCount++;
-
-    if (cl->lastUserinfoCount >= INFO_CHANGE_MAX_COUNT)
-    {
-      Q_strncpyz(cl->userinfoPostponed, arg, sizeof(cl->userinfoPostponed));
-      SV_SendServerCommand(cl, "print \"too many info changes last info postponed\n\"\n");
-      return;
-    }
-  }
-  else
-  {
-    cl->userinfoPostponed[0] = '\0';
-    cl->lastUserinfoCount = 0;
-    cl->lastUserinfoChange = svs.time + INFO_CHANGE_MIN_INTERVAL;
-  }
-
-  Q_strncpyz(cl->userinfo, arg, sizeof(cl->userinfo));
-  SV_FilterNameStringed(cl->userinfo);
   SV_UserinfoChanged(cl, qtrue, qtrue); //update userinfo, run filter
 
-  //prog code to allow overrides
-#if defined(USE_JAVA)
-  Java_G_ClientUserInfoChanged(ARRAY_INDEX(svs.clients, cl));
-#else
+  //call prog code to allow overrides
   VM_Call(sv.gvm, 1, GAME_CLIENT_USERINFO_CHANGED, ARRAY_INDEX(svs.clients, cl));
-#endif
-
-  //get name out of game and send to engine
-  SV_GetConfigstring(CS_PLAYERS + (ARRAY_INDEX(svs.clients, cl)), info, sizeof(info));
-  Info_SetValueForKey(cl->userinfo, "name", Info_ValueForKey(info, "n"));
-  Q_strncpyz(cl->name, Info_ValueForKey(info, "n"), sizeof(cl->name));
 }
 
 extern qint
@@ -4301,36 +4260,11 @@ Also called by bot code
 const void
 SV_ClientThink(client_t *cl, usercmd_t *cmd)
 {
-  qchar info[MAX_INFO_STRING];
-
   cl->lastUsercmd = *cmd;
 
   if (cl->state != CS_ACTIVE)
   {
     return; //may have been kicked during the last usercmd
-  }
-
-  if (cl->lastUserinfoCount >= INFO_CHANGE_MAX_COUNT && cl->lastUserinfoChange < svs.time && cl->userinfoPostponed[0])
-  {
-    Q_strncpyz(cl->userinfo, cl->userinfoPostponed, sizeof(cl->userinfo));
-    SV_UserinfoChanged(cl, qtrue, qfalse); //update userinfo, do not run filter
-
-    //call prog code to allow overrides
-#if defined(USE_JAVA)
-    Java_G_ClientUserInfoChanged(ARRAY_INDEX(svs.clients, cl));
-#else
-    VM_Call(sv.gvm, 1, GAME_CLIENT_USERINFO_CHANGED, ARRAY_INDEX(svs.clients, cl));
-#endif
-
-    //get the name out of the game and set it in the engine
-    SV_GetConfigstring(CS_PLAYERS + (ARRAY_INDEX(svs.clients, cl)), info, sizeof(info));
-    Info_SetValueForKey(cl->userinfo, "name", Info_ValueForKey(info, "n"));
-    Q_strncpyz(cl->name, Info_ValueForKey(info, "n"), sizeof(cl->name));
-
-    //clear it
-    cl->userinfoPostponed[0] = 0;
-    cl->lastUserinfoCount = 0;
-    cl->lastUserinfoChange = svs.time + INFO_CHANGE_MIN_INTERVAL;
   }
 
 #if defined(USE_JAVA)

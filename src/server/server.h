@@ -293,8 +293,6 @@ client_s
 {
   clientState_t	state;
   qchar userinfo[MAX_INFO_STRING]; //name, etc
-  qchar userinfobuffer[MAX_INFO_STRING]; //used for buffering of user info
-  qchar userinfoPostponed[MAX_INFO_STRING];
 
   qchar reliableCommands[MAX_RELIABLE_COMMANDS][MAX_STRING_CHARS];
   qint reliableSequence; //last added reliable message, not necesarily sent or acknowledged yet
