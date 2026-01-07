@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/06/2026--**
 
+* qcommon:<br />allow VMs to specify serverinfo vars
+
 * qcommon:<br />fix patch collide generation functions and code cleanup
 
 * qcommon:<br />allow VMs to specify systeminfo vars
