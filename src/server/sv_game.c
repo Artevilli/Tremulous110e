@@ -94,7 +94,7 @@ SV_GameSendServerCommand
 Sends a command string to a client
 ===============
 */
-void
+static void
 SV_GameSendServerCommand(qint clientNum, const qchar *text)
 {
   qint i;
@@ -142,7 +142,7 @@ SV_GameDropClient
 Disconnects the client with a message
 ===============
 */
-void
+static void
 SV_GameDropClient(qint clientNum, const qchar *reason)
 {
   if (clientNum < 0 || clientNum >= sv.maxclients)
@@ -161,7 +161,7 @@ SV_SetBrushModel
 sets mins and maxs for inline bmodels
 =================
 */
-void
+static void
 SV_SetBrushModel(sharedEntity_t *ent, const qchar *name)
 {
   clipHandle_t h;
@@ -198,7 +198,7 @@ SV_inPVS
 Also checks portalareas so that doors block sight
 =================
 */
-qbool
+static qbool
 SV_inPVS(const vec3_t p1, const vec3_t p2)
 {
   qint leafnum;
@@ -237,7 +237,7 @@ SV_inPVSIgnorePortals
 Does NOT check portalareas
 =================
 */
-qbool
+static qbool
 SV_inPVSIgnorePortals(const vec3_t p1, const vec3_t p2)
 {
   qint leafnum;
@@ -265,7 +265,7 @@ SV_inPVSIgnorePortals(const vec3_t p1, const vec3_t p2)
 SV_AdjustAreaPortalState
 ========================
 */
-void
+static void
 SV_AdjustAreaPortalState(sharedEntity_t *ent, qbool open)
 {
   svEntity_t *svEnt;
@@ -286,8 +286,8 @@ SV_AdjustAreaPortalState(sharedEntity_t *ent, qbool open)
 SV_GameAreaEntities
 ==================
 */
-qbool
-SV_EntityContact(vec3_t mins, vec3_t maxs, const sharedEntity_t *gEnt, traceType_t type)
+static qbool
+SV_EntityContact(const vec3_t mins, const vec3_t maxs, const sharedEntity_t *gEnt, const traceType_t type)
 {
   const float *origin;
   const float *angles;
@@ -310,7 +310,7 @@ SV_GetServerinfo
 
 ===============
 */
-void
+static void
 SV_GetServerinfo(qchar *buffer, qint bufferSize)
 {
   if (bufferSize < 1)
@@ -318,7 +318,14 @@ SV_GetServerinfo(qchar *buffer, qint bufferSize)
     Com_Error(ERR_DROP, "SV_GetServerinfo: bufferSize == %i", bufferSize);
   }
 
-  Q_strncpyz(buffer, Cvar_InfoString(CVAR_SERVERINFO, NULL), bufferSize);
+  if (sv.state != SS_GAME || !sv.configstrings[CS_SERVERINFO])
+  {
+    Q_strncpyz(buffer, Cvar_InfoString(CVAR_SERVERINFO, NULL), bufferSize);
+  }
+  else
+  {
+    Q_strncpyz(buffer, sv.configstrings[CS_SERVERINFO], bufferSize);
+  }
 }
 
 /*
@@ -330,6 +337,34 @@ SV_LocateGameData
 void
 SV_LocateGameData(sharedEntity_t *gEnts, qint numGEntities, qint sizeofGEntity_t, playerState_t *clients, qint sizeofGameClient)
 {
+  if (!sv.gvm->entryPoint)
+  {
+    if (numGEntities > MAX_GENTITIES)
+    {
+      Com_Error(ERR_DROP, "%s: bad entity count %i", __func__, numGEntities);
+    }
+    else
+    {
+      if (sizeofGEntity_t > sv.gvm->exactDataLength / numGEntities)
+      {
+        Com_Error(ERR_DROP, "%s: bad entity size %i", __func__, sizeofGEntity_t);	
+      }
+      else if ((byte *)gEnts + (numGEntities * sizeofGEntity_t) > (sv.gvm->dataBase + sv.gvm->exactDataLength))
+      {
+        Com_Error(ERR_DROP, "%s: entities located out of data segment", __func__);
+      }
+    }
+
+    if (sizeofGameClient > sv.gvm->exactDataLength / MAX_CLIENTS)
+    {
+      Com_Error(ERR_DROP, "%s: bad game client size %i", __func__, sizeofGameClient);	
+    }
+    else if ((byte *)clients + (sizeofGameClient * MAX_CLIENTS) > sv.gvm->dataBase + sv.gvm->exactDataLength)
+    {
+      Com_Error(ERR_DROP, "%s: clients located out of data segment", __func__);
+    }
+  }
+
   if (gEnts && (sizeofGEntity_t < (qint)sizeof(sharedEntity_t) || numGEntities < 0))
   {
     Com_Error(ERR_DROP, "SV_LocateGameData: incorrect game entity data");
@@ -338,11 +373,6 @@ SV_LocateGameData(sharedEntity_t *gEnts, qint numGEntities, qint sizeofGEntity_t
   if (clients && sizeofGameClient < (qint)sizeof(playerState_t))
   {
     Com_Error(ERR_DROP, "SV_LocateGameData: incorrect player state data");
-  }
-
-  if (numGEntities > MAX_GENTITIES)
-  {
-    Com_Error(ERR_DROP, "%s: bad entity size %i", __func__, sizeofGEntity_t);
   }
 
   sv.gentities = gEnts;
@@ -360,15 +390,17 @@ SV_GetUsercmd
 
 ===============
 */
-void
+static void
 SV_GetUsercmd(qint clientNum, usercmd_t *cmd)
 {
-  if (clientNum < 0 || clientNum >= sv.maxclients)
+  if ((unsigned)clientNum < sv.maxclients)
   {
-    Com_Error(ERR_DROP, "SV_GetUsercmd: bad clientNum:%i", clientNum);
+    *cmd = svs.clients[clientNum].lastUsercmd;
   }
-
-  *cmd = svs.clients[clientNum].lastUsercmd;
+  else
+  {
+    Com_Error(ERR_DROP, "%s(): bad clientNum: %i", __func__, clientNum);
+  }
 }
 
 //==============================================

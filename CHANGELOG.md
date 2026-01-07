@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/07/2026--**
 
+* server:<br />more sv_game.c fixes
+
 * qcommon/server:<br />use `SV_GameError` and `SV_GamePrint`, code formatting
 
 * qcommon/server:<br />move `Q_strstrip` to `q_shared.c`, cleanup `Cmd_Args_Sanitize`

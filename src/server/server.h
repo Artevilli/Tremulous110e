@@ -800,8 +800,6 @@ void
 SV_ShutdownGameProgs(void);
 void
 SV_RestartGameProgs(void);
-qbool
-SV_inPVS(const vec3_t p1, const vec3_t p2);
 
 #if defined(USE_JAVA)
 void
