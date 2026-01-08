@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/08/2026--**
 
+* qcommon:<br />fix bad debug if statement
+
 * makefile/qcommon:<br />removed unused vms
 
 * qcommon/server:<br />undo OpenWolf's modified va function
