@@ -66,7 +66,7 @@ void Netchan_Init( qint port ) {
 	port &= 0xffff;
 	showpackets = Cvar_GetAndDescribe("showpackets", "0", CVAR_TEMP, "Toggles infomation of all packets sent and received.");
 	showdrop = Cvar_GetAndDescribe("showdrop", "0", CVAR_TEMP, "Toggles information of dropped packet traffic.");
-	qport = Cvar_GetAndDescribe("net_qport", va(NULL, "%i", port), CVAR_INIT, "Set internal network port. This allows more than one person to play from behind a NAT router by using only one IP address.");
+	qport = Cvar_GetAndDescribe("net_qport", va("%i", port), CVAR_INIT, "Set internal network port. This allows more than one person to play from behind a NAT router by using only one IP address.");
 }
 
 /*

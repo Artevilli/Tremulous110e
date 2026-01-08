@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--01/08/2026--**
+
+* qcommon/server:<br />undo OpenWolf's modified va function
+
 **--01/07/2026--**
 
 * server:<br />more sv_game.c fixes

@@ -603,7 +603,7 @@ SV_CheckChallenge(const netadr_t *from)
 
   if (strlen(Cmd_Argv(1)) > 128)
   {
-    SV_WriteAttackLog(va(NULL, "SVC_Info: challenge length exceeded from %s dropping request\n", NET_AdrToString(from)));
+    SV_WriteAttackLog(va("SVC_Info: challenge length exceeded from %s dropping request\n", NET_AdrToString(from)));
     return qfalse;
   }
 
@@ -2142,7 +2142,7 @@ SV_SendClientGameState(client_t *client)
         qchar systemInfo[BIG_INFO_STRING];
 
         Q_strncpyz(systemInfo, sv.configstrings[start], sizeof(systemInfo));
-        Info_SetValueForKey_s(systemInfo, sizeof(systemInfo), "sv_pure", va(NULL, "%i", sv.pure));
+        Info_SetValueForKey_s(systemInfo, sizeof(systemInfo), "sv_pure", va("%i", sv.pure));
         MSG_WriteBigString(&msg, systemInfo);
       }
       else
@@ -3856,7 +3856,7 @@ SV_UserinfoChanged(client_t *cl, const qbool updateUserinfo, const qbool runFilt
 
   if (SV_CheckFunstuffExploit(cl->userinfo, "funfree") || SV_CheckFunstuffExploit(cl->userinfo, "funred") || SV_CheckFunstuffExploit(cl->userinfo, "funblue"))
   {
-    SV_WriteAttackLog(va(NULL, "funstuff exploit attempt from %s\n", NET_AdrToString(&cl->netchan.remoteAddress)));
+    SV_WriteAttackLog(va("funstuff exploit attempt from %s\n", NET_AdrToString(&cl->netchan.remoteAddress)));
   }
 }
 

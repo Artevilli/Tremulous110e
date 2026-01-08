@@ -239,8 +239,8 @@ SV_SendServerCommand(client_t *cl, const qchar *fmt, ...)
   //the actual cause of the bug is probably further downstream and should maybe be addressed later, but this certainly fixes the problem for now
   if (len > 1022)
   {
-    SV_WriteAttackLog(va(NULL, "SV_SendServerCommand(%d, %.20s...) length %ld > 1022 dropping to avoid buffer overflow\n", ARRAY_INDEX(svs.clients, cl), message, strlen(message)));
-    SV_WriteAttackLog(va(NULL, "full message [%s]\n", message));
+    SV_WriteAttackLog(va("SV_SendServerCommand(%d, %.20s...) length %ld > 1022 dropping to avoid buffer overflow\n", ARRAY_INDEX(svs.clients, cl), message, strlen(message)));
+    SV_WriteAttackLog(va("full message [%s]\n", message));
     return;
   }
 
@@ -732,7 +732,7 @@ SVC_BucketForAddress(const netadr_t *address, const unsigned burst, const unsign
   }
 
   //could not allocate a bucket for this address so write to attack log since it is relevant info
-  SV_WriteAttackLogD(va(NULL, "SVC_BucketForAddress: couldnt allocate bucket for client %s\n", NET_AdrToString(address)));
+  SV_WriteAttackLogD(va("SVC_BucketForAddress: couldnt allocate bucket for client %s\n", NET_AdrToString(address)));
   return NULL;
 }
 
@@ -767,7 +767,7 @@ SVC_RateLimit(rateLimit_t *bucket, const unsigned burst, const unsigned period, 
     return qfalse;
   }
 
-  SV_WriteAttackLogD(va(NULL, "SVC_RateLimit: burst limit exceeded for bucket %i limit %i\n", bucket->burst, burst));
+  SV_WriteAttackLogD(va("SVC_RateLimit: burst limit exceeded for bucket %i limit %i\n", bucket->burst, burst));
   return qtrue;
 }
 
@@ -1062,14 +1062,14 @@ SVC_Status(const netadr_t *from)
   //Chey: bugtraq 12534
   if (!SVC_VerifyChallenge(Cmd_Argv(1)))
   {
-    SV_WriteAttackLog(va(NULL, "SVC_Status: invalid challenge from %s, dropping request\n", NET_AdrToString(from)));
+    SV_WriteAttackLog(va("SVC_Status: invalid challenge from %s, dropping request\n", NET_AdrToString(from)));
     return;
   }
 
   //max challenge of 128
   if (strlen(Cmd_Argv(1)) > 128)
   {
-    SV_WriteAttackLog(va(NULL, "SVC_Status: challenge length exceeded from %s, dropping request\n", NET_AdrToString(from)));
+    SV_WriteAttackLog(va("SVC_Status: challenge length exceeded from %s, dropping request\n", NET_AdrToString(from)));
     return;
   }
 
@@ -1128,7 +1128,7 @@ SVC_Info(const netadr_t *from)
   //Chey: bugtraq 12534
   if (!SVC_VerifyChallenge(Cmd_Argv(1)))
   {
-    SV_WriteAttackLog(va(NULL, "svc info invalid challenge from %s dropping request\n", NET_AdrToString(from)));
+    SV_WriteAttackLog(va("svc info invalid challenge from %s dropping request\n", NET_AdrToString(from)));
     return;
   }
 
@@ -1140,7 +1140,7 @@ SVC_Info(const netadr_t *from)
   //a maximum challenge length of 128 should be more than plenty
   if (strlen(Cmd_Argv(1)) > 128)
   {
-    SV_WriteAttackLog(va(NULL, "svc info challenge length exceeded from %s dropping request\n", NET_AdrToString(from)));
+    SV_WriteAttackLog(va("svc info challenge length exceeded from %s dropping request\n", NET_AdrToString(from)));
     return;
   }
 
@@ -1158,40 +1158,40 @@ SVC_Info(const netadr_t *from)
   infostring[0] = '\0';
   //echo back the parameter to status. so servers can use it as a challenge to prevent timed spoofed reply packets that add ghost servers
   Info_SetValueForKey(infostring, "challenge", Cmd_Argv(1));
-  Info_SetValueForKey(infostring, "protocol", va(NULL, "%i", PROTOCOL_VERSION));
+  Info_SetValueForKey(infostring, "protocol", va("%i", PROTOCOL_VERSION));
   Info_SetValueForKey(infostring, "hostname", sv_hostname->string);
-  Info_SetValueForKey(infostring, "serverload", va(NULL, "%i", svs.serverLoad)); //Chey: included in SV_Status_f
+  Info_SetValueForKey(infostring, "serverload", va("%i", svs.serverLoad)); //Chey: included in SV_Status_f
 
   if (sv_cpuusagepublic->integer)
   {
-    Info_SetValueForKey(infostring, "cpuusage", va(NULL, "%lf", svs.stats.cpu));
+    Info_SetValueForKey(infostring, "cpuusage", va("%lf", svs.stats.cpu));
   }
 
   if (sv_avgframetimepublic->integer)
   {
-    Info_SetValueForKey(infostring, "avgframetime", va(NULL, "%lf", svs.stats.avg));
+    Info_SetValueForKey(infostring, "avgframetime", va("%lf", svs.stats.avg));
   }
 
   Info_SetValueForKey(infostring, "mapname", sv_mapname->string);
-  Info_SetValueForKey(infostring, "clients", va(NULL, "%i", count));
-  Info_SetValueForKey(infostring, "sv_maxclients", va(NULL, "%i", sv.maxclients - sv_privateClients->integer - sv_democlients->integer));
-  Info_SetValueForKey(infostring, "pure", va(NULL, "%i", sv.pure));
+  Info_SetValueForKey(infostring, "clients", va("%i", count));
+  Info_SetValueForKey(infostring, "sv_maxclients", va("%i", sv.maxclients - sv_privateClients->integer - sv_democlients->integer));
+  Info_SetValueForKey(infostring, "pure", va("%i", sv.pure));
   Info_SetValueForKey(infostring, "gamename", GAMENAME_FOR_MASTER);
 
 #if defined(USE_VOIP)
     if (sv_voip->integer)
     {
-      Info_SetValueForKey(infostring, "voip", va(NULL, "%i", sv_voip->integer));
+      Info_SetValueForKey(infostring, "voip", va("%i", sv_voip->integer));
     }
 #endif
 #if defined(INCLUDE_LEGACY_CHALLENGE)
   if (sv_minPing->integer)
   {
-    Info_SetValueForKey(infostring, "minPing", va(NULL, "%i", sv_minPing->integer));
+    Info_SetValueForKey(infostring, "minPing", va("%i", sv_minPing->integer));
   }
   if (sv_maxPing->integer)
   {
-    Info_SetValueForKey(infostring, "maxPing", va(NULL, "%i", sv_maxPing->integer));
+    Info_SetValueForKey(infostring, "maxPing", va("%i", sv_maxPing->integer));
   }
 #endif
   gamedir = Cvar_VariableString("fs_game");
@@ -1364,7 +1364,7 @@ SVC_CheckDRDoS(const netadr_t *from)
 
       if (!ban->flood && ((svs.time - ban->time) >= 3000) && ban->count <= 5)
       {
-        SV_WriteAttackLog(va(NULL, "unban info flood protect for address %s not flooding\n", NET_AdrToString(from)));
+        SV_WriteAttackLog(va("unban info flood protect for address %s not flooding\n", NET_AdrToString(from)));
         Com_Memset(ban, 0, sizeof(floodBan_t));
         oldestBan = i;
         break;
@@ -1372,7 +1372,7 @@ SVC_CheckDRDoS(const netadr_t *from)
 
       if (ban->count >= 180)
       {
-        SV_WriteAttackLog(va(NULL, "renewing info flood ban for address %s received %i getinfo or getstatus requests in %i milliseconds\n", NET_AdrToString(from), ban->count, svs.time - ban->time));
+        SV_WriteAttackLog(va("renewing info flood ban for address %s received %i getinfo or getstatus requests in %i milliseconds\n", NET_AdrToString(from), ban->count, svs.time - ban->time));
         ban->time = svs.time;
         ban->count = 0;
         ban->flood = qtrue;
@@ -1421,7 +1421,7 @@ SVC_CheckDRDoS(const netadr_t *from)
 
   if (specificCount >= 3) //sent three to ip in last two seconds
   {
-    SV_WriteAttackLog(va(NULL, "possible drdos from address %s add to temp getinfo and getstatus ban list\n", NET_AdrToString(from)));
+    SV_WriteAttackLog(va("possible drdos from address %s add to temp getinfo and getstatus ban list\n", NET_AdrToString(from)));
     ban = &svs.infoFloodBans[oldestBan];
     ban->adr = modifiedFrom;
     ban->time = svs.time;
@@ -1511,7 +1511,7 @@ SVC_RemoteCommand(const netadr_t *from, msg_t *msg)
   {
     valid = qtrue;
     Com_Printf("rcon from %s: %s\n", NET_AdrToString(from), Cmd_ArgsFrom(2));
-    SV_WriteAttackLog(va(NULL, "rcon from %s: %s\n", NET_AdrToString(from), Cmd_Argv(2)));
+    SV_WriteAttackLog(va("rcon from %s: %s\n", NET_AdrToString(from), Cmd_Argv(2)));
   }
 
   if (strlen(sv_rconLog->string))
@@ -1530,12 +1530,12 @@ SVC_RemoteCommand(const netadr_t *from, msg_t *msg)
   if (!strlen(sv_rconPassword->string) || strcmp(Cmd_Argv(1), sv_rconPassword->string))
   {
     valid2 = qfalse;
-    message = va(NULL, "bad rcon from %s: %s\n", NET_AdrToString(from), Cmd_ArgsFrom(2));
+    message = va("bad rcon from %s: %s\n", NET_AdrToString(from), Cmd_ArgsFrom(2));
   }
   else
   {
     valid2 = qtrue;
-    message = va(NULL, "rcon from %s: %s\n", NET_AdrToString(from), Cmd_ArgsFrom(2));
+    message = va("rcon from %s: %s\n", NET_AdrToString(from), Cmd_ArgsFrom(2));
   }
 
   Com_Printf("%s", message);
@@ -1544,7 +1544,7 @@ SVC_RemoteCommand(const netadr_t *from, msg_t *msg)
   {
     qtime_t qt;
     Com_RealTime(&qt);
-    const qchar *timestamp = va(NULL, "%02i/%02i/%02i %02i:%02i:%02i ", qt.tm_mday, qt.tm_mon, qt.tm_year - 100, qt.tm_hour, qt.tm_min, qt.tm_sec);
+    const qchar *timestamp = va("%02i/%02i/%02i %02i:%02i:%02i ", qt.tm_mday, qt.tm_mon, qt.tm_year - 100, qt.tm_hour, qt.tm_min, qt.tm_sec);
     FS_Write(timestamp, strlen(timestamp), rconLog);
     FS_Write(message, strlen(message), rconLog);
     FS_FCloseFile(rconLog);
@@ -1562,7 +1562,7 @@ SVC_RemoteCommand(const netadr_t *from, msg_t *msg)
   else if (!valid || !valid2)
   {
     Com_Printf("bad rcon password\n");
-    SV_WriteAttackLog(va(NULL, "bad rcon password from %s\n", NET_AdrToString(from)));
+    SV_WriteAttackLog(va("bad rcon password from %s\n", NET_AdrToString(from)));
   }
   else
   {
@@ -1710,14 +1710,14 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
     //this will print every 5 'period' msecs
     if (dropped[cmd] > 0 && lastMsg[cmd] + 5000 < now)
     {
-      SV_WriteAttackLog(va(NULL, "%s: \"%s\" rate limit exceeded, dropped %d request%s\n", __func__, commands[cmd], dropped[cmd], dropped[cmd] == 1 ? "":"s"));
+      SV_WriteAttackLog(va("%s: \"%s\" rate limit exceeded, dropped %d request%s\n", __func__, commands[cmd], dropped[cmd], dropped[cmd] == 1 ? "":"s"));
       dropped[cmd] = 0;
       lastMsg[cmd] = now;
     }
 
     if (droppedAdr > 0 && lastMsgAdr + 5000 < now)
     {
-      SV_WriteAttackLog(va(NULL, "%s: IP rate limit exceeded, dropped %d request%s\n", __func__, droppedAdr, droppedAdr == 1 ? "":"s"));
+      SV_WriteAttackLog(va("%s: IP rate limit exceeded, dropped %d request%s\n", __func__, droppedAdr, droppedAdr == 1 ? "":"s"));
       droppedAdr = 0;
       lastMsgAdr = now;
     }
@@ -1801,7 +1801,7 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
       break;
 
     default:
-      SV_WriteAttackLog(va(NULL, "bad connectionless packet from %s:\n%s\n", NET_AdrToString(from), s)); //changed from com dprintf to print in attack log and do com printf if attack log not set
+      SV_WriteAttackLog(va("bad connectionless packet from %s:\n%s\n", NET_AdrToString(from), s)); //changed from com dprintf to print in attack log and do com printf if attack log not set
       break;
   }
 }
@@ -2223,7 +2223,7 @@ SV_IntegerOverflowShutDown(const qchar *msg)
   Q_strncpyz(mapName, Cvar_VariableString("mapname"), sizeof(mapName));
 
   SV_Shutdown(msg);
-  Cbuf_AddText(va(NULL, "map %s\n", mapName));
+  Cbuf_AddText(va("map %s\n", mapName));
 }
 
 /*
@@ -2245,7 +2245,7 @@ SV_UpdateQueue(void)
   {
     if (svs.time - lastQueue[i] > 4000)
     {
-      SV_WriteAttackLog(va(NULL, "queue position %d for %s timed out - %d ms\n", i, NET_AdrToString(&queue[i]), svs.time - lastQueue[i]));
+      SV_WriteAttackLog(va("queue position %d for %s timed out - %d ms\n", i, NET_AdrToString(&queue[i]), svs.time - lastQueue[i]));
       continue;
     }
 
@@ -2315,7 +2315,7 @@ SV_TrackCvarChanges(void)
 
   if (sv_cl_fps->integer != sv_fps->integer)
   {
-    Cvar_Set("sv_cl_fps", va(NULL, "%i", sv_fps->integer));
+    Cvar_Set("sv_cl_fps", va("%i", sv_fps->integer));
   }
 
   Cvar_ResetGroup(CVG_SERVER, qfalse);
@@ -2415,7 +2415,7 @@ SV_Frame(const qint msec)
   //don't let it scale below 1ms
   if (frameMsec < 1)
   {
-    Cvar_Set("timescale", va(NULL, "%f", sv_fps->integer / 1000.0f));
+    Cvar_Set("timescale", va("%f", sv_fps->integer / 1000.0f));
     frameMsec = 1;
   }
 
@@ -2467,7 +2467,7 @@ SV_Frame(const qint msec)
 
   if (minRebootTimeCvar < minRebootTimeConst)
   {
-    Cvar_Set("sv_minRebootDelayMins", va(NULL, "%d", minRebootTimeConst / (60 * 1000)));
+    Cvar_Set("sv_minRebootDelayMins", va("%d", minRebootTimeConst / (60 * 1000)));
   }
 
   //if time is about to hit the 32nd bit, kick all clients and clear sv.time, rather than checking for negative time wraparound everywhere. 2giga-milliseconds = 23 days, so it won't be too often

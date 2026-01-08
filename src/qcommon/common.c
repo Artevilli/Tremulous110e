@@ -406,7 +406,7 @@ Com_Error(errorParm_t code, const qchar *fmt, ...)
   {
     Com_Printf("********************\nERROR: %s\n********************\n", com_errorMessage);
     VM_Forced_Unload_Start();
-    SV_Shutdown(va(NULL, "Server crashed: %s",  com_errorMessage));
+    SV_Shutdown(va("Server crashed: %s",  com_errorMessage));
     Com_EndRedirect();
 #if !defined(DEDICATED)
     CL_Disconnect(qfalse);
@@ -446,9 +446,9 @@ Com_Error(errorParm_t code, const qchar *fmt, ...)
   {
     VM_Forced_Unload_Start();
 #if !defined(DEDICATED)
-    CL_Shutdown(va(NULL, "Server fatal crashed: %s", com_errorMessage));
+    CL_Shutdown(va("Server fatal crashed: %s", com_errorMessage));
 #endif
-    SV_Shutdown(va(NULL, "Server fatal crashed: %s", com_errorMessage));
+    SV_Shutdown(va("Server fatal crashed: %s", com_errorMessage));
     Com_EndRedirect();
     VM_Forced_Unload_Done();
   }
@@ -1904,7 +1904,7 @@ static void Zone_Stats( const qchar *name, const memzone_t *z, qbool printDetail
 		if ( printDetails ) {
 			qint tag = block->tag;
 			Com_Printf( "block:%p  size:%8i  tag: %s\n", (void *)block, block->size,
-				(unsigned)tag < TAG_COUNT ? tagName[ tag ] : va( NULL, "%i", tag ) );
+				(unsigned)tag < TAG_COUNT ? tagName[ tag ] : va( "%i", tag ) );
 		}
 		if ( block->tag != TAG_FREE ) {
 			st.zoneBytes += block->size;
@@ -1994,7 +1994,7 @@ static void Com_Meminfo_f( void ) {
 	Zone_Stats( "main", mainzone, !Q_stricmp( Cmd_Argv(1), "main" ) || !Q_stricmp( Cmd_Argv(1), "all" ), &st );
 	Com_Printf( "%8i bytes total main zone\n\n", mainzone->size );
 	Com_Printf( "%8i bytes in %i main zone blocks%s\n", st.zoneBytes, st.zoneBlocks,
-		st.zoneSegments > 1 ? va( NULL, " and %i segments", st.zoneSegments ) : "" );
+		st.zoneSegments > 1 ? va( " and %i segments", st.zoneSegments ) : "" );
 	Com_Printf( "        %8i bytes in botlib\n", st.botlibBytes );
 	Com_Printf( "        %8i bytes in renderer\n", st.rendererBytes );
 	Com_Printf( "        %8i bytes in other\n", st.zoneBytes - ( st.botlibBytes + st.rendererBytes ) );
@@ -2006,7 +2006,7 @@ static void Com_Meminfo_f( void ) {
 	Zone_Stats( "small", smallzone, !Q_stricmp( Cmd_Argv(1), "small" ) || !Q_stricmp( Cmd_Argv(1), "all" ), &st );
 	Com_Printf( "%8i bytes total small zone\n\n", smallzone->size );
 	Com_Printf( "%8i bytes in %i small zone blocks%s\n", st.zoneBytes, st.zoneBlocks,
-		st.zoneSegments > 1 ? va( NULL, " and %i segments", st.zoneSegments ) : "" );
+		st.zoneSegments > 1 ? va( " and %i segments", st.zoneSegments ) : "" );
 	Com_Printf( "        %8i bytes in %i free blocks\n", st.freeBytes, st.freeBlocks );
 	if ( st.freeBlocks > 1 ) {
 		Com_Printf( "        (largest: %i bytes, smallest: %i bytes)\n\n", st.freeLargest, st.freeSmallest );
@@ -3752,7 +3752,7 @@ Com_InitExecs(void)
     return qfalse;
   }
 
-  Cbuf_AddText(va(NULL, "%s\n", Cmd_ArgsFrom(0)));
+  Cbuf_AddText(va("%s\n", Cmd_ArgsFrom(0)));
   return qtrue;
 }
 #endif
@@ -3936,7 +3936,7 @@ void Com_Init( qchar *commandLine ) {
 
 	Cmd_AddCommand("game_restart", Com_GameRestart_f);
 
-	const qchar *s = va(NULL, "%s %s %s", Q3_VERSION, PLATFORM_STRING, __DATE__ );
+	const qchar *s = va("%s %s %s", Q3_VERSION, PLATFORM_STRING, __DATE__ );
 	com_version = Cvar_GetAndDescribe("version", s, CVAR_PROTECTED | CVAR_ROM | CVAR_SERVERINFO, "Read-only CVAR to see the version of the game.");
 
 	Sys_Init();

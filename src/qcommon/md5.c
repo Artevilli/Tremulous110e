@@ -313,7 +313,7 @@ qchar *Com_MD5File( const qchar *fn, qint length, const qchar *prefix, qint pref
 	MD5Final(&md5, digest);
 	final[0] = '\0';
 	for(i = 0; i < 16; i++) {
-		Q_strcat(final, sizeof(final), va(NULL, "%02X", digest[i]));
+		Q_strcat(final, sizeof(final), va("%02X", digest[i]));
 	}
 	return final;
 }

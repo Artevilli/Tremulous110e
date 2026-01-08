@@ -120,10 +120,10 @@ SV_InitCvars(void)
   Cvar_Get("dmflags", "0", CVAR_ARCHIVE | CVAR_SERVERINFO);
   Cvar_Get("timelimit", "0", CVAR_SERVERINFO);
   Cvar_Get ("sv_keywords", "", CVAR_SERVERINFO);
-  Cvar_Get("protocol", va(NULL, "%i", PROTOCOL_VERSION), CVAR_SERVERINFO | CVAR_ROM);
+  Cvar_Get("protocol", va("%i", PROTOCOL_VERSION), CVAR_SERVERINFO | CVAR_ROM);
   sv_mapname = Cvar_GetAndDescribe("mapname", "nomap", CVAR_SERVERINFO | CVAR_ROM, "Display the name of the current map being used on the server.");
   sv_privateClients = Cvar_GetAndDescribe("sv_privateClients", "0", CVAR_SERVERINFO, "The number of spots out of sv_maxclients reserved for players with the server password set by sv_privatePassword, also the number of bot slots for ^1Z^7.");
-  Cvar_CheckRange(sv_privateClients, "0", va(NULL, "%i", MAX_CLIENTS - 1), CV_INTEGER);
+  Cvar_CheckRange(sv_privateClients, "0", va("%i", MAX_CLIENTS - 1), CV_INTEGER);
   sv_hostname = Cvar_GetAndDescribe("sv_hostname", "noname", CVAR_SERVERINFO | CVAR_ARCHIVE, "Sets the name of the server.");
   sv_maxclients = Cvar_GetAndDescribe("sv_maxclients", "8", CVAR_SERVERINFO | CVAR_LATCH, "Maximum number of people allowed to join the server.");
   Cvar_CheckRange(sv_maxclients, "1", XSTRING(MAX_CLIENTS), CV_INTEGER);
@@ -162,9 +162,9 @@ SV_InitCvars(void)
   sv_novis = Cvar_GetAndDescribe("sv_novis", "0", CVAR_ARCHIVE, "Toggle whether or not to skip the pvs check when transmitting entities.");
   sv_cpuusagepublic = Cvar_GetAndDescribe("sv_cpuusagepublic", "0", CVAR_ARCHIVE, "Toggle whether or not to publicly display server cpu usage in getinfo responses.");
   sv_avgframetimepublic = Cvar_GetAndDescribe("sv_avgframetimepublic", "0", CVAR_ARCHIVE, "Toggle whether or not to publicly display the average frame response time in getinfo responses.");
-  sv_warningscpu = Cvar_GetAndDescribe("sv_warningscpu", "70", CVAR_ARCHIVE, va(NULL, "Sets the desired percentage value before cpu usage warnings begin appearing.\nNOTE: Falls back to %i if not set!", CPU_USAGE_WARNING));
+  sv_warningscpu = Cvar_GetAndDescribe("sv_warningscpu", "70", CVAR_ARCHIVE, va("Sets the desired percentage value before cpu usage warnings begin appearing.\nNOTE: Falls back to %i if not set!", CPU_USAGE_WARNING));
   Cvar_CheckRange(sv_warningscpu, "0", "100", CV_INTEGER);
-  sv_warningsframetime = Cvar_GetAndDescribe("sv_warningsframetime", "30", CVAR_ARCHIVE, va(NULL, "Sets the desired value the average frame time has to go over before warnings begin appearing.\nNOTE: Falls back to %i if not set!", FRAME_TIME_WARNING));
+  sv_warningsframetime = Cvar_GetAndDescribe("sv_warningsframetime", "30", CVAR_ARCHIVE, va("Sets the desired value the average frame time has to go over before warnings begin appearing.\nNOTE: Falls back to %i if not set!", FRAME_TIME_WARNING));
   Cvar_CheckRange(sv_warningsframetime, "0", "100", CV_INTEGER);
   sv_floodWait = Cvar_GetAndDescribe("sv_floodWait", "500", CVAR_ARCHIVE | CVAR_SERVERINFO, "Time in milliseconds that a client has to wait before sending another client command.");
   sv_floodLimit = Cvar_GetAndDescribe("sv_floodLimit", "8", CVAR_ARCHIVE | CVAR_SERVERINFO, "The number of client commands a client is allowed to send before flood protection triggers.");
@@ -218,7 +218,7 @@ SV_InitCvars(void)
   //master servers
   for(index = 0;index < MAX_MASTER_SERVERS;index++)
   {
-    sv_master[index] = Cvar_Get(va(NULL, "sv_master%d", index + 1), "", CVAR_ARCHIVE_ND | CVAR_PROTECTED);
+    sv_master[index] = Cvar_Get(va("sv_master%d", index + 1), "", CVAR_ARCHIVE_ND | CVAR_PROTECTED);
   }
 
   sv_reconnectlimit = Cvar_GetAndDescribe("sv_reconnectlimit", "3", 0, "Number of seconds a disconnected client should wait before next reconnect.");

@@ -715,7 +715,7 @@ SV_SpawnServer(const qchar *server, qbool killBots)
   Com_RandomBytes((byte*)&sv.checksumFeed, sizeof(sv.checksumFeed));
   FS_Restart(sv.checksumFeed);
 
-  CM_LoadMap(va(NULL, "maps/%s.bsp", server), qfalse, &checksum);
+  CM_LoadMap(va("maps/%s.bsp", server), qfalse, &checksum);
 
   //set serverinfo visible name
   Cvar_Set("mapname", server);
@@ -925,7 +925,7 @@ SV_SpawnServer(const qchar *server, qbool killBots)
   if (sv_autoDemo->integer)
   {
     Com_RealTime(&now);
-    Cbuf_AddText(va(NULL, "demo_record %04d%02d%02d%02d%02d%02d-%s\n", 1900 + now.tm_year, 1 + now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec, server));
+    Cbuf_AddText(va("demo_record %04d%02d%02d%02d%02d%02d-%s\n", 1900 + now.tm_year, 1 + now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec, server));
   }
 }
 

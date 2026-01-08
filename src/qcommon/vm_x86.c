@@ -4937,7 +4937,7 @@ EmitMOPs(vm_t *vm, instruction_t *ci, macro_op_t op)
 static void
 dump_code(const qchar *vmname, uint8_t *c, int32_t code_len)
 {
-  const qchar *filename = va(NULL, "vm-%s.hex", vmname);
+  const qchar *filename = va("vm-%s.hex", vmname);
   fileHandle_t fh = FS_FOpenFileWrite(filename);
 
   if (fh != FS_INVALID_HANDLE)

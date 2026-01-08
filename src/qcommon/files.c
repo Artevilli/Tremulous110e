@@ -5243,7 +5243,7 @@ FS_ComparePaks(qchar *neededpaks, qint len, qbool dlstring)
         Q_strcat(neededpaks, len, "@");
 
         //do we have one with the same name?
-        if (FS_SV_FileExists(va(NULL, "%s.pk3", fs_serverReferencedPakNames[i])))
+        if (FS_SV_FileExists(va("%s.pk3", fs_serverReferencedPakNames[i])))
         {
           qchar st[MAX_ZPATH];
           //we already have one called this, we need to download it to another name
@@ -5271,7 +5271,7 @@ FS_ComparePaks(qchar *neededpaks, qint len, qbool dlstring)
         Q_strcat(neededpaks, len, ".pk3");
 
         //do we have one with the same name?
-        if (FS_SV_FileExists(va(NULL, "%s.pk3", fs_serverReferencedPakNames[i])))
+        if (FS_SV_FileExists(va("%s.pk3", fs_serverReferencedPakNames[i])))
         {
           Q_strcat(neededpaks, len, " (local file exists with wrong checksum)");
         }
@@ -5910,7 +5910,7 @@ FS_ReferencedPakChecksums(void)
 
       if (search->pack->referenced || Q_stricmp(search->pack->pakGamename, fs_basegame->string)) 
       {
-        Q_strcat(info, sizeof(info), va(NULL, "%i ", search->pack->checksum));
+        Q_strcat(info, sizeof(info), va("%i ", search->pack->checksum));
       }
     }
   }
@@ -5965,7 +5965,7 @@ FS_ReferencedPakPureChecksums(qint maxlen)
       //is the element a pak file and has it been referenced based on flag?
       if (search->pack && (search->pack->referenced & nFlags))
       {
-        s = Q_stradd(s, va(NULL, "%i ", search->pack->pure_checksum));
+        s = Q_stradd(s, va("%i ", search->pack->pure_checksum));
 
         if (s > max) //clientside overflow
         {
@@ -6026,7 +6026,7 @@ FS_ExcludeReference(void)
         continue;
       }
 
-      pakName = va(NULL, "%s/%s", search->pack->pakGamename, search->pack->pakBasename);
+      pakName = va("%s/%s", search->pack->pakGamename, search->pack->pakBasename);
 
       for(i = 0;i < nargs;i++)
       {
@@ -6073,7 +6073,7 @@ FS_ReferencedPakNames(void)
 
       if (search->pack->referenced || Q_stricmp(search->pack->pakGamename, fs_basegame->string)) 
       {
-        pakName = va(NULL, "%s/%s", search->pack->pakGamename, search->pack->pakBasename);
+        pakName = va("%s/%s", search->pack->pakGamename, search->pack->pakBasename);
 
         if (*info != '\0')
         {

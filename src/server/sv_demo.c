@@ -460,7 +460,7 @@ SV_DemoStartPlayback(void)
 
   s = MSG_ReadString(&msg);
 
-  if (!FS_FOpenFileRead(va(NULL, "maps/%s.bsp", s), NULL, qfalse))
+  if (!FS_FOpenFileRead(va("maps/%s.bsp", s), NULL, qfalse))
   {
     Com_Printf("map doesnt exist: %s.\n", s);
     SV_DemoStopPlayback();
@@ -496,7 +496,7 @@ SV_DemoStartPlayback(void)
   if (!com_sv_running->integer || strcmp(sv_mapname->string, s) || !Cvar_VariableIntegerValue("sv_cheats") || r < sv.time || sv_maxclients->modified || sv_democlients->modified)
   {
     //change to correct map and start demo with warmup delay
-    Cbuf_AddText(va(NULL, "devmap %s\ndelay %d %s\n", s, Cvar_VariableIntegerValue("g_warmup") * 1000, Cmd_Cmd()));
+    Cbuf_AddText(va("devmap %s\ndelay %d %s\n", s, Cvar_VariableIntegerValue("g_warmup") * 1000, Cmd_Cmd()));
     SV_DemoStopPlayback();
     return;
   }

@@ -148,7 +148,7 @@ Sys_PIDFileName
 static const char *
 Sys_PIDFileName(void)
 {
-  return va(NULL, "%s/%s", Sys_TempPath(), PID_FILENAME);
+  return va("%s/%s", Sys_TempPath(), PID_FILENAME);
 }
 
 /*
@@ -441,7 +441,7 @@ Sys_Warn(char *warning, ...)
   va_start(argptr, warning);
   Q_vsnprintf(string, sizeof(string), warning, argptr);
   va_end(argptr);
-  CON_Print(va(NULL, "Warning: %s", string));
+  CON_Print(va("Warning: %s", string));
 }
 
 /*
@@ -517,10 +517,10 @@ Sys_SigHandler(int signal)
   {
     signalcaught = qtrue;
 #ifndef DEDICATED
-    //CL_Shutdown(va(NULL, "Received signal %d", signal));
+    //CL_Shutdown(va("Received signal %d", signal));
     CL_Shutdown();
 #endif
-    SV_Shutdown(va(NULL, "Received signal %d", signal));
+    SV_Shutdown(va("Received signal %d", signal));
   }
 
   if (signal == SIGTERM || signal == SIGINT)
@@ -562,7 +562,7 @@ main(int argc, char **argv)
 
   if (SDL_VERSIONNUM(ver->major, ver->minor, ver->patch) < SDL_VERSIONNUM(MINSDL_MAJOR, MINSDL_MINOR, MINSDL_PATCH))
   {
-    Sys_Dialog(DT_ERROR, va(NULL, "SDL version " MINSDL_VERSION " or greater is required, " "but only version %d.%d.%d was found. You may be able to obtain a more recent copy " "from http://www.libsdl.org/.", ver->major, ver->minor, ver->patch), "SDL Library Too Old");
+    Sys_Dialog(DT_ERROR, va("SDL version " MINSDL_VERSION " or greater is required, " "but only version %d.%d.%d was found. You may be able to obtain a more recent copy " "from http://www.libsdl.org/.", ver->major, ver->minor, ver->patch), "SDL Library Too Old");
     Sys_Exit(1);
   }
 #endif

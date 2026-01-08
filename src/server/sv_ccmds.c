@@ -339,7 +339,7 @@ SV_MapRestart_f(void)
       sv.restartTime = 1;
     }
 
-    SV_SetConfigstring(CS_WARMUP, va(NULL, "%i", sv.restartTime));
+    SV_SetConfigstring(CS_WARMUP, va("%i", sv.restartTime));
     return;
   }
 
@@ -490,7 +490,7 @@ SV_MapRestart_f(void)
   if (sv_autoDemo->integer)
   {
     Com_RealTime(&now);
-    Cbuf_AddText(va(NULL, "demo_record %04d%02d%02d%02d%02d%02d-%s\n", 1900 + now.tm_year, 1 + now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec, Cvar_VariableString("mapname")));
+    Cbuf_AddText(va("demo_record %04d%02d%02d%02d%02d%02d-%s\n", 1900 + now.tm_year, 1 + now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec, Cvar_VariableString("mapname")));
   }
 }
 
@@ -1194,7 +1194,7 @@ SV_Demo_Play_f(void)
   //check for extension and protocol
   arg = Cmd_Argv(1);
 
-  if (!strcmp(arg + strlen(arg) - 6, va(NULL, ".svdm_%d", PROTOCOL_VERSION)))
+  if (!strcmp(arg + strlen(arg) - 6, va(".svdm_%d", PROTOCOL_VERSION)))
   {
     Com_sprintf(sv.demoName, sizeof(sv.demoName), "svdemos/%s", arg);
   }

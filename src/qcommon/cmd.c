@@ -517,7 +517,7 @@ Cmd_Vstr_f(void)
   }
 
   v = Cvar_VariableString(Cmd_Argv(1));
-  Cbuf_InsertText(va(NULL, "%s\n", v));
+  Cbuf_InsertText(va("%s\n", v));
 }
 
 /*

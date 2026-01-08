@@ -662,7 +662,7 @@ Display an error message
 */
 void Sys_ErrorDialog( const char *error )
 {
-	if( Sys_Dialog(DT_YES_NO, va(NULL, "%s. Copy console log to clipboard?", error),
+	if( Sys_Dialog(DT_YES_NO, va("%s. Copy console log to clipboard?", error),
 			"Error" ) == DR_YES )
 	{
 		HGLOBAL memoryHandle;
@@ -883,11 +883,11 @@ Sys_SetEnv(const char *name, const char *value)
 {
   if (value)
   {
-    _putenv(va(NULL, "%s=%s", name, value));
+    _putenv(va("%s=%s", name, value));
   }
   else
   {
-    _putenv(va(NULL, "%s=", name));
+    _putenv(va("%s=", name));
   }
 }
 

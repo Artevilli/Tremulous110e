@@ -1326,13 +1326,13 @@ SV_CheckInvalidUserInfoValues(client_t *cl)
   }
   else if (cl->rate < 5000)
   {
-    warning = va(NULL, "^3Your 'rate' value is extremely low (%d). Please consider a higher value.", cl->rate);
+    warning = va("^3Your 'rate' value is extremely low (%d). Please consider a higher value.", cl->rate);
     timeout = 1200000; //(60000 * 20) every 20 minutes
   }
   else if (cl->snaps < 20) //30)
   {
     //FIXME: only warn about this in spectators
-    warning = va(NULL, "^3Your 'snaps' value is extremely low (%d). Please consider a higher value.", cl->snaps);
+    warning = va("^3Your 'snaps' value is extremely low (%d). Please consider a higher value.", cl->snaps);
     timeout = 3600000; //(60000 * 60) every 60 minutes
   }
 
@@ -1341,17 +1341,17 @@ SV_CheckInvalidUserInfoValues(client_t *cl)
     return;
   }
 
-  //SV_SendServerCommand(cl, va(NULL, "print \"%s\n\"", warning));
+  //SV_SendServerCommand(cl, va("print \"%s\n\"", warning));
 
   if (critical)
   {
-    //SV_SendServerCommand(cl, va(NULL, "cp \"%s\n\"", warning));
-    SV_SendServerCommand(cl, va(NULL, "print \"%s\n\"", warning)); //FIXME: cp gets cut off very fast for some reason...
+    //SV_SendServerCommand(cl, va("cp \"%s\n\"", warning));
+    SV_SendServerCommand(cl, va("print \"%s\n\"", warning)); //FIXME: cp gets cut off very fast for some reason...
     Com_Printf(S_COLOR_RED "Sending critical warning to client %s: %s\n", cl->name, warning);
   }
   else
   {
-    SV_SendServerCommand(cl, va(NULL, "print \"%s\n\"", warning));
+    SV_SendServerCommand(cl, va("print \"%s\n\"", warning));
     Com_Printf(S_COLOR_YELLOW "Sending non-critical warning to client %s: %s\n", cl->name, warning);
   }
 

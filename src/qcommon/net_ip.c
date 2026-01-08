@@ -1695,11 +1695,11 @@ static void NET_OpenIP( void ) {
 #endif
 
 	net_ip = Cvar_GetAndDescribe("net_ip", "0.0.0.0", CVAR_LATCH, "Specifies network interface address client should use for outgoing UDP connections using IPv4.");
-	net_port = Cvar_GetAndDescribe("net_port", va(NULL, "%i", PORT_SERVER), CVAR_LATCH | CVAR_NORESTART, "The network port to use (IPv4).");
+	net_port = Cvar_GetAndDescribe("net_port", va("%i", PORT_SERVER), CVAR_LATCH | CVAR_NORESTART, "The network port to use (IPv4).");
 	Cvar_CheckRange(net_port, "0", "65535", CV_INTEGER);
 #if defined(USE_IPV6)
 	net_ip6 = Cvar_GetAndDescribe("net_ip6", "::", CVAR_LATCH, "Specifies network interface address client should use for outgoing UDP connections using IPv6.");
-	net_port6 = Cvar_GetAndDescribe("net_port6", va(NULL, "%i", PORT_SERVER), CVAR_LATCH | CVAR_NORESTART, "The network port to use (IPv6).");
+	net_port6 = Cvar_GetAndDescribe("net_port6", va("%i", PORT_SERVER), CVAR_LATCH | CVAR_NORESTART, "The network port to use (IPv6).");
 	Cvar_CheckRange(net_port6, "0", "65535", CV_INTEGER);
 #endif
 	

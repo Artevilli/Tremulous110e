@@ -635,10 +635,10 @@ void Sys_ErrorDialog( const qchar *error )
 	const qchar *fileName = "crashlog.txt";
 	qchar *ospath = FS_BuildOSPath(homepath, gamedir, fileName);
 
-	Sys_Print(va(NULL, "%s\n", error));
+	Sys_Print(va("%s\n", error));
 
 #if !defined(DEDICATED)
-        Sys_Dialog(DT_ERROR, va(NULL, "%s. See \"%s\" for details.", error, ospath), "Error");
+        Sys_Dialog(DT_ERROR, va("%s. See \"%s\" for details.", error, ospath), "Error");
 #endif
 
         /*make sure the write path for the crashlog exists*/

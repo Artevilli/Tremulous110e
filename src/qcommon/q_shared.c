@@ -2174,68 +2174,28 @@ Com_sprintf(qchar *dest, qint size, const qchar *fmt, ...)
 /*
 ============
 va
+
+does a varargs printf into a temp buffer, so I don't need to have
+varargs versions of all text functions.
+FIXME: make this buffer size safe someday
 ============
 */
-const qchar *
-va(qchar *str, const qchar *format, ...)
+const qchar *QDECL
+va(const qchar *format, ...)
 {
+  qchar *buf;
   va_list argptr;
-  qint size;
-  qint ret_size;
+  static qint index = 0;
+  static qchar string[2][32000]; //in case va is called by nested functions
 
-  size = sizeof(qchar) * strlen(format) + sizeof(qchar);
-  ret_size = 0;
+  buf = string[index];
+  index ^= 1;
 
-  if (!str)
-  {
-    str = (qchar *)malloc(size);
-  }
-  else
-  {
-    str = (qchar *)realloc(str, size);
-  }
+  va_start(argptr, format);
+  vsprintf(buf, format, argptr);
+  va_end(argptr);
 
-  if (!str)
-  {
-    return NULL;
-  }
-
-  Com_Memset(str, 0, size);
-
-  while(1)
-  {
-    va_start(argptr, format);
-    ret_size = Q_vsnprintf(str, size, format, argptr);
-    va_end(argptr);
-
-    if (!str)
-    {
-      return NULL;
-    }
-
-    if (ret_size >= size)
-    {
-      size *= 2; //truncated
-    }
-    else
-    {
-      break; //format done
-    }
-
-    str = (qchar *)realloc(str, size);
-  }
-
-  //drop unused memory
-  str = (qchar *)realloc(str, sizeof(qchar) * strlen(str) + sizeof(qchar));
-
-  if (!str)
-  {
-    return NULL;
-  }
-
-  //be sure last character is a terminator
-  *(str + (sizeof(qchar) * strlen(str))) = '\0';
-  return str;
+  return buf;
 }
 
 /*
