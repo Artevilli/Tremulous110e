@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--01/09/2026--**
+
+* makefile/qcommon:<br />rebase to Quake3e, add support for new vms
+
 **--01/08/2026--**
 
 * qcommon:<br />fix bad debug if statement
