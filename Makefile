@@ -66,14 +66,6 @@ PLATFORM=$(COMPILE_PLATFORM)
 endif
 export PLATFORM
 
-ifeq ($(COMPILE_ARCH),powerpc)
-  COMPILE_ARCH=ppc
-endif
-
-ifeq ($(COMPILE_ARCH),powerpc64)
-  COMPILE_ARCH=ppc64
-endif
-
 ifndef ARCH
 ARCH=$(COMPILE_ARCH)
 endif
@@ -255,13 +247,8 @@ ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu"))
   ifeq ($(ARCH),x86_64)
     LIB=lib64
   else
-  ifeq ($(ARCH),ppc64)
-    LIB=lib64
-  else
   ifeq ($(ARCH),s390x)
     LIB=lib64
-  endif
-  endif
   endif
   endif
 
@@ -319,19 +306,6 @@ ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu"))
      OPTIMIZE += -fomit-frame-pointer
     endif
   else
-  ifeq ($(ARCH),ppc)
-    BASE_CFLAGS += -maltivec
-    HAVE_VM_COMPILED=true
-  endif
-  ifeq ($(ARCH),ppc64)
-    BASE_CFLAGS += -maltivec
-    HAVE_VM_COMPILED=true
-  endif
-  ifeq ($(ARCH),sparc)
-    OPTIMIZE += -mtune=ultrasparc3 -mv8plus
-    OPTIMIZEVM += -mtune=ultrasparc3 -mv8plus
-    HAVE_VM_COMPILED=true
-  endif
   ifeq ($(ARCH),alpha)
     #according to https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=410555
     #-ffast-math will cause the client to die with SIGFPE on Alpha
@@ -380,9 +354,6 @@ ifneq (,$(findstring "$(PLATFORM)", "linux" "gnu_kfreebsd" "kfreebsd-gnu"))
   ifeq ($(ARCH),x86)
     # linux32 make ...
     BASE_CFLAGS += -m32
-  else
-  ifeq ($(ARCH),ppc64)
-    BASE_CFLAGS += -m64
   endif
   endif
 
@@ -402,13 +373,6 @@ ifeq ($(PLATFORM),darwin)
   CLIENT_CFLAGS =
   SERVER_CFLAGS =
 
-  ifeq ($(ARCH),ppc)
-    BASE_CFLAGS += -faltivec
-    OPTIMIZEVM += -O2
-  endif
-  ifeq ($(ARCH),ppc64)
-    BASE_CFLAGS += -faltivec
-  endif
   ifeq ($(ARCH),x86)
     OPTIMIZEVM += -march=prescott -mfpmath=sse
     # x86 vm will crash without -mstackrealign since MMX instructions will be
@@ -783,14 +747,6 @@ ifeq ($(PLATFORM),sunos)
 
   ifneq (,$(findstring i86pc,$(shell uname -m)))
     ARCH=x86
-  else #default to sparc
-    ARCH=sparc
-  endif
-
-  ifneq ($(ARCH),x86)
-    ifneq ($(ARCH),sparc)
-      $(error arch $(ARCH) is currently not supported)
-    endif
   endif
 
 
@@ -801,11 +757,6 @@ ifeq ($(PLATFORM),sunos)
 
   OPTIMIZEVM = -O2 -funroll-loops
 
-  ifeq ($(ARCH),sparc)
-    OPTIMIZE = -O2 -fno-fast-math -falign-functions=2 \
-      -mtune=ultrasparc3 -mv8plus -mno-faster-structs
-      HAVE_VM_COMPILED=true
-  else
   ifeq ($(ARCH),x86)
     OPTIMIZEVM += -march=i586 -fomit-frame-pointer \
       -falign-loops=2 -falign-jumps=2 \
@@ -814,7 +765,6 @@ ifeq ($(PLATFORM),sunos)
     BASE_CFLAGS += -m32
     CLIENT_CFLAGS += -I/usr/X11/include/NVIDIA
     CLIENT_LDFLAGS += -L/usr/X11/lib/NVIDIA -R/usr/X11/lib/NVIDIA
-  endif
   endif
 
   OPTIMIZE = $(OPTIMIZEVM) -fno-fast-math
@@ -1489,15 +1439,6 @@ ifeq ($(HAVE_VM_COMPILED),true)
   ifeq ($(ARCH),x64)
     Q3OBJ += $(B)/client/vm_x86.o
   endif
-  ifeq ($(ARCH),ppc)
-    Q3OBJ += $(B)/client/vm_powerpc.o $(B)/client/vm_powerpc_asm.o
-  endif
-  ifeq ($(ARCH),ppc64)
-    Q3OBJ += $(B)/client/vm_powerpc.o $(B)/client/vm_powerpc_asm.o
-  endif
-  ifeq ($(ARCH),sparc)
-    Q3OBJ += $(B)/client/vm_sparc.o
-  endif
 endif
 
 ifeq ($(PLATFORM),mingw32)
@@ -1620,15 +1561,6 @@ ifeq ($(HAVE_VM_COMPILED),true)
   endif
   ifeq ($(ARCH),x64)
     Q3DOBJ += $(B)/ded/vm_x86.o
-  endif
-  ifeq ($(ARCH),ppc)
-    Q3DOBJ += $(B)/ded/vm_powerpc.o $(B)/ded/vm_powerpc_asm.o
-  endif
-  ifeq ($(ARCH),ppc64)
-    Q3DOBJ += $(B)/ded/vm_powerpc.o $(B)/ded/vm_powerpc_asm.o
-  endif
-  ifeq ($(ARCH),sparc)
-    Q3DOBJ += $(B)/ded/vm_sparc.o
   endif
 endif
 

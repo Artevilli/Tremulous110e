@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/08/2026--**
 
+* makefile/qcommon:<br />removed unused vms
+
 * qcommon/server:<br />undo OpenWolf's modified va function
 
 **--01/07/2026--**
