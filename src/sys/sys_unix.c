@@ -581,41 +581,65 @@ Sys_Sleep
 Block execution for msec or until input is recieved.
 ==================
 */
-void Sys_Sleep( qint msec )
+void
+Sys_Sleep(qint msec)
 {
-	if( msec == 0 )
-		return;
+  struct timeval timeout;
+  fd_set fdset;
+  qint res;
 
-	if( stdinIsATTY )
-	{
-		fd_set fdset;
+  //if (msec == 0)
+  //{
+    //return;
+  //}
 
-                FD_ZERO(&fdset);
-                FD_SET(STDIN_FILENO, &fdset);
+  if (msec < 0)
+  {
+    //special case: wait for console input or network packet
+    if (stdin_active)
+    {
+      msec = 300;
 
-                if (msec < 0)
-                {
-                  select(STDIN_FILENO + 1, &fdset, NULL, NULL, NULL);
-                }
-                else
-                {
-                  struct timeval timeout;
+      do
+      {
+        FD_ZERO(&fdset);
+        FD_SET(STDIN_FILENO, &fdset);
+        timeout.tv_sec = msec / 1000;
+        timeout.tv_usec = (msec % 1000) * 1000;
+        res = select(STDIN_FILENO + 1, &fdset, NULL, NULL, &timeout);
+      }
+      while(res == 0 && NET_Sleep(10 * 1000));
+    }
+    else
+    {
+      //can happen only if no map loaded
+      //which means we totally stuck as stdin is also disabled :P
+      //usleep(300 * 1000);
+      while(NET_Sleep(3000 * 1000));
+    }
 
-                  timeout.tv_sec = msec/1000;
-                  timeout.tv_usec = (msec % 1000) * 1000;
-                  select(STDIN_FILENO + 1, &fdset, NULL, NULL, &timeout);
-                }
-	}
-	else
-	{
-	        //with nothing to select() on, we can't wait indefinitely
-	        if (msec < 0)
-	        {
-	          msec = 10;
-	        }
+    return;
+  }
+#if 1
+  struct timespec req;
 
-		usleep(msec * 1000);
-	}
+  req.tv_sec = msec / 1000;
+  req.tv_nsec = (msec % 1000) * 1000000;
+  nanosleep(&req, NULL);
+#else
+  if (com_dedicated->integer && stdin_active)
+  {
+    FD_ZERO(&fdset);
+    FD_SET(STDIN_FILENO, &fdset);
+    timeout.tv_sec = msec / 1000;
+    timeout.tv_usec = (msec % 1000) * 1000;
+    select(STDIN_FILENO + 1, &fdset, NULL, NULL, &timeout);
+  }
+  else
+  {
+    usleep(msec * 1000);
+  }
+#endif
 }
 
 /*

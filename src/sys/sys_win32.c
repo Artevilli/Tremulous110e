@@ -634,23 +634,32 @@ Sys_Sleep
 Block execution for msec or until input is received.
 ==============
 */
-void Sys_Sleep( int msec )
+void
+Sys_Sleep(int msec)
 {
-	if( msec == 0 )
-		return;
+  if (msec < 0)
+  {
+    //special case: wait for event or network packet
+    DWORD dwResult;
+    msec = 300;
 
-#ifdef DEDICATED
-	if( msec < 0 )
-		WaitForSingleObject( GetStdHandle( STD_INPUT_HANDLE ), INFINITE );
-	else
-		WaitForSingleObject( GetStdHandle( STD_INPUT_HANDLE ), msec );
-#else
-	// Client Sys_Sleep doesn't support waiting on stdin
-	if( msec < 0 )
-		return;
+    do
+    {
+      dwResult = MsgWaitForMultipleObjects(0, NULL, FALSE, msec, QS_ALLEVENTS);
+    }
+    while(dwResult == WAIT_TIMEOUT && NET_Sleep(10 * 1000));
 
-	Sleep( msec );
-#endif
+    //WaitMessage();
+    return;
+  }
+
+  //busy wait there because Sleep(0) will relinquish CPU - which is not what we want
+  //if (msec == 0)
+  //{
+    //return;
+  //}
+
+  Sleep(msec);
 }
 
 /*

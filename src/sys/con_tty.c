@@ -44,7 +44,7 @@ called before and after a stdout or stderr output
 */
 
 extern qbool stdinIsATTY;
-static qbool stdin_active;
+qbool stdin_active;
 // general flag to tell about tty console mode
 static qbool ttycon_on = qfalse;
 static qint ttycon_hide = 0;

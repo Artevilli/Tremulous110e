@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/09/2026--**
 
+* sys:<br />improve Sys_Sleep()
+
 * qcommon:<br />fixup some net_ip cvar handling
 
 * server:<br />more sv_init cleanup

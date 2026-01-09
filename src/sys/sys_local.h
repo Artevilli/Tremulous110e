@@ -28,6 +28,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define MINSDL_MINOR 2
 #define MINSDL_PATCH 10
 
+extern qbool stdin_active;
+
 // Input subsystem
 void IN_Init( void );
 void IN_Frame( void );
