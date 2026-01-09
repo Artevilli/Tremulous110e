@@ -2214,12 +2214,34 @@ SV_IntegerOverflowShutDown
 static const ID_INLINE void
 SV_IntegerOverflowShutDown(const qchar *msg)
 {
+  qbool sv_shutdown = qfalse;
   qchar mapName[MAX_QPATH];
+  qint i;
+
+  if (svs.clients)
+  {
+    //check if we can reset map time without full server shutdown
+    for(i = 0;i < sv.maxclients;i++)
+    {
+      if (svs.clients[i].state >= CS_CONNECTED)
+      {
+        sv_shutdown = qtrue;
+        break;
+      }
+    }
+  }
+
+  sv.time = 0; //force level time reset
+  sv.restartTime = 0;
 
   //save map name in case it gets cleared during shut down
-  Q_strncpyz(mapName, Cvar_VariableString("mapname"), sizeof(mapName));
+  Cvar_VariableStringBuffer("mapname", mapName, sizeof(mapName));
 
-  SV_Shutdown(msg);
+  if (sv_shutdown)
+  {
+    SV_Shutdown(msg);
+  }
+
   Cbuf_AddText(va("map %s\n", mapName));
 }
 
