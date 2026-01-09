@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/09/2026--**
 
+* server:<br />more sv_init cleanup
+
 * server:<br />clean up attack log prints
 
 * makefile/qcommon:<br />rebase to Quake3e, add support for new vms

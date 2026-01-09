@@ -41,7 +41,7 @@ SV_SendConfigstring(client_t *client, const qint index)
   qint len;
   qint sent;
   qint remaining;
-  qchar *cmd;
+  const qchar *cmd;
   qchar buf[MAX_STRING_CHARS];
 
   maxChunkSize = MAX_STRING_CHARS - 24;
@@ -76,7 +76,7 @@ SV_SendConfigstring(client_t *client, const qint index)
   else
   {
     //standard cs, just send it
-    SV_SendServerCommand(client, "cs %i \"%s\"\n", index, sv.configstrings[index]);
+    SV_SendServerCommand(client, "cs %i \"%s\"", index, sv.configstrings[index]);
   }
 }
 
@@ -191,7 +191,6 @@ SV_SetConfigstring(const qint index, const qchar *val)
 /*
 ===============
 SV_GetConfigstring
-
 ===============
 */
 const void
@@ -209,7 +208,7 @@ SV_GetConfigstring(const qint index, qchar *buffer, const qint bufferSize)
 
   if (!sv.configstrings[index])
   {
-    buffer[0] = 0;
+    buffer[0] = '\0';
     return;
   }
 
@@ -220,7 +219,6 @@ SV_GetConfigstring(const qint index, qchar *buffer, const qint bufferSize)
 /*
 ===============
 SV_SetUserinfo
-
 ===============
 */
 const void
@@ -228,7 +226,7 @@ SV_SetUserinfo(const qint index, const qchar *val)
 {
   if (index < 0 || index >= sv.maxclients)
   {
-    Com_Error(ERR_DROP, "SV_SetUserinfo: bad index %i", index);
+    Com_Error(ERR_DROP, "%s: bad index %i", __func__, index);
   }
 
   if (!val)
@@ -245,7 +243,6 @@ SV_SetUserinfo(const qint index, const qchar *val)
 /*
 ===============
 SV_GetUserinfo
-
 ===============
 */
 const void
@@ -253,12 +250,12 @@ SV_GetUserinfo(const qint index, qchar *buffer, const qint bufferSize)
 {
   if (bufferSize < 1)
   {
-    Com_Error(ERR_DROP, "SV_GetUserinfo: bufferSize == %i", bufferSize);
+    Com_Error(ERR_DROP, "%s: bufferSize == %i", __func__, bufferSize);
   }
 
   if (index < 0 || index >= sv.maxclients)
   {
-    Com_Error(ERR_DROP, "SV_GetUserinfo: bad index %i", index);
+    Com_Error(ERR_DROP, "%s: bad index %i", __func__, index);
   }
 
   Q_strncpyz(buffer, svs.clients[index].userinfo, bufferSize);
@@ -277,24 +274,24 @@ baseline will be transmitted
 static const void
 SV_CreateBaseline(void)
 {
-  sharedEntity_t *svent;
+  sharedEntity_t *ent;
   qint entnum;	
 
   for (entnum = 0;entnum < sv.num_entities;entnum++)
   {
-    svent = SV_GentityNum(entnum);
+    ent = SV_GentityNum(entnum);
 
-    if (!svent->r.linked)
+    if (!ent->r.linked)
     {
       continue;
     }
 
-    svent->s.number = entnum;
+    ent->s.number = entnum;
 
     //
     //take current state as baseline
     //
-    sv.svEntities[entnum].baseline = svent->s;
+    sv.svEntities[entnum].baseline = ent->s;
     sv.baselineUsed[entnum] = 1;
   }
 }
@@ -381,6 +378,7 @@ SV_Startup(void)
   }
 
   Cvar_Set("sv_running", "1");
+
   //join ipv6 multicast group since a map is running so clients can scan for us on the local network
 #if defined(USE_IPV6)
   NET_JoinMulticast6();
@@ -407,6 +405,7 @@ SV_ChangeMaxClients(void)
   if (!firstTime)
   {
     count = 0;
+
     for(i = 0;i < sv.maxclients;i++)
     {
       if (svs.clients[i].state >= CS_CONNECTED)
@@ -424,7 +423,6 @@ SV_ChangeMaxClients(void)
   maxclients = SV_BoundMaxClients(count);
 
   //update
-  Cvar_Get("sv_maxclients", "8", 0);
   Cvar_Get("sv_democlients", "0", 0);
   
   //make sure theres enough room for clients
@@ -765,7 +763,7 @@ SV_SpawnServer(const qchar *server, qbool killBots)
       {
         if (killBots)
         {
-          SV_DropClient(&svs.clients[i], "");
+          SV_DropClient(&svs.clients[i], "was kicked");
           continue;
         }
 
@@ -821,13 +819,11 @@ SV_SpawnServer(const qchar *server, qbool killBots)
   SV_BotFrame(sv.time);
   svs.time += 100;
 
-  //if a dedicated pure server we need to touch the cgame/ui because it could be in a
-  //seperate pk3 file and the client will need to load the latest cgame/ui.qvms
-  if (com_dedicated->integer)
-  {
-    FS_TouchFileInPak("vm/cgame.qvm");
-    FS_TouchFileInPak("vm/ui.qvm");
-  }
+  //we need to touch cgame and ui qvm because they could be in
+  //separate pk3 files and the client will need to download the pk3
+  //files with the latest cgame and ui qvm to pass the pure check
+  FS_TouchFileInPak("vm/cgame.qvm");
+  FS_TouchFileInPak("vm/ui.qvm");
 
   //the server sends these to the clients so they can figure
   //out which pk3s should be auto-downloaded
@@ -1094,8 +1090,10 @@ SV_FinalMessage(const qchar *message, qbool disconnect)
   //send twice, ignoring rate
   for(j = 0;j < 2;j++)
   {
-    for(i = 0, cl = svs.clients;i < sv.maxclients;i++, cl++)
+    for(i = 0;i < sv.maxclients;i++)
     {
+      cl = &svs.clients[i];
+
       if (cl->state >= CS_CONNECTED)
       {
         //dont send a disconnect to a local client
@@ -1202,10 +1200,20 @@ SV_Shutdown(const qchar *finalmsg)
   }
 
   Com_Memset(&svs, 0, sizeof(svs));
+  sv.time = 0;
   svs.serverLoad = 0;
+
   Cvar_Set("sv_running", "0");
+
+  //allow setting timescale 0 for demo playback
+  Cvar_CheckRange(com_timescale, "0", NULL, CV_FLOAT);
+
+#if !defined(DEDICATED)
   Cvar_Set("ui_singlePlayerActive", "0");
+#endif
+
   Com_Printf("---------------------------\n");
+
 #if !defined(DEDICATED)
   // disconnect any local clients
   if (sv_killserver->integer != 2)
@@ -1213,6 +1221,7 @@ SV_Shutdown(const qchar *finalmsg)
     CL_Disconnect(qfalse);
   }
 #endif
+
   //clean some server cvars
   Cvar_Set("sv_referencedPaks", "");
   Cvar_Set("sv_referencedPakNames", "");
