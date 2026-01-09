@@ -1010,7 +1010,7 @@ SV_InitAttackLog(void)
     {
       Com_Printf("logging attacks to %s\n", sv_protectLog->string);
       SV_WriteAttackLogUnrestricted("-------------------------------------------------------------------------------\n");
-      SV_WriteAttackLogUnrestricted("start attack log\n");
+      SV_WriteAttackLogUnrestricted("Start attack log\n");
       SV_WriteAttackLogUnrestricted("-------------------------------------------------------------------------------\n");
     }
   }
@@ -1027,9 +1027,9 @@ SV_CloseAttackLog(void)
   if (attHandle > 0)
   {
     SV_WriteAttackLogUnrestricted("-------------------------------------------------------------------------------\n");
-    SV_WriteAttackLogUnrestricted("close attack log\n");
+    SV_WriteAttackLogUnrestricted("Close attack log\n");
     SV_WriteAttackLogUnrestricted("-------------------------------------------------------------------------------\n");
-    Com_Printf("attack log closed\n");
+    Com_Printf("Attack log closed\n");
   }
 
   FS_FCloseFile(attHandle);
