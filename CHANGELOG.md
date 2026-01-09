@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/09/2026--**
 
+* qcommon:<br />fixup some net_ip cvar handling
+
 * server:<br />more sv_init cleanup
 
 * server:<br />clean up attack log prints
