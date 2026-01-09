@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/09/2026--**
 
+* server:<br />completely strip sv_minRebootDelayMins
+
 * server:<br />improve SV_IntegerOverflowShutDown()
 
 * sys:<br />improve Sys_Sleep()

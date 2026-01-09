@@ -70,7 +70,6 @@ cvar_t *sv_minSnaps;
 cvar_t *sv_minPing;
 cvar_t *sv_maxPing;
 #endif
-cvar_t *sv_minRebootDelayMins;
 cvar_t *sv_novis;
 cvar_t *sv_pure;
 cvar_t *sv_cpuusagepublic;
@@ -158,7 +157,6 @@ SV_InitCvars(void)
   sv_minPing = Cvar_GetAndDescribe("sv_minPing", "0", CVAR_ARCHIVE, "Minimum ping a client is allowed to have to be able to connect to the server.\nNOTE: Does not work if sv_legacyChallenge isn't set!");
   sv_maxPing = Cvar_GetAndDescribe("sv_maxPing", "0", CVAR_ARCHIVE, "Maximum ping a client is allowed to have to be able to connect to the server.\nNOTE: Does not work if sv_legacyChallenge isn't set!");
 #endif
-  sv_minRebootDelayMins = Cvar_GetAndDescribe("sv_minRebootDelayMins", "1440", CVAR_ARCHIVE | CVAR_SERVERINFO, "Automatic dedicated server process restarts for crashes and timed reboots.");
   sv_novis = Cvar_GetAndDescribe("sv_novis", "0", CVAR_ARCHIVE, "Toggle whether or not to skip the pvs check when transmitting entities.");
   sv_cpuusagepublic = Cvar_GetAndDescribe("sv_cpuusagepublic", "0", CVAR_ARCHIVE, "Toggle whether or not to publicly display server cpu usage in getinfo responses.");
   sv_avgframetimepublic = Cvar_GetAndDescribe("sv_avgframetimepublic", "0", CVAR_ARCHIVE, "Toggle whether or not to publicly display the average frame response time in getinfo responses.");

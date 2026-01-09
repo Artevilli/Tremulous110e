@@ -2212,7 +2212,7 @@ SV_IntegerOverflowShutDown
 ==================
 */
 static const ID_INLINE void
-SV_IntegerOverflowShutDown(const qchar *msg)
+SV_Restart(const qchar *reason)
 {
   qbool sv_shutdown = qfalse;
   qchar mapName[MAX_QPATH];
@@ -2239,7 +2239,7 @@ SV_IntegerOverflowShutDown(const qchar *msg)
 
   if (sv_shutdown)
   {
-    SV_Shutdown(msg);
+    SV_Shutdown(reason);
   }
 
   Cbuf_AddText(va("map %s\n", mapName));
@@ -2366,7 +2366,6 @@ happen before SV_Frame is called
 const void
 SV_Frame(const qint msec)
 {
-  client_t *cl;
   unsigned frameMsec;
   unsigned startTime;
   unsigned frameStartTime = 0;
@@ -2375,15 +2374,9 @@ SV_Frame(const qint msec)
   unsigned averageFrameTime;
   unsigned timeVal;
   unsigned i;
-  unsigned j;
-  const unsigned minRebootTimeCvar = 60 * 1000 * sv_minRebootDelayMins->integer;
-  const unsigned minRebootTimeConst = 60 * 60 * 1000; //absolute min time 1 hr
-  const unsigned maxRebootTime = 0x7FC9117F; //1 hour before max time, absolute max around 24.86 days
-  const unsigned minRebootTime = Q_max(minRebootTimeCvar, minRebootTimeConst);
   static unsigned updatequeue;
   static unsigned start;
   static unsigned end;
-  qbool hasHuman;
 
   start = Sys_Milliseconds();
   svs.stats.idle += (double)(start - end) / 1000;
@@ -2457,42 +2450,13 @@ SV_Frame(const qint msec)
     SV_BotFrame(sv.time + sv.timeResidual);
   }
 
-  hasHuman = qfalse;
-
-  for(j = 0;j < sv.maxclients;++j)
+  //if time is about to hit the 32nd bit, kick all clients
+  //and clear sv.time, rather
+  //than checking for negative time wraparound everywhere.
+  //2giga-milliseconds = 23 days, so it won't be too often
+  if (sv.time > 0x78000000)
   {
-    cl = &svs.clients[j];
-
-    if (cl->state >= CS_CONNECTED)
-    {
-      const qbool isBot = (cl->netchan.remoteAddress.type == NA_BOT) || (cl->gentity && (cl->gentity->r.svFlags & SVF_BOT));
-
-      if (!isBot)
-      {
-        hasHuman = qtrue;
-        //Com_DPrintf("DEBUG: HUMAN APPEARED\n");
-        break;
-      }
-    }
-  }
-
-  //shader time is stored as floating point number some mods may have something along the lines of "sin(cg.time / 1000.0f)"
-  //ieee 754 floats have 23 bit mantissa and rounding errors will start around ((1 << 23) / (60 * 1000)) which is roughly 139.8 minutes
-  if (svs.time >= minRebootTime && !hasHuman)
-  {
-    SV_IntegerOverflowShutDown("restarting server early to avoid time wrapping and or precision issues");
-    return;
-  }
-
-  if (minRebootTimeCvar < minRebootTimeConst)
-  {
-    Cvar_Set("sv_minRebootDelayMins", va("%d", minRebootTimeConst / (60 * 1000)));
-  }
-
-  //if time is about to hit the 32nd bit, kick all clients and clear sv.time, rather than checking for negative time wraparound everywhere. 2giga-milliseconds = 23 days, so it won't be too often
-  if (svs.time > maxRebootTime)
-  {
-    SV_IntegerOverflowShutDown("restarting server due to time wrapping");
+    SV_Restart("Restarting server due to time wrapping");
     return;
   }
 
@@ -2512,7 +2476,7 @@ SV_Frame(const qint msec)
 
       if (i == sv.maxclients)
       {
-        SV_IntegerOverflowShutDown("restarting server");
+        SV_Restart("Restarting server");
         return;
       }
     }
