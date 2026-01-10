@@ -757,9 +757,11 @@ handleOwner_t;
 #define BASEGAME "base"
 
 #if defined(DEDICATED)
-#	define Q3CONFIG_CFG "autogen_server.cfg"
+#define Q3CONFIG_CFG "autogen_server.cfg"
+#define CONSOLE_HISTORY_FILE "autogen_server_history.cfg"
 #else
-#	define Q3CONFIG_CFG "autogen.cfg"
+#define Q3CONFIG_CFG "autogen.cfg"
+#define CONSOLE_HISTORY_FILE "autogen_history"
 #endif
 
 typedef time_t fileTime_t;
@@ -813,8 +815,6 @@ FS_ResetReadOnlyAttribute(const qchar *filename);
 qbool
 FS_SV_FileExists(const qchar *file);
 fileHandle_t	FS_FOpenFileAppend( const qchar *filename );
-fileHandle_t
-FS_FCreateOpenPipeFile(const qchar *filename);
 // will properly create any needed paths and deal with seperater character issues
 
 fileHandle_t FS_SV_FOpenFileWrite( const qchar *filename );
@@ -1009,6 +1009,15 @@ Field_CompleteFilename(const qchar *dir, const qchar *ext, qbool stripExt, qint 
 void
 Field_CompleteCommand(const qchar *cmd, qbool doCommands, qbool doCvars);
 
+void
+Con_ResetHistory(void);
+void
+Con_SaveField(const field_t *field);
+qbool
+Con_HistoryGetPrev(field_t *field);
+qbool
+Con_HistoryGetNext(field_t *field);
+
 /*
 ==============================================================
 
@@ -1031,19 +1040,6 @@ extern qint CPU_Flags;
 #define CPU_ARMv7 0x01
 #define CPU_IDIVA 0x02
 #define CPU_VFPv3 0x04
-
-// returned by Sys_GetProcessorFeatures
-typedef enum
-{
-  CF_RDTSC      = BIT(0),
-  CF_MMX        = BIT(1),
-  CF_MMX_EXT    = BIT(2),
-  CF_3DNOW      = BIT(3),
-  CF_3DNOW_EXT  = BIT(4),
-  CF_SSE        = BIT(5),
-  CF_SSE2       = BIT(6),
-  CF_ALTIVEC    = BIT(7)
-} cpuFeatures_t;
 
 // centralized and cleaned, that's the max string you can send to a Com_Printf / Com_DPrintf (above gets truncated)
 #define	MAXPRINTMSG	8192
@@ -1088,6 +1084,8 @@ qint			Com_Milliseconds( void );	// will be journaled properly
 unsigned	Com_BlockChecksum( const void *buffer, qint length );
 //md5 functions
 qchar		*Com_MD5File(const qchar *filename, qint length, const qchar *prefix, qint prefix_len);
+qbool
+Com_EarlyParseCmdLine(qchar *cmdLine, qchar *con_title, qint title_size, qint *vid_xpos, qint *vid_ypos);
 qint			Com_Filter(const qchar *filter, const qchar *name);
 qbool
 Com_FilterExt(const qchar *filter, const qchar *name);
@@ -1173,6 +1171,8 @@ extern qbool com_errorEntered;
 
 extern fileHandle_t com_journalFile;
 extern fileHandle_t com_journalDataFile;
+
+extern qchar rconPassword2[MAX_CVAR_VALUE_STRING];
 
 typedef enum
 {
@@ -1391,8 +1391,6 @@ void	*Sys_GetUIAPI( void );
 void	Sys_UnloadBotLib( void );
 void	*Sys_GetBotLibAPI( void *parms );
 
-qchar	*Sys_GetCurrentUser( void );
-
 void	QDECL Sys_Error( const qchar *error, ...) __attribute__ ((format (printf, 1, 2)));
 void	Sys_Quit (void);
 qchar	*Sys_GetClipboardData( void );	// note that this isn't journaled...
@@ -1417,8 +1415,6 @@ qbool Sys_RandomBytes( byte *string, qint len );
 // the system console is shown when a dedicated server is running
 void	Sys_DisplaySystemConsole( qbool show );
 
-cpuFeatures_t Sys_GetProcessorFeatures( void );
-
 void	Sys_SetErrorText( const qchar *text );
 
 void	Sys_SendPacket( qint length, const void *data, const netadr_t *to );
@@ -1437,8 +1433,6 @@ FILE *
 Sys_FOpen(const qchar *ospath, const qchar *mode);
 qbool
 Sys_ResetReadOnlyAttribute(const qchar *ospath);
-FILE *
-Sys_Mkfifo(const qchar *ospath);
 const qchar *
 Sys_Pwd(void);
 const qchar *
@@ -1494,31 +1488,6 @@ Sys_UnloadLibrary(void *handle);
 
 void
 Sys_SetEnv(const qchar *name, const qchar *value);
-
-typedef enum
-{
-  DR_YES = 0,
-  DR_NO = 1,
-  DR_OK = 0,
-  DR_CANCEL = 1
-}
-dialogResult_t;
-
-typedef enum
-{
-  DT_INFO,
-  DT_WARNING,
-  DT_ERROR,
-  DT_YES_NO,
-  DT_OK_CANCEL
-}
-dialogType_t;
-
-dialogResult_t
-Sys_Dialog(dialogType_t type, const qchar *message, const qchar *title);
-
-qbool
-Sys_WritePIDFile(void);
 
 //adaptive huffman functions
 void

@@ -83,7 +83,6 @@ cvar_t *com_timedemo;
 #if defined(USE_AFFINITY_MASK)
 cvar_t *com_affinityMask;
 #endif
-cvar_t *com_altivec;
 cvar_t *com_sv_running;
 cvar_t *com_cl_running;
 #if defined(_WIN32) && defined(_DEBUG)
@@ -513,8 +512,11 @@ tremulous set test blah + map test
 */
 
 #define	MAX_CONSOLE_LINES	32
-qint		com_numConsoleLines;
-qchar	*com_consoleLines[MAX_CONSOLE_LINES];
+static qint com_numConsoleLines;
+static qchar *com_consoleLines[MAX_CONSOLE_LINES];
+
+//master rcon password
+qchar rconPassword2[MAX_CVAR_VALUE_STRING];
 
 /*
 ==================
@@ -523,29 +525,136 @@ Com_ParseCommandLine
 Break it up into multiple console lines
 ==================
 */
-void Com_ParseCommandLine( qchar *commandLine ) {
-    qint inq = 0;
-    com_consoleLines[0] = commandLine;
-    com_numConsoleLines = 1;
+static void
+Com_ParseCommandLine(qchar *commandLine)
+{
+  static qbool parsed = qfalse;
+  qint inq;
 
-    while ( *commandLine ) {
-        if (*commandLine == '"') {
-            inq = !inq;
-        }
-        // look for a + separating character
-        // if commandLine came from a file, we might have real line seperators
-        if ( (*commandLine == '+' && !inq) || *commandLine == '\n'  || *commandLine == '\r' ) {
-            if ( com_numConsoleLines == MAX_CONSOLE_LINES ) {
-                return;
-            }
-            com_consoleLines[com_numConsoleLines] = commandLine + 1;
-            com_numConsoleLines++;
-            *commandLine = '\0';
-        }
-        commandLine++;
+  if (parsed)
+  {
+    return;
+  }
+
+  inq = 0;
+  com_consoleLines[0] = commandLine;
+  rconPassword2[0] = '\0';
+
+  while(*commandLine)
+  {
+    if (*commandLine == '"')
+    {
+      inq = !inq;
     }
+
+    //look for a + separating character
+    //if commandLine came from a file, we might have real line seperators
+    if ((*commandLine == '+' && !inq) || *commandLine == '\n' || *commandLine == '\r')
+    {
+      if (com_numConsoleLines == MAX_CONSOLE_LINES)
+      {
+        return;
+      }
+
+      com_consoleLines[com_numConsoleLines] = commandLine + 1;
+      com_numConsoleLines++;
+      *commandLine = '\0';
+    }
+
+    commandLine++;
+  }
+
+  parsed = qtrue;
 }
 
+qchar cl_title[MAX_CVAR_VALUE_STRING] = CLIENT_WINDOW_TITLE;
+
+/*
+===================
+Com_EarlyParseCmdLine
+
+returns qtrue if both vid_xpos and vid_ypos was set
+===================
+*/
+qbool
+Com_EarlyParseCmdLine(qchar *commandLine, qchar *con_title, qint title_size, qint *vid_xpos, qint *vid_ypos)
+{
+  qint flags = 0;
+  qint i;
+
+  *con_title = '\0';
+  Com_ParseCommandLine(commandLine);
+
+  for(i = 0;i < com_numConsoleLines;i++)
+  {
+    Cmd_TokenizeString(com_consoleLines[i]);
+
+    if (!Q_stricmpn(Cmd_Argv(0), "set", 3) && !Q_stricmp(Cmd_Argv(1), "cl_title"))
+    {
+      com_consoleLines[i][0] = '\0';
+      Q_strncpyz(cl_title, Cmd_ArgsFrom(2), sizeof(cl_title));
+      continue;
+    }
+
+    if (!Q_stricmp(Cmd_Argv(0), "cl_title"))
+    {
+      com_consoleLines[i][0] = '\0';
+      Q_strncpyz(cl_title, Cmd_ArgsFrom(1), sizeof(cl_title));
+      continue;
+    }
+
+    if (!Q_stricmpn(Cmd_Argv(0), "set", 3) && !Q_stricmp(Cmd_Argv(1), "con_title"))
+    {
+      com_consoleLines[i][0] = '\0';
+      Q_strncpyz(con_title, Cmd_ArgsFrom(2), title_size);
+      continue;
+    }
+
+    if (!Q_stricmp(Cmd_Argv(0), "con_title"))
+    {
+      com_consoleLines[i][0] = '\0';
+      Q_strncpyz(con_title, Cmd_ArgsFrom(1), title_size);
+      continue;
+    }
+
+    if (!Q_stricmpn(Cmd_Argv(0), "set", 3) && !Q_stricmp(Cmd_Argv(1), "vid_xpos"))
+    {
+      *vid_xpos = Q_atoi(Cmd_Argv(2));
+      flags |= 1;
+      continue;
+    }
+
+    if (!Q_stricmp(Cmd_Argv(0), "vid_xpos"))
+    {
+      *vid_xpos = Q_atoi(Cmd_Argv(1));
+      flags |= 1;
+      continue;
+    }
+
+    if (!Q_stricmpn(Cmd_Argv(0), "set", 3) && !Q_stricmp(Cmd_Argv(1), "vid_ypos"))
+    {
+      *vid_ypos = Q_atoi(Cmd_Argv(2));
+      flags |= 2;
+      continue;
+    }
+
+    if (!Q_stricmp(Cmd_Argv(0), "vid_ypos"))
+    {
+      *vid_ypos = Q_atoi(Cmd_Argv(1));
+      flags |= 2;
+      continue;
+    }
+
+    if (!Q_stricmpn(Cmd_Argv(0), "set", 3) && !Q_stricmp(Cmd_Argv(1), "rconPassword2"))
+    {
+      com_consoleLines[i][0] = '\0';
+      Q_strncpyz( rconPassword2, Cmd_Argv( 2 ), sizeof( rconPassword2 ) );
+      continue;
+    }
+  }
+
+  return (flags == 3) ? qtrue:qfalse;
+}
 
 /*
 ===================
@@ -2983,40 +3092,6 @@ static void Com_Crash_f( void ) {
 
 /*
 =================
-Com_Setenv_f
-
-For controlling environment variables
-=================
-*/
-void
-Com_Setenv_f(void)
-{
-  const qint argc = Cmd_Argc();
-  qchar *arg1 = Cmd_Argv(1);
-
-  if (argc > 2)
-  {
-    const qchar *arg2 = Cmd_ArgsFrom(2);
-
-    Sys_SetEnv(arg1, arg2);
-  }
-  else if (argc == 2)
-  {
-    const qchar *env = getenv(arg1);
-
-    if (env)
-    {
-      Com_Printf("%s=%s\n", arg1, env);
-    }
-    else
-    {
-      Com_Printf("%s undefined\n", arg1);
-    }
-  }
-}
-
-/*
-=================
 Com_ExecuteCfg
 
 For controlling environment variables.
@@ -3450,13 +3525,13 @@ Sys_GetProcessorId(qchar *vendor)
 
 /*
 ================
-Com_SnapVector
+Sys_SnapVector
 ================
 */
 #if defined(_MSC_VER)
 #if idx64
 void
-Com_SnapVector(float *vector)
+Sys_SnapVector(float *vector)
 {
   __m128 vf0;
   __m128 vf1;
@@ -3484,7 +3559,7 @@ Com_SnapVector(float *vector)
 
 #if id386
 void
-Com_SnapVector(float *vector)
+Sys_SnapVector(float *vector)
 {
   static const DWORD cw037F = 0x037F;
   DWORD cwCurr;
@@ -3516,7 +3591,7 @@ Com_SnapVector(float *vector)
 
 #if arm64
 void
-Com_SnapVector(float *vector)
+Sys_SnapVector(float *vector)
 {
   vector[0] = rint(vector[0]);
   vector[1] = rint(vector[1]);
@@ -3535,7 +3610,7 @@ Com_SnapVector(float *vector)
   "fstps " src "\n"
 
 void
-Com_SnapVector(float *vector)
+Sys_SnapVector(float *vector)
 {
   static const unsigned short cw037F = 0x037F;
   unsigned short cwCurr;
@@ -3557,7 +3632,7 @@ Com_SnapVector(float *vector)
 #else //idx64, non-x86
 
 void
-Com_SnapVector(float *vector)
+Sys_SnapVector(float *vector)
 {
   vector[0] = rint(vector[0]);
   vector[1] = rint(vector[1]);
@@ -3704,23 +3779,6 @@ Com_SetAffinityMask(const qchar *str)
 }
 #endif //USE_AFFINITY_MASK
 
-static void Com_DetectAltivec(void)
-{
-	// Only detect if user hasn't forcibly disabled it.
-	if (com_altivec->integer) {
-		static qbool altivec = qfalse;
-		static qbool detected = qfalse;
-		if (!detected) {
-			altivec = ( Sys_GetProcessorFeatures( ) & CF_ALTIVEC );
-			detected = qtrue;
-		}
-
-		if (!altivec) {
-			Cvar_Set( "com_altivec", "0" );  // we don't have it! Disable support!
-		}
-	}
-}
-
 /*
 =================
 Com_InitRand
@@ -3834,9 +3892,6 @@ void Com_Init( qchar *commandLine ) {
 
         //FIXME: broken Com_CommandLineCheck(&Com_InitExecs);
 
-        //add some commands here already so users can use them from config files
-        Cmd_AddCommand("setenv", Com_Setenv_f);
-
         if (com_developer && com_developer->integer)
         {
           Cmd_AddCommand("error", Com_Error_f);
@@ -3880,7 +3935,6 @@ void Com_Init( qchar *commandLine ) {
 	//
 	// init commands and vars
 	//
-	com_altivec = Cvar_Get ("com_altivec", "1", CVAR_ARCHIVE);
 	com_blood = Cvar_Get ("com_blood", "1", CVAR_ARCHIVE);
 
 	com_logfile = Cvar_GetAndDescribe("logfile", "0", CVAR_TEMP, "System console logging:\n"
@@ -3968,18 +4022,6 @@ void Com_Init( qchar *commandLine ) {
         }
 #endif
 
-        if (Sys_WritePIDFile())
-        {
-#if !defined(DEDICATED)
-          const qchar *message = "The last time " CLIENT_WINDOW_TITLE " ran, it didn't exit properly. This may be due to inappropriate video settings. Would you like to start with \"safe\" video settings?";
-
-          if (Sys_Dialog(DT_YES_NO, message, "Abnormal Exit") == DR_YES)
-          {
-            Cvar_Set("com_abnormalExit", "1");
-          }
-#endif
-        }
-
         //pick a random port value
         Com_RandomBytes((byte *)&qport, sizeof(qport));
         Netchan_Init(qport & 0xffff);
@@ -4018,19 +4060,6 @@ void Com_Init( qchar *commandLine ) {
 #endif
 
 	com_fullyInitialized = qtrue;
-
-	// always set the cvar, but only print the info if it makes sense.
-	Com_DetectAltivec();
-#if idppc
-	Com_Printf ("Altivec support is %s\n", com_altivec->integer ? "enabled" : "disabled");
-#endif
-
-        com_pipefile = Cvar_Get("com_pipefile", "", CVAR_ARCHIVE | CVAR_LATCH);
-
-        if (com_pipefile->string[0])
-        {
-          pipefile = FS_FCreateOpenPipeFile(com_pipefile->string);
-        }
 
 	Com_Printf ("--- Common Initialization Complete ---\n");
 

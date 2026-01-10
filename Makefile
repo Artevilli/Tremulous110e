@@ -1181,7 +1181,9 @@ endif # !USE_SDL
 else # !MINGW
 
   Q3OBJ += \
-    $(B)/client/sys_unix.o \
+    $(B)/client/unix_main.o \
+    $(B)/client/unix_shared.o \
+    $(B)/client/linux_signals.o
 
 ifeq ($(USE_SDL),1)
     Q3OBJ += \
@@ -1263,6 +1265,7 @@ Q3DOBJ = \
   $(B)/ded/common.o \
   $(B)/ded/cvar.o \
   $(B)/ded/files.o \
+  $(B)/ded/history.o \
   $(B)/ded/md4.o \
   $(B)/ded/md5.o \
   $(B)/ded/msg.o \
@@ -1280,9 +1283,6 @@ Q3DOBJ = \
   $(B)/ded/null_client.o \
   $(B)/ded/null_input.o \
   $(B)/ded/null_snddma.o \
-  \
-  $(B)/ded/con_log.o \
-  $(B)/ded/sys_main.o
 
 ifdef MINGW
   Q3DOBJ += \
@@ -1291,8 +1291,9 @@ ifdef MINGW
     $(B)/ded/con_win32.o
 else
   Q3DOBJ += \
-  $(B)/ded/sys_unix.o \
-  $(B)/ded/con_tty.o
+  $(B)/ded/linux_signals.o \
+  $(B)/ded/unix_main.o \
+  $(B)/ded/unix_shared.o
 endif
 
   Q3DOBJ += \

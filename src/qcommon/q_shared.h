@@ -30,9 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define PRODUCT_NAME_UPPPER     "XreaL" //case, no spaces
 #define PRODUCT_NAME_LOWER      "xreal" //no case, no spaces
 
-#if defined(_MSC_VER)
 #define PRODUCT_VERSION          "0.8.1"
-#endif
 
 #define ENGINE_NAME             "XreaL Engine"
 #define ENGINE_VERSION          "0.9.7"
@@ -55,12 +53,17 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 #endif
 
+#if defined(SVN_VERSION)
+#define Q3_VERSION PRODUCT_NAME " " SVN_VERSION
+#else
+#define Q3_VERSION PRODUCT_NAME " " PRODUCT_VERSION
+#endif
+
 #define Q3_ENGINE ENGINE_NAME " " ENGINE_VERSION
 #define Q3_ENGINE_DATE          __DATE__
 
-#define CLIENT_WINDOW_TITLE       "XreaL " PRODUCT_VERSION
-#define CLIENT_WINDOW_MIN_TITLE   "XreaL"
-#define Q3_VERSION                 PRODUCT_NAME " " //PRODUCT_VERSION //Chey: FIXME? figure out a way to uncomment this?
+#define CLIENT_WINDOW_TITLE       PRODUCT_VERSION
+#define CLIENT_WINDOW_MIN_TITLE   PRODUCT_NAME_LOWER
 
 #define GAMENAME_FOR_MASTER PRODUCT_NAME_UPPPER //must NOT contain whitespaces
 

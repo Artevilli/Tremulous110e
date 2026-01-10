@@ -1477,59 +1477,6 @@ FS_FOpenFileAppend(const qchar *filename)
 
 /*
 ===========
-FS_FCreateOpenPipeFile
-===========
-*/
-fileHandle_t
-FS_FCreateOpenPipeFile(const qchar *filename)
-{
-  qchar *ospath;
-  FILE *fifo;
-  fileHandle_t f;
-  fileHandleData_t *fd;
-
-  if (!fs_searchpaths)
-  {
-    Com_Error(ERR_FATAL, "Filesystem call made without initialization");
-  }
-
-  //allocate new file handle
-  f = FS_HandleForFile();
-  fd = &fsh[f];
-  FS_InitHandle(fd);
-
-  Q_strncpyz(fd->name, filename, sizeof(fd->name));
-#if !defined(DEDICATED)
-  //dont let sound stutter
-  //S_ClearSoundBuffer();
-#endif
-  ospath = FS_BuildOSPath(fs_homepath->string, fs_gamedir, filename);
-
-  if (fs_debug->integer)
-  {
-    Com_Printf("FS_FCreateOpenPipeFile: %s\n", ospath);
-  }
-
-  FS_CheckFilenameIsNotAllowed(ospath, __func__, qfalse);
-
-  fifo = Sys_Mkfifo(ospath);
-
-  if (fifo)
-  {
-    fd->handleFiles.file.o = fifo;
-    fd->handleSync = qfalse;
-  }
-  else
-  {
-    Com_Printf(S_COLOR_YELLOW "WARNING: Could not create new com_pipefile at %s. com_pipefile will not be used.\n", ospath);
-    return FS_INVALID_HANDLE;
-  }
-
-  return f;
-}
-
-/*
-===========
 FS_FilenameCompare
 
 Ignore case and separator qchar distinctions
@@ -5936,15 +5883,10 @@ FS_ReferencedPakPureChecksums(qint maxlen)
   qchar *max;
   const searchpath_t *search;
   qint nFlags;
-  qint numPaks;
-  qint checksum;
 
   max = info + maxlen; //maxlen is always smaller than MAX_STRING_CHARS so we can overflow a bit
   s = info;
   *s = 0;
-
-  checksum = fs_checksumFeed;
-  numPaks = 0;
 
   for(nFlags = FS_CGAME_REF;nFlags;nFlags = nFlags >> 1)
   {
@@ -5976,15 +5918,9 @@ FS_ReferencedPakPureChecksums(qint maxlen)
         {
           break;
         }
-
-        checksum ^= search->pack->pure_checksum;
-        numPaks++;
       }
     }
   }
-
-  //last checksum is the encoded number of referenced pk3s
-  checksum ^= numPaks;
 
   if (s > max)
   {

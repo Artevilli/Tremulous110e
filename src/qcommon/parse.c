@@ -471,7 +471,7 @@ Parse_ReadEscapeCharacter
 */
 static qint Parse_ReadEscapeCharacter(script_t *script, qchar *ch)
 {
-  qint c, val, i;
+  qint c, val;
 
   //step over the leading '\\'
   script->script_p++;
@@ -492,7 +492,7 @@ static qint Parse_ReadEscapeCharacter(script_t *script, qchar *ch)
     case 'x':
     {
       script->script_p++;
-      for (i = 0, val = 0; ; i++, script->script_p++)
+      for (val = 0; ;script->script_p++)
       {
         c = *script->script_p;
         if (c >= '0' && c <= '9') c = c - '0';
@@ -513,7 +513,7 @@ static qint Parse_ReadEscapeCharacter(script_t *script, qchar *ch)
     default: //NOTE: decimal ASCII code, NOT octal
     {
       if (*script->script_p < '0' || *script->script_p > '9') Parse_ScriptError(script, "unknown escape qchar");
-      for (i = 0, val = 0; ; i++, script->script_p++)
+      for (val = 0; ;script->script_p++)
       {
         c = *script->script_p;
         if (c >= '0' && c <= '9') c = c - '0';

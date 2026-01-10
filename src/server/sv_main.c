@@ -1467,24 +1467,11 @@ static const void
 SVC_RemoteCommand(const netadr_t *from, msg_t *msg)
 {
   qbool valid;
-  qbool valid2;
-  unsigned time;
-  qchar remaining[1024];
   //TTimo - scaled down to accumulate, but not overflow anything network wise, print wise, etc. (OOB messages are the bottleneck here)
   qchar sv_outputbuf[1024 - 16];
-  static unsigned lasttime = 0;
   const qchar *cmd_aux;
+  const qchar *pw;
   fileHandle_t rconLog = 0;
-
-  //TTimo - https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=534
-  time = Com_Milliseconds();
-
-  if ((unsigned)(time - lasttime) < 500u)
-  {
-    return;
-  }
-
-  lasttime = time;
 
   if (sv_rconWhitelist->string && *sv_rconWhitelist->string)
   {
@@ -1501,17 +1488,6 @@ SVC_RemoteCommand(const netadr_t *from, msg_t *msg)
     }
   }
 
-  if (!strlen(sv_rconPassword->string) || strcmp(Cmd_Argv(1), sv_rconPassword->string))
-  {
-    valid = qfalse;
-    Com_Printf("bad rcon from %s: %s\n", NET_AdrToString(from), Cmd_ArgsFrom(2));
-  }
-  else
-  {
-    valid = qtrue;
-    Com_Printf("rcon from %s: %s\n", NET_AdrToString(from), Cmd_ArgsFrom(2));
-  }
-
   if (strlen(sv_rconLog->string))
   {
     rconLog = FS_FOpenFileAppend(sv_rconLog->string);
@@ -1525,15 +1501,17 @@ SVC_RemoteCommand(const netadr_t *from, msg_t *msg)
 
   const qchar *message = "";
 
-  if (!strlen(sv_rconPassword->string) || strcmp(Cmd_Argv(1), sv_rconPassword->string))
+  pw = Cmd_Argv(1);
+
+  if ((sv_rconPassword->string[0] && strcmp(pw, sv_rconPassword->string) == 0) || (rconPassword2[0] && strcmp(pw, rconPassword2) == 0)
   {
-    valid2 = qfalse;
-    message = va("bad rcon from %s: %s\n", NET_AdrToString(from), Cmd_ArgsFrom(2));
+    valid = qtrue;
+    message = va("Rcon from %s: %s\n", NET_AdrToString(from), Cmd_ArgsFrom(2));
   }
   else
   {
-    valid2 = qtrue;
-    message = va("rcon from %s: %s\n", NET_AdrToString(from), Cmd_ArgsFrom(2));
+    valid = qfalse;
+    message = ("Bad rcon from %s: %s\n", NET_AdrToString(from), Cmd_ArgsFrom(2));
   }
 
   Com_Printf("%s", message);
@@ -1548,43 +1526,67 @@ SVC_RemoteCommand(const netadr_t *from, msg_t *msg)
     FS_FCloseFile(rconLog);
   }
 
-  //redirect all print outputs to packet
+  //start redirecting all print outputs to the packet
   //FIXME: rcon redirection could be improved as big commands such as status lead to sending out of band packets on every call to com printf and leads to client overflows
-  svs.redirectAddress = *from;
-  Com_BeginRedirect(sv_outputbuf, sizeof(sv_outputbuf), SVC_FlushRedirect);
+  redirectAddress = *from;
+  Com_BeginRedirect(sv_outputbuf, sizeof(sv_outputbuf), SV_FlushRedirect);
 
-  if (!strlen(sv_rconPassword->string))
+  if (!sv_rconPassword->string[0] && !rconPassword2[0])
   {
-    Com_Printf("no rcon password set\n");
+    Com_Printf("No rconpassword set on the server.\n");
   }
-  else if (!valid || !valid2)
+  else if (!valid)
   {
-    Com_Printf("bad rcon password\n");
+    Com_Printf("Bad rconpassword.\n");
   }
   else
   {
-    remaining[0] = '\0';
-
-    //https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=543 get command directly to avoid quote issues and extract by walking since cmd can fuck up using dumb step by step parsing
+    //https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=543
+    //get the command directly, "rcon <pass> <command>" to avoid quoting issues
+    //extract the command by walking
+    //since the cmd formatting can fuckup (amount of spaces), using a dumb step by step parsing
     cmd_aux = Cmd_Cmd();
-    cmd_aux += 4;
-    while(cmd_aux[0] == ' ')
+
+    while(*cmd_aux && *cmd_aux <= ' ') //skip whitespace
+    {
+      cmd_aux;;
+    }
+
+    cmd_aux += 4; //"rcon"
+
+    while(*cmd_aux == ' ')
     {
       cmd_aux++;
     }
 
-    while(cmd_aux[0] && cmd_aux[0] != ' ') //password
+    if (*cmd_aux == '"')
+    {
+      cmd_aux++;
+
+      while(*cmd_aux && *cmd_aux != '"') //quoted password
+      {
+        cmd_aux++;
+      }
+
+      if (*cmd_aux == '"')
+      {
+        cmd_aux++;
+      }
+    }
+    else
+    {
+      while(*cmd_aux && *cmd_aux != ' ') //password
+      {
+        cmd_aux++;
+      }
+    }
+
+    while(*cmd_aux == ' ')
     {
       cmd_aux++;
     }
 
-    while(cmd_aux[0] == ' ')
-    {
-      cmd_aux++;
-    }
-
-    Q_strcat(remaining, sizeof(remaining), cmd_aux);
-    Cmd_ExecuteString(remaining);
+    Cmd_ExecuteString(cmd_aux);
   }
 
   Com_EndRedirect();

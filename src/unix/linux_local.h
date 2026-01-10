@@ -19,50 +19,48 @@ along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
+#pragma once
 
-#include "../qcommon/q_shared.h"
-#include "../qcommon/qcommon.h"
-#include "sys_local.h"
+#if !defined(__LINUX_LOCAL_H__)
+#define __LINUX_LOCAL_H__
 
-#include <stdio.h>
+//Input subsystem
 
-/*
-==================
-CON_Shutdown
-==================
-*/
-void CON_Shutdown( void )
-{
-}
+void
+IN_Init(void);
+void
+IN_Frame(void);
+void
+IN_Shutdown(void);
 
-/*
-==================
-CON_Init
-==================
-*/
-void CON_Init( void )
-{
-}
 
-/*
-==================
-CON_Input
-==================
-*/
-char *CON_Input( void )
-{
-	return NULL;
-}
+void
+IN_JoyMove(void);
+void
+IN_StartupJoystick(void);
 
-/*
-==================
-CON_Print
-==================
-*/
-void CON_Print( const char *msg )
-{
-	if( com_ansiColor && com_ansiColor->integer )
-		Sys_AnsiColorPrint( msg );
-	else
-		fputs( msg, stderr );
-}
+//OpenGL subsystem
+qbool
+QGL_Init(const qchar *dllname);
+void
+QGL_Shutdown(qbool unloadDLL);
+
+//Vulkan subsystem
+qbool
+QVK_Init(void);
+void
+QVK_Shutdown(qbool unloadDLL);
+
+
+//bk001130 - win32
+//void
+//IN_JoystickCommands(void);
+
+char *
+strlwr(qchar *s);
+
+//signals.c
+void
+InitSig(void);
+
+#endif //__LINUX_LOCAL_H__
