@@ -421,7 +421,7 @@ client_t;
 
 //=============================================================================
 
-#define STATFRAMES (sv_fps->integer * 5) //FIXME: i think this is actually FRAMETIME / @sv_fps //5 seconds, assume running at sv_fps
+#define STATFRAMES(frametime) (frametime * 5) //FIXME: i think this is actually FRAMETIME / @sv_fps //5 seconds, assume running at sv_fps
 
 typedef struct
 {

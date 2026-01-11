@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/11/2026--**
 
+* server:<br />fix preprocessor define for dynamic sv_fps values
+
 * server:<br />code cleanup
 
 * makefile/sys:<br />initial rewrite of windows sys

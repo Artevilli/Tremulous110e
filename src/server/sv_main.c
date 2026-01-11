@@ -2612,7 +2612,7 @@ SV_Frame(const qint msec)
   end = Sys_Milliseconds();
   svs.stats.active += ((double)(end - start)) / 1000;
 
-  if (++svs.stats.count == STATFRAMES) //@sv_fps //5 seconds
+  if (++svs.stats.count == STATFRAMES(sv_fps->integer)) //@sv_fps //5 seconds
   {
     svs.stats.latched_active = svs.stats.active;
     svs.stats.latched_idle = svs.stats.idle;
@@ -2626,7 +2626,7 @@ SV_Frame(const qint msec)
       svs.stats.cpu = 100 * svs.stats.latched_active / svs.stats.cpu;
     }
 
-    svs.stats.avg = 1000 * svs.stats.latched_active / STATFRAMES;
+    svs.stats.avg = 1000 * svs.stats.latched_active / STATFRAMES(sv_fps->integer);
 
     //FIXME: add mail, irc, player info, etc for both warnings
     //TODO: inspect/adjust these values and/or add cvars
