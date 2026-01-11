@@ -367,12 +367,12 @@ SV_LocateGameData(sharedEntity_t *gEnts, qint numGEntities, qint sizeofGEntity_t
 
   if (gEnts && (sizeofGEntity_t < (qint)sizeof(sharedEntity_t) || numGEntities < 0))
   {
-    Com_Error(ERR_DROP, "SV_LocateGameData: incorrect game entity data");
+    Com_Error(ERR_DROP, "%s: incorrect game entity data", __func__);
   }
 
   if (clients && sizeofGameClient < (qint)sizeof(playerState_t))
   {
-    Com_Error(ERR_DROP, "SV_LocateGameData: incorrect player state data");
+    Com_Error(ERR_DROP, "%s: incorrect player state data", __func__);
   }
 
   sv.gentities = gEnts;

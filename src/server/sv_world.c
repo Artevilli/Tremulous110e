@@ -148,10 +148,10 @@ SV_CreateworldSector(qint depth, vec3_t mins, vec3_t maxs)
 
   anode->dist = 0.5f * (maxs[anode->axis] + mins[anode->axis]);
 
-  VectorCopy (mins, mins1);	
-  VectorCopy (mins, mins2);	
-  VectorCopy (maxs, maxs1);	
-  VectorCopy (maxs, maxs2);	
+  VectorCopy(mins, mins1);	
+  VectorCopy(mins, mins2);	
+  VectorCopy(maxs, maxs1);	
+  VectorCopy(maxs, maxs2);	
 
   maxs1[anode->axis] = mins2[anode->axis] = anode->dist;
 

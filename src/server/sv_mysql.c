@@ -144,7 +144,7 @@ sv_mysql_fetchfieldbyName(const qchar *name, qchar *buffer, qint len)
     {
       if(!strcmp(fields[i].name, name))
       {
-        Q_strncpyz( buffer, row[i], len );
+        Q_strncpyz(buffer, row[i], len);
         return;
       }
     }

@@ -265,7 +265,7 @@ SV_Map_f(void)
   //start up the map
   SV_SpawnServer(mapname, killBots);
   
-  // set the cheat value if the level was started with "map <levelname>", then cheats will not be allowed. If started with "devmap <levelname>" then cheats will be allowed
+  //set the cheat value if the level was started with "map <levelname>", then cheats will not be allowed. If started with "devmap <levelname>" then cheats will be allowed
   if (cheat)
   {
     Cvar_Set("sv_cheats", "1");
@@ -916,7 +916,7 @@ SV_ConTell_f(void)
 
   if (Cmd_Argc() < 3)
   {
-    Com_Printf( "Usage: tell <client number> <text>\n" );
+    Com_Printf("Usage: tell <client number> <text>\n");
     return;
   }
 
@@ -1172,7 +1172,7 @@ static void
 SV_Demo_Play_f(void)
 {
   qchar *arg;
-  
+
   if (Cmd_Argc() != 2)
   {
     Com_Printf("use demo_play demoname\n");
@@ -1447,7 +1447,7 @@ void
 SV_AddOperatorCommands(void)
 {
   static qbool initialized;
-  
+
   if (initialized)
   {
     return;

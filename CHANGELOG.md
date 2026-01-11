@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/11/2026--**
 
+* server:<br />code cleanup
+
 * makefile/sys:<br />initial rewrite of windows sys
 
 **--01/10/2026--**

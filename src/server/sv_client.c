@@ -3914,8 +3914,8 @@ SV_PrintLocations_f(client_t *client)
     return;
   }
 
-  max_namelength = 4; // strlen("name")
-  max_ctrylength = 7; // strlen("country")
+  max_namelength = 4; //strlen("name")
+  max_ctrylength = 7; //strlen("country")
 
   //first pass: save and determine max.lengths of name/address fields
   for(i = 0;i < sv.maxclients;i++)
@@ -4344,7 +4344,7 @@ SV_UserMove(client_t *cl, msg_t *msg, qbool delta)
   }
 
   //save time for ping calculation
-  if (cl->frames[ cl->messageAcknowledge & PACKET_MASK ].messageAcked <= 0)
+  if (cl->frames[cl->messageAcknowledge & PACKET_MASK].messageAcked == 0)
   {
     cl->frames[cl->messageAcknowledge & PACKET_MASK].messageAcked = Sys_Milliseconds();
   }

@@ -480,22 +480,25 @@ SV_AddIndexToSnapshot(svEntity_t *svEnt, qint index, snapshotEntityNumbers_t *eN
 SV_AddEntitiesVisibleFromPoint
 ===============
 */
-static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *frame, 
-                  snapshotEntityNumbers_t *eNums, qbool portal ) {
-  qint   e, i;
+static void
+SV_AddEntitiesVisibleFromPoint(vec3_t origin, clientSnapshot_t *frame, snapshotEntityNumbers_t *eNums, qbool portal)
+{
+  qint e;
+  qint i;
   sharedEntity_t *ent;
-  svEntity_t  *svEnt;
+  svEntity_t *svEnt;
   entityState_t *es;
-  qint   l;
-  qint   clientarea, clientcluster;
-  qint   leafnum;
-  qint   eventNumber;
-  byte  *clientpvs;
-  byte  *bitvector;
+  qint l;
+  qint clientarea;
+  qint clientcluster;
+  qint leafnum;
+  qint eventNumber;
+  byte *clientpvs;
+  byte *bitvector;
 
-  // during an error shutdown message we may need to transmit
-  // the shutdown message after the server has shutdown, so
-  // specfically check for it
+  //during an error shutdown message we may need to transmit
+  //the shutdown message after the server has shutdown, so
+  //specfically check for it
   if (sv.state == SS_DEAD)
   {
     return;
@@ -593,11 +596,11 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
 
     //ignore if not touching a PV leaf
     //check area
-    if (!CM_AreasConnected( clientarea, svEnt->areanum))
+    if (!CM_AreasConnected(clientarea, svEnt->areanum))
     {
       //doors can legally straddle two areas, so
       //we may need to check another one
-      if (!CM_AreasConnected( clientarea, svEnt->areanum2))
+      if (!CM_AreasConnected(clientarea, svEnt->areanum2))
       {
         continue; //blocked by a door
       }
@@ -744,7 +747,7 @@ static void SV_AddEntitiesVisibleFromPoint( vec3_t origin, clientSnapshot_t *fra
         vec3_t dir;
 
         VectorSubtract(ent->s.origin, origin, dir);
-        if (VectorLengthSquared(dir) > (float) ent->s.generic1 * ent->s.generic1)
+        if (VectorLengthSquared(dir) > (float)ent->s.generic1 * ent->s.generic1)
         {
           continue;
         }
@@ -912,13 +915,13 @@ For viewing through other player's eyes, clent can be something other than clien
 static void
 SV_BuildClientSnapshot(client_t *client)
 {
-  vec3_t            org;
-  clientSnapshot_t      *frame;
-  snapshotEntityNumbers_t   entityNumbers;
-  qint             i;
-  svEntity_t          *svEnt;
-  qint             clientNum;
-  playerState_t       *ps;
+  vec3_t org;
+  clientSnapshot_t *frame;
+  snapshotEntityNumbers_t entityNumbers;
+  qint i;
+  svEntity_t *svEnt;
+  qint clientNum;
+  playerState_t *ps;
 
   //this is the frame we are creating
   frame = &client->frames[client->netchan.outgoingSequence & PACKET_MASK];
@@ -943,6 +946,7 @@ SV_BuildClientSnapshot(client_t *client)
   //never send client's own entity, because it can
   //be regenerated from the playerstate
   clientNum = frame->ps.clientNum;
+
   if (clientNum < 0 || clientNum >= MAX_GENTITIES)
   {
     Com_Error(ERR_DROP, "SV_SvEntityForGentity: bad gEnt");
