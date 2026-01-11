@@ -1149,8 +1149,10 @@ endif
 ifdef MINGW
 
   Q3OBJ += \
+    $(B)/client/win_main.o \
+    $(B)/client/win_shared.o \
+    $(B)/client/win_syscon.o \
     $(B)/client/win_resource.o
-    $(B)/client/sys_win32.o
 
 ifeq ($(USE_SDL),1)
     Q3OBJ += \
@@ -1286,9 +1288,10 @@ Q3DOBJ = \
 
 ifdef MINGW
   Q3DOBJ += \
-    $(B)/ded/win_resource.o \
-    $(B)/ded/sys_win32.o \
-    $(B)/ded/con_win32.o
+  $(B)/ded/win_main.o \
+  $(B)/client/win_resource.o \
+  $(B)/ded/win_shared.o \
+  $(B)/ded/win_syscon.o
 else
   Q3DOBJ += \
   $(B)/ded/linux_signals.o \

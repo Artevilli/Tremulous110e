@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--01/11/2026--**
+
+* makefile/sys:<br />initial rewrite of windows sys
+
 **--01/10/2026--**
 
 * makefile/sys/qcommon/server:<br />initial restructuring and rewrite of sys handling, better rcon handling
