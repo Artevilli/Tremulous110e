@@ -877,7 +877,7 @@ SV_DirectConnect(const netadr_t *from)
     {
       cl = &svs.clients[i];
 
-      if (NET_CompareBaseAdr(from, &cl->netchan.remoteAddress))
+      if (NET_CompareAdr(from, &cl->netchan.remoteAddress))
       {
         const qint elapsed = svs.time - cl->lastConnectTime;
 
@@ -1000,7 +1000,7 @@ SV_DirectConnect(const netadr_t *from)
       }
 
       //both qport and netport should match for a reconnecting client
-      if (NET_CompareBaseAdr(from, &cl->netchan.remoteAddress) && cl->netchan.qport == qport)
+      if (NET_CompareAdr(from, &cl->netchan.remoteAddress) && cl->netchan.qport == qport)
       {
         Com_Printf("%s:reconnect\n", NET_AdrToString(from));
         newcl = cl;
@@ -1183,7 +1183,7 @@ gotnewcl1:
     if (denied)
     {
       //we can't just use VM_ArgPtr, because that is only valid inside a VM_Call
-      const qchar *str = (const qchar *)GVM_ArgPtr(denied);
+      const qchar *str = GVM_ArgPtr(denied);
 
       NET_OutOfBandPrint(NS_SERVER, from, "print\n%s\n", str);
       Com_DPrintf("Game rejected a connection: %s.\n", str);
@@ -1200,7 +1200,7 @@ gotnewcl1:
     svs.challenges[i].firstPing = 0;
 
     //send the connect packet to the client
-    NET_OutOfBandPrint(NS_SERVER, from, "connectResponse");
+    NET_OutOfBandPrint(NS_SERVER, from, "connectResponse %d", challenge);
 
     SV_SetClientState(newcl, CS_CONNECTED);
 
@@ -1354,7 +1354,7 @@ gotnewcl1:
     }
     else
     {
-      ip = (qchar *)NET_AdrToString(from);
+      ip = NET_AdrToString(from);
     }
 
     if (!Info_SetValueForKey(userinfo, "ip", ip))
@@ -1385,7 +1385,7 @@ gotnewcl1:
     {
       cl = &svs.clients[i];
 
-      if (NET_CompareBaseAdr(from, &cl->netchan.remoteAddress))
+      if (NET_CompareAdr(from, &cl->netchan.remoteAddress))
       {
         const qint elapsed = svs.time - cl->lastConnectTime;
 
@@ -1437,7 +1437,7 @@ gotnewcl1:
       }
 
       //both qport and netport should match for a reconnecting client
-      if (NET_CompareBaseAdr(from, &cl->netchan.remoteAddress) && cl->netchan.qport == qport)
+      if (NET_CompareAdr(from, &cl->netchan.remoteAddress) && cl->netchan.qport == qport)
       {
         Com_Printf("%s:reconnect\n", NET_AdrToString(from));
         newcl = cl;
@@ -1620,7 +1620,7 @@ gotnewcl2:
     if (denied)
     {
       //we can't just use VM_ArgPtr, because that is only valid inside a VM_Call
-      const qchar *str = (const qchar *)GVM_ArgPtr(denied);
+      const qchar *str = GVM_ArgPtr(denied);
 
       NET_OutOfBandPrint(NS_SERVER, from, "print\n%s\n", str);
       Com_DPrintf("Game rejected a connection: %s.\n", str);
@@ -1638,7 +1638,7 @@ gotnewcl2:
     svs.challenges[i].firstPing = 0;
 #endif
     //send the connect packet to the client
-    NET_OutOfBandPrint(NS_SERVER, from, "connectResponse");
+    NET_OutOfBandPrint(NS_SERVER, from, "connectResponse %d", challenge);
 
     SV_SetClientState(newcl, CS_CONNECTED);
 
@@ -4136,7 +4136,7 @@ SV_ExecuteClientCommand(client_t *cl, const qchar *s)
   //see if it is a server level command
   for(ucmd = ucmds;ucmd->name;ucmd++)
   {
-    if (!Q_stricmp(Cmd_Argv(0), ucmd->name))
+    if (!strcmp(Cmd_Argv(0), ucmd->name))
     {
       if (ucmd->func == SV_UpdateUserinfo_f)
       {
@@ -4739,27 +4739,12 @@ SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
   {
     c = MSG_ReadByte(msg);
 
-#if 0
-    //See if this is an extension command after the EOF, which means we
-    //got data that a legacy server should ignore.
-    if ((c == clc_EOF) && (MSG_LookaheadByte(msg) == clc_extension))
-    {
-      MSG_ReadByte(msg); //throw the clc_extension byte away.
-      c = MSG_ReadByte(msg); //something legacy servers can't do!
-      //sometimes you get a clc_extension at end of stream...dangling
-      //bits in the huffman decoder giving a bogus value?
-      if (c == -1)
-      {
-        c = clc_EOF;
-      }
-    }
-#endif
     if (c != clc_clientCommand)
     {
       break;
     }
 
-    if (!SV_ClientCommand(cl, msg))
+    if (!SV_ClientCommand(cl, msg)) //Chey: FIXME: this is being rapidly spammed when the client is about to enter the world
     {
       return; //we couldn't execute it because of the flood protection
     }
