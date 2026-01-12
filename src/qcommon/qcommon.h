@@ -1131,6 +1131,7 @@ extern cvar_t *com_developer;
 extern cvar_t *com_dedicated;
 extern cvar_t *com_speeds;
 extern cvar_t *com_timescale;
+extern cvar_t *com_viewlog; //0 = hidden, 1 = visible, 2 = minimized
 extern cvar_t *com_sv_running;
 extern cvar_t *com_cl_running;
 #if defined(USE_AFFINITY_MASK)
@@ -1347,6 +1348,9 @@ qbool
 SV_GameCommand( void );
 qint
 SV_SendQueuedPackets(void);
+
+void
+SV_AddDedicatedCommands(void);
 void
 SV_RemoveDedicatedCommands(void);
 
@@ -1414,6 +1418,9 @@ qbool Sys_RandomBytes( byte *string, qint len );
 
 // the system console is shown when a dedicated server is running
 void	Sys_DisplaySystemConsole( qbool show );
+
+void
+Sys_ShowConsole(qint level, qbool quitOnClose);
 
 void	Sys_SetErrorText( const qchar *text );
 

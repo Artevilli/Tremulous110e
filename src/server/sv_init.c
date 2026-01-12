@@ -1045,6 +1045,11 @@ SV_Init(void)
 
   SV_AddOperatorCommands();
 
+  if (com_dedicated->integer)
+  {
+    SV_AddDedicatedCommands();
+  }
+
   //initialize cvars
   SV_InitCvars();
   //init attack log with tremded

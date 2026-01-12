@@ -67,6 +67,7 @@ static fileHandle_t logfile = FS_INVALID_HANDLE;
 fileHandle_t com_journalFile = FS_INVALID_HANDLE; //events are written here
 fileHandle_t com_journalDataFile = FS_INVALID_HANDLE; //config files are written here
 
+cvar_t *com_viewlog;
 cvar_t *com_speeds;
 cvar_t *com_developer;
 cvar_t *com_dedicated;
@@ -104,7 +105,6 @@ cvar_t *sv_packetdelay;
 cvar_t *sv_packetloss;
 cvar_t *com_cameraMode;
 cvar_t *com_ansiColor;
-cvar_t *com_abnormalExit;
 cvar_t *com_homepath;
 
 //com_speeds times
@@ -3892,18 +3892,6 @@ void Com_Init( qchar *commandLine ) {
 
         //FIXME: broken Com_CommandLineCheck(&Com_InitExecs);
 
-        if (com_developer && com_developer->integer)
-        {
-          Cmd_AddCommand("error", Com_Error_f);
-          Cmd_AddCommand("crash", Com_Crash_f);
-          Cmd_AddCommand("freeze", Com_Freeze_f);
-        }
-
-        Cmd_AddCommand("quit", Com_Quit_f);
-        Cmd_AddCommand("changeVectors", MSG_ReportChangeVectors_f);
-        Cmd_AddCommand("writeconfig", Com_WriteConfig_f);
-        Cmd_SetCommandCompletionFunc("writeconfig", Cmd_CompleteWriteCfgName);
-
 	// override anything from the config files with command line args
 	Com_StartupVariable( NULL );
 
@@ -3915,15 +3903,6 @@ void Com_Init( qchar *commandLine ) {
 	com_dedicated = Cvar_Get ("dedicated", "0", CVAR_LATCH);
 	Cvar_CheckRange( com_dedicated, "0", "2", CV_INTEGER );
 #endif
-
-        if (com_dedicated->integer)
-        {
-          gw_minimized = qtrue;
-        }
-        else
-        {
-          gw_minimized = qfalse;
-        }
 
 	// allocate the stack based hunk allocator
 	Com_InitHunkMemory();
@@ -3949,6 +3928,7 @@ void Com_Init( qchar *commandLine ) {
 	Cvar_CheckRange(com_timescale, "0", NULL, CV_FLOAT);
 	com_fixedtime = Cvar_GetAndDescribe("fixedtime", "0", CVAR_CHEAT, "Toggle the rendering of every frame the game will wait until each frame is completely rendered before sending the next frame.");
 	com_showtrace = Cvar_GetAndDescribe("com_showtrace", "0", CVAR_CHEAT, "Debugging tool that prints out trace information.");
+	com_viewlog = Cvar_GetAndDescribe("viewlog", "0", 0, "Toggle the display of the startup console window over the game screen.");
 	com_speeds = Cvar_GetAndDescribe("com_speeds", "0", 0, "Prints speed information per frame to the console. Used for debugging.");
 #if !defined(DEDICATED)
 	com_timedemo = Cvar_GetAndDescribe("timedemo", "0", CVAR_CHEAT, "When set to '1' times a demo and returns frames per second like a benchmark.");
@@ -3985,9 +3965,31 @@ void Com_Init( qchar *commandLine ) {
         com_affinityMask->modified = qfalse;
 #endif
 
+        if (com_dedicated->integer)
+        {
+          if (!com_viewlog->integer)
+          {
+            Cvar_Set("viewlog", "1");
+          }
 
-	com_abnormalExit = Cvar_Get("com_abnormalExit", "0", CVAR_ROM);
+          gw_minimized = qtrue;
+        }
+        else
+        {
+          gw_minimized = qfalse;
+        }
 
+        if (com_developer && com_developer->integer)
+        {
+          Cmd_AddCommand("error", Com_Error_f);
+          Cmd_AddCommand("crash", Com_Crash_f);
+          Cmd_AddCommand("freeze", Com_Freeze_f);
+        }
+
+        Cmd_AddCommand("quit", Com_Quit_f);
+        Cmd_AddCommand("changeVectors", MSG_ReportChangeVectors_f);
+        Cmd_AddCommand("writeconfig", Com_WriteConfig_f);
+        Cmd_SetCommandCompletionFunc("writeconfig", Cmd_CompleteWriteCfgName);
 	Cmd_AddCommand("game_restart", Com_GameRestart_f);
 
 	const qchar *s = va("%s %s %s", Q3_VERSION, PLATFORM_STRING, __DATE__ );
@@ -4032,6 +4034,7 @@ void Com_Init( qchar *commandLine ) {
 	com_dedicated->modified = qfalse;
 #if !defined(DEDICATED)
 	CL_Init();
+	//Sys_ShowConsole(com_viewlog->integer, qfalse); //moved down
 #endif
 
 	// add + commands from command line
@@ -4053,6 +4056,11 @@ void Com_Init( qchar *commandLine ) {
 	// being random enough for a serverid
 	//lastTime = com_frameTime = Com_Milliseconds();
 	Com_FrameInit();
+
+        if (!com_errorEntered)
+        {
+          Sys_ShowConsole(com_viewlog->integer, qfalse);
+        }
 
 #if !defined(DEDICATED)
 	// make sure single player is off by default
@@ -4306,6 +4314,17 @@ Com_Frame(qbool noDelay)
   Com_WriteConfiguration();
 #endif
 
+  //if "viewlog" has been modified, show or hide the console log
+  if (com_viewlog->modified)
+  {
+    if (!com_dedicated->integer)
+    {
+      Sys_ShowConsole(com_viewlog->integer, qfalse);
+    }
+
+    com_viewlog->modified = qfalse;
+  }
+
 #if defined(USE_AFFINITY_MASK)
   if (com_affinityMask->modified)
   {
@@ -4434,6 +4453,7 @@ Com_Frame(qbool noDelay)
 #if !defined(DEDICATED)
       CL_Init();
 #endif
+      Sys_ShowConsole(com_viewlog->integer, qfalse);
 #if !defined(DEDICATED)
       gw_minimized = qfalse;
       CL_StartHunkUsers();
@@ -4445,6 +4465,8 @@ Com_Frame(qbool noDelay)
       CL_Shutdown();
       CL_FlushMemory();
 #endif
+      Sys_ShowConsole(1, qtrue);
+      SV_AddDedicatedCommands();
       gw_minimized = qtrue;
     }
   }

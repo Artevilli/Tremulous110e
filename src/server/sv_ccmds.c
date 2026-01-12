@@ -48,8 +48,8 @@ SV_GetPlayerByHandle(void)
 {
   client_t *cl;
   qint i;
-  qchar *s;
-  qchar cleanName[64];
+  const qchar *s;
+  qchar cleanName[MAX_NAME_LENGTH];
 
   //make sure server is running
   if (!com_sv_running->integer)
@@ -77,7 +77,7 @@ SV_GetPlayerByHandle(void)
     {
       cl = &svs.clients[plid];
 			
-      if (cl->state)
+      if (cl->state >= CS_CONNECTED)
       {
         return cl;
       }
@@ -89,7 +89,7 @@ SV_GetPlayerByHandle(void)
   {
     cl = &svs.clients[i];
 
-    if (!cl->state)
+    if (cl->state < CS_CONNECTED)
     {
       continue;
     }
@@ -125,7 +125,7 @@ SV_GetPlayerByNum(void)
   client_t *cl;
   qint i;
   qint idnum;
-  qchar *s;
+  const qchar *s;
 
   //make sure server is running
   if (!com_sv_running->integer)
@@ -160,7 +160,7 @@ SV_GetPlayerByNum(void)
 
   cl = &svs.clients[idnum];
 
-  if (!cl->state)
+  if (cl->state < CS_CONNECTED)
   {
     Com_Printf("Client %i is not active\n", idnum);
     return NULL;
@@ -198,9 +198,10 @@ Restart the server on a different map
 static void
 SV_Map_f(void)
 {
-  qchar *cmd;
-  qchar *map;
-  qbool killBots, cheat;
+  const qchar *cmd;
+  const qchar *map;
+  qbool killBots;
+  qbool cheat;
   qchar expanded[MAX_QPATH];
   qchar mapname[MAX_QPATH];
   qint i;
@@ -208,7 +209,7 @@ SV_Map_f(void)
 
   map = Cmd_Argv(1);
 
-  if (!map)
+  if (!map || !*map)
   {
     return;
   }
@@ -221,6 +222,7 @@ SV_Map_f(void)
 
   //make sure the level exists before trying to change, so that a typo at the server console won't end the game
   Com_sprintf(expanded, sizeof(expanded), "maps/%s.bsp", map);
+
   //bypass pure check so we can open downloaded map
   FS_BypassPure();
   len = FS_FOpenFileRead(expanded, NULL, qfalse);
@@ -256,7 +258,7 @@ SV_Map_f(void)
     SV_DemoStopPlayback();
   }
   
-  // save the map name here cause on a map restart we reload the autogen.cfg and thus nuke the arguments of the map command
+  //save the map name here cause on a map restart we reload the autogen.cfg and thus nuke the arguments of the map command
   Q_strncpyz(mapname, map, sizeof(mapname));
 
   //enforce lowercase names for consistency
@@ -275,10 +277,10 @@ SV_Map_f(void)
     Cvar_Set("sv_cheats", "0");
   }
   
-  // This forces the local master server IP address cache to be updated on sending the next heartbeat
+  //This forces the local master server IP address cache to be updated on sending the next heartbeat
   for(i = 0;i < MAX_MASTER_SERVERS;i++)
   {
-    sv_master[ i ]->modified  = qtrue;
+    sv_master[i]->modified = qtrue;
   }
 }
 
@@ -295,16 +297,15 @@ SV_MapRestart_f(void)
 {
   qint i;
   client_t *client;
-  qchar *denied;
+  const qchar *denied;
   qchar mapname[MAX_QPATH];
   qbool isBot;
   qtime_t now;
   qint delay;
   qbool isDownloading = qfalse;
-  //static qint lastRestartFrame;
 
   //make sure we aren't restarting twice in the same frame
-  if (com_frameTime == sv.restartedServerId) //formerly lastRestartFrame
+  if (com_frameTime == sv.restartedServerId)
   {
     return;
   }
@@ -359,6 +360,7 @@ SV_MapRestart_f(void)
   if (sv_maxclients->modified || sv_democlients->modified || sv_pure->modified || isDownloading)
   {
     Com_Printf("variable change and/or client downloading -- restarting.\n");
+
     //restart the map the slow way
     Q_strncpyz(mapname, Cvar_VariableString("mapname"), sizeof(mapname));
     SV_SpawnServer(mapname, qfalse);
@@ -520,7 +522,7 @@ SV_KickAll_f(void)
   {
     cl = &svs.clients[i];
 
-    if (!cl->state)
+    if (cl->state < CS_CONNECTED)
     {
       continue;
     }
@@ -1459,8 +1461,6 @@ SV_AddOperatorCommands(void)
   Cmd_AddCommand("kickAll", SV_KickAll_f);
   Cmd_AddCommand("clientkick", SV_KickNum_f);
   Cmd_AddCommand("status", SV_Status_f);
-  Cmd_AddCommand("serverinfo", SV_Serverinfo_f);
-  Cmd_AddCommand("systeminfo", SV_Systeminfo_f);
   Cmd_AddCommand("dumpuser", SV_DumpUser_f);
   Cmd_AddCommand("map_restart", SV_MapRestart_f);
   Cmd_AddCommand("sectorlist", SV_SectorList_f);
@@ -1480,13 +1480,21 @@ SV_AddOperatorCommands(void)
 #if defined(INCLUDE_REMOTE_COMMANDS)
   Cmd_AddCommand("rconwhitelistrehash", SV_RconWhitelistRehash_f);
 #endif
+}
 
-  if (com_dedicated->integer)
-  {
-    Cmd_AddCommand("say", SV_ConSay_f);
-    Cmd_AddCommand("tell", SV_ConTell_f);
-    Cmd_AddCommand("locations", SV_Locations_f);
-  }
+/*
+==================
+SV_AddOperatorCommands
+==================
+*/
+void
+SV_AddDedicatedCommands(void)
+{
+  Cmd_AddCommand("serverinfo", SV_Serverinfo_f);
+  Cmd_AddCommand("systeminfo", SV_Systeminfo_f);
+  Cmd_AddCommand("tell", SV_ConTell_f);
+  Cmd_AddCommand("say", SV_ConSay_f);
+  Cmd_AddCommand("locations", SV_Locations_f);
 }
 
 /*
