@@ -726,8 +726,8 @@ tty_colorTable[] =
   {COLOR_GREEN, "32"},
   {COLOR_YELLOW, "33"},
   {COLOR_BLUE, "34"},
-  {COLOR_CYAN, "35"},
-  {COLOR_MAGENTA, "36"},
+  {COLOR_CYAN, "36"},
+  {COLOR_MAGENTA, "35"},
   {COLOR_WHITE, "0"}
 };
 

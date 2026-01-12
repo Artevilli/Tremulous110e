@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/12/2026--**
 
+* sys:<br />fix bad color code ordering
+
 * qcommon/server:<br />better handling of dedicated server commands, implement `com_viewlog` for Windows, avoid empty map names in `SV_Map_f()` code cleanup
 
 * server:<br />remove redundant array initializer
