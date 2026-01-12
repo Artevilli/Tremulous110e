@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/12/2026--**
 
+* server:<br />server snapshot cleanup
+
 * server:<br />various fixes
 
 * qcommon:<br />various fixes

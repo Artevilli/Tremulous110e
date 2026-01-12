@@ -155,8 +155,7 @@ NET
 #define MAX_SNAPSHOT_ENTITIES 256
 #define	PORT_ANY			-1
 
-#define	MAX_RELIABLE_COMMANDS	512			// max string commands buffered for restransmit
-#define MAX_RELIABLE_COMMANDS_VANILLA 128 //max string commands buffered for retransmit as supported by vanilla clients
+#define	MAX_RELIABLE_COMMANDS	128			// max string commands buffered for restransmit
 
 #define	MAX_PACKETLEN			1400		// max size of a network packet
 
