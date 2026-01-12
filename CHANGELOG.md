@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/12/2026--**
 
+* server:<br />remove redundant array initializer
+
 * server:<br />temporary serverside fix to VoIP support
 
 **--01/11/2026--**

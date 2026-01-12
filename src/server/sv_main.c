@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 #include "server.h"
 
 serverStatic_t svs; //persistant server info
-server_t sv = {}; //local server
+server_t sv; //local server
 
 //Chey
 #if defined(INCLUDE_REMOTE_COMMANDS)
