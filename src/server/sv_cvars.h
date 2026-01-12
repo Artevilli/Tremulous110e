@@ -45,6 +45,9 @@
 //fix client ping calculation to more accurately reflect packet loss, enabled by sv_pingFix, also force minimum ping for humans to 1
 #define INCLUDE_SV_PINGFIX
 
+//voip support
+#define USE_VOIP
+
 //stateless challenges v2 does not support debugging yet
 #if defined(STATELESS_CHALLENGES_VERSION_ONE)
 //challenge debugging

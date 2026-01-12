@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--01/12/2026--**
+
+* server:<br />temporary serverside fix to VoIP support
+
 **--01/11/2026--**
 
 * server:<br />fix preprocessor define for dynamic sv_fps values
