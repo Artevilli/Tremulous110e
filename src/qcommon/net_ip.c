@@ -2005,7 +2005,7 @@ NET_Event(const fd_set *fdr)
         }
       }
 
-#if !defined(DEDICATED)
+#if defined(DEDICATED)
       Com_RunAndTimeServerPacket(&from, &netmsg);
 #else
       if (com_sv_running->integer || com_dedicated->integer)

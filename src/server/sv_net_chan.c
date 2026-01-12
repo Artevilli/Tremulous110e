@@ -131,7 +131,7 @@ SV_Netchan_Decode(client_t *client, msg_t *msg)
   msg->bit = sbit;
   msg->readcount = srdc;
         
-  string = (byte *)client->reliableCommands[reliableAcknowledge & (MAX_RELIABLE_COMMANDS-1)];
+  string = (byte *)client->reliableCommands[reliableAcknowledge & (MAX_RELIABLE_COMMANDS - 1)];
   index = 0;
   //
   key = client->challenge ^ serverId ^ messageAcknowledge;

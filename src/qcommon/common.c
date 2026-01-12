@@ -2943,68 +2943,90 @@ Com_EventLoop
 Returns last event time
 =================
 */
-qint Com_EventLoop( void ) {
-	sysEvent_t	ev;
-	byte		bufData[MAX_MSGLEN_BUF];
-	msg_t		buf;
+qint
+Com_EventLoop(void)
+{
+  sysEvent_t ev;
 
-	MSG_Init( &buf, bufData, MAX_MSGLEN );
-
-	while ( 1 ) {
-		ev = Com_GetEvent();
-
-		// if no more events are available
-		if ( ev.evType == SE_NONE ) {
-			// manually send packet events for the loopback channel
 #if !defined(DEDICATED)
-                        netadr_t evFrom;
-			while ( NET_GetLoopPacket( NS_CLIENT, &evFrom, &buf ) ) {
-				CL_PacketEvent( &evFrom, &buf );
-			}
+  byte bufData[MAX_MSGLEN_BUF];
+  msg_t buf;
 
-			while ( NET_GetLoopPacket( NS_SERVER, &evFrom, &buf ) ) {
-				// if the server just shut down, flush the events
-				if ( com_sv_running->integer ) {
-					Com_RunAndTimeServerPacket( &evFrom, &buf );
-				}
-			}
-#endif
-			return ev.evTime;
-		}
+  MSG_Init(&buf, bufData, MAX_MSGLEN);
+#endif //!DEDICATED
 
+  while(1)
+  {
+    ev = Com_GetEvent();
 
-		switch ( ev.evType ) {
+    //if no more events are available
+    if (ev.evType == SE_NONE)
+    {
+      // manually send packet events for the loopback channel
 #if !defined(DEDICATED)
-		case SE_KEY:
-			CL_KeyEvent( ev.evValue, ev.evValue2, ev.evTime );
-			break;
-		case SE_CHAR:
-			CL_CharEvent( ev.evValue );
-			break;
-		case SE_MOUSE:
-			CL_MouseEvent( ev.evValue, ev.evValue2, ev.evTime );
-			break;
-		case SE_JOYSTICK_AXIS:
-			CL_JoystickEvent( ev.evValue, ev.evValue2, ev.evTime );
-			break;
-#endif
-		case SE_CONSOLE:
-			Cbuf_AddText( (qchar *)ev.evPtr );
-			Cbuf_AddText( "\n" );
-			break;
-		default:
-			Com_Error( ERR_FATAL, "Com_EventLoop: bad event type %i", ev.evType );
-			break;
-		}
+      netadr_t evFrom;
 
-		// free any block data
-		if ( ev.evPtr ) {
-			Z_Free( ev.evPtr );
-			ev.evPtr = NULL;
-		}
-	}
+      while( NET_GetLoopPacket(NS_CLIENT, &evFrom, &buf))
+      {
+        CL_PacketEvent(&evFrom, &buf);
+      }
 
-	return 0;	// never reached
+      while(NET_GetLoopPacket(NS_SERVER, &evFrom, &buf))
+      {
+        //if the server just shut down, flush the events
+        if (com_sv_running->integer)
+        {
+          Com_RunAndTimeServerPacket(&evFrom, &buf);
+        }
+      }
+#endif //!DEDICATED
+      return ev.evTime;
+    }
+
+
+    switch(ev.evType)
+    {
+#if !defined(DEDICATED)
+      case
+      SE_KEY:
+        CL_KeyEvent(ev.evValue, ev.evValue2, ev.evTime);
+        break;
+
+      case
+      SE_CHAR:
+        CL_CharEvent(ev.evValue);
+        break;
+
+      case
+      SE_MOUSE:
+        CL_MouseEvent(ev.evValue, ev.evValue2, ev.evTime);
+        break;
+
+      case
+      SE_JOYSTICK_AXIS:
+        CL_JoystickEvent(ev.evValue, ev.evValue2, ev.evTime);
+        break;
+#endif //!DEDICATED
+      case
+      SE_CONSOLE:
+        Cbuf_AddText((qchar *)ev.evPtr);
+        Cbuf_AddText("\n");
+        break;
+
+      default:
+        Com_Error(ERR_FATAL, "Com_EventLoop: bad event type %i", ev.evType);
+        break;
+    }
+
+    //free any block data
+    if (ev.evPtr)
+    {
+      Z_Free(ev.evPtr);
+      ev.evPtr = NULL;
+    }
+  }
+
+  return 0; //never reached
 }
 
 /*
@@ -3014,22 +3036,24 @@ Com_Milliseconds
 Can be used for profiling, but will be journaled accurately
 ================
 */
-qint Com_Milliseconds (void) {
-	if ( com_journal->integer ) {
-		sysEvent_t	ev;
+qint
+Com_Milliseconds(void)
+{
+  sysEvent_t ev;
 
-		// get events and push them until we get a null event with the current time
-		do {
-			ev = Com_GetRealEvent();
-			if ( ev.evType != SE_NONE ) {
-				Com_PushEvent( &ev );
-			}
-		} while ( ev.evType != SE_NONE );
+  //get events and push them until we get a null event with the current time
+  do
+  {
+    ev = Com_GetRealEvent();
 
-		return ev.evTime;
-	}
+    if (ev.evType != SE_NONE)
+    {
+      Com_PushEvent(&ev);
+    }
+  }
+  while(ev.evType != SE_NONE);
 
-	return Sys_Milliseconds();
+  return ev.evTime;
 }
 
 //============================================================================
@@ -3059,24 +3083,32 @@ Just freeze in place for a given number of seconds to test
 error recovery
 =============
 */
-static void Com_Freeze_f (void) {
-	float	s;
-	qint		start, now;
+static void
+Com_Freeze_f(void)
+{
+  qint s;
+  qint start;
+  qint now;
 
-	if ( Cmd_Argc() != 2 ) {
-		Com_Printf( "freeze <seconds>\n" );
-		return;
-	}
-	s = Q_atof( Cmd_Argv(1) );
+  if (Cmd_Argc() != 2)
+  {
+    Com_Printf("freeze <seconds>\n");
+    return;
+  }
 
-	start = Com_Milliseconds();
+  s = Q_atoi(Cmd_Argv(1));
 
-	while ( 1 ) {
-		now = Com_Milliseconds();
-		if ( ( now - start ) * 0.001 > s ) {
-			break;
-		}
-	}
+  start = Com_Milliseconds();
+
+  while(1)
+  {
+    now = Com_Milliseconds();
+
+    if ((now - start) > s)
+    {
+      break;
+    }
+  }
 }
 
 /*
@@ -3134,6 +3166,7 @@ Com_GameRestart(qint checksumFeed, qbool clientRestart)
     {
       CL_Disconnect(qfalse);
       CL_ShutdownAll();
+      Hunk_Clear();
     }
 #endif
     //kill server if we have one
@@ -3142,8 +3175,11 @@ Com_GameRestart(qint checksumFeed, qbool clientRestart)
       SV_Shutdown("Game directory changed");
     }
 
+    //reset console command history
+    Con_ResetHistory();
+
     //shutdown fs early so cvar_restart will not reset old game cvars
-    FS_Shutdown(qfalse);
+    FS_Shutdown(qtrue);
 
     //clean out any user and qvm created cvars
     Cvar_Restart(qtrue);
@@ -3152,7 +3188,10 @@ Com_GameRestart(qint checksumFeed, qbool clientRestart)
 
     //clean out any user and vm created cvars
     Cvar_Restart(qtrue);
+
+    //load new configuration
     Com_ExecuteCfg();
+
 #if !defined(DEDICATED)
     //restart sound subsystem so old handles are flushed
     CL_Snd_Restart();

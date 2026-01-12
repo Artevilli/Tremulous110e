@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/12/2026--**
 
+* qcommon:<br />various fixes
+
 * qcommon:<br />avoid using ansicolor for now
 
 * sys:<br />fix bad color code ordering
