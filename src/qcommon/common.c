@@ -3947,7 +3947,7 @@ void Com_Init( qchar *commandLine ) {
 	sv_packetloss = Cvar_Get("sv_packetloss", "0", CVAR_CHEAT);
 	com_sv_running = Cvar_GetAndDescribe("sv_running", "0", CVAR_ROM, "Communicates to game modules if there is a server currently running.");
 	com_buildScript = Cvar_GetAndDescribe("com_buildScript", "0", 0, "Loads all game assets, regardless whether they are required or not.");
-	com_ansiColor = Cvar_GetAndDescribe("com_ansiColor", "0", CVAR_ARCHIVE, "Use ANSI color in the terminal window instead of color codes");
+	com_ansiColor = Cvar_GetAndDescribe("com_ansiColor", "0", CVAR_ROM /*CVAR_ARCHIVE*/, "Use ANSI color in the terminal window instead of color codes");
 
         Cvar_Get("com_errorMessage", "", CVAR_ROM | CVAR_NORESTART);
 
