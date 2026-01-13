@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/13/2026--**
 
+* qcommon:<br />add an option for alternative float casting in virtual machines
+
 * server/qcommon/renderer/public:<br />initial support for engine extensions
 
 * server:<br />clean up unoptimized client downloads

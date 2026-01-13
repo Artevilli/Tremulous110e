@@ -23,6 +23,31 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include "vm_local.h"
 
+#if defined(VM_ALT_FLOAT_CASTING)
+static qint
+VM_tonextint(float x)
+{
+  qint casted;
+  float rest;
+
+  casted = (qint)x;
+  rest = x - (float)casted;
+
+  if (rest >= 0.5f)
+  {
+    return casted + 1;
+  }
+  else if (rest <= -0.5f)
+  {
+    return casted - 1;
+  }
+  else
+  {
+    return casted;
+  }
+}
+#endif
+
 
 qchar *
 VM_Indent(vm_t *vm)
@@ -757,7 +782,11 @@ nextInstruction2:
 
       case
       OP_CVFI:
+#if defined(VM_ALT_FLOAT_CASTING)
+        *opStack = VM_tonextint(r0.f);
+#else
         *opStack = (qint)r0.f;
+#endif
         break;
 
       case

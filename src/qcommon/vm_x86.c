@@ -1531,7 +1531,11 @@ static void
 emit_cvttss2si(uint32_t intreg, uint32_t xmmreg)
 {
   Emit1(0xF3);
+#if defined(VM_ALT_FLOAT_CASTING)
+  emit_op_reg(0x0F, 0x2D, xmmreg, intreg);
+#else
   emit_op_reg(0x0F, 0x2C, xmmreg, intreg);
+#endif
 }
 
 static void
