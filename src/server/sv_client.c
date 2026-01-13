@@ -4125,13 +4125,11 @@ SV_ExecuteClientCommand(client_t *cl, const qchar *s)
   //the command, we will stop processing the rest of the packet,
   //including the usercmd.  This causes flooders to lag themselves
   //but not other people
+
   //We don't do this when the client hasn't been active yet since its
   //normal to spam a lot of commands when downloading
-  //flood protection in game for trem
-
-  //applying flood protection only to "CS_ACTIVE" clients leaves too much room for abuse, extending this flood protection to clients pre CS_ACTIVE should not cause any issues, as the download-commands are handled within the engine and floodprotect only filters calls to the qvm
   isBot = /*(*/(cl->netchan.remoteAddress.type == NA_BOT) /*|| (cl->gentity->r.svFlags & SVF_BOT))*/ ? qtrue:qfalse;
-  bFloodProtect = !isBot; //&& cl->state >= CS_ACTIVE;
+  bFloodProtect = !isBot && cl->state >= CS_ACTIVE;
 
   //see if it is a server level command
   for(ucmd = ucmds;ucmd->name;ucmd++)
@@ -4744,7 +4742,7 @@ SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
       break;
     }
 
-    if (!SV_ClientCommand(cl, msg)) //Chey: FIXME: this is being rapidly spammed when the client is about to enter the world
+    if (!SV_ClientCommand(cl, msg))
     {
       return; //we couldn't execute it because of the flood protection
     }
