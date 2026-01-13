@@ -4034,6 +4034,9 @@ void Com_Init( qchar *commandLine ) {
 	const qchar *s = va("%s %s %s", Q3_VERSION, PLATFORM_STRING, __DATE__ );
 	com_version = Cvar_GetAndDescribe("version", s, CVAR_PROTECTED | CVAR_ROM | CVAR_SERVERINFO, "Read-only CVAR to see the version of the game.");
 
+        //this cvar is the single entry point of the entire extension system
+        Cvar_Get("//trap_GetValue", va("%i", COM_TRAP_GETVALUE), CVAR_PROTECTED | CVAR_ROM);
+
 	Sys_Init();
 
         //CPU detection

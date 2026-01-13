@@ -404,6 +404,37 @@ static int	FloatAsInt( float f ) {
 	return temp;
 }
 
+static qbool
+CL_GetValue(qchar *value, qint valueSize, const qchar *key)
+{
+  if (!Q_stricmp(key, "trap_R_AddRefEntityToScene2"))
+  {
+    Q_snprintf(value, valueSize, "%i", CG_R_ADDREFENTITYTOSCENE2);
+    return qtrue;
+  }
+
+  if (!Q_stricmp(key, "trap_R_ForceFixedDLights"))
+  {
+    Q_snprintf(value, valueSize, "%i", CG_R_FORCEFIXEDDLIGHTS);
+    return qtrue;
+  }
+
+  return qfalse;
+}
+
+static void
+CL_ForceFixedDLlights(void)
+{
+  cvar_t *cv;
+
+  cv = Cvar_Get("r_dlightMode", "1", 0);
+
+  if (cv)
+  {
+    Cvar_CheckRange(cv, "1", "2", CV_INTEGER);
+  }
+}
+
 /*
 ====================
 CL_CgameSystemCalls
@@ -565,7 +596,7 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		re.ClearScene();
 		return 0;
 	case CG_R_ADDREFENTITYTOSCENE:
-		re.AddRefEntityToScene( VMA(1) );
+		re.AddRefEntityToScene( VMA(1), qfalse );
 		return 0;
 	case CG_R_ADDPOLYTOSCENE:
 		re.AddPolyToScene( args[1], args[2], VMA(3), 1 );
@@ -734,8 +765,23 @@ intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_R_INPVS:
 		return re.inPVS( VMA(1), VMA(2) );
 
+        //engine extensions
+        case
+        CG_R_ADDREFENTITYTOSCENE2:
+          re.AddRefEntityToScene(VMA(1), qtrue);
+          return 0;
+
+        case
+        CG_R_FORCEFIXEDDLIGHTS:
+          CL_ForceFixedDlights();
+          return 0;
+
+        case
+        CG_TRAP_GETVALUE:
+          VM_CHECKBOUNDS(cgvm, args[1], args[2]);
+          return CL_GetValue(VMA(1), args[2], VMA(3));
+
 	default:
-	        assert(0);
 		Com_Error( ERR_DROP, "Bad cgame system trap: %ld", (long int) args[0] );
 	}
 	return 0;

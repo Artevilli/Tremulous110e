@@ -1532,3 +1532,6 @@ Parse_SourceFileAndLine(qint handle, qchar *filename, qint *line);
 #define DLF_NO_REDIRECT 2
 #define DLF_NO_UDP 4
 #define DLF_NO_DISCONNECT 8
+
+//functional gate syscall number
+#define COM_TRAP_GETVALUE 700

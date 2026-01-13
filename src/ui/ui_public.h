@@ -128,7 +128,11 @@ typedef enum
   UI_PARSE_SOURCE_FILE_AND_LINE,
 
   UI_FLOOR = 107,
-  UI_CEIL
+  UI_CEIL,
+
+  //engine extensions
+  UI_R_ADDREFENTITYTOSCENE2,
+  UI_TRAP_GETVALUE = COM_TRAP_GETVALUE,
 }
 uiImport_t;
 

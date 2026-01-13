@@ -638,6 +638,18 @@ static int FloatAsInt( float f ) {
 	return temp;
 }
 
+static qbool
+UI_GetValue(qchar *value, qint valueSize, const qchar *key)
+{
+  if (!Q_stricmp(key, "trap_R_AddRefEntityToScene2"))
+  {
+    Q_snprintf(value, valueSize, "%i", UI_R_ADDREFENTITYTOSCENE2);
+    return qtrue;
+  }
+
+  return qfalse;
+}
+
 /*
 ====================
 CL_UISystemCalls
@@ -747,7 +759,7 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return 0;
 
 	case UI_R_ADDREFENTITYTOSCENE:
-		re.AddRefEntityToScene( VMA(1) );
+		re.AddRefEntityToScene( VMA(1), qfalse );
 		return 0;
 
 	case UI_R_ADDPOLYTOSCENE:
@@ -984,6 +996,18 @@ intptr_t CL_UISystemCalls( intptr_t *args ) {
 	case UI_R_REMAP_SHADER:
 		re.RemapShader( VMA(1), VMA(2), VMA(3) );
 		return 0;
+
+        //engine extensions
+        case
+        UI_R_ADDREFENTITYTOSCENE2:
+          re.AddRefEntityToScene(VMA(1), qtrue);
+          return 0;
+
+        //engine extensions
+        case
+        UI_TRAP_GETVALUE:
+          VM_CHECKBOUNDS(uivm, args[1], args[2]);
+          return UI_GetValue(VMA(1), args[2], VMA(3));
 
 	default:
 		Com_Error( ERR_DROP, "Bad UI system trap: %ld", (long int) args[0] );

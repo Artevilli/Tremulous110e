@@ -289,8 +289,8 @@ SV_WriteSnapshotToClient(client_t *client, msg_t *msg)
   MSG_WriteByte (msg, snapFlags);
 
   // send over the areabits
-  MSG_WriteByte (msg, frame->areabytes);
-  MSG_WriteData (msg, frame->areabits, frame->areabytes);
+  MSG_WriteByte(msg, frame->areabytes);
+  MSG_WriteData(msg, frame->areabits, frame->areabytes);
 
   //dont send any changes to zombies
   if (client->state <= CS_ZOMBIE)
@@ -326,7 +326,7 @@ SV_WriteSnapshotToClient(client_t *client, msg_t *msg)
   {
     for(i = 0;i < sv_padPackets->integer;i++)
     {
-      MSG_WriteByte (msg, svc_nop);
+      MSG_WriteByte(msg, svc_nop);
     }
   }
 }
@@ -367,7 +367,6 @@ Build a client snapshot structure
 =============================================================================
 */
 
-//#define MAX_SNAPSHOT_ENTITIES 1024
 typedef qint entityNum_t;
 
 typedef struct
@@ -380,13 +379,13 @@ snapshotEntityNumbers_t;
 
 /*
 =======================
-SV_QsortEntityNumbers
+SV_SortEntityNumbers
 
 Insertion sort is about 10 times faster than quicksort for our task
 =======================
 */
 static const void
-SV_QsortEntityNumbers(entityNum_t *num, const qint size)
+SV_SortEntityNumbers(entityNum_t *num, const qint size)
 {
   entityNum_t tmp;
   qint i;
@@ -443,7 +442,7 @@ SV_AddEntitiesVisibleFromPoint
 ===============
 */
 static void
-SV_AddEntitiesVisibleFromPoint(vec3_t origin, clientSnapshot_t *frame, snapshotEntityNumbers_t *eNums, qbool portal)
+SV_AddEntitiesVisibleFromPoint(const vec3_t origin, clientSnapshot_t *frame, snapshotEntityNumbers_t *eNums, qbool portal)
 {
   qint e;
   qint i;
@@ -719,6 +718,15 @@ SV_AddEntitiesVisibleFromPoint(vec3_t origin, clientSnapshot_t *frame, snapshotE
       SV_AddEntitiesVisibleFromPoint(ent->s.origin2, frame, eNums, portal);
     }
   }
+
+  ent = SV_GentityNum(frame->ps.clientNum);
+
+  //extension: merge second PVS at ent->r.s.origin2
+  if (ent->r.svFlags & SVF_SELF_PORTAL2 && !portal)
+  {
+    SV_AddEntitiesVisibleFromPoint(ent->r.s.origin2, frame, eNums, qtrue);
+    eNums->unordered = qtrue;
+  }
 }
 
 /*
@@ -733,9 +741,11 @@ SV_InitSnapshotStorage(void)
   Com_Memset(svs.snapFrames, 0, sizeof(svs.snapFrames));
   svs.freeStorageEntities = svs.numSnapshotEntities;
   svs.currentStoragePosition = 0;
+
   svs.snapshotFrame = 0;
   svs.currentSnapshotFrame = 0;
   svs.lastValidFrame = 0;
+
   svs.currFrame = NULL;
 }
 
@@ -956,12 +966,12 @@ SV_BuildClientSnapshot(client_t *client)
   //of an entity being included twice.
   if (entityNumbers.unordered)
   {
-    SV_QsortEntityNumbers(&entityNumbers.snapshotEntities[0], entityNumbers.numSnapshotEntities);
+    SV_SortEntityNumbers(&entityNumbers.snapshotEntities[0], entityNumbers.numSnapshotEntities);
   }
 
   //now that all viewpoint's areabits have been OR'd together, invert
   //all of them to make it a mask vector, which is what the renderer wants
-  for (i = 0;i < MAX_MAP_AREA_BYTES / sizeof(qint);i++)
+  for(i = 0;i < MAX_MAP_AREA_BYTES / sizeof(qint);i++)
   {
     ((qint *)frame->areabits)[i] = ((qint *)frame->areabits)[i] ^ -1;
   }
@@ -973,35 +983,6 @@ SV_BuildClientSnapshot(client_t *client)
   {
     frame->ents[i] = svs.currFrame->ents[entityNumbers.snapshotEntities[i]];
   }
-}
-
-/*
-=======================
-SV_SnapshotRateMsec
-
-Return the number of msec a given size message is supposed
-to take to clear, based on the current rate
-=======================
-*/
-#define HEADER_RATE_BYTES 48
-const qint
-SV_SnapshotRateMsec(const client_t *client, qint messageSize)
-{
-  //individual messages will never be larger than fragment size
-  //FIXME - use MAX_PACKETLEN or FRAGMENT_SIZE here, not random numbers...
-  if (messageSize > 1500)
-  {
-    messageSize = 1500;
-  }
-
-  if (!client->rate)
-  {
-    return 0;
-  }
-
-  qint rate = client->rate;
-
-  return ((messageSize + HEADER_RATE_BYTES) * 1000 / (qint)(rate * com_timescale->value));
 }
 
 /*
@@ -1195,7 +1176,7 @@ SV_SendClientMessages(void)
         SV_DropClient(c, "Download failed");
       }
 
-      continue; //dont send snapshots if downloading
+      //continue; //dont send snapshots if downloading
     }
 
     if (c->gentity && (c->gentity->r.svFlags & SVF_BOT))

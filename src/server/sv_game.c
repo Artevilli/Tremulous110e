@@ -450,6 +450,18 @@ GVM_ArgPtr(intptr_t intValue)
   return VM_ArgPtr(intValue);
 }
 
+static qbool
+SV_GetValue(qchar *value, qint valueSize, const qchar *key)
+{
+  if (!Q_stricmp(key, "SVF_SELF_PORTAL2"))
+  {
+    Com_sprintf(value, valueSize, "%i", SVF_SELF_PORTAL2);
+    return qtrue;
+  }
+
+  return qfalse;
+}
+
 /*
 ====================
 SV_GameSystemCalls
@@ -793,6 +805,11 @@ SV_GameSystemCalls(intptr_t *args)
     case
     G_TESTPRINTFLOAT:
       return sprintf(VMA(1), "%f", VMF(2));
+
+    case
+    G_TRAP_GETVALUE:
+      VM_CHECKBOUNDS(sv.gvm, args[1], args[2]);
+      return SV_GetValue(VMA(1), args[2], VMA(3));
 
     case
     G_SQL_RUNQUERY:
