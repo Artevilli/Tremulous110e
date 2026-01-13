@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/13/2026--**
 
+* server:<br />clean up unoptimized client downloads
+
 * server:<br />fix clientCommand spam when entering the world
 
 **--01/12/2026--**

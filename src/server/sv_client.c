@@ -2607,7 +2607,7 @@ SV_ReadDownloadBlock(client_t *cl, qchar **dataOut, qint *sizeOut)
       //read next source chunk
       cl->downloadSrcChunkSize = cl->downloadSrcFileRemaining < DOWNLOAD_READ_CHUNK_SIZE ? cl->downloadSrcFileRemaining:DOWNLOAD_READ_CHUNK_SIZE;
 
-      if (FS_Read(cl->downloadSrcChunk, cl->downloadSrcChunkSize, cl->download) != (unsigned)cl->downloadSrcChunkSize)
+      if (FS_Read(cl->downloadSrcChunk, cl->downloadSrcChunkSize, cl->download) != (qint)cl->downloadSrcChunkSize)
       {
         return qfalse;
       }
@@ -2687,7 +2687,7 @@ SV_DownloadCountOutgoingBytes(client_t *cl)
 SV_WriteDownloadToClient
 
 Check to see if the client wants a file, open it if needed and start pumping the client
-Fill up msg with data 
+Fill up msg with data, return if a download block was added.
 ==================
 */
 #if defined(UDP_DOWNLOAD_OPTIMIZE)
@@ -2767,7 +2767,6 @@ SV_WriteDownloadToClient(client_t *cl)
     cl->downloadSrcChunkSize = 0;
     cl->downloadCurrentBlock = 0;
     cl->downloadSrcChunk = Z_Malloc(DOWNLOAD_READ_CHUNK_SIZE);
-    cl->downloadSrcChunkPos = cl->downloadSrcChunkSize = 0;
     cl->downloadClientMsg = cl->downloadRetransmitMsg = cl->downloadCurrentMsg = 0;
     cl->downloadLastSentTime = Sys_Milliseconds();
     cl->downloadCurrentRate = DOWNLOAD_MAX_RATE;
@@ -2934,18 +2933,20 @@ SV_WriteDownloadToClient(client_t *cl)
     Com_DPrintf("clientDownload: %d: outgoing size %i\n", ARRAY_INDEX(svs.clients, cl), SV_DownloadCountOutgoingBytes(cl));
   }
 
-  cl->downloadLastSentTime = Sys_Milliseconds();
+  cl->downloadLastSentTime = svs.time;
 
   //move on to the next block
   cl->downloadXmitBlock++;
   return qtrue;
 }
 #else
-const qbool
-SV_WriteDownloadToClient(client_t *cl, msg_t *msg)
+static const qbool
+SV_WriteDownloadToClient(client_t *cl)
 {
   qint curindex;
   qchar errorMessage[1024];
+  msg_t msg;
+  byte msgBuffer[MAX_DOWNLOAD_BLKSIZE * 2 + 8];
 
   if (!*cl->downloadName)
   {
@@ -2987,10 +2988,16 @@ SV_WriteDownloadToClient(client_t *cl, msg_t *msg)
         Com_sprintf(errorMessage, sizeof(errorMessage), "File \"%s\" not found on server for autodownloading.\n", cl->downloadName);
       }
 
-      MSG_WriteByte(msg, svc_download);
-      MSG_WriteShort(msg, 0); //client is expecting block zero
-      MSG_WriteLong(msg, -1); //illegal file size
-      MSG_WriteString(msg, errorMessage);
+      MSG_Init(&msg, msgBuffer, sizeof(msgBuffer) - 8);
+      MSG_WriteLong(&msg, cl->lastClientCommand);
+
+      MSG_WriteByte(&msg, svc_download);
+      MSG_WriteShort(&msg, 0); //client is expecting block zero
+      MSG_WriteLong(&msg, -1); //illegal file size
+      MSG_WriteString(&msg, errorMessage);
+
+      MSG_WriteByte(&msg, svc_EOF);
+      SV_Netchan_Transmit(cl, &msg);
 
       *cl->downloadName = '\0';
 
@@ -3091,22 +3098,28 @@ SV_WriteDownloadToClient(client_t *cl, msg_t *msg)
   //send current block
   curindex = (cl->downloadXmitBlock % MAX_DOWNLOAD_WINDOW);
 
-  MSG_WriteByte(msg, svc_download);
-  MSG_WriteShort(msg, cl->downloadXmitBlock);
+  MSG_Init(&msg, msgBuffer, sizeof(msgBuffer) - 8);
+  MSG_WriteLong(&msg, cl->lastClientCommand);
+
+  MSG_WriteByte(&msg, svc_download);
+  MSG_WriteShort(&msg, cl->downloadXmitBlock);
 
   //block zero is special, contains file size
   if (!cl->downloadXmitBlock)
   {
-    MSG_WriteLong(msg, cl->downloadSize);
+    MSG_WriteLong(&msg, cl->downloadSize);
   }
 
-  MSG_WriteShort(msg, cl->downloadBlockSize[curindex]);
+  MSG_WriteShort(&msg, cl->downloadBlockSize[curindex]);
 
   //write the block
   if (cl->downloadBlockSize[curindex])
   {
-    MSG_WriteData(msg, cl->downloadBlocks[curindex], cl->downloadBlockSize[curindex]);
+    MSG_WriteData(&msg, cl->downloadBlocks[curindex], cl->downloadBlockSize[curindex]);
   }
+
+  MSG_WriteByte(&msg, svc_EOF);
+  SV_Netchan_Transmit(cl, &msg);
 
   Com_DPrintf("clientDownload: %d: writing block %d\n", ARRAY_INDEX(svs.clients, cl), cl->downloadXmitBlock);
 
@@ -3264,35 +3277,17 @@ end:
 #else
   qint i;
   qint numDLs;
-  client_t *client;
-  msg_t msg;
-  byte msgBuffer[MAX_MSGLEN_BUF];
+  client_t *cl;
 
   numDLs = 0;
 
   for(i = 0;i < sv.maxclients;i++)
   {
-    client = &svs.clients[i];
+    cl = &svs.clients[i];
 
-    if (client->state >= CS_CONNECTED && *client->downloadName)
+    if (cl->state >= CS_CONNECTED && *cl->downloadName)
     {
-      if (client->netchan.unsentFragments)
-      {
-        SV_Netchan_TransmitNextFragment(client);
-      }
-      else
-      {
-        MSG_Init(&msg, msgBuffer, MAX_MSGLEN);
-        MSG_WriteLong(&msg, client->lastClientCommand);
-        const qbool retval = SV_WriteDownloadToClient(client, &msg);
-
-        if (retval)
-        {
-          MSG_WriteByte(&msg, svc_EOF);
-          SV_Netchan_Transmit(client, &msg);
-          numDLs += retval;
-        }
-      }
+      numDLs += SV_WriteDownloadToClient(cl);
     }
   }
 

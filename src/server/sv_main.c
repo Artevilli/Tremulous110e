@@ -2744,7 +2744,7 @@ SV_SendQueuedPackets(void)
   qint dlStart;
   qint deltaT;
   qint delayT;
-  static unsigned dlNextRound = 0;
+  static qint dlNextRound = 0;
   qint timeVal = INT_MAX;
 #endif
 
