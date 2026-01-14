@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/13/2026--**
 
+* client:<br />begin the rewrite
+
 * server/qcommon:<br />network debugging
 
 * server:<br />partially revert `server snapshot cleanup`
