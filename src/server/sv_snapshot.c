@@ -46,6 +46,10 @@ A normal server packet will look like:
 =============================================================================
 */
 
+//Chey: add this here so the compiler knows what it is
+static qbool
+SV_UpdateServerCommandsToClients(client_t *client, msg_t *msg, qbool allowPartial);
+
 /*
 =============
 SV_EmitPacketEntities
@@ -286,7 +290,7 @@ SV_WriteSnapshotToClient(client_t *client, msg_t *msg)
     snapFlags |= SNAPFLAG_NOT_ACTIVE;
   }
 
-  MSG_WriteByte (msg, snapFlags);
+  MSG_WriteByte(msg, snapFlags);
 
   // send over the areabits
   MSG_WriteByte(msg, frame->areabytes);
@@ -342,21 +346,55 @@ SV_UpdateServerCommandsToClient
 void
 SV_UpdateServerCommandsToClient(client_t *client, msg_t *msg)
 {
+  SV_UpdateServerCommandsToClients(client, msg, qfalse);
+}
+
+/*
+==================
+SV_UpdateServerCommandsToClients
+==================
+*/
+static qbool
+SV_UpdateServerCommandsToClients(client_t *client, msg_t *msg, qbool allowPartial)
+{
   qint i;
   qint n;
+  qint countSent = 0;
 
   //write any unacknowledged serverCommands
   n = client->reliableSequence - client->reliableAcknowledge;
 
-  for(i = 0;i < n;i++)
+  for(i = 0;i < n;i++, countSent++)
   {
     const qint index = client->reliableAcknowledge + 1 + i;
     const qchar * const cmd = client->reliableCommands[index & (MAX_RELIABLE_COMMANDS - 1)];
+    //msg overflow checks for 4 byte internally, we want to write svc_servercommand (1 byte), the index (4 byte) and the string and 0 terminator (1 byte)
+    //also multiply with 2 because worst theoretical case each byte might end up 2 bytes with huffman
+    if (allowPartial && msg->maxsize - msg->cursize - 4 < 2 * (1 + 4 + (qint)strlen(client->reliableCommands[i & (MAX_RELIABLE_COMMANDS - 1)]) + 1))
+    {
+      client->reliableSent = i - 1;
+      return qfalse;
+    }
+
+    //try to reduce the risk of a "CL_GetServerCommand: a reliable command was cycled out" error by limiting the total amount of
+    //new servercommands we send in a single message
+    //this server is modded to have a higher serverside buffer (MAX_RELIABLE_COMMANDS) than a vanilla client
+    //so don't send more than the client will conservatively be able to process
+    //also consider demo playback, so do like half of what the client would probably be able to handle because
+    //it might parse two messages in a single frame, i suppose it might parse even more but oh well, nothing is perfect
+    if (allowPartial && countSent >= (MAX_RELIABLE_COMMANDS_VANILLA / 2))
+    {
+      client->reliableSent = i - 1;
+      return qfalse;
+    }
 
     MSG_WriteByte(msg, svc_serverCommand);
     MSG_WriteLong(msg, index);
     MSG_WriteString(msg, cmd);
   }
+
+  client->reliableSent = client->reliableSequence;
+  return qtrue;
 }
 
 /*
@@ -987,6 +1025,35 @@ SV_BuildClientSnapshot(client_t *client)
 
 /*
 =======================
+SV_SnapshotRateMsec
+
+Return the number of msec a given size message is supposed
+to take to clear, based on the current rate
+=======================
+*/
+#define HEADER_RATE_BYTES 48
+const qint
+SV_SnapshotRateMsec(const client_t *client, qint messageSize)
+{
+  //individual messages will never be larger than fragment size
+  //FIXME - use MAX_PACKETLEN or FRAGMENT_SIZE here, not random numbers...
+  if (messageSize > 1500)
+  {
+    messageSize = 1500;
+  }
+
+  if (!client->rate)
+  {
+    return 0;
+  }
+
+  qint rate = client->rate;
+
+  return ((messageSize + HEADER_RATE_BYTES) * 1000 / (qint)(rate * com_timescale->value));
+}
+
+/*
+=======================
 SV_SendMessageToClient
 
 Called by SV_SendClientSnapshot and SV_SendClientGameState
@@ -1012,6 +1079,56 @@ SV_SendMessageToClient(msg_t *msg, client_t *client)
 
 /*
 =======================
+SV_SendClientIdle
+
+There is no need to send full snapshots who are loading a map.
+Send them idle packets with the bare minimum required to keep the client on the server.
+=======================
+*/
+static void
+SV_SendClientIdle(client_t *client)
+{
+  byte msg_buf[MAX_MSGLEN_BUF];
+  msg_t msg;
+#if !defined(UDP_DOWNLOAD_OPTIMIZE)
+  msg_t msgBackup;
+#endif
+
+  MSG_Init(&msg, msg_buf, MAX_MSGLEN);
+
+  //NOTE, MRE: all server->client messages now acknowledge
+  //let the client know which reliable clientCommands we have received
+  MSG_WriteLong(&msg, client->lastClientCommand);
+
+  //(re)send any reliable server commands
+  if (!SV_UpdateServerCommandsToClients(client, &msg, qtrue))
+  {
+    //if all commands cant fit in a single message send anyways without entities
+    SV_SendMessageToClient(&msg, client);
+    return;
+  }
+
+  if (msg.overflowed)
+  {
+    Com_Printf("sendclientidle msg overflowed for %s\n", client->name);
+    MSG_Clear(&msg);
+    SV_DropClient(client, "sendclientidle msg overflowed");
+    return;
+  }
+
+  SV_SendMessageToClient(&msg, client);
+
+  if (sv_forceSendFragments->integer)
+  {
+    while(client->netchan.unsentFragments)
+    {
+      Netchan_TransmitNextFragment(&client->netchan);
+    }
+  }
+}
+
+/*
+=======================
 SV_SendClientSnapshot
 
 Also called by SV_FinalMessage
@@ -1023,15 +1140,32 @@ SV_SendClientSnapshot(client_t *client)
 {
   byte msg_buf[MAX_MSGLEN_BUF];
   msg_t msg;
+  msg_t msgBackup;
+
+  //Chey: bots dont need snapshots
+  if (client->gentity && client->gentity->r.svFlags & SVF_BOT)
+  {
+    return;
+  }
+
+  //zombie clients need full snaps to process reliable commands such as picking up disconnect reason
+  if (client->state < CS_ACTIVE)
+  {
+    if (client->state != CS_ZOMBIE)
+    {
+      SV_SendClientIdle(client);
+      return;
+    }
+  }
 
   //build the snapshot
   SV_BuildClientSnapshot(client);
 
   //bots need to have snapshots built but they query without directly needing to be sent
-  if (client->gentity && client->gentity->r.svFlags & SVF_BOT)
-  {
-    return;
-  }
+  //if (client->gentity && client->gentity->r.svFlags & SVF_BOT)
+  //{
+    //return;
+  //}
 
   MSG_Init(&msg, msg_buf, MAX_MSGLEN);
 
@@ -1040,7 +1174,15 @@ SV_SendClientSnapshot(client_t *client)
   MSG_WriteLong(&msg, client->lastClientCommand);
 
   //(re)send any reliable server commands
-  SV_UpdateServerCommandsToClient(client, &msg);
+  if (!SV_UpdateServerCommandsToClients(client, &msg, qtrue))
+  {
+    //if all commands cant fit in a single message send anyways without entities
+    SV_SendMessageToClient(&msg, client);
+    return;
+  }
+
+  //back up msg state in case snapshot overflows
+  Com_Memcpy(&msgBackup, &msg, sizeof(msgBackup));
 
   //send over all the relevant entityState_t
   //and the playerState_t
@@ -1050,14 +1192,41 @@ SV_SendClientSnapshot(client_t *client)
   SV_WriteVoipToClient(client, &msg);
 #endif
 
+  if (msg.overflowed && !msgBackup.overflowed)
+  {
+    //entity states were too much so send old states as net code wont send msg buf content afterwards old msg values point to updated buffer
+    SV_SendMessageToClient(&msgBackup, client);
+    return;
+  }
+
   //check for overflow
   if (msg.overflowed)
   {
+    //This always end fucking the server.
     Com_Printf("WARNING: msg overflowed for %s\n", client->name);
     MSG_Clear(&msg);
+    SV_DropClient(client, "SV_SendClientSnapshot: msg overflowed");
+    return;
   }
 
   SV_SendMessageToClient(&msg, client);
+
+/* this works fine on lan (160k/s dl, yay) and SEEMS okay over the net, but needs more testing */
+#define UNSUCK_DOWNLOADS
+#if defined(UNSUCK_DOWNLOADS)
+  if (sv_forceSendFragments->integer)
+  {
+    //KHB 071111 the whole reason Q3 dl's SUCK is that there's a "secret" artificial cap
+    //based on UDP packet sizes. so the server "sends" a 2k block each snap, but it's actually
+    //cut down to 1300 bytes, MINUS the game traffic, so the ABSOLUTE peak dl speed is roughly
+    //1K * 30 snaps, EVEN ON LAN; and the realistic dl speed from an active server is about
+    //400 bytes * svfps, depending on how many random newbs are spamming pulse and chat etc
+    while(client->netchan.unsentFragments)
+    {
+      SV_Netchan_TransmitNextFragment(client);
+    }
+  }
+#endif
 }
 
 /*
@@ -1157,15 +1326,14 @@ SV_SendClientMessages(void)
     }
 #endif
 
+    if (!SV_IsValidClientSnapshot(c))
+    {
+      continue; //not a valid snapshot
+    }
+
     if (svs.time - c->lastSnapshotTime < c->snapshotMsec * com_timescale->value)
     {
       continue; //not time yet
-    }
-
-    if (c->netchan.unsentFragments || c->netchan_start_queue)
-    {
-      c->rateDelayed = qtrue;
-      continue; //drop this snapshot if the packet queue is still full or delta compression will break
     }
 
     if (*c->downloadName)
@@ -1175,8 +1343,6 @@ SV_SendClientMessages(void)
       {
         SV_DropClient(c, "Download failed");
       }
-
-      //continue; //dont send snapshots if downloading
     }
 
     if (c->gentity && (c->gentity->r.svFlags & SVF_BOT))
@@ -1184,10 +1350,11 @@ SV_SendClientMessages(void)
       continue; //Chey: bots may cause error drops in the server net chan
     }
 
-    if (SV_RateMsec(c) > 0)
+    //send additional message fragments if the last message was too large to send at once
+    if (c->netchan.unsentFragments)
     {
-      //not enough time since last packet passed through the line
-      c->rateDelayed = qtrue;
+      c->lastSnapshotTime = svs.time + SV_SnapshotRateMsec(c, c->netchan.unsentLength - c->netchan.unsentFragmentStart);
+      SV_Netchan_TransmitNextFragment(c);
       continue;
     }
 
@@ -1241,4 +1408,37 @@ SV_SendClientMessages(void)
     c->lastSnapshotTime = svs.time;
     c->rateDelayed = qfalse;
   }
+}
+
+/*
+=======================
+SV_IsValidClientSnapshot
+=======================
+*/
+qbool
+SV_IsValidClientSnapshot(const client_t *client)
+{
+  //if (client->deltaMessage <= 0)
+  if (client->deltaMessage == client->netchan.outgoingSequence - (PACKET_BACKUP + 1))
+  {
+    return qtrue;
+  }
+
+  if (client->state != CS_ACTIVE)
+  {
+    return qtrue;
+  }
+
+  if (client->lastPacketTime >= svs.time)
+  {
+    return qtrue;
+  }
+
+  //if (client->netchan.outgoingSequence - client->deltaMessage < 29)
+  if (client->netchan.outgoingSequence - client->deltaMessage < (PACKET_BACKUP - 3))
+  {
+    return qtrue;
+  }
+
+  return qfalse;
 }

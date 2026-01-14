@@ -4123,8 +4123,10 @@ SV_ExecuteClientCommand(client_t *cl, const qchar *s)
 
   //We don't do this when the client hasn't been active yet since its
   //normal to spam a lot of commands when downloading
+
+ //applying flood protection only to "CS_ACTIVE" clients leaves too much room for abuse, extending this flood protection to clients pre CS_ACTIVE should not cause any issues, as the download-commands are handled within the engine and floodprotect only filters calls to the qvm
   isBot = /*(*/(cl->netchan.remoteAddress.type == NA_BOT) /*|| (cl->gentity->r.svFlags & SVF_BOT))*/ ? qtrue:qfalse;
-  bFloodProtect = !isBot && cl->state >= CS_ACTIVE;
+  bFloodProtect = !isBot; //&& cl->state >= CS_ACTIVE;
 
   //see if it is a server level command
   for(ucmd = ucmds;ucmd->name;ucmd++)
