@@ -84,6 +84,7 @@ cvar_t *sv_pingFix;
 #endif
 cvar_t *sv_userInfoFloodProtect;
 cvar_t *sv_forceSendFragments;
+cvar_t *sv_showAverageBPS;
 cvar_t *sv_lanForceRate; //dedicated 1 (LAN) server forces local client rates to 99999 (bug #491)
 cvar_t *sv_protect; //attack protection, 0 unpretected, 1 xreal, 2 openwolf, 4 print to console
 cvar_t *sv_protectLog; //name
@@ -172,6 +173,7 @@ SV_InitCvars(void)
 #endif
   sv_userInfoFloodProtect = Cvar_GetAndDescribe("sv_userInfoFloodProtect", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, "Prevents users from flooding the server with userinfo changes by delaying the next change for 5 seconds.");
   sv_forceSendFragments = Cvar_GetAndDescribe("sv_forceSendFragments", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, "Forces all unsent fragments to be sent to each client each time a snapshot is created.");
+  sv_showAverageBPS = Cvar_GetAndDescribe("sv_showAverageBPS", "0", 0, "BSP Network debugging");
   sv_collectClientJunkInfo = Cvar_GetAndDescribe("sv_collectClientJunkInfo", "0", CVAR_ARCHIVE, "If this is set, prints if message readcount isn't equal to the message cursize.");
 
   //systeminfo

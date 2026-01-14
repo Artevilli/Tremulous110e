@@ -97,6 +97,8 @@ MSG_WriteBits(msg_t *msg, qint value, qint bits)
 {
   qint i;
 
+  msg->uncompsize += bits;
+
   if (bits == 0 || bits < -31 || bits > 32)
   {
     Com_Error(ERR_DROP, "MSG_WriteBits: bad bits %i", bits);

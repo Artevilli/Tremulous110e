@@ -116,6 +116,7 @@ extern cvar_t *sv_pingFix;
 #endif
 extern cvar_t *sv_userInfoFloodProtect;
 extern cvar_t *sv_forceSendFragments;
+extern cvar_t *sv_showAverageBPS;
 extern cvar_t *sv_lanForceRate; //dedicated 1 (LAN) server forces local client rates to 99999 (bug #491)
 extern cvar_t *sv_protect; //attack protection, 0 unpretected, 1 xreal, 2 openwolf, 4 print to console
 extern cvar_t *sv_protectLog; //name

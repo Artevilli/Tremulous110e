@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/13/2026--**
 
+* server/qcommon:<br />network debugging
+
 * server:<br />partially revert `server snapshot cleanup`
 
 * qcommon:<br />add an option for alternative float casting in virtual machines

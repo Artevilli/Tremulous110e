@@ -47,6 +47,8 @@ protect_flags_s
 }
 protect_flags_t;
 
+#define MAX_BPS_WINDOW 20
+
 #define	MAX_ENT_CLUSTERS 16
 
 //use an alternative dropped gamestate, simplifying code and fixing potential udp download issues
@@ -161,6 +163,19 @@ typedef struct
 
   qint restartTime;
   qint time;
+
+  //net debugging
+  qint bpsWindow[MAX_BPS_WINDOW];
+  qint bpsWindowSteps;
+  qint bpsTotalBytes;
+  qint bpsMaxBytes;
+
+  qint ubpsWindow[MAX_BPS_WINDOW];
+  qint ubpsTotalBytes;
+  qint ubpsMaxBytes;
+
+  float ucompAve;
+  qint ucompNum;
 
   byte baselineUsed[MAX_GENTITIES];
 

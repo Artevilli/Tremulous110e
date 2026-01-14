@@ -1125,6 +1125,9 @@ SV_SendClientIdle(client_t *client)
       Netchan_TransmitNextFragment(&client->netchan);
     }
   }
+
+  sv.bpsTotalBytes += msg.cursize;
+  sv.ubpsTotalBytes += msg.uncompsize / 8;
 }
 
 /*
@@ -1227,6 +1230,9 @@ SV_SendClientSnapshot(client_t *client)
     }
   }
 #endif
+
+  sv.bpsTotalBytes += msg.cursize;
+  sv.ubpsTotalBytes += msg.uncompsize / 8;
 }
 
 /*
@@ -1299,9 +1305,13 @@ void
 SV_SendClientMessages(void)
 {
   qint i;
+  qint numclients = 0;
   client_t *c;
 
   svs.msgTime = Sys_Milliseconds();
+
+  sv.bpsTotalBytes = 0;
+  sv.ubpsTotalBytes = 0;
 
   //send a message to each connected client
   for(i = 0;i < sv.maxclients;i++)
@@ -1349,6 +1359,8 @@ SV_SendClientMessages(void)
     {
       continue; //Chey: bots may cause error drops in the server net chan
     }
+
+    numclients++;
 
     //send additional message fragments if the last message was too large to send at once
     if (c->netchan.unsentFragments)
@@ -1407,6 +1419,56 @@ SV_SendClientMessages(void)
     SV_SendClientSnapshot(c);
     c->lastSnapshotTime = svs.time;
     c->rateDelayed = qfalse;
+  }
+
+  //net debugging
+  if (sv_showAverageBPS->integer && numclients > 0)
+  {
+    float ave = 0;
+    float uave = 0;
+
+    for(i = 0;i < MAX_BPS_WINDOW - 1;i++)
+    {
+      sv.bpsWindow[i] = sv.bpsWindow[i + 1];
+      ave += sv.bpsWindow[i];
+
+      sv.ubpsWindow[i] = sv.ubpsWindow[i + 1];
+      uave += sv.ubpsWindow[i];
+    }
+
+    sv.bpsWindow[MAX_BPS_WINDOW - 1] = sv.bpsTotalBytes;
+    ave += sv.bpsTotalBytes;
+
+    sv.ubpsWindow[MAX_BPS_WINDOW - 1] = sv.ubpsTotalBytes;
+    uave += sv.ubpsTotalBytes;
+
+    if (sv.bpsTotalBytes >= sv.bpsMaxBytes)
+    {
+      sv.bpsMaxBytes = sv.bpsTotalBytes;
+    }
+
+    if (sv.ubpsTotalBytes >= sv.ubpsMaxBytes)
+    {
+      sv.ubpsMaxBytes = sv.ubpsTotalBytes;
+    }
+
+    sv.bpsWindowSteps++;
+
+    if (sv.bpsWindowSteps >= MAX_BPS_WINDOW)
+    {
+      float comp_ratio;
+
+      sv.bpsWindowSteps = 0;
+
+      ave = (ave / (float)MAX_BPS_WINDOW);
+      uave = (uave / (float)MAX_BPS_WINDOW);
+
+      comp_ratio = (1 - ave / uave) * 100.f;
+      sv.ucompAve += comp_ratio;
+      sv.ucompNum++;
+
+      Com_Printf("bpspc(%2.0f) bps(%2.0f) pk(%i) ubps(%2.0f) upk(%i) cr(%2.2f) acr(%2.2f)\n", ave / (float)numclients, ave, sv.bpsMaxBytes, uave, sv.ubpsMaxBytes, comp_ratio, sv.ucompAve / sv.ucompNum);
+    }
   }
 }
 

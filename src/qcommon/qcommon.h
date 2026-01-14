@@ -59,6 +59,7 @@ typedef struct {
 	qint		maxsize;
 	qint maxbits; //maxsize in bits, for overflow checks
 	qint		cursize;
+	qint uncompsize;
 	qint		readcount;
 	qint		bit;				// for bitwise reads and writes
 } msg_t;
