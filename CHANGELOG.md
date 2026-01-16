@@ -4,9 +4,15 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
-**--01/13/2026--**
+**--01/16/2026--**
+
+* server:<br />massive code cleanup
+
+**--01/14/2026--**
 
 * client:<br />begin the rewrite
+
+**--01/13/2026--**
 
 * server/qcommon:<br />network debugging
 

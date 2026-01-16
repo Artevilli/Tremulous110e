@@ -232,8 +232,8 @@ clientState_t;
 typedef struct netchan_buffer_s
 {
   msg_t msg;
-  byte *msgBuffer;
-  qchar *lastClientCommandString;
+  byte msgBuffer[MAX_MSGLEN];
+  qchar clientCommandString[MAX_STRING_CHARS]; //valid command string for SV_Netchan_Encode
   struct netchan_buffer_s *next;
 }
 netchan_buffer_t;
@@ -264,8 +264,8 @@ leakyBucket_s
 
   rateLimit_t rate;
 
-  unsigned hash;
-  unsigned toxic;
+  qint hash;
+  qint toxic;
 
   leakyBucket_t *prev;
   leakyBucket_t *next;
@@ -578,11 +578,15 @@ extern server_t sv; //cleared each map
 //sv_main.c
 //
 const qbool
-SVC_RateLimit(rateLimit_t *bucket, const unsigned burst, const unsigned period, const unsigned now);
+SVC_RateLimit(rateLimit_t *bucket, qint burst, qint period);
+const qbool
+SVC_RateLimitAddress(const netadr_t *from, qint burst, qint period);
 const void
-SVC_RateRestoreBurstAddress(const netadr_t *from, const unsigned burst, const unsigned period, const unsigned now);
+SVC_RateRestoreBurstAddress(const netadr_t *from, qint burst, qint period);
 const void
-SVC_RateRestoreToxicAddress(const netadr_t *from, const unsigned burst, const unsigned period, const unsigned now);
+SVC_RateRestoreToxicAddress(const netadr_t *from, qint burst, qint period);
+const void
+SVC_RateDropAddress(const netadr_t *from, qint burst, qint period);
 #if defined(SUPPORT_STATUS_SCORES_OVERRIDE)
 void
 SV_HandleGameInfoMessage(const qchar *info);
@@ -595,10 +599,8 @@ SV_StatusScoresOverride_AdjustScore(qint defaultScore, qint clientNum);
 void
 SV_CalculateMaxBaselines(client_t *client, msg_t msg);
 #endif
-const void
-SV_FinalMessage(const qchar *message, qbool disconnect);
-void
-QDECL SV_SendServerCommand(client_t *cl, const qchar *fmt, ...);
+void QDECL
+SV_SendServerCommand(client_t *cl, const qchar *fmt, ...);
 void
 SV_MasterShutdown(void);
 void
@@ -899,7 +901,7 @@ SV_ClipToEntity(trace_t *trace, const vec3_t start, const vec3_t mins, const vec
 void
 SV_Netchan_Transmit(client_t *client, msg_t *msg);
 void
-SV_Netchan_ClearQueue(client_t *client);
+SV_Netchan_FreeQueue(client_t *client);
 qint
 SV_Netchan_TransmitNextFragment(client_t *client);
 qbool

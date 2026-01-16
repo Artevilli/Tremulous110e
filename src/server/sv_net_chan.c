@@ -166,7 +166,7 @@ SV_NetchanFreeQueue
 =================
 */
 void
-SV_Netchan_ClearQueue(client_t *client)
+SV_Netchan_FreeQueue(client_t *client)
 {
   netchan_buffer_t *netbuf;
   netchan_buffer_t *next;
@@ -191,28 +191,25 @@ SV_Netchan_TransmitNextInQueue(client_t *client)
 {
   netchan_buffer_t *netbuf;
 
-  while(!client->netchan.unsentFragments && client->netchan_start_queue)
+  Com_DPrintf("#462 Netchan_TransmitNextFragment: popping a queued message for transmit\n");
+  netbuf = client->netchan_start_queue;
+  SV_Netchan_Encode(client, &netbuf->msg, netbuf->clientCommandString);
+  Netchan_Transmit(&client->netchan, netbuf->msg.cursize, netbuf->msg.data);
+
+  //pop from queue
+  client->netchan_start_queue = netbuf->next;
+
+  if (!client->netchan_start_queue)
   {
-    Com_DPrintf("#462 Netchan_TransmitNextFragment: popping a queued message for transmit\n");
-    netbuf = client->netchan_start_queue;
-    SV_Netchan_Encode(client, &netbuf->msg, netbuf->lastClientCommandString);
-    Netchan_Transmit(&client->netchan, netbuf->msg.cursize, netbuf->msg.data);
-
-    //pop from queue
-    client->netchan_start_queue = netbuf->next;
-
-    if (!client->netchan_start_queue)
-    {
-      Com_DPrintf("#462 Netchan_TransmitNextFragment: emptied queue\n");
-      client->netchan_end_queue = &client->netchan_start_queue;
-    }
-    else
-    {
-      Com_DPrintf("#462 Netchan_TransmitNextFragment: remaining queued message\n");
-    }
-
-    Z_Free(netbuf);
+    Com_DPrintf("#462 Netchan_TransmitNextFragment: emptied queue\n");
+    client->netchan_end_queue = &client->netchan_start_queue;
   }
+  else
+  {
+    Com_DPrintf("#462 Netchan_TransmitNextFragment: remaining queued message\n");
+  }
+
+  Z_Free(netbuf);
 }
 
 /*
@@ -250,25 +247,20 @@ then buffer them and make sure they get sent in correct order
 */
 
 void
-SV_Netchan_Transmit(client_t *client, msg_t *msg) //qint length, const byte *data ) {
+SV_Netchan_Transmit(client_t *client, msg_t *msg)
 {
   MSG_WriteByte(msg, svc_EOF);
 
   if (client->netchan.unsentFragments || client->netchan_start_queue)
   {
     netchan_buffer_t *netbuf;
-    const size_t netSize = sizeof(netchan_buffer_t);
-    const size_t cmdLen = strlen(client->lastClientCommandString) + 1;
 
     Com_DPrintf("#462 SV_Netchan_Transmit: unsent fragments, stacked\n");
-    netbuf = (netchan_buffer_t *)Z_Malloc(netSize + msg->cursize + cmdLen);
-    netbuf->msgBuffer = ((byte *)netbuf) + netSize;
-    netbuf->lastClientCommandString = (qchar *)(((byte *)netbuf) + (netSize + msg->cursize));
-    netbuf->lastClientCommandString[0] = '\0';
+    netbuf = (netchan_buffer_t *)Z_Malloc(sizeof(netchan_buffer_t));
 
     //store the msg, we can't store it encoded, as the encoding depends on stuff we still have to finish sending
-    MSG_Copy(&netbuf->msg, netbuf->msgBuffer, msg->cursize, msg);
-    Q_strncpyz(netbuf->lastClientCommandString, client->lastClientCommandString, cmdLen);
+    MSG_Copy(&netbuf->msg, netbuf->msgBuffer, sizeof(netbuf->msgBuffer), msg);
+    Q_strncpyz(netbuf->clientCommandString, client->lastClientCommandString, sizeof(netbuf->clientCommandString));
     netbuf->next = NULL;
 
     //insert it in the queue, the message will be encoded and sent later

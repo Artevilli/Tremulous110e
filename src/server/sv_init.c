@@ -582,12 +582,6 @@ SV_SpawnServer(const qchar *server, qbool killBots)
   qchar *denied;
   qbool isBot;
 
-  //broadcast level change to all clients
-  if (svs.clients && !com_errorEntered)
-  {
-    SV_FinalMessage("spawnserver", qfalse);
-  }
-
   //shut down the existing game if it is running
   SV_ShutdownGameProgs();
 
@@ -946,7 +940,7 @@ SV_WriteAttackLog(const qchar *log)
       (void)FS_Write(string, strlen(string), attHandle);
     }
 
-    if (sv_protect->integer & SVP_CONSOLE)
+    if (sv_printAttackLogs->integer)
     {
       Com_Printf("%s", log);
     }
@@ -975,7 +969,7 @@ SV_WriteAttackLogUnrestricted(const qchar *log)
     (void)FS_Write(string, strlen(string), attHandle);
   }
 
-  if (sv_protect->integer & SVP_CONSOLE)
+  if (sv_printAttackLogs->integer)
   {
     Com_Printf("%s", log);
   }
@@ -1085,7 +1079,7 @@ not just stuck on the outgoing message list, because the server is going
 to totally exit after returning from this function.
 ==================
 */
-const void
+static const void
 SV_FinalMessage(const qchar *message, qbool disconnect)
 {
   qint i;
@@ -1105,25 +1099,14 @@ SV_FinalMessage(const qchar *message, qbool disconnect)
         if (cl->netchan.remoteAddress.type != NA_LOOPBACK)
         {
           SV_SendServerCommand(cl, "print \"%s\n\"\n", message);
-
-          //added so map changes can use this functionality
-          if (disconnect)
-          {
-            SV_SendServerCommand(cl, "disconnect \"%s\"", message);
-          }
+          SV_SendServerCommand(cl, "disconnect \"%s\"", message);
         }
 
         if (sv.gameClients != NULL)
         {
           //force a snapshot to be sent
-          //cl->nextSnapshotTime = -1;
           cl->lastSnapshotTime = svs.time - 9999; //generate a snapshot immediately
-
-          if (disconnect)
-          {
-            cl->state = CS_ZOMBIE; //skip delta generation
-          }
-
+          cl->state = CS_ZOMBIE; //skip delta generation
           SV_SendClientSnapshot(cl);
         }
       }
@@ -1198,7 +1181,7 @@ SV_Shutdown(const qchar *finalmsg)
   {
     for(index = 0;index < sv.maxclients;index++)
     {
-      SV_Netchan_ClearQueue(&svs.clients[index]);
+      SV_FreeClient(&svs.clients[index]);
     }
 
     Z_Free(svs.clients);

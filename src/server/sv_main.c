@@ -54,8 +54,8 @@ Converts newlines to "\n" so a line prints nicer
 static const qchar *
 SV_ExpandNewlines(const qchar *in)
 {
-  static qchar string[1024];
-  size_t l;
+  static qchar string[MAX_STRING_CHARS * 2];
+  qint l;
 
   l = 0;
 
@@ -63,15 +63,12 @@ SV_ExpandNewlines(const qchar *in)
   {
     if (*in == '\n')
     {
-      string[l] = '\\';
-      l++;
-      string[l] = 'n';
-      l++;
+      string[l++] = '\\';
+      string[l++] = 'n';
     }
     else
     {
-      string[l] = *in;
-      l++;
+      string[l++] = *in;
     }
 
     in++;
@@ -153,11 +150,6 @@ SV_AddServerCommand(client_t *client, const qchar *cmd)
     //return;
   //}
 
-  if (!client)
-  {
-    return;
-  }
-
 #if defined(SKIP_PRE_ACTIVE_COMMANDS)
   if (client->state < CS_ACTIVE)
   {
@@ -187,12 +179,6 @@ SV_AddServerCommand(client_t *client, const qchar *cmd)
   */
   if (client->reliableSequence - client->reliableAcknowledge == MAX_RELIABLE_COMMANDS + 1)
   {
-    if (client->gamestateMessageNum == -1)
-    {
-      //invalid gamestate message can occur in sv_dropclient() to avoid calling it multiple times
-      return;
-    }
-
     Com_Printf("===== pending server commands =====\n");
 
     n = client->reliableSequence - client->reliableAcknowledge;
@@ -228,23 +214,16 @@ SV_SendServerCommand(client_t *cl, const qchar *fmt, ...)
   va_list argptr;
   qchar message[MAX_STRING_CHARS + 128]; //slightly larger than allowed, to detect overflows
   client_t *client;
-  unsigned j;
-  unsigned len;
+  qint j;
+  qint len;
 
   va_start(argptr,fmt);
   len = Q_vsnprintf(message, sizeof(message), fmt, argptr);
   va_end(argptr);
 
-  //fix to http://aluigi.altervista.org/adv/q3msgboom-adv.txt
-  //the actual cause of the bug is probably further downstream and should maybe be addressed later, but this certainly fixes the problem for now
-  if (len > 1022)
-  {
-    SV_WriteAttackLog(va("Warning: q3infoboom/q3msgboom exploit attack from client slot %i.\n", ARRAY_INDEX(svs.clients, cl)));
-    return;
-  }
-
   if (cl != NULL)
   {
+    //http://aluigi.altervista.org/adv/q3msgboom-adv.txt
     if (len <= 1022)
     {
       SV_AddServerCommand(cl, message);
@@ -516,20 +495,20 @@ SV_MasterGameStat(const qchar *data)
 
 static leakyBucket_t buckets[MAX_BUCKETS];
 static leakyBucket_t *bucketHashes[MAX_HASHES];
-//static rateLimit_t outboundRateLimit;
+static rateLimit_t outboundRateLimit;
 
 /*
 ================
 SVC_HashForAddress
 ================
 */
-static const ID_INLINE unsigned
+static const qint
 SVC_HashForAddress(const netadr_t *address)
 {
   const byte *ip = NULL;
-  unsigned size = 0;
-  unsigned hash = 0;
-  unsigned i;
+  qint size = 0;
+  qint hash = 0;
+  qint i;
 
   switch(address->type)
   {
@@ -571,8 +550,8 @@ SVC_HashForAddress(const netadr_t *address)
 SVC_RelinkToHead
 ================
 */
-static const ID_INLINE void
-SVC_RelinkToHead(leakyBucket_t *bucket, const unsigned hash)
+static const void
+SVC_RelinkToHead(leakyBucket_t *bucket, qint hash)
 {
   if (bucket->prev != NULL)
   {
@@ -607,16 +586,15 @@ Find or allocate a bucket for an address
 ================
 */
 static leakyBucket_t *
-SVC_BucketForAddress(const netadr_t *address, const unsigned burst, const unsigned period, const unsigned now)
+SVC_BucketForAddress(const netadr_t *address, qint burst, qint period)
 {
-  //const unsigned now = Sys_Milliseconds() ? Sys_Milliseconds():1; //Chey: do not use a time of zero for leaky buckets as it may cause... "leaky bucket leaking"?
-  //const unsigned now = Sys_Milliseconds(); //Chey: NULL time prevention is not relevant anymore
   static leakyBucket_t dummy = {0};
-  static unsigned start = 0;
-  const unsigned hash = SVC_HashForAddress(address);
+  static qint start = 0;
+  const qint hash = SVC_HashForAddress(address);
+  const qint now = Sys_Milliseconds();
   leakyBucket_t *bucket;
-  unsigned i;
-  unsigned n;
+  qint i;
+  qint n;
 
   n = 0;
 
@@ -661,18 +639,19 @@ SVC_BucketForAddress(const netadr_t *address, const unsigned burst, const unsign
 
   for(i = 0;i < MAX_BUCKETS;i++)
   {
+    qint interval;
+
     if (start >= MAX_BUCKETS)
     {
       start = 0;
     }
 
-    bucket = &buckets[start];
-    start++;
+    bucket = &buckets[start++];
 
-    const unsigned interval = now - bucket->rate.lastTime;
+    interval = now - bucket->rate.lastTime;
 
     //reclaim expired buckets
-    if (bucket->type != NA_BAD && interval > (bucket->rate.burst * period))
+    if (bucket->type != NA_BAD && (unsigned)interval > (bucket->rate.burst * period))
     {
       if (bucket->prev != NULL)
       {
@@ -743,11 +722,12 @@ dont call if sv_protect 1 xreal isnt set
 ================
 */
 const qbool
-SVC_RateLimit(rateLimit_t *bucket, const unsigned burst, const unsigned period, const unsigned now)
+SVC_RateLimit(rateLimit_t *bucket, qint burst, qint period)
 {
-  const unsigned interval = now - bucket->lastTime;
-  const unsigned expired = interval / period;
-  const unsigned expiredRemainder = interval % period;
+  qint now = Sys_Milliseconds();
+  qint interval = now - bucket->lastTime;
+  qint expired = interval / period;
+  qint expiredRemainder = interval % period;
 
   if (expired > bucket->burst || interval < 0)
   {
@@ -775,8 +755,8 @@ SVC_RateLimit(rateLimit_t *bucket, const unsigned burst, const unsigned period, 
 SVC_RateDrop
 ================
 */
-static const ID_INLINE void
-SVC_RateDrop(leakyBucket_t *bucket, const unsigned burst, const unsigned now)
+static const void
+SVC_RateDrop(leakyBucket_t *bucket, qint burst)
 {
   if (bucket != NULL)
   {
@@ -786,7 +766,7 @@ SVC_RateDrop(leakyBucket_t *bucket, const unsigned burst, const unsigned now)
     }
 
     bucket->rate.burst = burst * bucket->toxic;
-    bucket->rate.lastTime = now;
+    bucket->rate.lastTime = Sys_Milliseconds();
   }
 }
 
@@ -795,7 +775,7 @@ SVC_RateDrop(leakyBucket_t *bucket, const unsigned burst, const unsigned now)
 SVC_RateRestoreBurst
 ================
 */
-static const ID_INLINE void
+static const void
 SVC_RateRestoreBurst(leakyBucket_t *bucket)
 {
   if (bucket != NULL)
@@ -812,7 +792,7 @@ SVC_RateRestoreBurst(leakyBucket_t *bucket)
 SVC_RateRestoreToxic
 ================
 */
-static const ID_INLINE void
+static const void
 SVC_RateRestoreToxic(leakyBucket_t *bucket)
 {
   if (bucket != NULL)
@@ -831,12 +811,12 @@ SVC_RateLimitAddress
 Rate limit for a particular address
 ================
 */
-static const ID_INLINE qbool
-SVC_RateLimitAddress(const netadr_t *from, const unsigned burst, const unsigned period, const unsigned now)
+const qbool
+SVC_RateLimitAddress(const netadr_t *from, qint burst, qint period)
 {
-  leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period, now);
+  leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period);
 
-  return bucket ? SVC_RateLimit(&bucket->rate, burst, period, now):qtrue;
+  return bucket ? SVC_RateLimit(&bucket->rate, burst, period):qtrue;
 }
 
 /*
@@ -847,9 +827,9 @@ Decrease burst rate
 ================
 */
 const void
-SVC_RateRestoreBurstAddress(const netadr_t *from, const unsigned burst, const unsigned period, const unsigned now)
+SVC_RateRestoreBurstAddress(const netadr_t *from, qint burst, qint period)
 {
-  leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period, now);
+  leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period);
 
   SVC_RateRestoreBurst(bucket);
 }
@@ -862,9 +842,9 @@ Decrease toxicity
 ================
 */
 const void
-SVC_RateRestoreToxicAddress(const netadr_t *from, const unsigned burst, const unsigned period, const unsigned now)
+SVC_RateRestoreToxicAddress(const netadr_t *from, qint burst, qint period)
 {
-  leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period, now);
+  leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period);
 
   SVC_RateRestoreToxic(bucket);
 }
@@ -874,12 +854,12 @@ SVC_RateRestoreToxicAddress(const netadr_t *from, const unsigned burst, const un
 SVC_RateDropAddress
 ================
 */
-static const ID_INLINE void
-SVC_RateDropAddress(const netadr_t *from, const unsigned burst, const unsigned period, const unsigned now)
+const void
+SVC_RateDropAddress(const netadr_t *from, qint burst, qint period)
 {
-  leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period, now);
+  leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period);
 
-  SVC_RateDrop(bucket, burst, now);
+  SVC_RateDrop(bucket, burst);
 }
 
 /*
@@ -1065,6 +1045,21 @@ SVC_Status(const netadr_t *from)
     return;
   }
 
+  //prevent using getstatus as an amplifier
+  if (SVC_RateLimitAddress(from, 10, 1000))
+  {
+    SV_WriteAttackLog(va("SVC_Status: rate limit from %s exceeded, dropping request\n", NET_AdrToString(from)));
+    return;
+  }
+
+  //allow getstatus to be DoSed relatively easily, but prevent
+  //excess outbound bandwidth usage when being flooded inbound
+  if (SVC_RateLimit(&outboundRateLimit, 10, 100))
+  {
+    SV_WriteAttackLog(va("SVC_Status: rate limit exceeded, dropping request\n"));
+    return;
+  }
+
   //max challenge of 128
   if (strlen(Cmd_Argv(1)) > 128)
   {
@@ -1119,8 +1114,8 @@ if a user is interested in a server to do a full status
 static const void
 SVC_Info(const netadr_t *from)
 {
-  unsigned i;
-  unsigned count;
+  qint i;
+  qint count;
   const qchar *gamedir;
   qchar infostring[MAX_INFO_STRING];
 
@@ -1128,6 +1123,21 @@ SVC_Info(const netadr_t *from)
   if (!SVC_VerifyChallenge(Cmd_Argv(1)))
   {
     SV_WriteAttackLog(va("%s: Invalid challenge from %s, dropping request.\n", __func__, NET_AdrToString(from)));
+    return;
+  }
+
+  //prevent using getinfo as an amplifier
+  if (SVC_RateLimitAddress(from, 10, 1000))
+  {
+    SV_WriteAttackLog(va("SVC_Info: rate limit from %s exceeded, dropping request\n", NET_AdrToString(from)));
+    return;
+  }
+
+  //allow getinfo to be DoSed relatively easily, but prevent
+  //excess outbound bandwidth usage when being flooded inbound
+  if (SVC_RateLimit(&outboundRateLimit, 10, 100))
+  {
+    SV_WriteAttackLog(va("SVC_Info: rate limit exceeded, dropping request\n"));
     return;
   }
 
@@ -1291,168 +1301,6 @@ SVC_Ping(const netadr_t *from)
   NET_OutOfBandPrint(NS_SERVER, from, "print\nacknowledged\n");
 }
 
-/*
-================
-SVC_CheckDRDoS
-
-DRDoS stands for "Distributed Reflected Denial of Service"
-See here: http://www.lemuria.org/security/application-drdos.html
-
-If the address isn't NA_IP it is automatically denied.
-
-Return qfalse if we're good.
-Otherwise, return qtrue if we need to block.
-
-NOTE: Do not call if sv_protect 2 is not set!
-================
-*/
-static const qbool
-SVC_CheckDRDoS(const netadr_t *from)
-{
-  unsigned i;
-  unsigned oldestBan;
-  unsigned oldestBanTime;
-  unsigned globalCount;
-  unsigned specificCount;
-  receipt_t *receipt;
-  netadr_t modifiedFrom;
-  unsigned oldest;
-  unsigned oldestTime;
-  static unsigned lastGlobalLogTime = 0;
-  floodBan_t *ban;
-
-  //Chey: i added this cvar because i dont believe this should be a de facto rule, also id say its good for testing purposes, makes things easier
-  if (!sv_owolfAffectsLan->integer)
-  {
-    //network is usually smart enough to block incoming udp packets with a source being a spoofed lan and if not then sending packets to other lan is not a big deal na loopback qualifies as lan
-    if (Sys_IsLANAddress(from))
-    {
-      return qfalse;
-    }
-  }
-
-  modifiedFrom = *from;
-
-  if (modifiedFrom.type == NA_IP)
-  {
-    modifiedFrom.ipv._4[3] = 0; //xx.xx.xx.0
-  }
-#if defined(USE_IPV6)
-  else if (modifiedFrom.type == NA_IP6)
-  {
-    Com_Memset(modifiedFrom.ipv._6 + 7, 0, 9); //mask to /56
-  }
-#endif
-  else
-  {
-    //Chey: i have no idea what this could possibly be
-    return qtrue;
-  }
-
-  //quick exit strategy which does not impact server performance
-  oldestBan = 0;
-  oldestBanTime = 0x7fffffff;
-
-  for(i = 0;i < MAX_INFO_FLOOD_BANS;i++)
-  {
-    ban = &svs.infoFloodBans[i];
-
-    if (svs.time - ban->time < 120000 && NET_CompareBaseAdr(&modifiedFrom, &ban->adr)) //two minutes ban
-    {
-      ban->count++;
-
-      if (!ban->flood && ((svs.time - ban->time) >= 3000) && ban->count <= 5)
-      {
-        SV_WriteAttackLog(va("%s: Unban info flood protect for address %s, they're not flooding.\n", __func__, NET_AdrToString(from)));
-        Com_Memset(ban, 0, sizeof(floodBan_t));
-        oldestBan = i;
-        break;
-      }
-
-      if (ban->count >= 180)
-      {
-        SV_WriteAttackLog(va("%s: Renewing info flood ban for address %s, received %i getinfo/getstatus requests in %i milliseconds.\n", __func__, NET_AdrToString(from), ban->count, svs.time - ban->time));
-        ban->time = svs.time;
-        ban->count = 0;
-        ban->flood = qtrue;
-      }
-
-      return qtrue;
-    }
-
-    if (ban->time < oldestBanTime)
-    {
-      oldestBanTime = ban->time;
-      oldestBan = i;
-    }
-  }
-
-  //count receipts in last two seconds
-  globalCount = 0;
-  specificCount = 0;
-  oldest = 0;
-  oldestTime = 0x7fffffff;
-
-  for(i = 0;i < MAX_INFO_RECEIPTS;i++)
-  {
-    receipt = &svs.infoReceipts[i];
-
-    if (receipt->time + 2000 > svs.time)
-    {
-      if (receipt->time)
-      {
-        //all receipts start at zero and svs time is close to zero so check that receipt time is set so master server query doesnt get ignored but that means an unlimited number of getinfo and getstatus responses can be sent during the first frame of a servers life
-        globalCount++;
-      }
-
-      if (NET_CompareBaseAdr(&modifiedFrom, &receipt->adr))
-      {
-        specificCount++;
-      }
-    }
-
-    if (receipt->time < oldestTime)
-    {
-      oldestTime = receipt->time;
-      oldest = i;
-    }
-  }
-
-  if (specificCount >= 3) //sent three to ip in last two seconds
-  {
-    SV_WriteAttackLog(va("%s: Possible DRDoS attack to address %s, putting into temporary getinfo/getstatus ban list.\n", __func__, NET_AdrToString(from)));
-    ban = &svs.infoFloodBans[oldestBan];
-    ban->adr = modifiedFrom;
-    ban->time = svs.time;
-    ban->count = 0;
-    ban->flood = qfalse;
-    return qtrue;
-  }
-
-  if (globalCount == MAX_INFO_RECEIPTS) //all in last two seconds
-  {
-    //detect time wrap where server sets time back to zero since static variable does not get zeroed when time wraps
-    //TTimo way is casting everything including the difference to uint but this may be confusing
-    if (svs.time < lastGlobalLogTime)
-    {
-      lastGlobalLogTime = 0;
-    }
-
-    if (lastGlobalLogTime + 1000 <= svs.time) //one log per second
-    {
-      SV_WriteAttackLog("%s: Detected flood of arbitrary getinfo/getstatus connectionless packets.\n");
-      lastGlobalLogTime = svs.time;
-    }
-
-    return qtrue;
-  }
-
-  receipt = &svs.infoReceipts[oldest];
-  receipt->adr = modifiedFrom;
-  receipt->time = svs.time;
-  return qfalse;
-}
-
 #if defined(INCLUDE_REMOTE_COMMANDS)
 /*
 ===============
@@ -1466,12 +1314,20 @@ Redirect all printfs
 static const void
 SVC_RemoteCommand(const netadr_t *from, msg_t *msg)
 {
+  static rateLimit_t bucket;
   qbool valid;
   //TTimo - scaled down to accumulate, but not overflow anything network wise, print wise, etc. (OOB messages are the bottleneck here)
   qchar sv_outputbuf[1024 - 16];
   const qchar *cmd_aux;
   const qchar *pw;
   fileHandle_t rconLog = 0;
+
+  //prevent using rcon as an amplifier and make dictionary attacks impractical
+  if (SVC_RateLimitAddress(from, 10, 1000))
+  {
+    SV_WriteAttackLog(va("SVC_RemoteCommand: rate limit from %s exceeded, dropping request\n", NET_AdrToString(from)));
+    return;
+  }
 
   if (sv_rconWhitelist->string && *sv_rconWhitelist->string)
   {
@@ -1510,6 +1366,13 @@ SVC_RemoteCommand(const netadr_t *from, msg_t *msg)
   }
   else
   {
+    //make DoS via rcon impractical
+    if (SVC_RateLimit(&bucket, 10, 1000))
+    {
+      SV_WriteAttackLog(va("SVC_RemoteCommand: rate limit exceeded, dropping request\n");
+      return;
+    }
+
     valid = qfalse;
     message = ("Bad rcon from %s: %s\n", NET_AdrToString(from), Cmd_ArgsFrom(2));
   }
@@ -1608,57 +1471,11 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
 {
   const qchar *s;
   const qchar *c;
-  const unsigned now = Sys_Milliseconds();
-  const unsigned rate = sv_maxOOBRate->integer;
-  const unsigned iprate = sv_maxOOBRateIP->integer;
-  const unsigned period = 1000 / rate;
-  const unsigned ipperiod = 1000 / iprate;
-  const unsigned burst = rate; //one second worth of packets
-  const unsigned ipburst = 10 * iprate; //one second worth of packets
-  unsigned i;
-  static unsigned droppedAdr;
-  static unsigned dropped[SVC_MAX];
-  static unsigned lastMsgAdr;
-  static unsigned lastMsg[SVC_MAX];
-  static rateLimit_t bucket[SVC_MAX];
-  static const qchar * const commands[SVC_MAX] =
-  {
-    "invalid",
-    "connect",
-    "getstatus",
-    "getinfo",
-    "getchallenge",
-    "rcon",
-    "ping",
-    "disconnect"
-  };
-  svcType_t cmd;
 
   if (!com_sv_running->integer)
   {
     return;
   }
-
-  if ((sv_protect->integer & SVP_OWOLF) && SVC_CheckDRDoS(from))
-  {
-    return;
-  }
-
-  //Chey: XXX: this is an irrelevant message now c:
-  //Chey: DO NOT use this with SVP_OWOLF enabled, as this will
-  //prevent SVC_CheckDRDoS from having valid counters by returning
-  //early, this is purely for making SVP_XREAL stricter than it
-  //already is
-  if (sv_protect->integer & SVP_XREAL)
-  {
-    if (SVC_RateLimitAddress(from, ipburst, ipperiod, now))
-    {
-      droppedAdr++;
-      return;
-    }
-  }
-
-  cmd = SVC_INVALID;
 
   MSG_BeginReadingOOB(msg);
   MSG_ReadLong(msg); //skip -1 marker
@@ -1677,7 +1494,6 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
     }
 
     Huff_Decompress(msg, 12);
-    cmd = SVC_CONNECT;
   }
 
   s = MSG_ReadStringLine(msg);
@@ -1685,123 +1501,48 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
 
   c = Q_strlwr(Cmd_Argv(0));
 
-  for(i = SVC_FIRST;i < SVC_MAX && cmd == SVC_INVALID;i++)
-  {
-    if (!Q_stricmp(c, commands[i]))
-    {
-      cmd = (svcType_t)i;
-    }
-  }
-
-  //Chey: XXX: this is an irrelevant message now c:
-  //Chey: DO NOT use this with SVP_OWOLF enabled, as this will
-  //prevent SVC_CheckDRDoS from having valid counters by returning
-  //early, this is purely for making SVP_XREAL stricter than it
-  //already is
-  if (sv_protect->integer & SVP_XREAL)
-  {
-    if (SVC_RateLimit(&bucket[cmd], burst, period, now))
-    {
-      dropped[cmd]++;
-      return;
-    }
-
-    //this will print every 5 'period' msecs
-    if (dropped[cmd] > 0 && lastMsg[cmd] + 5000 < now)
-    {
-      SV_WriteAttackLog(va("%s: \"%s\" rate limit exceeded, dropped %d request%s.\n", __func__, commands[cmd], dropped[cmd], dropped[cmd] == 1 ? "":"s"));
-      dropped[cmd] = 0;
-      lastMsg[cmd] = now;
-    }
-
-    if (droppedAdr > 0 && lastMsgAdr + 5000 < now)
-    {
-      SV_WriteAttackLog(va("%s: IP rate limit exceeded, dropped %d request%s.\n", __func__, droppedAdr, droppedAdr == 1 ? "":"s"));
-      droppedAdr = 0;
-      lastMsgAdr = now;
-    }
-  }
-
   if (com_developer->integer)
   {
     Com_Printf("sv packet %s: %s\n", NET_AdrToString(from), c);
   }
 
-  switch(cmd)
-  {
-    case
-    SVC_GETSTATUS:
-      if (sv_hidden->integer)
-      {
-        return;
-      }
-
-      SVC_Status(from);
-      break;
-
-    case
-    SVC_GETINFO:
-      //if the server is hidden do not respond to getinfo requests by default
-#if defined(INCLUDE_LEGACY_CHALLENGE)
-      if (sv_hidden->integer)
-      {
-        if (sv_legacyChallenge->integer)
-        {
-          if (!SV_CheckChallenge(from))
-          {
-            return;
-          }
-        }
-        else
-        {
-          return;
-        }
-      }
-#else
-      if (sv_hidden->integer)
-      {
-        return;
-      }
-#endif
-
-      SVC_Info(from);
-      break;
-
-    case
-    SVC_GETCHALLENGE:
-      SV_GetChallenge(from);
-      break;
-
-    case
-    SVC_CONNECT:
-      SV_DirectConnect(from);
-      break;
-
-    case
-    SVC_RCON:
 #if defined(INCLUDE_REMOTE_COMMANDS)
-      SVC_RemoteCommand(from, msg);
+  if (!Q_stricmp(c, "rcon"))
+  {
+    SVC_RemoteCommand(from);
+    return;
+  }
 #endif
-      break;
 
-    case
-    SVC_PING:
-      if (sv_hidden->integer)
-      {
-        return;
-      }
-
-      SVC_Ping(from);
-      break;
-
-    case
-    SVC_DISCONNECT:
-      //if client starts local server some spurious server disconnect messages may happen when new server sees final sequenced messages to old client
-      break;
-
-    default:
-      SV_WriteAttackLog(va("Bad connectionless packet from %s:\n%s\n", NET_AdrToString(from), s)); //changed from com dprintf to print in attack log and do com printf if attack log not set
-      break;
+  if (!Q_stricmp(c, "getstatus"))
+  {
+    SVC_Status(from);
+  }
+  else if (!Q_stricmp(c, "getinfo"))
+  {
+    SVC_Info(from);
+  }
+  else if (!Q_stricmp(c, "getchallenge"))
+  {
+    SV_GetChallenge(from);
+  }
+  else if (!Q_stricmp(c, "ping"))
+  {
+    SVC_Ping(from);
+  }
+  else if (!Q_stricmp(c, "connect"))
+  {
+    SV_DirectConnect(from);
+  }
+  else if (!Q_stricmp(c, "disconnect"))
+  {
+    //if a client starts up a local server, we may see some spurious
+    //server disconnect messages when their new server sees our final
+    //sequenced messages to the old client
+  }
+  else
+  {
+    SV_WriteAttackLog(va("Bad connectionless packet from %s:\n%s\n", NET_AdrToString(from), s)); //changed from com dprintf to print in attack log and do com printf if attack log not set
   }
 }
 
@@ -1814,7 +1555,7 @@ SV_IsValidNetwork
 Used by SV_ReadPackets, checks if a network connection is valid.
 =================
 */
-static const ID_INLINE qbool
+static const qbool
 SV_IsValidNetwork(const netadr_t *from)
 {
   if (Sys_IsLANAddress(from))
@@ -1853,9 +1594,9 @@ SV_ReadPackets
 const void
 SV_ReadPackets(const netadr_t *from, msg_t *msg)
 {
-  unsigned i;
+  qint i;
   client_t *cl;
-  unsigned qport;
+  qint qport;
 
   if (!SV_IsValidNetwork(from))
   {
@@ -1913,7 +1654,7 @@ SV_ReadPackets(const netadr_t *from, msg_t *msg)
       //port assignments
       if (cl->netchan.remoteAddress.port != from->port)
       {
-        Com_Printf("sv read packets fixing up translated port\n");
+        Com_Printf("SV_ReadPackets: fixing up a translated port\n");
         cl->netchan.remoteAddress.port = from->port;
       }
 
@@ -1938,12 +1679,12 @@ Updates the cl->ping variables
 static const void
 SV_CalcPings(void)
 {
-  unsigned i;
-  unsigned j;
+  qint i;
+  qint j;
   client_t *cl;
-  unsigned total;
-  unsigned count;
-  unsigned delta;
+  qint total;
+  qint count;
+  qint delta;
   playerState_t *ps;
 
   for(i = 0;i < sv.maxclients;i++)
@@ -2065,7 +1806,6 @@ if necessary
 static const ID_INLINE void
 SV_CheckTimeouts(void)
 {
-  const unsigned now = Sys_Milliseconds();
   qint i;
   client_t *cl;
   qint droppoint;
@@ -2094,7 +1834,7 @@ SV_CheckTimeouts(void)
     if (cl->justConnected && svs.time - cl->lastPacketTime > 4000)
     {
       //for real client 4 seconds is more than enough to respond
-      SVC_RateDropAddress(&cl->netchan.remoteAddress, 10, 1000, now); //enforce burst with progressive multiplier
+      SVC_RateDropAddress(&cl->netchan.remoteAddress, 10, 1000); //enforce burst with progressive multiplier
       SV_DropClient(cl, NULL); //drop silently
       cl->state = CS_FREE;
       continue;
@@ -2123,16 +1863,16 @@ SV_CheckTimeouts(void)
 SV_CheckPaused
 ==================
 */
-static const ID_INLINE qbool
+static const qbool
 SV_CheckPaused(void)
 {
 #if defined(DEDICATED)
   //can't pause on dedicated servers
   return qfalse;
 #else
-  qbool players;
+  qbool players = qfalse;
   client_t *cl;
-  unsigned i;
+  qint  i;
 
   if (!cl_paused->integer)
   {
@@ -2169,82 +1909,6 @@ SV_CheckPaused(void)
 
   return qtrue;
 #endif //!DEDICATED
-}
-
-/*
-==================
-SV_CheckCvars
-==================
-*/
-static const void
-SV_CheckCvars(void)
-{
-  static qint lastMod = -1;
-  qbool changed = qfalse;
-
-  if (sv_hostname->modificationCount != lastMod)
-  {
-    qchar hostname[MAX_INFO_STRING];
-    qchar *c = hostname;
-    lastMod = sv_hostname->modificationCount;
-
-    Q_strncpyz(hostname, sv_hostname->string, sizeof(hostname));
-
-    while(*c)
-    {
-      if ((*c == '\\') || (*c == ';') || (*c == '"'))
-      {
-        *c = '.';
-        changed = qtrue;
-      }
-
-      c++;
-    }
-
-    if (changed)
-    {
-      Cvar_Set("sv_hostname", hostname);
-    }
-  }
-}
-
-/*
-==================
-SV_IntegerOverflowShutDown
-==================
-*/
-static const ID_INLINE void
-SV_Restart(const qchar *reason)
-{
-  qbool sv_shutdown = qfalse;
-  qchar mapName[MAX_QPATH];
-  qint i;
-
-  if (svs.clients)
-  {
-    //check if we can reset map time without full server shutdown
-    for(i = 0;i < sv.maxclients;i++)
-    {
-      if (svs.clients[i].state >= CS_CONNECTED)
-      {
-        sv_shutdown = qtrue;
-        break;
-      }
-    }
-  }
-
-  sv.time = 0; //force level time reset
-  sv.restartTime = 0;
-
-  //save map name in case it gets cleared during shut down
-  Cvar_VariableStringBuffer("mapname", mapName, sizeof(mapName));
-
-  if (sv_shutdown)
-  {
-    SV_Shutdown(reason);
-  }
-
-  Cbuf_AddText(va("map %s\n", mapName));
 }
 
 /*
@@ -2297,8 +1961,8 @@ SV_FrameMsec(void)
 {
   if (sv_fps)
   {
-    const unsigned frameMsec = 1000.0f / sv_fps->value;
-    const unsigned scaledResidual = (const unsigned)(sv.timeResidual / com_timescale->value);
+    const qint frameMsec = 1000.0f / sv_fps->value;
+    const qint scaledResidual = (const qint)(sv.timeResidual / com_timescale->value);
 
     if (frameMsec < scaledResidual)
     {
@@ -2355,6 +2019,45 @@ SV_TrackCvarChanges(void)
       SV_UserinfoChanged(cl, qfalse, qfalse); //do not update userinfo, do not run filter
     }
   }
+}
+
+/*
+==================
+SV_Restart
+==================
+*/
+static const ID_INLINE void
+SV_Restart(const qchar *reason)
+{
+  qbool sv_shutdown = qfalse;
+  qchar mapName[MAX_QPATH];
+  qint i;
+
+  if (svs.clients)
+  {
+    //check if we can reset map time without full server shutdown
+    for(i = 0;i < sv.maxclients;i++)
+    {
+      if (svs.clients[i].state >= CS_CONNECTED)
+      {
+        sv_shutdown = qtrue;
+        break;
+      }
+    }
+  }
+
+  sv.time = 0; //force level time reset
+  sv.restartTime = 0;
+
+  //save map name in case it gets cleared during shut down
+  Cvar_VariableStringBuffer("mapname", mapName, sizeof(mapName));
+
+  if (sv_shutdown)
+  {
+    SV_Shutdown(reason);
+  }
+
+  Cbuf_AddText(va("map %s\n", mapName));
 }
 
 /*
@@ -2553,7 +2256,6 @@ SV_Frame(const qint msec)
   SV_CheckTimeouts(); //check timeouts
   SV_IssueNewSnapshot(); //reset current and build new snapshot on first query
   SV_SendClientMessages(); //send messages back to the clients
-  SV_CheckCvars(); //Chey
   SV_MasterHeartbeat(HEARTBEAT_GAME); //send a heartbeat to the master if needed
 
   if (com_dedicated->integer)
