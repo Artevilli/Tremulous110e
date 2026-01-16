@@ -1350,7 +1350,7 @@ CLIENT COMMAND EXECUTION
 #define DOWNLOAD_READ_CHUNK_SIZE 16384
 
 //rate control constants
-#define DOWNLOAD_MAX_RATE 5000 //in KB/s
+#define DOWNLOAD_MAX_RATE (sv_dlRate->integer ? (sv_dlRate->integer >= 250 ? (Q_min(sv_dlRate->integer, 5000)):250):5000) //in KB/s
 #define DOWNLOAD_MIN_RATE 250 //in KB/s (burst rate, overall speed may be slower due to transmit window)
 #define DOWNLOAD_RETRANSMIT_RATE_DECREASE(oldRate) (oldRate * 0.8) //on retransmit
 #define DOWNLOAD_RATE_INCREASE(oldRate, blockSize) (oldRate + blockSize / 200.0) //on block acknowledge

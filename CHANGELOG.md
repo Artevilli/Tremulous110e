@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/16/2026--**
 
+* server:<br />fix download rate decreasing when sv_dlRate is set lower than 5000
+
 * server:<br />massive code cleanup
 
 **--01/14/2026--**

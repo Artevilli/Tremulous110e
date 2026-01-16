@@ -1516,10 +1516,21 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
 
   if (!Q_stricmp(c, "getstatus"))
   {
+    if (sv_hidden->integer)
+    {
+      return;
+    }
+
     SVC_Status(from);
   }
   else if (!Q_stricmp(c, "getinfo"))
   {
+    //if the server is hidden, don't respond to getinfo requests by default
+    if (sv_hidden->integer)
+    {
+      return;
+    }
+
     SVC_Info(from);
   }
   else if (!Q_stricmp(c, "getchallenge"))
@@ -1528,6 +1539,11 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
   }
   else if (!Q_stricmp(c, "ping"))
   {
+    if (sv_hidden->integer)
+    {
+      return;
+    }
+
     SVC_Ping(from);
   }
   else if (!Q_stricmp(c, "connect"))
