@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/16/2026--**
 
+* qcommon:<br />reduce `MAX_RELIABLE_COMMANDS` back down to 128
+
 * server:<br />fix SV_SendClientMessages()
 
 * server:<br />make rate decreasing follow a dynamic sv_dlRate
