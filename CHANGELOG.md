@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/16/2026--**
 
+* server:<br />fix SV_SendClientMessages()
+
 * server:<br />make rate decreasing follow a dynamic sv_dlRate
 
 * server:<br />fix download rate decreasing when sv_dlRate is set lower than 5000

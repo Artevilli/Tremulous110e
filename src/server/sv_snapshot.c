@@ -1190,6 +1190,19 @@ SV_SendClientMessages(void)
       }
     }
 
+    if (c->netchan.unsentFragments || c->netchan_start_queue)
+    {
+      c->rateDelayed = qtrue;
+      continue; //drop this snapshot if the packet queue is still full or delta compression will break
+    }
+
+    if (SV_RateMsec(c) > 0)
+    {
+      //not enough time since last packet passed through the line
+      c->rateDelayed = qtrue;
+      continue;
+    }
+
     if (c->gentity && (c->gentity->r.svFlags & SVF_BOT))
     {
       continue; //Chey: bots may cause error drops in the server net chan
