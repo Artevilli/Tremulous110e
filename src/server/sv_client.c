@@ -1350,7 +1350,7 @@ CLIENT COMMAND EXECUTION
 #define DOWNLOAD_READ_CHUNK_SIZE 16384
 
 //rate control constants
-#define DOWNLOAD_MAX_RATE(rate) (rate ? (rate >= 250 ? (Q_min(rate, 5000)):250):5000) //in KB/s
+#define DOWNLOAD_MAX_RATE (sv_dlRate->integer ? (sv_dlRate->integer >= 250 ? (Q_min(sv_dlRate->integer, 5000)):250):5000) //in KB/s
 #define DOWNLOAD_MIN_RATE 250 //in KB/s (burst rate, overall speed may be slower due to transmit window)
 #define DOWNLOAD_RETRANSMIT_RATE_DECREASE(oldRate) (oldRate * 0.8) //on retransmit
 #define DOWNLOAD_RATE_INCREASE(oldRate, blockSize) (oldRate + blockSize / 200.0) //on block acknowledge
@@ -1365,7 +1365,7 @@ CLIENT COMMAND EXECUTION
 //roughly MAX_MSGLEN / DOWNLOAD_FRAGMENT_SIZE
 #define DOWNLOAD_MAX_PACKETS_PER_BLOCK 12
 
-#define DOWNLOAD_MAX_PACKETS_PER_MS(rate) (DOWNLOAD_MAX_RATE(rate) / DOWNLOAD_FRAGMENT_SIZE + 2)
+#define DOWNLOAD_MAX_PACKETS_PER_MS (DOWNLOAD_MAX_RATE / DOWNLOAD_FRAGMENT_SIZE + 2)
 
 //for certain purposes, don't treat client download rate as higher than global rate limit
 #define DOWNLOAD_CLIENT_RATE(cl) (sv_dlRate->integer > 0 && sv_dlRate->integer < cl->downloadCurrentRate ? sv_dlRate->integer:cl->downloadCurrentRate)
@@ -1512,9 +1512,9 @@ SV_NextDownload_f(client_t *cl)
     //gradually increment rate
     cl->downloadCurrentRate = DOWNLOAD_RATE_INCREASE(cl->downloadCurrentRate, cl->downloadBlockSize[blockIndex]);
 
-    if (cl->downloadCurrentRate > DOWNLOAD_MAX_RATE(sv_dlRate->integer))
+    if (cl->downloadCurrentRate > DOWNLOAD_MAX_RATE)
     {
-      cl->downloadCurrentRate = DOWNLOAD_MAX_RATE(sv_dlRate->integer);
+      cl->downloadCurrentRate = DOWNLOAD_MAX_RATE;
     }
 
     cl->downloadAckTime = svs.time;
@@ -1824,7 +1824,7 @@ SV_WriteDownloadToClient(client_t *cl)
     cl->downloadSrcChunk = Z_Malloc(DOWNLOAD_READ_CHUNK_SIZE);
     cl->downloadClientMsg = cl->downloadRetransmitMsg = cl->downloadCurrentMsg = 0;
     cl->downloadLastSentTime = Sys_Milliseconds();
-    cl->downloadCurrentRate = DOWNLOAD_MAX_RATE(sv_dlRate->integer);
+    cl->downloadCurrentRate = DOWNLOAD_MAX_RATE;
     cl->downloadRatePool = 0;
 
     //reset the ack time to current when we start
@@ -2293,7 +2293,7 @@ SV_SendDownloadMessages(void)
   }
 
   //send download packets
-  for(round = 0;round < DOWNLOAD_MAX_PACKETS_PER_MS(sv_dlRate->integer);round++)
+  for(round = 0;round < DOWNLOAD_MAX_PACKETS_PER_MS;round++)
   {
     for(i = 0;i < sv.maxclients;i++)
     {
