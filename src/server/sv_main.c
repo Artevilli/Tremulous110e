@@ -1298,7 +1298,12 @@ Simple server ping, used to check online status.
 static const ID_INLINE void
 SVC_Ping(const netadr_t *from)
 {
-  NET_OutOfBandPrint(NS_SERVER, from, "print\nacknowledged\n");
+  static rateLimit_t bucket;
+
+  if (!SVC_RateLimit(&bucket, 10, 200))
+  {
+    NET_OutOfBandPrint(NS_SERVER, from, "print\nacknowledged\n");
+  }
 }
 
 #if defined(INCLUDE_REMOTE_COMMANDS)

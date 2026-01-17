@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--01/17/2026--**
+
+* server:<br />add more rate limiting
+
 **--01/16/2026--**
 
 * server:<br />revert redundant "make rate decreasing follow a dynamic sv_dlRate"

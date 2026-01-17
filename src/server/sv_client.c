@@ -577,7 +577,11 @@ SV_DirectConnect(const netadr_t *from)
 
   if (*v == '\0')
   {
-    NET_OutOfBandPrint(NS_SERVER, from, "print\nmissing challenge in userinfo\n");
+    if (!SVC_RateLimit(&bucket, 10, 200))
+    {
+      NET_OutOfBandPrint(NS_SERVER, from, "print\nmissing challenge in userinfo\n");
+    }
+
     return;
   }
 
@@ -590,13 +594,21 @@ SV_DirectConnect(const netadr_t *from)
 #if defined(STATELESS_CHALLENGES_VERSION_ONE)
     if (!SV_VerifyChallenge(challenge, from))
     {
-      NET_OutOfBandPrint(NS_SERVER, from, "print\nincorrect challenge for your address\n");
+      if (!SVC_RateLimit(&bucket, 10, 200))
+      {
+        NET_OutOfBandPrint(NS_SERVER, from, "print\nincorrect challenge for your address\n");
+      }
+
       return;
     }
 #else
     if (!SV_VerifyChallenge(challenge, from))
     {
-      NET_OutOfBandPrint(NS_SERVER, from, "print\nincorrect challenge, please reconnect\n");
+      if (!SVC_RateLimit(&bucket, 10, 200))
+      {
+        NET_OutOfBandPrint(NS_SERVER, from, "print\nincorrect challenge, please reconnect\n");
+      }
+
       return;
     }
 #endif
@@ -607,7 +619,11 @@ SV_DirectConnect(const netadr_t *from)
 
   if (*v == '\0')
   {
-    NET_OutOfBandPrint(NS_SERVER, from, "print\nmissing protocol in userinfo\n");
+    if (!SVC_RateLimit(&bucket, 10, 200))
+    {
+      NET_OutOfBandPrint(NS_SERVER, from, "print\nmissing protocol in userinfo\n");
+    }
+
     return;
   }
 
@@ -653,7 +669,11 @@ SV_DirectConnect(const netadr_t *from)
 
   if (!Info_SetValueForKey(userinfo, "ip", ip))
   {
-    NET_OutOfBandPrint(NS_SERVER, from, "print\nUserinfo string length exceeded. Try removing setu cvars from your config.\n");
+    if (!SVC_RateLimit(&bucket, 10, 200))
+    {
+      NET_OutOfBandPrint(NS_SERVER, from, "print\nUserinfo string length exceeded. Try removing setu cvars from your config.\n");
+    }
+
     return;
   }
 
