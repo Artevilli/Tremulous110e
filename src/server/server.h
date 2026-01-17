@@ -578,15 +578,13 @@ extern server_t sv; //cleared each map
 //sv_main.c
 //
 const qbool
-SVC_RateLimit(rateLimit_t *bucket, qint burst, qint period);
-const qbool
-SVC_RateLimitAddress(const netadr_t *from, qint burst, qint period);
+SVC_RateLimit(rateLimit_t *bucket, qint burst, qint period, qint now);
 const void
-SVC_RateRestoreBurstAddress(const netadr_t *from, qint burst, qint period);
+SVC_RateRestoreBurstAddress(const netadr_t *from, qint burst, qint period, qint now);
 const void
-SVC_RateRestoreToxicAddress(const netadr_t *from, qint burst, qint period);
+SVC_RateRestoreToxicAddress(const netadr_t *from, qint burst, qint period, qint now);
 const void
-SVC_RateDropAddress(const netadr_t *from, qint burst, qint period);
+SVC_RateDropAddress(const netadr_t *from, qint burst, qint period, qint now);
 #if defined(SUPPORT_STATUS_SCORES_OVERRIDE)
 void
 SV_HandleGameInfoMessage(const qchar *info);

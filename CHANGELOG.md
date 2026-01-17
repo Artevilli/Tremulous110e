@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/17/2026--**
 
+* server:<br />readd sv_protect logic
+
 * server:<br />add more rate limiting
 
 **--01/16/2026--**

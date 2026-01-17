@@ -118,13 +118,6 @@ SV_GetChallenge(const netadr_t *from)
 {
   qint challenge;
 
-  //prevent using getchallenge as an amplifier
-  if (SVC_RateLimitAddress(from, 10, 1000))
-  {
-    SV_WriteAttackLog(va("SV_GetChallenge: rate limit from %s exceeded, dropping request\n", NET_AdrToString(from)));
-    return;
-  }
-
   //create a unique challenge for this client without storing state on server
 #if defined(STATELESS_CHALLENGES_VERSION_ONE)
     challenge = SV_CreateChallenge(from);
@@ -520,7 +513,7 @@ A "connect" OOB command has been received
 const void
 SV_DirectConnect(const netadr_t *from)
 {
-  static rateLimit_t bucket;
+  const qint now = Sys_Milliseconds();
   qchar userinfo[MAX_INFO_STRING];
   qchar tld[3];
   qint i;
@@ -542,13 +535,6 @@ SV_DirectConnect(const netadr_t *from)
 
   Com_DPrintf("SVC_DirectConnect()\n");
 
-  //prevent using connect as an amplifier
-  if (SVC_RateLimitAddress(from, 10, 1000))
-  {
-    SV_WriteAttackLog(va("SV_DirectConnect: rate limit from %s exceeded, dropping request\n", NET_AdrToString(from)));
-    return;
-  }
-
   for(i = 0, n = 0;i < sv.maxclients;i++)
   {
     const netadr_t *addr = &svs.clients[i].netchan.remoteAddress;
@@ -559,12 +545,7 @@ SV_DirectConnect(const netadr_t *from)
       {
         if (++n >= sv_maxclientsPerIP->integer)
         {
-          //avoid excessive outgoing traffic
-          if (!SVC_RateLimit(&bucket, 10, 200))
-          {
-            NET_OutOfBandPrint(NS_SERVER, from, "print\ntoo many connections\n");
-          }
-
+          NET_OutOfBandPrint(NS_SERVER, from, "print\ntoo many connections\n");
           return;
         }
       }
@@ -577,11 +558,7 @@ SV_DirectConnect(const netadr_t *from)
 
   if (*v == '\0')
   {
-    if (!SVC_RateLimit(&bucket, 10, 200))
-    {
-      NET_OutOfBandPrint(NS_SERVER, from, "print\nmissing challenge in userinfo\n");
-    }
-
+    NET_OutOfBandPrint(NS_SERVER, from, "print\nmissing challenge in userinfo\n");
     return;
   }
 
@@ -594,21 +571,13 @@ SV_DirectConnect(const netadr_t *from)
 #if defined(STATELESS_CHALLENGES_VERSION_ONE)
     if (!SV_VerifyChallenge(challenge, from))
     {
-      if (!SVC_RateLimit(&bucket, 10, 200))
-      {
-        NET_OutOfBandPrint(NS_SERVER, from, "print\nincorrect challenge for your address\n");
-      }
-
+      NET_OutOfBandPrint(NS_SERVER, from, "print\nincorrect challenge for your address\n");
       return;
     }
 #else
     if (!SV_VerifyChallenge(challenge, from))
     {
-      if (!SVC_RateLimit(&bucket, 10, 200))
-      {
-        NET_OutOfBandPrint(NS_SERVER, from, "print\nincorrect challenge, please reconnect\n");
-      }
-
+      NET_OutOfBandPrint(NS_SERVER, from, "print\nincorrect challenge, please reconnect\n");
       return;
     }
 #endif
@@ -619,11 +588,7 @@ SV_DirectConnect(const netadr_t *from)
 
   if (*v == '\0')
   {
-    if (!SVC_RateLimit(&bucket, 10, 200))
-    {
-      NET_OutOfBandPrint(NS_SERVER, from, "print\nmissing protocol in userinfo\n");
-    }
-
+    NET_OutOfBandPrint(NS_SERVER, from, "print\nmissing protocol in userinfo\n");
     return;
   }
 
@@ -641,11 +606,7 @@ SV_DirectConnect(const netadr_t *from)
 
   if (*v == '\0')
   {
-    if (!SVC_RateLimit(&bucket, 10, 200))
-    {
-      NET_OutOfBandPrint(NS_SERVER, from, "print\nmissing qport in userinfo\n");
-    }
-
+    NET_OutOfBandPrint(NS_SERVER, from, "print\nmissing qport in userinfo\n");
     return;
   }
 
@@ -669,11 +630,7 @@ SV_DirectConnect(const netadr_t *from)
 
   if (!Info_SetValueForKey(userinfo, "ip", ip))
   {
-    if (!SVC_RateLimit(&bucket, 10, 200))
-    {
-      NET_OutOfBandPrint(NS_SERVER, from, "print\nUserinfo string length exceeded. Try removing setu cvars from your config.\n");
-    }
-
+    NET_OutOfBandPrint(NS_SERVER, from, "print\nUserinfo string length exceeded. Try removing setu cvars from your config.\n");
     return;
   }
 
@@ -690,7 +647,10 @@ SV_DirectConnect(const netadr_t *from)
   }
 
   //restore burst capacity
-  SVC_RateRestoreBurstAddress(from, 10, 1000);
+  if (sv_protect->integer & SVP_XREAL)
+  {
+    SVC_RateRestoreBurstAddress(from, 10, 1000, now);
+  }
 
   //quick reject
   newcl = NULL;
@@ -707,14 +667,12 @@ SV_DirectConnect(const netadr_t *from)
       {
         const qint remains = ((sv_reconnectlimit->integer * 1000) - elapsed + 999) / 1000;
 
-        SV_WriteAttackLog(va("%s: reconnect rejected: too soon\n", NET_AdrToString(from)));
-
-        //avoid excessive outgoing traffic
-        if (!SVC_RateLimit(&bucket, 10, 200))
+        if (com_developer->integer)
         {
-          NET_OutOfBandPrint(NS_SERVER, from, "print\nreconnecting, please wait %i second%s\n", remains, remains != 1 ? "s":"");
+          Com_Printf("%s: reconnect rejected: too soon\n", NET_AdrToString(from));
         }
 
+        NET_OutOfBandPrint(NS_SERVER, from, "print\nreconnecting, please wait %i second%s\n", remains, remains != 1 ? "s":"");
         return;
       }
 
@@ -910,7 +868,11 @@ gotnewcl:
   newcl->lastConnectTime = svs.time;
   newcl->lastDisconnectTime = svs.time;
 
-  SVC_RateRestoreToxicAddress(&newcl->netchan.remoteAddress, 10, 1000);
+  if (sv_protect->integer & SVP_XREAL)
+  {
+    SVC_RateRestoreToxicAddress(&newcl->netchan.remoteAddress, 10, 1000, now);
+  }
+
   newcl->justConnected = qtrue;
 	  
   //when we receive the first packet from the client, we will
@@ -3118,9 +3080,11 @@ SV_FloodProtect
 static const qbool
 SV_FloodProtect(client_t *cl)
 {
+  const qint now = Sys_Milliseconds();
+
   if (sv_floodProtect->integer)
   {
-    return SVC_RateLimit(&cl->cmd_rate, sv_floodLimit->integer, sv_floodWait->integer);
+    return SVC_RateLimit(&cl->cmd_rate, sv_floodLimit->integer, sv_floodWait->integer, now);
   }
   else
   {
@@ -3138,6 +3102,7 @@ Also called by bot code
 const qbool
 SV_ExecuteClientCommand(client_t *cl, const qchar *s)
 {
+  const qint now = Sys_Milliseconds();
   const ucmd_t *ucmd;
   qbool bFloodProtect;
   qbool isBot;
@@ -3168,7 +3133,7 @@ SV_ExecuteClientCommand(client_t *cl, const qchar *s)
         {
           if (sv_userInfoFloodProtect->integer)
           {
-            if (!SVC_RateLimit(&cl->info_rate, 5, 1000))
+            if (!SVC_RateLimit(&cl->info_rate, 5, 1000, now))
             {
               return qfalse; //lag flooder
             }
@@ -3317,6 +3282,7 @@ each of the backup packets.
 static const void
 SV_UserMove(client_t *cl, msg_t *msg, qbool delta)
 {
+  const qint now = Sys_Milliseconds();
   qint i;
   qint key;
   qint cmdCount;
@@ -3379,7 +3345,15 @@ SV_UserMove(client_t *cl, msg_t *msg, qbool delta)
     if (sv.pure && !cl->gotCP)
     {
       //we didn't get a cp yet, don't assume anything and just send the gamestate all over again
-      if (!SVC_RateLimit(&cl->gamestate_rate, 2, 1000))
+      if (sv_protect->integer & SVP_XREAL)
+      {
+        if (!SVC_RateLimit(&cl->gamestate_rate, 2, 1000, now))
+        {
+          Com_DPrintf("%s: didn't get cp command, resending gamestate\n", cl->name);
+          SV_SendClientGameState(cl);
+        }
+      }
+      else
       {
         Com_DPrintf("%s: didn't get cp command, resending gamestate\n", cl->name);
         SV_SendClientGameState(cl);
@@ -3643,6 +3617,7 @@ Parse a client packet
 const void
 SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
 {
+  const qint now = Sys_Milliseconds();
   qint c;
   qint serverId;
   qint reliableAcknowledge;
@@ -3719,7 +3694,15 @@ SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
     if (!cl->downloading)
     {
       //send initial gamestate, client may not acknowledge it in next command but start downloading after SV_ClientCommand()
-      if (!SVC_RateLimit(&cl->gamestate_rate, 1, 1000))
+      if (sv_protect->integer & SVP_XREAL)
+      {
+        if (!SVC_RateLimit(&cl->gamestate_rate, 1, 1000, now))
+        {
+          Com_DPrintf("%s: sending gamestate\n", cl->name);
+          SV_SendClientGameState(cl);
+        }
+      }
+      else
       {
         Com_DPrintf("%s: sending gamestate\n", cl->name);
         SV_SendClientGameState(cl);
@@ -3771,7 +3754,14 @@ SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
   //check for sending initial gamestate
   if (cl->state == CS_CONNECTED)
   {
-    if (!SVC_RateLimit(&cl->gamestate_rate, 2, 1000))
+    if (sv_protect->integer & SVP_XREAL)
+    {
+      if (!SVC_RateLimit(&cl->gamestate_rate, 2, 1000, now))
+      {
+        SV_SendClientGameState(cl);
+      }
+    }
+    else
     {
       SV_SendClientGameState(cl);
     }
@@ -3784,7 +3774,15 @@ SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
   {
     if (cl->messageAcknowledge - cl->gamestateMessageNum > 0)
     {
-      if (!SVC_RateLimit(&cl->gamestate_rate, 2, 1000))
+      if (sv_protect->integer & SVP_XREAL)
+      {
+        if (!SVC_RateLimit(&cl->gamestate_rate, 2, 1000, now))
+        {
+          Com_DPrintf("%s: %s gamestate, resending\n", cl->name, serverId != sv.serverId ? "outdated":"dropped");
+          SV_SendClientGameState(cl);
+        }
+      }
+      else
       {
         Com_DPrintf("%s: %s gamestate, resending\n", cl->name, serverId != sv.serverId ? "outdated":"dropped");
         SV_SendClientGameState(cl);
@@ -3794,6 +3792,7 @@ SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
     return;
   }
 #else
+#if 0 //Chey: FIXME: this causes clients to get stuck in an infinite gamestate resend loop specifically after server downloading completes
   if (cl->gamestateAck != GSA_ACKED)
   {
     //late check for gamestate resend
@@ -3801,10 +3800,17 @@ SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
     {
       if (!SV_AcknowledgeGamestate(cl, serverId))
       {
-        Com_DPrintf("%s: dropped gamestate, resending\n", cl->name);
-
-        if (!SVC_RateLimit(&cl->gamestate_rate, 1, 1000))
+        if (sv_protect->integer & SVP_XREAL)
         {
+          if (!SVC_RateLimit(&cl->gamestate_rate, 1, 1000, now))
+          {
+            Com_DPrintf("%s: dropped gamestate, resending\n", cl->name);
+            SV_SendClientGameState(cl);
+          }
+        }
+        else
+        {
+          Com_DPrintf("%s: dropped gamestate, resending\n", cl->name);
           SV_SendClientGameState(cl);
         }
 
@@ -3816,6 +3822,7 @@ SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
       return; //cl->state <= CS_CONNECTED
     }
   }
+#endif
 #endif
   //read voip data
   if (c == clc_voip)
@@ -3861,7 +3868,15 @@ SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
     }
     else if (gsDelta > 20)
     {
-      if (!SVC_RateLimit(&cl->gamestate_rate, 2, 1000))
+      if (sv_protect->integer & SVP_XREAL)
+      {
+        if (!SVC_RateLimit(&cl->gamestate_rate, 2, 1000, now))
+        {
+          Com_DPrintf("%s: dropped post-download gamestate, resending\n", cl->name);
+          SV_SendClientGameState(cl);
+        }
+      }
+      else
       {
         Com_DPrintf("%s: dropped post-download gamestate, resending\n", cl->name);
         SV_SendClientGameState(cl);

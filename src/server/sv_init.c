@@ -940,7 +940,7 @@ SV_WriteAttackLog(const qchar *log)
       (void)FS_Write(string, strlen(string), attHandle);
     }
 
-    if (sv_printAttackLogs->integer)
+    if (sv_protect->integer & SVP_CONSOLE)
     {
       Com_Printf("%s", log);
     }
@@ -969,7 +969,7 @@ SV_WriteAttackLogUnrestricted(const qchar *log)
     (void)FS_Write(string, strlen(string), attHandle);
   }
 
-  if (sv_printAttackLogs->integer)
+  if (sv_protect->integer & SVP_CONSOLE)
   {
     Com_Printf("%s", log);
   }

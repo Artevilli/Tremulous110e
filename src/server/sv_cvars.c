@@ -86,9 +86,9 @@ cvar_t *sv_userInfoFloodProtect;
 cvar_t *sv_forceSendFragments;
 cvar_t *sv_showAverageBPS;
 cvar_t *sv_lanForceRate; //dedicated 1 (LAN) server forces local client rates to 99999 (bug #491)
+cvar_t *sv_protect; //attack protection, 0 unpretected, 1 xreal, 2 openwolf, 4 print to console
 cvar_t *sv_protectLog; //name
 cvar_t *sv_protectLogInterval; //frequency of writing logs
-cvar_t *sv_printAttackLogs; //printing attack logs to console
 cvar_t *sv_owolfAffectsLan;
 cvar_t *sv_dequeuePeriod;
 cvar_t *sv_demoState;
@@ -139,6 +139,10 @@ SV_InitCvars(void)
   sv_maxRate = Cvar_GetAndDescribe("sv_maxRate", "0", CVAR_ARCHIVE_ND | CVAR_SERVERINFO, "Maximum server bandwidth (in bit per second) a client can use.");
   Cvar_CheckRange(sv_maxRate, "0", "100000", CV_INTEGER);
   sv_dlRate = Cvar_GetAndDescribe("sv_dlRate", "1000", CVAR_ARCHIVE | CVAR_SERVERINFO, "Bandwidth allotted to PK3 file downloads via UDP, in kbyte/s.");
+  sv_maxOOBRate = Cvar_GetAndDescribe("sv_maxOOBRate", "20", CVAR_ARCHIVE | CVAR_SERVERINFO, "Max out of band rate for handling incoming packets.\nNOTE: sv_protect & SVP_XREAL must be set!");
+  Cvar_CheckRange(sv_maxOOBRate, "1", "1000", CV_INTEGER);
+  sv_maxOOBRateIP = Cvar_GetAndDescribe("sv_maxOOBRateIP", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, "Max out of band rate for handling incoming packets per IP address.\nNOTE: sv_protect & SVP_XREAL must be set!");
+  Cvar_CheckRange(sv_maxOOBRateIP, "1", "1000", CV_INTEGER);
 #if defined(UDP_DOWNLOAD_OPTIMIZE)
   Cvar_CheckRange(sv_dlRate, "0", "1500", CV_INTEGER);
 #else
@@ -229,9 +233,10 @@ SV_InitCvars(void)
   sv_mapChecksum = Cvar_GetAndDescribe("sv_mapChecksum", "", CVAR_ROM, "Allows check for client server map to match.");
   sv_lanForceRate = Cvar_GetAndDescribe("sv_lanForceRate", "1", CVAR_ARCHIVE_ND, "Forces LAN clients to the maximum rate instead of accepting client setting.");
   sv_dequeuePeriod = Cvar_Get("sv_dequeuePeriod", "500", CVAR_ARCHIVE);
+  sv_protect = Cvar_GetAndDescribe("sv_protect", "7", CVAR_ARCHIVE | CVAR_SERVERINFO, "Sets the desired networking protection level and whether or not to print logs to the console.\n1 is equal to 0001 in binary, enabling SVP_XREAL.\n2 is equal to 0010 in binary, enabling SVP_OWOLF.\n4 is equal to 0100 in binary, enabling SVP_CONSOLE (console print)\nIf this is set to 3, 0011 in binary, it enables both SVP_XREAL and SVP_OWOLF, and does not print to console.\nIf this is set to 5, 0101 in binary, it enables SVP_XREAL and SVP_CONSOLE.\nIf this is set to 6, 0110 in binary, it enables SVP_OWOLF and SVP_CONSOLE.\nIf this is set to 7, 0111 in binary, it enables SVP_XREAL, SVP_OWOLF, and SVP_CONSOLE for all functionality.");
   sv_protectLog = Cvar_GetAndDescribe("sv_protectLog", "sv_protect.log", CVAR_ARCHIVE | CVAR_SERVERINFO, "Sets the desired name of the sv_protect log file. To disable for developer print output, set to \"\".");
   sv_protectLogInterval = Cvar_GetAndDescribe("sv_protectLogInterval", "1000", CVAR_ARCHIVE | CVAR_SERVERINFO, "Sets the desired time in milliseconds until the next write to sv_protectLog is allowed to happen.");
-  sv_printAttackLogs = Cvar_GetAndDescribe("sv_printAttackLogs", "1", CVAR_ARCHIVE, "Toggle whether or not to print attack logs to the server console");
+  sv_owolfAffectsLan = Cvar_GetAndDescribe("sv_owolfAffectsLan", "0", CVAR_ARCHIVE, "Toggle whether or not sv_protect & SVP_OWOLF applies to lan clients.");
   sv_demoState = Cvar_Get("sv_demoState", "0", CVAR_ROM);
   sv_autoDemo = Cvar_Get("sv_autoDemo", "0", CVAR_ARCHIVE);
   sv_levelTimeReset = Cvar_GetAndDescribe("sv_levelTimeReset", "0", CVAR_ARCHIVE_ND, "Toggle whether or not to reset leveltime after a new map loads.");

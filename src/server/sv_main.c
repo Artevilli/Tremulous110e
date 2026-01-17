@@ -495,7 +495,7 @@ SV_MasterGameStat(const qchar *data)
 
 static leakyBucket_t buckets[MAX_BUCKETS];
 static leakyBucket_t *bucketHashes[MAX_HASHES];
-static rateLimit_t outboundRateLimit;
+//static rateLimit_t outboundRateLimit;
 
 /*
 ================
@@ -586,12 +586,11 @@ Find or allocate a bucket for an address
 ================
 */
 static leakyBucket_t *
-SVC_BucketForAddress(const netadr_t *address, qint burst, qint period)
+SVC_BucketForAddress(const netadr_t *address, qint burst, qint period, qint now)
 {
   static leakyBucket_t dummy = {0};
   static qint start = 0;
   const qint hash = SVC_HashForAddress(address);
-  const qint now = Sys_Milliseconds();
   leakyBucket_t *bucket;
   qint i;
   qint n;
@@ -722,9 +721,8 @@ dont call if sv_protect 1 xreal isnt set
 ================
 */
 const qbool
-SVC_RateLimit(rateLimit_t *bucket, qint burst, qint period)
+SVC_RateLimit(rateLimit_t *bucket, qint burst, qint period, qint now)
 {
-  qint now = Sys_Milliseconds();
   qint interval = now - bucket->lastTime;
   qint expired = interval / period;
   qint expiredRemainder = interval % period;
@@ -756,7 +754,7 @@ SVC_RateDrop
 ================
 */
 static const void
-SVC_RateDrop(leakyBucket_t *bucket, qint burst)
+SVC_RateDrop(leakyBucket_t *bucket, qint burst, qint now)
 {
   if (bucket != NULL)
   {
@@ -766,7 +764,7 @@ SVC_RateDrop(leakyBucket_t *bucket, qint burst)
     }
 
     bucket->rate.burst = burst * bucket->toxic;
-    bucket->rate.lastTime = Sys_Milliseconds();
+    bucket->rate.lastTime = now;
   }
 }
 
@@ -811,12 +809,12 @@ SVC_RateLimitAddress
 Rate limit for a particular address
 ================
 */
-const qbool
-SVC_RateLimitAddress(const netadr_t *from, qint burst, qint period)
+static const qbool
+SVC_RateLimitAddress(const netadr_t *from, qint burst, qint period, qint now)
 {
-  leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period);
+  leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period, now);
 
-  return bucket ? SVC_RateLimit(&bucket->rate, burst, period):qtrue;
+  return bucket ? SVC_RateLimit(&bucket->rate, burst, period, now):qtrue;
 }
 
 /*
@@ -827,9 +825,9 @@ Decrease burst rate
 ================
 */
 const void
-SVC_RateRestoreBurstAddress(const netadr_t *from, qint burst, qint period)
+SVC_RateRestoreBurstAddress(const netadr_t *from, qint burst, qint period, qint now)
 {
-  leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period);
+  leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period, now);
 
   SVC_RateRestoreBurst(bucket);
 }
@@ -842,9 +840,9 @@ Decrease toxicity
 ================
 */
 const void
-SVC_RateRestoreToxicAddress(const netadr_t *from, qint burst, qint period)
+SVC_RateRestoreToxicAddress(const netadr_t *from, qint burst, qint period, qint now)
 {
-  leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period);
+  leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period, now);
 
   SVC_RateRestoreToxic(bucket);
 }
@@ -855,11 +853,11 @@ SVC_RateDropAddress
 ================
 */
 const void
-SVC_RateDropAddress(const netadr_t *from, qint burst, qint period)
+SVC_RateDropAddress(const netadr_t *from, qint burst, qint period, qint now)
 {
-  leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period);
+  leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period, now);
 
-  SVC_RateDrop(bucket, burst);
+  SVC_RateDrop(bucket, burst, now);
 }
 
 /*
@@ -1045,21 +1043,6 @@ SVC_Status(const netadr_t *from)
     return;
   }
 
-  //prevent using getstatus as an amplifier
-  if (SVC_RateLimitAddress(from, 10, 1000))
-  {
-    SV_WriteAttackLog(va("SVC_Status: rate limit from %s exceeded, dropping request\n", NET_AdrToString(from)));
-    return;
-  }
-
-  //allow getstatus to be DoSed relatively easily, but prevent
-  //excess outbound bandwidth usage when being flooded inbound
-  if (SVC_RateLimit(&outboundRateLimit, 10, 100))
-  {
-    SV_WriteAttackLog(va("SVC_Status: rate limit exceeded, dropping request\n"));
-    return;
-  }
-
   //max challenge of 128
   if (strlen(Cmd_Argv(1)) > 128)
   {
@@ -1123,21 +1106,6 @@ SVC_Info(const netadr_t *from)
   if (!SVC_VerifyChallenge(Cmd_Argv(1)))
   {
     SV_WriteAttackLog(va("%s: Invalid challenge from %s, dropping request.\n", __func__, NET_AdrToString(from)));
-    return;
-  }
-
-  //prevent using getinfo as an amplifier
-  if (SVC_RateLimitAddress(from, 10, 1000))
-  {
-    SV_WriteAttackLog(va("SVC_Info: rate limit from %s exceeded, dropping request\n", NET_AdrToString(from)));
-    return;
-  }
-
-  //allow getinfo to be DoSed relatively easily, but prevent
-  //excess outbound bandwidth usage when being flooded inbound
-  if (SVC_RateLimit(&outboundRateLimit, 10, 100))
-  {
-    SV_WriteAttackLog(va("SVC_Info: rate limit exceeded, dropping request\n"));
     return;
   }
 
@@ -1298,12 +1266,169 @@ Simple server ping, used to check online status.
 static const ID_INLINE void
 SVC_Ping(const netadr_t *from)
 {
-  static rateLimit_t bucket;
+  NET_OutOfBandPrint(NS_SERVER, from, "print\nacknowledged\n");
+}
 
-  if (!SVC_RateLimit(&bucket, 10, 200))
+/*
+================
+SVC_CheckDRDoS
+
+DRDoS stands for "Distributed Reflected Denial of Service"
+See here: http://www.lemuria.org/security/application-drdos.html
+
+If the address isn't NA_IP it is automatically denied.
+
+Return qfalse if we're good.
+Otherwise, return qtrue if we need to block.
+
+NOTE: Do not call if sv_protect 2 is not set!
+================
+*/
+static const qbool
+SVC_CheckDRDoS(const netadr_t *from)
+{
+  unsigned i;
+  unsigned oldestBan;
+  unsigned oldestBanTime;
+  unsigned globalCount;
+  unsigned specificCount;
+  receipt_t *receipt;
+  netadr_t modifiedFrom;
+  unsigned oldest;
+  unsigned oldestTime;
+  static unsigned lastGlobalLogTime = 0;
+  floodBan_t *ban;
+
+  //Chey: i added this cvar because i dont believe this should be a de facto rule, also id say its good for testing purposes, makes things easier
+  if (!sv_owolfAffectsLan->integer)
   {
-    NET_OutOfBandPrint(NS_SERVER, from, "print\nacknowledged\n");
+    //network is usually smart enough to block incoming udp packets with a source being a spoofed lan and if not then sending packets to other lan is not a big deal na loopback qualifies as lan
+    if (Sys_IsLANAddress(from))
+    {
+      return qfalse;
+    }
   }
+
+  modifiedFrom = *from;
+
+  if (modifiedFrom.type == NA_IP)
+  {
+    modifiedFrom.ipv._4[3] = 0; //xx.xx.xx.0
+  }
+#if defined(USE_IPV6)
+  else if (modifiedFrom.type == NA_IP6)
+  {
+    Com_Memset(modifiedFrom.ipv._6 + 7, 0, 9); //mask to /56
+  }
+#endif
+  else
+  {
+    //Chey: i have no idea what this could possibly be
+    return qtrue;
+  }
+
+  //quick exit strategy which does not impact server performance
+  oldestBan = 0;
+  oldestBanTime = 0x7fffffff;
+
+  for(i = 0;i < MAX_INFO_FLOOD_BANS;i++)
+  {
+    ban = &svs.infoFloodBans[i];
+
+    if (svs.time - ban->time < 120000 && NET_CompareBaseAdr(&modifiedFrom, &ban->adr)) //two minutes ban
+    {
+      ban->count++;
+
+      if (!ban->flood && ((svs.time - ban->time) >= 3000) && ban->count <= 5)
+      {
+        SV_WriteAttackLog(va("%s: Unban info flood protect for address %s, they're not flooding.\n", __func__, NET_AdrToString(from)));
+        Com_Memset(ban, 0, sizeof(floodBan_t));
+        oldestBan = i;
+        break;
+      }
+
+      if (ban->count >= 180)
+      {
+        SV_WriteAttackLog(va("%s: Renewing info flood ban for address %s, received %i getinfo/getstatus requests in %i milliseconds.\n", __func__, NET_AdrToString(from), ban->count, svs.time - ban->time));
+        ban->time = svs.time;
+        ban->count = 0;
+        ban->flood = qtrue;
+      }
+
+      return qtrue;
+    }
+
+    if (ban->time < oldestBanTime)
+    {
+      oldestBanTime = ban->time;
+      oldestBan = i;
+    }
+  }
+
+  //count receipts in last two seconds
+  globalCount = 0;
+  specificCount = 0;
+  oldest = 0;
+  oldestTime = 0x7fffffff;
+
+  for(i = 0;i < MAX_INFO_RECEIPTS;i++)
+  {
+    receipt = &svs.infoReceipts[i];
+
+    if (receipt->time + 2000 > svs.time)
+    {
+      if (receipt->time)
+      {
+        //all receipts start at zero and svs time is close to zero so check that receipt time is set so master server query doesnt get ignored but that means an unlimited number of getinfo and getstatus responses can be sent during the first frame of a servers life
+        globalCount++;
+      }
+
+      if (NET_CompareBaseAdr(&modifiedFrom, &receipt->adr))
+      {
+        specificCount++;
+      }
+    }
+
+    if (receipt->time < oldestTime)
+    {
+      oldestTime = receipt->time;
+      oldest = i;
+    }
+  }
+
+  if (specificCount >= 3) //sent three to ip in last two seconds
+  {
+    SV_WriteAttackLog(va("%s: Possible DRDoS attack to address %s, putting into temporary getinfo/getstatus ban list.\n", __func__, NET_AdrToString(from)));
+    ban = &svs.infoFloodBans[oldestBan];
+    ban->adr = modifiedFrom;
+    ban->time = svs.time;
+    ban->count = 0;
+    ban->flood = qfalse;
+    return qtrue;
+  }
+
+  if (globalCount == MAX_INFO_RECEIPTS) //all in last two seconds
+  {
+    //detect time wrap where server sets time back to zero since static variable does not get zeroed when time wraps
+    //TTimo way is casting everything including the difference to uint but this may be confusing
+    if (svs.time < lastGlobalLogTime)
+    {
+      lastGlobalLogTime = 0;
+    }
+
+    if (lastGlobalLogTime + 1000 <= svs.time) //one log per second
+    {
+      SV_WriteAttackLog("%s: Detected flood of arbitrary getinfo/getstatus connectionless packets.\n");
+      lastGlobalLogTime = svs.time;
+    }
+
+    return qtrue;
+  }
+
+  receipt = &svs.infoReceipts[oldest];
+  receipt->adr = modifiedFrom;
+  receipt->time = svs.time;
+  return qfalse;
 }
 
 #if defined(INCLUDE_REMOTE_COMMANDS)
@@ -1319,20 +1444,12 @@ Redirect all printfs
 static const void
 SVC_RemoteCommand(const netadr_t *from, msg_t *msg)
 {
-  static rateLimit_t bucket;
   qbool valid;
   //TTimo - scaled down to accumulate, but not overflow anything network wise, print wise, etc. (OOB messages are the bottleneck here)
   qchar sv_outputbuf[1024 - 16];
   const qchar *cmd_aux;
   const qchar *pw;
   fileHandle_t rconLog = 0;
-
-  //prevent using rcon as an amplifier and make dictionary attacks impractical
-  if (SVC_RateLimitAddress(from, 10, 1000))
-  {
-    SV_WriteAttackLog(va("SVC_RemoteCommand: rate limit from %s exceeded, dropping request\n", NET_AdrToString(from)));
-    return;
-  }
 
   if (sv_rconWhitelist->string && *sv_rconWhitelist->string)
   {
@@ -1371,13 +1488,6 @@ SVC_RemoteCommand(const netadr_t *from, msg_t *msg)
   }
   else
   {
-    //make DoS via rcon impractical
-    if (SVC_RateLimit(&bucket, 10, 1000))
-    {
-      SV_WriteAttackLog(va("SVC_RemoteCommand: rate limit exceeded, dropping request\n");
-      return;
-    }
-
     valid = qfalse;
     message = ("Bad rcon from %s: %s\n", NET_AdrToString(from), Cmd_ArgsFrom(2));
   }
@@ -1476,11 +1586,57 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
 {
   const qchar *s;
   const qchar *c;
+  const unsigned now = Sys_Milliseconds();
+  const unsigned rate = sv_maxOOBRate->integer;
+  const unsigned iprate = sv_maxOOBRateIP->integer;
+  const unsigned period = 1000 / rate;
+  const unsigned ipperiod = 1000 / iprate;
+  const unsigned burst = rate; //one second worth of packets
+  const unsigned ipburst = 10 * iprate; //one second worth of packets
+  unsigned i;
+  static unsigned droppedAdr;
+  static unsigned dropped[SVC_MAX];
+  static unsigned lastMsgAdr;
+  static unsigned lastMsg[SVC_MAX];
+  static rateLimit_t bucket[SVC_MAX];
+  static const qchar * const commands[SVC_MAX] =
+  {
+    "invalid",
+    "connect",
+    "getstatus",
+    "getinfo",
+    "getchallenge",
+    "rcon",
+    "ping",
+    "disconnect"
+  };
+  svcType_t cmd;
 
   if (!com_sv_running->integer)
   {
     return;
   }
+
+  if ((sv_protect->integer & SVP_OWOLF) && SVC_CheckDRDoS(from))
+  {
+    return;
+  }
+
+  //Chey: XXX: this is an irrelevant message now c:
+  //Chey: DO NOT use this with SVP_OWOLF enabled, as this will
+  //prevent SVC_CheckDRDoS from having valid counters by returning
+  //early, this is purely for making SVP_XREAL stricter than it
+  //already is
+  if (sv_protect->integer & SVP_XREAL)
+  {
+    if (SVC_RateLimitAddress(from, ipburst, ipperiod, now))
+    {
+      droppedAdr++;
+      return;
+    }
+  }
+
+  cmd = SVC_INVALID;
 
   MSG_BeginReadingOOB(msg);
   MSG_ReadLong(msg); //skip -1 marker
@@ -1499,6 +1655,7 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
     }
 
     Huff_Decompress(msg, 12);
+    cmd = SVC_CONNECT;
   }
 
   s = MSG_ReadStringLine(msg);
@@ -1506,64 +1663,123 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
 
   c = Q_strlwr(Cmd_Argv(0));
 
+  for(i = SVC_FIRST;i < SVC_MAX && cmd == SVC_INVALID;i++)
+  {
+    if (!Q_stricmp(c, commands[i]))
+    {
+      cmd = (svcType_t)i;
+    }
+  }
+
+  //Chey: XXX: this is an irrelevant message now c:
+  //Chey: DO NOT use this with SVP_OWOLF enabled, as this will
+  //prevent SVC_CheckDRDoS from having valid counters by returning
+  //early, this is purely for making SVP_XREAL stricter than it
+  //already is
+  if (sv_protect->integer & SVP_XREAL)
+  {
+    if (SVC_RateLimit(&bucket[cmd], burst, period, now))
+    {
+      dropped[cmd]++;
+      return;
+    }
+
+    //this will print every 5 'period' msecs
+    if (dropped[cmd] > 0 && lastMsg[cmd] + 5000 < now)
+    {
+      SV_WriteAttackLog(va("%s: \"%s\" rate limit exceeded, dropped %d request%s.\n", __func__, commands[cmd], dropped[cmd], dropped[cmd] == 1 ? "":"s"));
+      dropped[cmd] = 0;
+      lastMsg[cmd] = now;
+    }
+
+    if (droppedAdr > 0 && lastMsgAdr + 5000 < now)
+    {
+      SV_WriteAttackLog(va("%s: IP rate limit exceeded, dropped %d request%s.\n", __func__, droppedAdr, droppedAdr == 1 ? "":"s"));
+      droppedAdr = 0;
+      lastMsgAdr = now;
+    }
+  }
+
   if (com_developer->integer)
   {
     Com_Printf("sv packet %s: %s\n", NET_AdrToString(from), c);
   }
 
-#if defined(INCLUDE_REMOTE_COMMANDS)
-  if (!Q_stricmp(c, "rcon"))
+  switch(cmd)
   {
-    SVC_RemoteCommand(from);
-    return;
-  }
+    case
+    SVC_GETSTATUS:
+      if (sv_hidden->integer)
+      {
+        return;
+      }
+
+      SVC_Status(from);
+      break;
+
+    case
+    SVC_GETINFO:
+      //if the server is hidden do not respond to getinfo requests by default
+#if defined(INCLUDE_LEGACY_CHALLENGE)
+      if (sv_hidden->integer)
+      {
+        if (sv_legacyChallenge->integer)
+        {
+          if (!SV_CheckChallenge(from))
+          {
+            return;
+          }
+        }
+        else
+        {
+          return;
+        }
+      }
+#else
+      if (sv_hidden->integer)
+      {
+        return;
+      }
 #endif
 
-  if (!Q_stricmp(c, "getstatus"))
-  {
-    if (sv_hidden->integer)
-    {
-      return;
-    }
+      SVC_Info(from);
+      break;
 
-    SVC_Status(from);
-  }
-  else if (!Q_stricmp(c, "getinfo"))
-  {
-    //if the server is hidden, don't respond to getinfo requests by default
-    if (sv_hidden->integer)
-    {
-      return;
-    }
+    case
+    SVC_GETCHALLENGE:
+      SV_GetChallenge(from);
+      break;
 
-    SVC_Info(from);
-  }
-  else if (!Q_stricmp(c, "getchallenge"))
-  {
-    SV_GetChallenge(from);
-  }
-  else if (!Q_stricmp(c, "ping"))
-  {
-    if (sv_hidden->integer)
-    {
-      return;
-    }
+    case
+    SVC_CONNECT:
+      SV_DirectConnect(from);
+      break;
 
-    SVC_Ping(from);
-  }
-  else if (!Q_stricmp(c, "connect"))
-  {
-    SV_DirectConnect(from);
-  }
-  else if (!Q_stricmp(c, "disconnect"))
-  {
-    //if a client starts up a local server, we may see some spurious
-    //server disconnect messages when their new server sees our final
-    //sequenced messages to the old client
-  }
-  else
-  {
-    SV_WriteAttackLog(va("Bad connectionless packet from %s:\n%s\n", NET_AdrToString(from), s)); //changed from com dprintf to print in attack log and do com printf if attack log not set
+    case
+    SVC_RCON:
+#if defined(INCLUDE_REMOTE_COMMANDS)
+      SVC_RemoteCommand(from, msg);
+#endif
+      break;
+
+    case
+    SVC_PING:
+      if (sv_hidden->integer)
+      {
+        return;
+      }
+
+      SVC_Ping(from);
+      break;
+
+    case
+    SVC_DISCONNECT:
+      //if client starts local server some spurious server disconnect messages may happen when new server sees final sequenced messages to old client
+      break;
+
+    default:
+      SV_WriteAttackLog(va("Bad connectionless packet from %s:\n%s\n", NET_AdrToString(from), s)); //changed from com dprintf to print in attack log and do com printf if attack log not set
+      break;
   }
 }
 
@@ -1827,6 +2043,7 @@ if necessary
 static const ID_INLINE void
 SV_CheckTimeouts(void)
 {
+  const qint now = Sys_Milliseconds();
   qint i;
   client_t *cl;
   qint droppoint;
@@ -1855,7 +2072,7 @@ SV_CheckTimeouts(void)
     if (cl->justConnected && svs.time - cl->lastPacketTime > 4000)
     {
       //for real client 4 seconds is more than enough to respond
-      SVC_RateDropAddress(&cl->netchan.remoteAddress, 10, 1000); //enforce burst with progressive multiplier
+      SVC_RateDropAddress(&cl->netchan.remoteAddress, 10, 1000, now); //enforce burst with progressive multiplier
       SV_DropClient(cl, NULL); //drop silently
       cl->state = CS_FREE;
       continue;
