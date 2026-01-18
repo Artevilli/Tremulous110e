@@ -1161,16 +1161,6 @@ SVC_Info(const netadr_t *from)
       Info_SetValueForKey(infostring, "voip", va("%i", sv_voip->integer));
     }
 #endif
-#if defined(INCLUDE_LEGACY_CHALLENGE)
-  if (sv_minPing->integer)
-  {
-    Info_SetValueForKey(infostring, "minPing", va("%i", sv_minPing->integer));
-  }
-  if (sv_maxPing->integer)
-  {
-    Info_SetValueForKey(infostring, "maxPing", va("%i", sv_maxPing->integer));
-  }
-#endif
   gamedir = Cvar_VariableString("fs_game");
 
   if (*gamedir != '\0')
@@ -1313,12 +1303,12 @@ SVC_CheckDRDoS(const netadr_t *from)
 
   if (modifiedFrom.type == NA_IP)
   {
-    modifiedFrom.ipv._4[3] = 0; //xx.xx.xx.0
+    modifiedFrom.ipv._4[3] = '\0'; //xx.xx.xx.0
   }
 #if defined(USE_IPV6)
   else if (modifiedFrom.type == NA_IP6)
   {
-    Com_Memset(modifiedFrom.ipv._6 + 7, 0, 9); //mask to /56
+    Com_Memset(modifiedFrom.ipv._6 + 7, '\0', 9); //mask to /56
   }
 #endif
   else
@@ -1720,27 +1710,10 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
     case
     SVC_GETINFO:
       //if the server is hidden do not respond to getinfo requests by default
-#if defined(INCLUDE_LEGACY_CHALLENGE)
-      if (sv_hidden->integer)
-      {
-        if (sv_legacyChallenge->integer)
-        {
-          if (!SV_CheckChallenge(from))
-          {
-            return;
-          }
-        }
-        else
-        {
-          return;
-        }
-      }
-#else
       if (sv_hidden->integer)
       {
         return;
       }
-#endif
 
       SVC_Info(from);
       break;

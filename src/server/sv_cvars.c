@@ -66,10 +66,6 @@ cvar_t *sv_maxOOBRate;
 cvar_t *sv_maxOOBRateIP;
 cvar_t *sv_dlRate;
 cvar_t *sv_minSnaps;
-#if defined(INCLUDE_LEGACY_CHALLENGE)
-cvar_t *sv_minPing;
-cvar_t *sv_maxPing;
-#endif
 cvar_t *sv_novis;
 cvar_t *sv_pure;
 cvar_t *sv_cpuusagepublic;
@@ -98,9 +94,6 @@ cvar_t *sv_filter;
 cvar_t *sv_antiWallhack;
 cvar_t *sv_sendNearbyEnts;
 cvar_t *sv_sendNearbyEntsRange;
-#if defined(INCLUDE_LEGACY_CHALLENGE)
-cvar_t *sv_legacyChallenge;
-#endif
 cvar_t *sv_filterCommands;
 
 #if defined(USE_VOIP)
@@ -154,10 +147,6 @@ SV_InitCvars(void)
   sv_minSnaps = Cvar_GetAndDescribe("sv_minSnaps", "40", CVAR_ARCHIVE | CVAR_SERVERINFO, "Minimum snaps the client is allowed to have.");
 #endif
   Cvar_CheckRange(sv_minSnaps, "10", "125", CV_INTEGER);
-#if defined(INCLUDE_LEGACY_CHALLENGE)
-  sv_minPing = Cvar_GetAndDescribe("sv_minPing", "0", CVAR_ARCHIVE, "Minimum ping a client is allowed to have to be able to connect to the server.\nNOTE: Does not work if sv_legacyChallenge isn't set!");
-  sv_maxPing = Cvar_GetAndDescribe("sv_maxPing", "0", CVAR_ARCHIVE, "Maximum ping a client is allowed to have to be able to connect to the server.\nNOTE: Does not work if sv_legacyChallenge isn't set!");
-#endif
   sv_novis = Cvar_GetAndDescribe("sv_novis", "0", CVAR_ARCHIVE, "Toggle whether or not to skip the pvs check when transmitting entities.");
   sv_cpuusagepublic = Cvar_GetAndDescribe("sv_cpuusagepublic", "0", CVAR_ARCHIVE, "Toggle whether or not to publicly display server cpu usage in getinfo responses.");
   sv_avgframetimepublic = Cvar_GetAndDescribe("sv_avgframetimepublic", "0", CVAR_ARCHIVE, "Toggle whether or not to publicly display the average frame response time in getinfo responses.");
@@ -245,9 +234,6 @@ SV_InitCvars(void)
   sv_sendNearbyEnts = Cvar_GetAndDescribe("sv_sendNearbyEnts", "0", CVAR_ARCHIVE, "Toggle whether or not to send nearby entities regardless of pvs or anti wallhack.\nNOTE: range is specified by sv_sendNearbyEntsRange.");
   sv_sendNearbyEntsRange = Cvar_GetAndDescribe("sv_sendNearbyEntsRange", "1500", CVAR_ARCHIVE, "Specifies the range at which entities that fail the pvs check are sent to the client.");
   Cvar_CheckRange(sv_sendNearbyEntsRange, "0", NULL, CV_INTEGER);
-#if defined(INCLUDE_LEGACY_CHALLENGE)
-  sv_legacyChallenge = Cvar_GetAndDescribe("sv_legacyChallenge", "0", CVAR_ARCHIVE | CVAR_SERVERINFO, "Toggles whether or not to use the legacy method of client challenge handling.");
-#endif
   sv_filterCommands = Cvar_GetAndDescribe("sv_filterCommands", "1", CVAR_ARCHIVE, "Toggles whether or not to filter excessive client commands.\n0: only strip essentials\n1: strip \\n and \\r\n2: also strip ;");
 
 #if defined(USE_VOIP)
@@ -256,12 +242,6 @@ SV_InitCvars(void)
 #endif
 
 #if defined(DEBUG_SV_CHALLENGE)
-  sv_debugChallenges = Cvar_GetAndDescribe("sv_debugChallenges", "0", CVAR_ARCHIVE,
-#if defined(INCLUDE_LEGACY_CHALLENGE)
-  "Toggles whether or not to print debug messages for serverside stateless challenge generation. NOTE: this does not work with sv_legacyChallenge set!"
-#else
-  "Toggles whether or not to print debug messages for serverside stateless challenge generation."
-#endif
-  );
+  sv_debugChallenges = Cvar_GetAndDescribe("sv_debugChallenges", "0", CVAR_ARCHIVE, "Toggles whether or not to print debug messages for serverside stateless challenge generation.");
 #endif
 }

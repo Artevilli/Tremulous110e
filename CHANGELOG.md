@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--01/18/2026--**
+
+* server:<br />properly null bytes in drdos checking
+
 **--01/17/2026--**
 
 * server:<br />readd sv_protect logic

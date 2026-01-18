@@ -450,30 +450,6 @@ typedef struct
 }
 svstats_t;
 
-#if defined(INCLUDE_LEGACY_CHALLENGE)
-//MAX_CHALLENGES is made large to prevent a denial of service attack that could cycle all of them out before legitimate users connected
-#define	MAX_CHALLENGES 2048
-
-//Allow a certain amount of challenges to have the same IP address to make it a bit harder to DRDOS a single IP address from connecting while not allowing one IP to grab all of the challenges
-#define MAX_CHALLENGES_MULTI (MAX_CHALLENGES / 2)
-
-#define	AUTHORIZE_TIMEOUT 8000
-
-typedef struct
-{
-  netadr_t adr;
-  qint challenge;
-  qint clientChallenge; //challenge number from client
-  qint time; //time the last packet was sent to the autherize server
-  qint pingTime; //time the challenge response was sent to client
-  qint firstTime; //time the adr was first used, for authorize timeout checks
-  qint firstPing; //used for min and max ping checks
-  qbool wasrefused;
-  qbool connected;
-}
-challenge_t;
-#endif
-
 typedef struct
 {
   netadr_t adr;
@@ -518,9 +494,6 @@ typedef struct
   qint numSnapshotEntities; //PACKET_BACKUP * MAX_SNAPSHOT_ENTITIES
   entityState_t *snapshotEntities; //[numSnapshotEntities]
   qint nextHeartbeatTime;
-#if defined(INCLUDE_LEGACY_CHALLENGE)
-  challenge_t challenges[MAX_CHALLENGES]; //to prevent invalid IPs from connecting
-#endif
   receipt_t infoReceipts[MAX_INFO_RECEIPTS];
   floodBan_t infoFloodBans[MAX_INFO_FLOOD_BANS];
 #if defined(INCLUDE_REMOTE_COMMANDS)
@@ -673,10 +646,6 @@ void
 SV_GetChallenge(const netadr_t *from);
 const void
 SV_InitChallenger(void);
-#if defined(INCLUDE_LEGACY_CHALLENGE)
-qbool
-SV_CheckChallenge(const netadr_t *from);
-#endif
 void
 SV_DirectConnect(const netadr_t *from);
 void

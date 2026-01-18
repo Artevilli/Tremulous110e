@@ -32,9 +32,6 @@
 //enabling rcon
 //#define INCLUDE_REMOTE_COMMANDS
 
-//enabling legacy stateful challenges
-//#define INCLUDE_LEGACY_CHALLENGE
-
 //switching between the first and second version of stateless challenges
 //#define STATELESS_CHALLENGES_VERSION_ONE
 
@@ -97,10 +94,6 @@ extern cvar_t *sv_maxOOBRate;
 extern cvar_t *sv_maxOOBRateIP;
 extern cvar_t *sv_dlRate;
 extern cvar_t *sv_minSnaps;
-#if defined(INCLUDE_LEGACY_CHALLENGE)
-extern cvar_t *sv_minPing;
-extern cvar_t *sv_maxPing;
-#endif
 extern cvar_t *sv_minRebootDelayMins;
 extern cvar_t *sv_novis;
 extern cvar_t *sv_pure;
@@ -130,9 +123,6 @@ extern cvar_t *sv_filter;
 extern cvar_t *sv_antiWallhack;
 extern cvar_t *sv_sendNearbyEnts;
 extern cvar_t *sv_sendNearbyEntsRange;
-#if defined(INCLUDE_LEGACY_CHALLENGE)
-extern cvar_t *sv_legacyChallenge;
-#endif
 extern cvar_t *sv_filterCommands;
 
 #if defined(USE_VOIP)
