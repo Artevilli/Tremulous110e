@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/18/2026--**
 
+* server:<br />reimplement minimal netbuf allocation
+
 * server:<br />properly null bytes in drdos checking
 
 **--01/17/2026--**

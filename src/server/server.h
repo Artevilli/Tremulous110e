@@ -232,8 +232,8 @@ clientState_t;
 typedef struct netchan_buffer_s
 {
   msg_t msg;
-  byte msgBuffer[MAX_MSGLEN];
-  qchar clientCommandString[MAX_STRING_CHARS]; //valid command string for SV_Netchan_Encode
+  byte *msgBuffer;
+  qchar *lastClientCommandString; //valid command string for SV_Netchan_Encode
   struct netchan_buffer_s *next;
 }
 netchan_buffer_t;
