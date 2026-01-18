@@ -2044,8 +2044,12 @@ SV_CheckTimeouts(void)
 
     if (cl->justConnected && svs.time - cl->lastPacketTime > 4000)
     {
-      //for real client 4 seconds is more than enough to respond
-      SVC_RateDropAddress(&cl->netchan.remoteAddress, 10, 1000, now); //enforce burst with progressive multiplier
+      if (sv_protect->integer & SVP_XREAL)
+      {
+        //for real client 4 seconds is more than enough to respond
+        SVC_RateDropAddress(&cl->netchan.remoteAddress, 10, 1000, now); //enforce burst with progressive multiplier
+      }
+
       SV_DropClient(cl, NULL); //drop silently
       cl->state = CS_FREE;
       continue;

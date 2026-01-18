@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/18/2026--**
 
+* server:<br />encompass rate dropping in sv_protect
+
 * server:<br />reimplement minimal netbuf allocation
 
 * server:<br />properly null bytes in drdos checking
