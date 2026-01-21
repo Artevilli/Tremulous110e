@@ -1005,6 +1005,8 @@ Field_AutoComplete(field_t *edit);
 void
 Field_CompleteKeyname(void);
 void
+Field_CompleteKeyBind(qint key);
+void
 Field_CompleteFilename(const qchar *dir, const qchar *ext, qbool stripExt, qint flags);
 void
 Field_CompleteCommand(const qchar *cmd, qbool doCommands, qbool doCvars);

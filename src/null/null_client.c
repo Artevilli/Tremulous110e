@@ -36,9 +36,6 @@ void CL_Init( void ) {
 void CL_MouseEvent( qint dx, qint dy, qint time ) {
 }
 
-void Key_WriteBindings( fileHandle_t f ) {
-}
-
 void CL_Frame ( qint msec ) {
 }
 

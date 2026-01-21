@@ -42,6 +42,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 #endif
 
+#include "../client/keys.h"
+
 qint demo_protocols[] =
 { PROTOCOL_VERSION, 0 };
 
@@ -4718,36 +4720,53 @@ Field_FindFirstSeparator(const qchar *s)
 
 /*
 ===============
+Field_AddSpace
+===============
+*/
+static void
+Field_AddSpace(void)
+{
+  size_t len = strlen(completionField->buffer);
+
+  if (len && len < sizeof(completionField->buffer) - 1 && completionField->buffer[len - 1] != ' ')
+  {
+    Com_Memcpy(completionField->buffer + len, " ", 2);
+    completionField->cursor = (qint)(len + 1);
+  }
+}
+
+/*
+===============
 Field_Complete
 ===============
 */
-static qbool Field_Complete( void )
+static qbool
+Field_Complete(void)
 {
-	qint completionOffset;
+  qint completionOffset;
 
-	if( matchCount == 0 )
-		return qtrue;
+  if (matchCount == 0)
+  {
+    return qtrue;
+  }
 
-	completionOffset = strlen( completionField->buffer ) - strlen( completionString );
+  completionOffset = strlen(completionField->buffer) - strlen(completionString);
 
-	Q_strncpyz( &completionField->buffer[ completionOffset ], shortestMatch,
-		sizeof( completionField->buffer ) - completionOffset );
+  Q_strncpyz(&completionField->buffer[completionOffset], shortestMatch, sizeof(completionField->buffer) - completionOffset);
 
-	completionField->cursor = strlen( completionField->buffer );
+  completionField->cursor = strlen(completionField->buffer);
 
-	if( matchCount == 1 )
-	{
-		Q_strcat( completionField->buffer, sizeof( completionField->buffer ), " " );
-		completionField->cursor++;
-		return qtrue;
-	}
+  if (matchCount == 1)
+  {
+    Field_AddSpace();
+    return qtrue;
+  }
 
-	Com_Printf( "]%s\n", completionField->buffer );
+  Com_Printf("]%s\n", completionField->buffer);
 
-	return qfalse;
+  return qfalse;
 }
 
-#if !defined(DEDICATED)
 /*
 ===============
 Field_CompleteKeyname
@@ -4763,7 +4782,46 @@ void Field_CompleteKeyname( void )
 	if( !Field_Complete( ) )
 		Key_KeynameCompletion( PrintMatches );
 }
-#endif
+
+/*
+===============
+Field_CompleteKeyBind
+===============
+*/
+void
+Field_CompleteKeyBind(qint key)
+{
+  const qchar *value;
+  qint vlen;
+  qint blen;
+
+  value = Key_GetBinding(key);
+
+  if (value == NULL || *value == '\0')
+  {
+    return;
+  }
+
+  blen = (qint)strlen(completionField->buffer);
+  vlen = (qint)strlen(value);
+
+  if (Field_FindFirstSeparator((qchar *)value))
+  {
+    value = va("\"%s\"", value);
+    vlen += 2;
+  }
+
+  if (vlen + blen > sizeof(completionField->buffer) - 1)
+  {
+    //vlen = sizeof(completionField->buffer) - 1 - blen;
+    return;
+  }
+
+  Com_Memcpy(completionField->buffer + blen, value, vlen + 1);
+  completionField->cursor = blen + vlen;
+
+  Field_AddSpace();
+}
 
 /*
 ===============

@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--01/21/2026--**
+
+* makefile/qcommon/client:<br />initial rewrite of client key handling
+
 **--01/20/2026--**
 
 * server:<br />reimplement avoiding sending full snapshots to loading clients
