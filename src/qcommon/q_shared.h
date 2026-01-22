@@ -1252,6 +1252,7 @@ cvar_flags_s
   CVAR_SHADER = BIT(14), //tell renderer to recompile shaders.
   CVAR_NODEFAULT = BIT(15),
   CVAR_PRIVATE = BIT(16), //can't be read from VM
+  CVAR_DEVELOPER = BIT(17), //can be set only in developer mode
   CVAR_ARCHIVE_ND = (CVAR_ARCHIVE | CVAR_NODEFAULT),
 
   //these flags are only returned by the Cvar_Flags() function

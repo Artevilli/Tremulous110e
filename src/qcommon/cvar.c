@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 static cvar_t *cvar_vars = NULL;
 static cvar_t *cvar_cheats;
+static cvar_t *cvar_developer;
 qint cvar_modifiedFlags;
 
 #define	MAX_CVARS 2048
@@ -498,7 +499,7 @@ Cvar_Get(const qchar *var_name, const qchar *var_value, qint flags)
       Z_Free(var->resetString);
       var->resetString = CopyString(var_value);
 
-      if (flags & CVAR_ROM)
+      if (flags & CVAR_ROM || ((flags & CVAR_DEVELOPER) && !cvar_developer->integer))
       {
         //this variable was set by the user,
         //so force it to value given by the engine.
@@ -833,7 +834,7 @@ Cvar_Set2(const qchar *var_name, const qchar *value, qbool force)
     }
   }
 
-  if (var->flags & (CVAR_ROM | CVAR_INIT | CVAR_CHEAT) && !force)
+  if (var->flags & (CVAR_ROM | CVAR_INIT | CVAR_CHEAT | CVAR_DEVELOPER) && !force)
   {
     if (var->flags & CVAR_ROM)
     {
@@ -850,6 +851,12 @@ Cvar_Set2(const qchar *var_name, const qchar *value, qbool force)
     if ((var->flags & CVAR_CHEAT) && !cvar_cheats->integer)
     {
       Com_Printf("%s is cheat protected.\n", var_name);
+      return var;
+    }
+
+    if ((var->flags & CVAR_DEVELOPER) && !cvar_developer->integer)
+    {
+      Com_Printf("%s can be set only in developer mode.\n", var_name);
       return var;
     }
   }
@@ -2617,7 +2624,8 @@ Cvar_Init(void)
   Com_Memset(cvar_indexes, '\0', sizeof(cvar_indexes));
   Com_Memset(hashTable, '\0', sizeof(hashTable));
 
-  cvar_cheats = Cvar_Get("sv_cheats", "1", CVAR_ROM | CVAR_SYSTEMINFO);
+  cvar_cheats = Cvar_GetAndDescribe("sv_cheats", "1", CVAR_ROM | CVAR_SYSTEMINFO, "Enable cheating commands (server side only).");
+  cvar_developer = Cvar_GetAndDescribe("developer", "0", CVAR_TEMP, "Toggles developer mode. Prints more info to console and provides more commands.");
 
   Cmd_AddCommand("print", Cvar_Print_f);
   Cmd_AddCommand("toggle", Cvar_Toggle_f);

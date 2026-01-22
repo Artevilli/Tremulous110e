@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--01/22/2026--**
+
+* qcommon/renderer:<br />added `CVAR_DEVELOPER`
+
 **--01/21/2026--**
 
 * makefile/qcommon/client:<br />initial rewrite of client key handling
