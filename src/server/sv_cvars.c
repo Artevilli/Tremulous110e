@@ -217,8 +217,8 @@ SV_InitCvars(void)
   Cvar_CheckRange(sv_reconnectlimit, "0", "12", CV_INTEGER);
 #endif
   sv_showloss = Cvar_Get("sv_showloss", "0", 0);
-  sv_padPackets = Cvar_GetAndDescribe("sv_padPackets", "0", 0, "Possibly toggles the padding of network packets on the server PAD - Packet Assembler/Disassembler.");
-  sv_killserver = Cvar_GetAndDescribe("sv_killserver", "0", 0, "Debugging tool to kill the server.");
+  sv_padPackets = Cvar_GetAndDescribe("sv_padPackets", "0", CVAR_DEVELOPER, "Adds padding bytes to network packets for rate debugging.");
+  sv_killserver = Cvar_GetAndDescribe("sv_killserver", "0", 0, "Internal flag to manage server state.");
   sv_mapChecksum = Cvar_GetAndDescribe("sv_mapChecksum", "", CVAR_ROM, "Allows check for client server map to match.");
   sv_lanForceRate = Cvar_GetAndDescribe("sv_lanForceRate", "1", CVAR_ARCHIVE_ND, "Forces LAN clients to the maximum rate instead of accepting client setting.");
   sv_dequeuePeriod = Cvar_Get("sv_dequeuePeriod", "500", CVAR_ARCHIVE);
