@@ -3066,6 +3066,7 @@ static const ucmd_t ucmds[] =
   {"nextdl", SV_NextDownload_f},
   {"stopdl", SV_StopDownload_f},
   {"donedl", SV_DoneDownload_f},
+  {"locations", SV_PrintLocations_f},
 #if defined(USE_VOIP)
   {"voip", SV_Voip_f},
 #endif

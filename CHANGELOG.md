@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/23/2026--**
 
+* server:<br />fix missing locations ucmd
+
 * server:<br />flag `sv_padPackets` as `CVAR_DEVELOPER`
 
 **--01/22/2026--**
