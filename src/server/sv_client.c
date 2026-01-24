@@ -3120,8 +3120,8 @@ SV_ExecuteClientCommand(client_t *cl, const qchar *s)
   //normal to spam a lot of commands when downloading
 
  //applying flood protection only to "CS_ACTIVE" clients leaves too much room for abuse, extending this flood protection to clients pre CS_ACTIVE should not cause any issues, as the download-commands are handled within the engine and floodprotect only filters calls to the qvm
-  isBot = /*(*/(cl->netchan.remoteAddress.type == NA_BOT) ? qtrue:qfalse;
-  bFloodProtect = !isBot && cl->state >= CS_ACTIVE;
+  isBot = cl->netchan.remoteAddress.type == NA_BOT ? qtrue:qfalse;
+  bFloodProtect = !isBot; //&& cl->state >= CS_ACTIVE;
 
   //see if it is a server level command
   for(ucmd = ucmds;ucmd->name;ucmd++)
@@ -3166,12 +3166,6 @@ SV_ExecuteClientCommand(client_t *cl, const qchar *s)
     //pass unknown strings to the game
     if (!ucmd->name && sv.state == SS_GAME && cl->state >= CS_PRIMED)
     {
-      if (cl->state != CS_ACTIVE && !Q_strncmp(Cmd_Argv(0), "say", 3))
-      {
-        Com_DPrintf("client spam ignored for %s\n", cl->name);
-        return qfalse;
-      }
-
       if (sv.gvm->forceDataMask)
       {
         Cmd_Args_Sanitize("\n\r;"); //handle ';' for OSP

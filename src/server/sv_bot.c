@@ -45,11 +45,12 @@ qint
 SV_BotAllocateClient(void)
 {
   qint i;
+  client_t *cl;
 
   //find a client slot
-  for(i = 0;i < sv.maxclients;i++)
+  for(i = 0, cl = svs.clients;i < sv.maxclients;i++, cl++)
   {
-    if (svs.clients[i].state == CS_FREE)
+    if (cl->state == CS_FREE)
     {
       break;
     }
@@ -60,12 +61,13 @@ SV_BotAllocateClient(void)
     return -1;
   }
 
-  svs.clients[i].gentity = SV_GentityNum(i);
-  svs.clients[i].gentity->s.number = i;
-  svs.clients[i].state = CS_ACTIVE;
-  svs.clients[i].lastPacketTime = svs.time;
-  svs.clients[i].netchan.remoteAddress.type = NA_BOT;
-  svs.clients[i].rate = 16384;
+  cl->gentity = SV_GentityNum(i);
+  cl->gentity->s.number = i;
+  cl->state = CS_ACTIVE;
+  cl->lastPacketTime = svs.time;
+  cl->snapshotMsec = 1000 / sv_fps->integer;
+  cl->netchan.remoteAddress.type = NA_BOT;
+  cl->rate = 0;
 
   svs.clients[i].tld[0] = '\0';
   svs.clients[i].country = "BOT";
@@ -83,7 +85,7 @@ SV_BotFreeClient(qint clientNum)
 {
   client_t *cl;
 
-  if (clientNum < 0 || clientNum >= sv.maxclients)
+  if ((unsigned)clientNum >= sv.maxclients)
   {
     Com_Error(ERR_DROP, "SV_BotFreeClient: bad clientNum: %i", clientNum);
   }
@@ -131,27 +133,34 @@ SV_BotGetConsoleMessage
 qint
 SV_BotGetConsoleMessage(qint client, qchar *buf, qint size)
 {
-  client_t *cl;
-  qint index;
+  if ((unsigned)client < sv.maxclients)
+  {
+    client_t *cl;
+    qint index;
 
-  cl = &svs.clients[client];
-  cl->lastPacketTime = svs.time;
+    cl = &svs.clients[client];
+    cl->lastPacketTime = svs.time;
 
-  if (cl->reliableAcknowledge == cl->reliableSequence)
+    if (cl->reliableAcknowledge == cl->reliableSequence)
+    {
+      return qfalse;
+    }
+
+    cl->reliableAcknowledge++;
+    index = cl->reliableAcknowledge & (MAX_RELIABLE_COMMANDS - 1);
+
+    if (!cl->reliableCommands[index][0])
+    {
+      return qfalse;
+    }
+
+    Q_strncpyz(buf, cl->reliableCommands[index], size);
+    return qtrue;
+  }
+  else
   {
     return qfalse;
   }
-
-  cl->reliableAcknowledge++;
-  index = cl->reliableAcknowledge & (MAX_RELIABLE_COMMANDS - 1);
-
-  if (!cl->reliableCommands[index][0])
-  {
-    return qfalse;
-  }
-
-  Q_strncpyz(buf, cl->reliableCommands[index], size);
-  return qtrue;
 }
 
 #if 0
@@ -190,18 +199,22 @@ SV_BotGetSnapshotEntity
 qint
 SV_BotGetSnapshotEntity(qint client, qint sequence)
 {
-  client_t *cl;
-  clientSnapshot_t *frame;
+  if ((unsigned)client < sv.maxclients)
+  {
+    const client_t *cl = &svs.clients[client];
+    const clientSnapshot_t *frame = &cl->frames[cl->netchan.outgoingSequence & PACKET_MASK];
 
-  cl = &svs.clients[client];
-  frame = &cl->frames[cl->netchan.outgoingSequence & PACKET_MASK];
+    if ((unsigned)sequence >= frame->num_entities)
+    {
+      return -1;
+    }
 
-  if (sequence < 0 || sequence >= frame->num_entities)
+    return frame->ents[sequence]->number;
+  }
+  else
   {
     return -1;
   }
-
-  return frame->ents[sequence]->number;
 }
 
 /*
