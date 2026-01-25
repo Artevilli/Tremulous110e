@@ -1217,11 +1217,6 @@ SV_SendClientMessages(void)
     }
 #endif
 
-    if (!SV_IsValidClientSnapshot(c))
-    {
-      continue; //not a valid snapshot
-    }
-
     if (svs.time - c->lastSnapshotTime < c->snapshotMsec * com_timescale->value)
     {
       continue; //not time yet
@@ -1356,37 +1351,4 @@ SV_SendClientMessages(void)
       Com_Printf("bpspc(%2.0f) bps(%2.0f) pk(%i) ubps(%2.0f) upk(%i) cr(%2.2f) acr(%2.2f)\n", ave / (float)numclients, ave, sv.bpsMaxBytes, uave, sv.ubpsMaxBytes, comp_ratio, sv.ucompAve / sv.ucompNum);
     }
   }
-}
-
-/*
-=======================
-SV_IsValidClientSnapshot
-=======================
-*/
-qbool
-SV_IsValidClientSnapshot(const client_t *client)
-{
-  //if (client->deltaMessage <= 0)
-  if (client->deltaMessage == client->netchan.outgoingSequence - (PACKET_BACKUP + 1))
-  {
-    return qtrue;
-  }
-
-  if (client->state != CS_ACTIVE)
-  {
-    return qtrue;
-  }
-
-  if (client->lastPacketTime >= svs.time)
-  {
-    return qtrue;
-  }
-
-  //if (client->netchan.outgoingSequence - client->deltaMessage < 29)
-  if (client->netchan.outgoingSequence - client->deltaMessage < (PACKET_BACKUP - 3))
-  {
-    return qtrue;
-  }
-
-  return qfalse;
 }

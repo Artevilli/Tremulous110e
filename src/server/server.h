@@ -720,8 +720,6 @@ void
 SV_SendClientSnapshot(client_t *client);
 void
 SV_CheckClientUserinfoTimer(void);
-qbool
-SV_IsValidClientSnapshot(const client_t *client);
 void
 SV_InitSnapshotStorage(void);
 void
