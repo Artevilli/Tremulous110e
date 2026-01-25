@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/24/2026--**
 
+* server:<br />potentially fix client command spam on world entering
+
 * server:<br />small cleanup
 
 **--01/23/2026--**
