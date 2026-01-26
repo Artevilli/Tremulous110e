@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/26/2026--**
 
+* qcommon/server:<br />fix a few problems reported by cppcheck
+
 * qcommon:<br />do not assign a local auto-variable address to a function parameter
 
 * qcommon:<br />remove colors in favor of new ones from CPMA/CNQ3

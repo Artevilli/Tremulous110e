@@ -25,7 +25,7 @@ typedef struct
 }
 xglobal;
 
-xglobal ** globals = NULL;
+xglobal **globals = NULL;
 unsigned long global_count = 0;
 
 qchar *global_error = NULL;
@@ -93,11 +93,15 @@ xglobal_load_c(qchar *path)
     if (buffer == NULL)
     {
       xglobal_seterror("Malloc failure\n");
+      fclose(fp);
       return 1;
     }
+
     if (fread(buffer, 1, size, fp) != size)
     {
       xglobal_seterror("fread couldn't read entire file\n");
+      free(buffer);
+      fclose(fp);
       return 1;
     }
 
@@ -152,19 +156,23 @@ xglobal_parse_file_c(qchar *data, unsigned long size)
 qint
 xglobal_insert_c(qchar *data)
 {
+  xglobal **temp;
+
   if (data == NULL)
   {
     xglobal_seterror("Invalid argument(insert)");
     return 1;
   }
 
-  globals = realloc(globals, sizeof(xglobal *) * (global_count + 1));
+  temp = realloc(globals, sizeof(xglobal *) * (global_count + 1));
 
-  if (globals == NULL)
+  if (temp == NULL)
   {
     xglobal_seterror("Realloc failed\n");
     return 1;
   }
+
+  globals = temp;
 
   globals[global_count] = malloc(sizeof(xglobal));
 

@@ -4053,7 +4053,7 @@ __recompile:
                     break;
 
                   default:
-                    var.size = 4 //r0 = (unsigned word)var.base[r2]
+                    var.size = 4; //r0 = (unsigned word)var.base[r2]
                     break;
                 }
 
