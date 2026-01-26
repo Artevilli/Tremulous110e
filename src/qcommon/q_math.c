@@ -35,135 +35,83 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 const vec3_t	vec3_origin = {0,0,0};
 vec3_t	axisDefault[3] = { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } };
 
-vec4_t colorBlack = {0.000f, 0.000f, 0.000f, 1.000f};
-vec4_t colorRed = {1.000f, 0.000f, 0.000f, 1.000f};
-vec4_t colorGreen = {0.000f, 1.000f, 0.000f, 1.000f};
-vec4_t colorYellow = {1.000f, 1.000f, 0.000f, 1.000f};
-vec4_t colorBlue = {0.000f, 0.000f, 1.000f, 1.000f};
-vec4_t colorCyan = {0.000f, 1.000f, 1.000f, 1.000f};
-vec4_t colorMagenta = {1.000f, 0.000f, 1.000f, 1.000f};
-vec4_t colorWhite = {1.000f, 1.000f, 1.000f, 1.000f};
-vec4_t colorGray = {0.502f, 0.502f, 0.502f, 1.000f};
-vec4_t colorOrange = {1.000f, 0.686f, 0.000f, 1.000f};
-vec4_t colorRoseBud = {0.996f, 0.671f, 0.604f, 1.000f};
-vec4_t colorPaleGreen = {0.596f, 0.984f, 0.596f, 1.000f};
-vec4_t colorPaleGolden = {0.933f, 0.910f, 0.667f, 1.000f};
-vec4_t colorColumbiaBlue = {0.608f, 0.867f, 1.000f, 1.000f};
-vec4_t colorPaleTurquoise = {0.686f, 0.933f, 0.933f, 1.000f};
-vec4_t colorPaleVioletRed = {0.859f, 0.439f, 0.576f, 1.000f};
-vec4_t colorPalacePaleWhite = {0.910f, 0.898f, 0.863f, 1.000f};
-vec4_t colorOlive = {0.231f, 0.235f, 0.212f, 1.000f};
-vec4_t colorTomato = {1.000f, 0.388f, 0.278f, 1.000f};
-vec4_t colorLime = {0.749f, 1.000f, 0.000f, 1.000f};
-vec4_t colorLemon = {1.000f, 0.969f, 0.000f, 1.000f};
-vec4_t colorBlueBerry = {0.310f, 0.525f, 0.969f, 1.000f};
-vec4_t colorTurquoise = {0.251f, 0.878f, 0.816f, 1.000f};
-vec4_t colorWildWatermelon = {0.992f, 0.357f, 0.471f, 1.000f};
-vec4_t colorSaltpan = {0.933f, 0.953f, 0.898f, 1.000f};
-vec4_t colorGrayChateau = {0.624f, 0.639f, 0.655f, 1.000f};
-vec4_t colorRust = {0.718f, 0.255f, 0.055f, 1.000f};
-vec4_t colorCopperGreen = {0.431f, 0.553f, 0.443f, 1.000f};
-vec4_t colorGold = {1.000f, 0.843f, 0.000f, 1.000f};
-vec4_t colorSteelBlue = {0.275f, 0.510f, 0.706f, 1.000f};
-vec4_t colorSteelGray = {0.482f, 0.565f, 0.584f, 1.000f};
-vec4_t colorBronze = {0.804f, 0.498f, 0.196f, 1.000f};
-vec4_t colorSilver = {0.753f, 0.753f, 0.753f, 1.000f};
-vec4_t colorDarkGray = {0.663f, 0.663f, 0.663f, 1.000f};
-vec4_t colorDarkOrange = {1.000f, 0.549f, 0.000f, 1.000f};
-vec4_t colorDarkGreen = {0.000f, 0.392f, 0.000f, 1.000f};
-vec4_t colorRedOrange = {1.000f, 0.247f, 0.204f, 1.000f};
-vec4_t colorForestGreen = {0.133f, 0.545f, 0.133f, 1.000f};
-vec4_t colorBrightSun = {0.926f, 0.741f, 0.173f, 1.000f};
-vec4_t colorMediumSlateBlue = {0.482f, 0.408f, 0.933f, 1.000f};
-vec4_t colorCeleste = {0.698f, 1.000f, 1.000f, 1.000f};
-vec4_t colorIronstone = {0.525f, 0.314f, 0.251f, 1.000f};
-vec4_t colorTimberwolf = {0.859f, 0.843f, 0.824f, 1.000f};
-vec4_t colorOnyx = {0.059f, 0.059f, 0.059f, 1.000f};
-vec4_t colorRosewood = {0.396f, 0.000f, 0.043f, 1.000f};
-vec4_t colorKokoda = {0.482f, 0.471f, 0.353f, 1.000f};
-vec4_t colorPorsche = {0.875f, 0.616f, 0.357f, 1.000f};
-vec4_t colorCloudBurst = {0.208f, 0.369f, 0.310f, 1.000f};
-vec4_t colorBlueDiane = {0.208f, 0.318f, 0.310f, 1.000f};
-vec4_t colorRope = {0.557f, 0.349f, 0.235f, 1.000f};
-vec4_t colorBlonde = {0.980f, 0.941f, 0.745f, 1.000f};
-vec4_t colorSmokeyBlack = {0.063f, 0.047f, 0.031f, 1.000f};
-vec4_t colorAmericanRose = {1.000f, 0.012f, 0.243f, 1.000f};
-vec4_t colorNeonGreen = {0.224f, 1.000f, 0.078f, 1.000f};
-vec4_t colorNeonYellow = {0.980f, 0.929f, 0.153f, 1.000f};
-vec4_t colorUltramarine = {0.071f, 0.039f, 0.561f, 1.000f};
-vec4_t colorTurquoiseBlue = {0.000f, 1.000f, 0.937f, 1.000f};
-vec4_t colorPurple = {0.502f, 0.000f, 0.502f, 1.000f};
-vec4_t colorTeal = {0.000f, 0.502f, 0.502f, 1.000f};
-vec4_t colorPink = {1.000f, 0.753f, 0.796f, 1.000f};
-vec4_t colorChocolate = {0.482f, 0.247f, 0.000f, 1.000f};
-vec4_t colorIndigo = {0.247f, 0.000f, 1.000f, 1.000f};
+vec4_t colorBlack = {0, 0, 0, 1};
+vec4_t colorRed = {1, 0, 0, 1};
+vec4_t colorGreen = {0, 1, 0, 1};
+vec4_t colorBlue = {0, 0, 1, 1};
+vec4_t colorYellow = {1, 1, 0, 1};
+vec4_t colorMagenta = {1, 0, 1, 1};
+vec4_t colorCyan = {0, 1, 1, 1};
+vec4_t colorWhite = {1, 1, 1, 1};
+vec4_t colorLtGrey = {0.75, 0.75, 0.75, 1};
+vec4_t colorMdGrey = {0.5, 0.5, 0.5, 1};
+vec4_t colorDkGrey = {0.25, 0.25, 0.25, 1};
 
-const vec4_t
-g_color_table[62] =
+//actually there are 35 colors but we want to use bitmask safely
+const vec4_t g_color_table[64] =
 {
-  {0.000f, 0.000f, 0.000f, 1.000f},
-  {1.000f, 0.000f, 0.000f, 1.000f},
-  {0.000f, 1.000f, 0.000f, 1.000f},
-  {1.000f, 1.000f, 0.000f, 1.000f},
-  {0.000f, 0.000f, 1.000f, 1.000f},
-  {0.000f, 1.000f, 1.000f, 1.000f},
-  {1.000f, 0.000f, 1.000f, 1.000f},
-  {1.000f, 1.000f, 1.000f, 1.000f},
-  {0.502f, 0.502f, 0.502f, 1.000f},
-  {1.000f, 0.686f, 0.000f, 1.000f},
-  {0.996f, 0.671f, 0.604f, 1.000f},
-  {0.596f, 0.984f, 0.596f, 1.000f},
-  {0.933f, 0.910f, 0.667f, 1.000f},
-  {0.608f, 0.867f, 1.000f, 1.000f},
-  {0.686f, 0.933f, 0.933f, 1.000f},
-  {0.859f, 0.439f, 0.576f, 1.000f},
-  {0.910f, 0.898f, 0.863f, 1.000f},
-  {0.231f, 0.235f, 0.212f, 1.000f},
-  {1.000f, 0.388f, 0.278f, 1.000f},
-  {0.749f, 1.000f, 0.000f, 1.000f},
-  {1.000f, 0.969f, 0.000f, 1.000f},
-  {0.310f, 0.525f, 0.969f, 1.000f},
-  {0.251f, 0.878f, 0.816f, 1.000f},
-  {0.992f, 0.357f, 0.471f, 1.000f},
-  {0.933f, 0.953f, 0.898f, 1.000f},
-  {0.624f, 0.639f, 0.655f, 1.000f},
-  {0.718f, 0.255f, 0.055f, 1.000f},
-  {0.431f, 0.553f, 0.443f, 1.000f},
-  {1.000f, 0.843f, 0.000f, 1.000f},
-  {0.275f, 0.510f, 0.706f, 1.000f},
-  {0.482f, 0.565f, 0.584f, 1.000f},
-  {0.804f, 0.498f, 0.196f, 1.000f},
-  {0.753f, 0.753f, 0.753f, 1.000f},
-  {0.663f, 0.663f, 0.663f, 1.000f},
-  {1.000f, 0.549f, 0.000f, 1.000f},
-  {0.000f, 0.392f, 0.000f, 1.000f},
-  {1.000f, 0.247f, 0.204f, 1.000f},
-  {0.133f, 0.545f, 0.133f, 1.000f},
-  {0.926f, 0.741f, 0.173f, 1.000f},
-  {0.482f, 0.408f, 0.933f, 1.000f},
-  {0.698f, 1.000f, 1.000f, 1.000f},
-  {0.525f, 0.314f, 0.251f, 1.000f},
-  {0.859f, 0.843f, 0.824f, 1.000f},
-  {0.059f, 0.059f, 0.059f, 1.000f},
-  {0.396f, 0.000f, 0.043f, 1.000f},
-  {0.482f, 0.471f, 0.353f, 1.000f},
-  {0.875f, 0.616f, 0.357f, 1.000f},
-  {0.208f, 0.369f, 0.310f, 1.000f},
-  {0.208f, 0.318f, 0.310f, 1.000f},
-  {0.557f, 0.349f, 0.235f, 1.000f},
-  {0.980f, 0.941f, 0.745f, 1.000f},
-  {0.063f, 0.047f, 0.031f, 1.000f},
-  {1.000f, 0.012f, 0.243f, 1.000f},
-  {0.224f, 1.000f, 0.078f, 1.000f},
-  {0.980f, 0.929f, 0.153f, 1.000f},
-  {0.071f, 0.039f, 0.561f, 1.000f},
-  {0.000f, 1.000f, 0.937f, 1.000f},
-  {0.502f, 0.000f, 0.502f, 1.000f},
-  {0.000f, 0.502f, 0.502f, 1.000f},
-  {1.000f, 0.753f, 0.796f, 1.000f},
-  {0.482f, 0.247f, 0.000f, 1.000f},
-  {0.247f, 0.000f, 1.000f, 1.000f}
+  {0.0f, 0.0f, 0.0f, 1.0f},
+  {1.0f, 0.0f, 0.0f, 1.0f},
+  {0.0f, 1.0f, 0.0f, 1.0f},
+  {1.0f, 1.0f, 0.0f, 1.0f},
+  {0.2f, 0.2f, 1.0f, 1.0f}, //{0.0, 0.0, 1.0, 1.0},
+  {0.0f, 1.0f, 1.0f, 1.0f},
+  {1.0f, 0.0f, 1.0f, 1.0f},
+  {1.0f, 1.0f, 1.0f, 1.0f},
+
+  //extend color codes from CPMA/CNQ3:
+  {1.00000f, 0.50000f, 0.00000f, 1.00000f}, //8
+  {0.60000f, 0.60000f, 1.00000f, 1.00000f}, //9
+
+  //CPMA's alphabet rainbow
+  {1.00000f, 0.00000f, 0.00000f, 1.00000f}, //a
+  {1.00000f, 0.26795f, 0.00000f, 1.00000f}, //b
+  {1.00000f, 0.50000f, 0.00000f, 1.00000f}, //c
+  {1.00000f, 0.73205f, 0.00000f, 1.00000f}, //d
+  {1.00000f, 1.00000f, 0.00000f, 1.00000f}, //e
+  {0.73205f, 1.00000f, 0.00000f, 1.00000f}, //f
+  {0.50000f, 1.00000f, 0.00000f, 1.00000f}, //g
+  {0.26795f, 1.00000f, 0.00000f, 1.00000f}, //h
+  {0.00000f, 1.00000f, 0.00000f, 1.00000f}, //i
+  {0.00000f, 1.00000f, 0.26795f, 1.00000f}, //j
+  {0.00000f, 1.00000f, 0.50000f, 1.00000f}, //k
+  {0.00000f, 1.00000f, 0.73205f, 1.00000f}, //l
+  {0.00000f, 1.00000f, 1.00000f, 1.00000f}, //m
+  {0.00000f, 0.73205f, 1.00000f, 1.00000f}, //n
+  {0.00000f, 0.50000f, 1.00000f, 1.00000f}, //o
+  {0.00000f, 0.26795f, 1.00000f, 1.00000f}, //p
+  {0.00000f, 0.00000f, 1.00000f, 1.00000f}, //q
+  {0.26795f, 0.00000f, 1.00000f, 1.00000f}, //r
+  {0.50000f, 0.00000f, 1.00000f, 1.00000f}, //s
+  {0.73205f, 0.00000f, 1.00000f, 1.00000f}, //t
+  {1.00000f, 0.00000f, 1.00000f, 1.00000f}, //u
+  {1.00000f, 0.00000f, 0.73205f, 1.00000f}, //v
+  {1.00000f, 0.00000f, 0.50000f, 1.00000f}, //w
+  {1.00000f, 0.00000f, 0.26795f, 1.00000f}, //x
+  {1.0, 1.0, 1.0, 1.0}, //y, white, duped so all colors can be expressed with this palette
+  {0.5, 0.5, 0.5, 1.0}, //z, grey
 };
+
+qint
+ColorIndexFromChar(qchar ccode)
+{
+  if (ccode >= '0' && ccode <= '9')
+  {
+    return (ccode - '0');
+  }
+  else if (ccode >= 'a' && ccode <= 'z')
+  {
+    return (ccode - 'a' + 10);
+  }
+  else if (ccode >= 'A' && ccode <= 'Z')
+  {
+    return (ccode - 'A' + 10);
+  }
+  else
+  {
+    return ColorIndex(COLOR_WHITE);
+  }
+}
 
 vec3_t	bytedirs[NUMVERTEXNORMALS] =
 {

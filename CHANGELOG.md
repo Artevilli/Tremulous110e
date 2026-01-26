@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--01/26/2026--**
+
+* qcommon:<br />remove colors in favor of new ones from CPMA/CNQ3
+
 **--01/24/2026--**
 
 * server:<br />remove problematic `SV_IsValidClientSnapshot()`
