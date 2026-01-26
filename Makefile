@@ -533,7 +533,7 @@ else
 #############################################################################
 
   BASE_CFLAGS += -Wall -Wimplicit -Wstrict-prototypes -pipe \
-    -Wformat-security -Winline -Wshadow -Werror
+    -Wformat-security -Winline -Wshadow -Werror -D_FORTIFY_SOURCE=3
 
   BASE_CFLAGS += -Wno-unused-result
 

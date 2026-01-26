@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/26/2026--**
 
+* makefile:<br />enable `-D_FORTIFY_SOURCE` at level 3
+
 * qcommon/server:<br />fix a few problems reported by cppcheck
 
 * qcommon:<br />do not assign a local auto-variable address to a function parameter
