@@ -358,34 +358,34 @@ emit(uint32_t isn)
 #define BRK(imm16) ((0b11010100001 << 21) | (imm16 << 5))
 #define RET(Rn) ((0b1101011 << 25) | (0b0010 << 21) | (0b11111 << 16) | (0b000000 << 10) | (Rn << 5) | 0b00000 /*Rm*/)
 
-#define MOVZ32(Rd, imm16) ((0 << 31) /*sf*/ | (0b10100101 << 23) | (0b00 << 21) | (((imm16) & 0xFFFF) << 5) | Rd)
-#define MOVZ32_16(Rd, imm16) ((0 << 31) /*sf*/ | (0b10100101 << 23) | (0b01 << 21) | (((imm16) & 0xFFFF) << 5) | Rd)
-#define MOVZ64(Rd, imm16) ((1 << 31) /*sf*/ | (0b10100101 << 23) | (0b00 << 21) | (((imm16) & 0xFFFF) << 5) | Rd)
+#define MOVZ32(Rd, imm16) ((0U << 31) /*sf*/ | (0b10100101 << 23) | (0b00 << 21) | (((imm16) & 0xFFFF) << 5) | Rd)
+#define MOVZ32_16(Rd, imm16) ((0U << 31) /*sf*/ | (0b10100101 << 23) | (0b01 << 21) | (((imm16) & 0xFFFF) << 5) | Rd)
+#define MOVZ64(Rd, imm16) ((1U << 31) /*sf*/ | (0b10100101 << 23) | (0b00 << 21) | (((imm16) & 0xFFFF) << 5) | Rd)
 
-#define MOVK32_16(Rd, imm16) ((0 << 31) /*sf*/ | (0b11100101 << 23) | (0b01 << 21) | (((imm16) & 0xFFFF) << 5) | Rd)
-#define MOVK64_16(Rd, imm16) ((1 << 31) /*sf*/ | (0b11100101 << 23) | (0b01 << 21) | (((imm16) & 0xFFFF) << 5) | Rd)
-#define MOVK64_32(Rd, imm16) ((1 << 31) /*sf*/ | (0b11100101 << 23) | (0b10 << 21) | (((imm16) & 0xFFFF) << 5) | Rd)
-#define MOVK64_48(Rd, imm16) ((1 << 31) /*sf*/ | (0b11100101 << 23) | (0b11 << 21) | (((imm16) & 0xFFFF) << 5) | Rd)
+#define MOVK32_16(Rd, imm16) ((0U << 31) /*sf*/ | (0b11100101 << 23) | (0b01 << 21) | (((imm16) & 0xFFFF) << 5) | Rd)
+#define MOVK64_16(Rd, imm16) ((1U << 31) /*sf*/ | (0b11100101 << 23) | (0b01 << 21) | (((imm16) & 0xFFFF) << 5) | Rd)
+#define MOVK64_32(Rd, imm16) ((1U << 31) /*sf*/ | (0b11100101 << 23) | (0b10 << 21) | (((imm16) & 0xFFFF) << 5) | Rd)
+#define MOVK64_48(Rd, imm16) ((1U << 31) /*sf*/ | (0b11100101 << 23) | (0b11 << 21) | (((imm16) & 0xFFFF) << 5) | Rd)
 
-#define MOVN32(Rd, imm16) ((0 << 31) /*sf*/ | (0b00100101 << 23) | (0b00 << 21) | ((imm16 & 0xFFFF) << 5) | Rd)
-#define MOVN32_16(Rd, imm16) ((0 << 31) /*sf*/ | (0b00100101 << 23) | (0b01 << 21) | ((imm16 & 0xFFFF) << 5) | Rd)
-#define MOVN64(Rd, imm16) ((1 << 31) /*sf*/ | (0b00100101 << 23) | (0b00 << 21) | ((imm16 & 0xFFFF) << 5) | Rd)
-#define MOVN64_16(Rd, imm16) ((1 << 31) /*sf*/ | (0b00100101 << 23) | (0b01 << 21) | ((imm16 & 0xFFFF) << 5) | Rd)
-#define MOVN64_32(Rd, imm16) ((1 << 31) /*sf*/ | (0b00100101 << 23) | (0b10 << 21) | ((imm16 & 0xFFFF) << 5) | Rd)
-#define MOVN64_48(Rd, imm16) ((1 << 31) /*sf*/ | (0b00100101 << 23) | (0b11 << 21) | ((imm16 & 0xFFFF) << 5) | Rd)
+#define MOVN32(Rd, imm16) ((0U << 31) /*sf*/ | (0b00100101 << 23) | (0b00 << 21) | ((imm16 & 0xFFFF) << 5) | Rd)
+#define MOVN32_16(Rd, imm16) ((0U << 31) /*sf*/ | (0b00100101 << 23) | (0b01 << 21) | ((imm16 & 0xFFFF) << 5) | Rd)
+#define MOVN64(Rd, imm16) ((1U << 31) /*sf*/ | (0b00100101 << 23) | (0b00 << 21) | ((imm16 & 0xFFFF) << 5) | Rd)
+#define MOVN64_16(Rd, imm16) ((1U << 31) /*sf*/ | (0b00100101 << 23) | (0b01 << 21) | ((imm16 & 0xFFFF) << 5) | Rd)
+#define MOVN64_32(Rd, imm16) ((1U << 31) /*sf*/ | (0b00100101 << 23) | (0b10 << 21) | ((imm16 & 0xFFFF) << 5) | Rd)
+#define MOVN64_48(Rd, imm16) ((1U << 31) /*sf*/ | (0b00100101 << 23) | (0b11 << 21) | ((imm16 & 0xFFFF) << 5) | Rd)
 
-#define ORR32(Rd, Rn, Rm) ((0 << 31) /*sf*/ | 0b0101010 << 24 | 0b00 << 22 /*shift*/ | (0 << 21) /*N*/ | (Rm << 16) | 0b000000 << 10 /*imm6*/ | (Rn << 5) | Rd)
-#define ORR64(Rd, Rn, Rm) ((1 << 31) /*sf*/ | 0b0101010 << 24 | 0b00 << 22 /*shift*/ | (0 << 21) /*N*/ | (Rm << 16) | 0b000000 << 10 /*imm6*/ | (Rn << 5) | Rd)
+#define ORR32(Rd, Rn, Rm) ((0U << 31) /*sf*/ | 0b0101010 << 24 | 0b00 << 22 /*shift*/ | (0 << 21) /*N*/ | (Rm << 16) | 0b000000 << 10 /*imm6*/ | (Rn << 5) | Rd)
+#define ORR64(Rd, Rn, Rm) ((1U << 31) /*sf*/ | 0b0101010 << 24 | 0b00 << 22 /*shift*/ | (0 << 21) /*N*/ | (Rm << 16) | 0b000000 << 10 /*imm6*/ | (Rn << 5) | Rd)
 
-#define EOR32(Rd, Rn, Rm) ((0 << 31) /*sf*/ | (0b1001010 << 24) | 0b00 << 22 /*shift*/ | (0 << 21) /*N*/ | (Rm << 16) | 0b000000 << 10 /*imm6*/ | (Rn << 5) | Rd)
-#define EOR64(Rd, Rn, Rm) ((1 << 31) /*sf*/ | (0b1001010 << 24) | 0b00 << 22 /*shift*/ | (0 << 21) /*N*/ | (Rm << 16) | 0b000000 << 10 /*imm6*/ | (Rn << 5) | Rd)
+#define EOR32(Rd, Rn, Rm) ((0U << 31) /*sf*/ | (0b1001010 << 24) | 0b00 << 22 /*shift*/ | (0 << 21) /*N*/ | (Rm << 16) | 0b000000 << 10 /*imm6*/ | (Rn << 5) | Rd)
+#define EOR64(Rd, Rn, Rm) ((1U << 31) /*sf*/ | (0b1001010 << 24) | 0b00 << 22 /*shift*/ | (0 << 21) /*N*/ | (Rm << 16) | 0b000000 << 10 /*imm6*/ | (Rn << 5) | Rd)
 
-#define AND32(Rd, Rn, Rm) ((0 << 31) /*sf*/ | (0b0001010 << 24) | 0b00 << 22 /*shift*/ | (0 << 21) /*N*/ | (Rm << 16) | 0b000000 << 10 /*imm6*/ | (Rn << 5) | Rd)
-#define AND64(Rd, Rn, Rm) ((1 << 31) /*sf*/ | (0b0001010 << 24) | 0b00 << 22 /*shift*/ | (0 << 21) /*N*/ | (Rm << 16) | 0b000000 << 10 /*imm6*/ | (Rn << 5) | Rd)
+#define AND32(Rd, Rn, Rm) ((0U << 31) /*sf*/ | (0b0001010 << 24) | 0b00 << 22 /*shift*/ | (0 << 21) /*N*/ | (Rm << 16) | 0b000000 << 10 /*imm6*/ | (Rn << 5) | Rd)
+#define AND64(Rd, Rn, Rm) ((1U << 31) /*sf*/ | (0b0001010 << 24) | 0b00 << 22 /*shift*/ | (0 << 21) /*N*/ | (Rm << 16) | 0b000000 << 10 /*imm6*/ | (Rn << 5) | Rd)
 
-#define AND32i(Rd, Rn, immrs) ((0 << 31) /*sf*/ | (0b00 << 29) | (0b100100 << 23) | ((immrs) << 10) | ((Rn) << 5) | (Rd))
-#define ORR32i(Rd, Rn, immrs) ((0 << 31) /*sf*/ | (0b01 << 29) | (0b100100 << 23) | ((immrs) << 10) | ((Rn) << 5) | (Rd))
-#define EOR32i(Rd, Rn, immrs) ((0 << 31) /*sf*/ | (0b10 << 29) | (0b100100 << 23) | ((immrs) << 10) | ((Rn) << 5) | (Rd))
+#define AND32i(Rd, Rn, immrs) ((0U << 31) /*sf*/ | (0b00 << 29) | (0b100100 << 23) | ((immrs) << 10) | ((Rn) << 5) | (Rd))
+#define ORR32i(Rd, Rn, immrs) ((0U << 31) /*sf*/ | (0b01 << 29) | (0b100100 << 23) | ((immrs) << 10) | ((Rn) << 5) | (Rd))
+#define EOR32i(Rd, Rn, immrs) ((0U << 31) /*sf*/ | (0b10 << 29) | (0b100100 << 23) | ((immrs) << 10) | ((Rn) << 5) | (Rd))
 
 #define MOV32(Rd, Rm) ORR32(Rd, WZR, Rm)
 #define MOV64(Rd, Rm) ORR64(Rd, XZR, Rm)
@@ -393,53 +393,53 @@ emit(uint32_t isn)
 #define MOV32i(Rd, immrs) ORR32i(Rd, WZR, immrs)
 
 //MUL, alias for MADD
-#define MUL32(Rd, Rn, Rm) ((0 << 31) | (0b00 << 29) | (0b11011 << 24) | (0b000 << 21) | (Rm << 16) | (0 << 15) | (WZR << 10) /*Ra*/ | (Rn << 5) | Rd)
+#define MUL32(Rd, Rn, Rm) ((0U << 31) | (0b00 << 29) | (0b11011 << 24) | (0b000 << 21) | (Rm << 16) | (0 << 15) | (WZR << 10) /*Ra*/ | (Rn << 5) | Rd)
 
 //ADD (shifted register)
-#define ADD32(Rd, Rn, Rm) ((0 << 31) | (0b0001011000 << 21) | (Rm << 16) | (0b000000 << 10) /*imm6*/ | (Rn << 5) | Rd )
-#define ADD64(Rd, Rn, Rm) ((1 << 31) | (0b0001011000 << 21) | (Rm << 16) | (0b000000 << 10) /*imm6*/ | (Rn << 5) | Rd )
+#define ADD32(Rd, Rn, Rm) ((0U << 31) | (0b0001011000 << 21) | (Rm << 16) | (0b000000 << 10) /*imm6*/ | (Rn << 5) | Rd )
+#define ADD64(Rd, Rn, Rm) ((1U << 31) | (0b0001011000 << 21) | (Rm << 16) | (0b000000 << 10) /*imm6*/ | (Rn << 5) | Rd )
 
 //ADD (immediate)
-#define ADD32i(Rd, Rn, pimm12) ((0 << 31) | (0b00100010 << 23) | (0 << 22) /*sh*/ | ((pimm12) << 10) | (Rn << 5) | Rd)
-#define ADD64i(Rd, Rn, pimm12) ((1 << 31) | (0b00100010 << 23) | (0 << 22) /*sh*/ | ((pimm12) << 10) | (Rn << 5) | Rd)
+#define ADD32i(Rd, Rn, pimm12) ((0U << 31) | (0b00100010 << 23) | (0 << 22) /*sh*/ | ((pimm12) << 10) | (Rn << 5) | Rd)
+#define ADD64i(Rd, Rn, pimm12) ((1U << 31) | (0b00100010 << 23) | (0 << 22) /*sh*/ | ((pimm12) << 10) | (Rn << 5) | Rd)
 
 //SUB (shifted register)
-#define SUB32(Rd, Rn, Rm) ((0 << 31) | 0b1001011000 << 21 | (Rm << 16) | 0b000000 << 10 /*imm6*/ | (Rn << 5) | Rd )
-#define SUB64(Rd, Rn, Rm) ((1 << 31) | 0b1001011000 << 21 | (Rm << 16) | 0b000000 << 10 /*imm6*/ | (Rn << 5) | Rd )
+#define SUB32(Rd, Rn, Rm) ((0U << 31) | 0b1001011000 << 21 | (Rm << 16) | 0b000000 << 10 /*imm6*/ | (Rn << 5) | Rd )
+#define SUB64(Rd, Rn, Rm) ((1U << 31) | 0b1001011000 << 21 | (Rm << 16) | 0b000000 << 10 /*imm6*/ | (Rn << 5) | Rd )
 
 //SUB (immediate)
-#define SUB32i(Rd, Rn, pimm12) ((0 << 31) | (0b10100010 << 23) | (0 << 22) /*sh*/ | ((pimm12) << 10) | (Rn << 5) | Rd)
-#define SUB64i(Rd, Rn, pimm12) ((1 << 31) | (0b10100010 << 23) | (0 << 22) /*sh*/ | ((pimm12) << 10) | (Rn << 5) | Rd)
+#define SUB32i(Rd, Rn, pimm12) ((0U << 31) | (0b10100010 << 23) | (0 << 22) /*sh*/ | ((pimm12) << 10) | (Rn << 5) | Rd)
+#define SUB64i(Rd, Rn, pimm12) ((1U << 31) | (0b10100010 << 23) | (0 << 22) /*sh*/ | ((pimm12) << 10) | (Rn << 5) | Rd)
 
-#define SDIV32(Rd, Rn, Rm) ((0 << 31) | (0b00 << 29) | (0b11010110 << 21) | (Rm << 16) | (0b00001 << 11) | (1 << 10) | (Rn << 5) | Rd)
-#define UDIV32(Rd, Rn, Rm) ((0 << 31) | (0b00 << 29) | (0b11010110 << 21) | (Rm << 16) | (0b00001 << 11) | (0 << 10) | (Rn << 5) | Rd)
+#define SDIV32(Rd, Rn, Rm) ((0U << 31) | (0b00 << 29) | (0b11010110 << 21) | (Rm << 16) | (0b00001 << 11) | (1 << 10) | (Rn << 5) | Rd)
+#define UDIV32(Rd, Rn, Rm) ((0U << 31) | (0b00 << 29) | (0b11010110 << 21) | (Rm << 16) | (0b00001 << 11) | (0 << 10) | (Rn << 5) | Rd)
 
-#define MSUB32(Rd, Rn, Rm, Ra) ((0 << 31) | (0b00 << 29) | (0b11011 << 24) | (0b000 << 21) | (Rm << 16) | (1 << 15) | (Ra << 10) | (Rn << 5) | Rd)
+#define MSUB32(Rd, Rn, Rm, Ra) ((0U << 31) | (0b00 << 29) | (0b11011 << 24) | (0b000 << 21) | (Rm << 16) | (1 << 15) | (Ra << 10) | (Rn << 5) | Rd)
 
 //MVN, alias for ORN (shifted register)
-#define MVN32(Rd, Rm) ((0 << 31) | (0b01 << 29) | (0b01010 << 24) | (0b001 << 21) | (Rm << 16) | (0b000000 << 10) | (0b11111 << 5) | Rd )
+#define MVN32(Rd, Rm) ((0U << 31) | (0b01 << 29) | (0b01010 << 24) | (0b001 << 21) | (Rm << 16) | (0b000000 << 10) | (0b11111 << 5) | Rd )
 
 //NEG (shifted register), alias for SUB(shifted register)
 #define NEG32(Rd, Rm) SUB32(Rd, WZR, Rm)
 //#define NEG64(Rd, Rm) SUB64(Rd, XZR, Rm)
 
 //LSL (register)
-#define LSL32(Rd, Rn, Rm) ((0 << 31) | (0b00 << 29) | (0b11010110 << 21) | (Rm << 16) | (0b0010 << 12) | (0b00 << 10) | (Rn << 5) | Rd)
+#define LSL32(Rd, Rn, Rm) ((0U << 31) | (0b00 << 29) | (0b11010110 << 21) | (Rm << 16) | (0b0010 << 12) | (0b00 << 10) | (Rn << 5) | Rd)
 
 //LSR (register)
-#define LSR32(Rd, Rn, Rm) ((0 << 31) | (0b00 << 29) | (0b11010110 << 21) | (Rm << 16) | (0b0010 << 12) | (0b01 << 10) | (Rn << 5) | Rd)
+#define LSR32(Rd, Rn, Rm) ((0U << 31) | (0b00 << 29) | (0b11010110 << 21) | (Rm << 16) | (0b0010 << 12) | (0b01 << 10) | (Rn << 5) | Rd)
 
 //ASR (register)
-#define ASR32(Rd, Rn, Rm) ((0 << 31) | (0b00 << 29) | (0b11010110 << 21) | (Rm << 16) | (0b0010 << 12) | (0b10 << 10) | (Rn << 5) | Rd)
+#define ASR32(Rd, Rn, Rm) ((0U << 31) | (0b00 << 29) | (0b11010110 << 21) | (Rm << 16) | (0b0010 << 12) | (0b10 << 10) | (Rn << 5) | Rd)
 
 //LSL (immediate in range 1..31)
-#define LSL32i(Rd, Rn, shift) ((0 << 31) | (0b10 << 29) | (0b100110 << 23) | (0 << 22) | (((-(shift)) & 31) << 16) | ((31-(shift)) << 10) | ((Rn) << 5) | Rd)
+#define LSL32i(Rd, Rn, shift) ((0U << 31) | (0b10 << 29) | (0b100110 << 23) | (0 << 22) | (((-(shift)) & 31) << 16) | ((31-(shift)) << 10) | ((Rn) << 5) | Rd)
 
 //LSR (immediate in range 1..31)
-#define LSR32i(Rd, Rn, shift) ((0 << 31) | (0b10 << 29) | (0b100110 << 23) | (0 << 22) | ((shift) << 16) | (31 << 10) | ((Rn) << 5) | Rd)
+#define LSR32i(Rd, Rn, shift) ((0U << 31) | (0b10 << 29) | (0b100110 << 23) | (0 << 22) | ((shift) << 16) | (31 << 10) | ((Rn) << 5) | Rd)
 
 //ASR (immediate in range 1..31)
-#define ASR32i(Rd, Rn, shift) ((0 << 31) | (0b00 << 29) | (0b100110 << 23) | (0 << 22) | ((shift) << 16) | (31 << 10) | ((Rn) << 5) | Rd)
+#define ASR32i(Rd, Rn, shift) ((0U << 31) | (0b00 << 29) | (0b100110 << 23) | (0 << 22) | ((shift) << 16) | (31 << 10) | ((Rn) << 5) | Rd)
 
 
 //LDP - load pair of registers with signed offset
@@ -520,33 +520,33 @@ emit(uint32_t isn)
 //#define STR32_4(Rt, Rn, Rm) ((0b10 << 30) | 0b111000001 << 21 | Rm << 16 | 0b011 << 13 /*LSL*/ | 1 << 12 /*#2*/ | 0b10 << 10 | (Rn << 5) | Rt)
 //#define STR64_8(Rt, Rn, Rm) ((0b11 << 30) | 0b111000001 << 21 | Rm << 16 | 0b011 << 13 /*LSL*/ | 1 << 12 /*#3*/ | 0b10 << 10 | (Rn << 5) | Rt)
 
-#define SXTB(Rd, Rn) ((0 << 31) | (0b00 << 29) | (0b100110 << 23) | (0 << 22) /*N*/ | (0b000000 << 16) /*immr*/ | (0b000111 << 10) /*imms*/ | (Rn << 5) | Rd)
-#define UXTB(Rd, Rn) ((0 << 31) | (0b10 << 29) | (0b100110 << 23) | (0 << 22) /*N*/ | (0b000000 << 16) /*immr*/ | (0b000111 << 10) /*imms*/ | (Rn << 5) | Rd)
-#define SXTH(Rd, Rn) ((0 << 31) | (0b00 << 29) | (0b100110 << 23) | (0 << 22) /*N*/ | (0b000000 << 16) /*immr*/ | (0b001111 << 10) /*imms*/ | (Rn << 5) | Rd)
-#define UXTH(Rd, Rn) ((0 << 31) | (0b10 << 29) | (0b100110 << 23) | (0 << 22) /*N*/ | (0b000000 << 16) /*immr*/ | (0b001111 << 10) /*imms*/ | (Rn << 5) | Rd)
+#define SXTB(Rd, Rn) ((0U << 31) | (0b00 << 29) | (0b100110 << 23) | (0 << 22) /*N*/ | (0b000000 << 16) /*immr*/ | (0b000111 << 10) /*imms*/ | (Rn << 5) | Rd)
+#define UXTB(Rd, Rn) ((0U << 31) | (0b10 << 29) | (0b100110 << 23) | (0 << 22) /*N*/ | (0b000000 << 16) /*immr*/ | (0b000111 << 10) /*imms*/ | (Rn << 5) | Rd)
+#define SXTH(Rd, Rn) ((0U << 31) | (0b00 << 29) | (0b100110 << 23) | (0 << 22) /*N*/ | (0b000000 << 16) /*immr*/ | (0b001111 << 10) /*imms*/ | (Rn << 5) | Rd)
+#define UXTH(Rd, Rn) ((0U << 31) | (0b10 << 29) | (0b100110 << 23) | (0 << 22) /*N*/ | (0b000000 << 16) /*immr*/ | (0b001111 << 10) /*imms*/ | (Rn << 5) | Rd)
 
 //CMP (immediate)
-#define CMP32i(Rn, imm12) ((0 << 31) | (0b11 << 29) | (0b100010 << 23) | (0 << 22) /*sh*/ | (imm12) << 10 | (Rn << 5) | WZR /*Rd*/)
-#define CMP64i(Rn, imm12) ((1 << 31) | (0b11 << 29) | (0b100010 << 23) | (0 << 22) /*sh*/ | (imm12) << 10 | (Rn << 5) | XZR /*Rd*/)
+#define CMP32i(Rn, imm12) ((0U << 31) | (0b11 << 29) | (0b100010 << 23) | (0 << 22) /*sh*/ | (imm12) << 10 | (Rn << 5) | WZR /*Rd*/)
+#define CMP64i(Rn, imm12) ((1U << 31) | (0b11 << 29) | (0b100010 << 23) | (0 << 22) /*sh*/ | (imm12) << 10 | (Rn << 5) | XZR /*Rd*/)
 
 //CMP (shifted register)
-#define CMP32(Rn, Rm) ((0 << 31) | (0b11 << 29) | (0b01011 << 24) | (0b00 << 22) /*sh*/ | (0 << 21) | (Rm << 16) | (0b000000 << 10) /*imm6*/ | (Rn << 5) | WZR /*Rd*/)
-#define CMP64(Rn, Rm) ((1 << 31) | (0b11 << 29) | (0b01011 << 24) | (0b00 << 22) /*sh*/ | (0 << 21) | (Rm << 16) | (0b000000 << 10) /*imm6*/ | (Rn << 5) | XZR /*Rd*/)
+#define CMP32(Rn, Rm) ((0U << 31) | (0b11 << 29) | (0b01011 << 24) | (0b00 << 22) /*sh*/ | (0 << 21) | (Rm << 16) | (0b000000 << 10) /*imm6*/ | (Rn << 5) | WZR /*Rd*/)
+#define CMP64(Rn, Rm) ((1U << 31) | (0b11 << 29) | (0b01011 << 24) | (0b00 << 22) /*sh*/ | (0 << 21) | (Rm << 16) | (0b000000 << 10) /*imm6*/ | (Rn << 5) | XZR /*Rd*/)
 
 //CBZ - Compare and Branch on Zero
-#define CBZ32(Rt, simm19) ((0 << 31) | (0b011010 << 25) | (0 << 24) /*op*/ | (encode_offset19(simm19) << 5) | Rt)
+#define CBZ32(Rt, simm19) ((0U << 31) | (0b011010 << 25) | (0 << 24) /*op*/ | (encode_offset19(simm19) << 5) | Rt)
 
 //CBNZ - Compare and Branch on Nonzero
-#define CBNZ32(Rt, simm19) ((0 << 31) | (0b011010 << 25) | (1 << 24) /*op*/ | (encode_offset19(simm19) << 5) | Rt)
+#define CBNZ32(Rt, simm19) ((0U << 31) | (0b011010 << 25) | (1 << 24) /*op*/ | (encode_offset19(simm19) << 5) | Rt)
 
 //conditional branch within +/-1M
 #define Bcond(cond, simm19) ((0b0101010 << 25) | (0 << 24) | (encode_offset19(simm19) << 5) | (0 << 4) | cond)
 
 //unconditional branch within +/-128M
-#define B(simm26) ((0 << 31) | (0b00101 << 26) | encode_offset26(simm26))
+#define B(simm26) ((0U << 31) | (0b00101 << 26) | encode_offset26(simm26))
 
 //branch with link within +/-128M
-#define BL(simm26) ((1 << 31) | (0b00101 << 26) | encode_offset26(simm26))
+#define BL(simm26) ((1U << 31) | (0b00101 << 26) | encode_offset26(simm26))
 
 //branch to register
 #define BR(Rn) ((0b1101011 << 25) | (0 << 24) | (0 << 23) | (0b00 << 21) | (0b11111 << 16) | (0b0000 << 12) | (0 << 11) /*A*/ | (0 << 10) /*M*/ | (Rn << 5) | 0b00000 /*Rm*/)
@@ -582,18 +582,18 @@ emit(uint32_t isn)
 #define FCMP0(Sn) ((0b000 << 29) | (0b11110 << 24) | (0b00 << 22) | (1 << 21) | (0 << 16)  | (0b00 << 14) | (0b1000 << 10) | (Sn << 5) | (0b01 << 3) /*opc*/ | 0b000)
 
 //single precision to signed integer
-#define FCVTZS(Rd, Sn) ((0 << 31) | (0b00 << 29) | (0b11110 << 24) | (0b00 << 22)  | (1 << 21) | (0b11 << 19) /*rmode*/ | (0b000 << 16) /*opcode*/ | (0b000000 << 10) | (Sn << 5) | Rd)
+#define FCVTZS(Rd, Sn) ((0U << 31) | (0b00 << 29) | (0b11110 << 24) | (0b00 << 22)  | (1 << 21) | (0b11 << 19) /*rmode*/ | (0b000 << 16) /*opcode*/ | (0b000000 << 10) | (Sn << 5) | Rd)
 //signed integer to single precision
-#define SCVTF(Sd, Rn) ((0 << 31) | (0b00 << 29) | (0b11110 << 24) | (0b00 << 22) | (1 << 21) | (0b00 << 19) /*rmode*/ | (0b010 << 16) /*opcode*/ | (0b000000 << 10) | (Rn << 5) | Sd)
+#define SCVTF(Sd, Rn) ((0U << 31) | (0b00 << 29) | (0b11110 << 24) | (0b00 << 22) | (1 << 21) | (0b00 << 19) /*rmode*/ | (0b010 << 16) /*opcode*/ | (0b000000 << 10) | (Rn << 5) | Sd)
 
 //move scalar to scalar
-#define FMOV(Sd, Sn) ((0 << 31) | (0b00 << 29) | (0b11110 << 24) | (0b00 << 22) | (1 << 21) | (0b00 << 19) /*rmode*/ | (0b000 << 16) /*opcode*/ | (0b010000 << 10) | (Sn << 5) | Sd)
+#define FMOV(Sd, Sn) ((0U << 31) | (0b00 << 29) | (0b11110 << 24) | (0b00 << 22) | (1 << 21) | (0b00 << 19) /*rmode*/ | (0b000 << 16) /*opcode*/ | (0b010000 << 10) | (Sn << 5) | Sd)
 //move scalar to general
-#define FMOVgs(Rd, Sn) ((0 << 31) | (0b00 << 29) | (0b11110 << 24) | (0b00 << 22) | (1 << 21) | (0b00 << 19) /*rmode*/ | (0b110 << 16) /*opcode*/ | (0b000000 << 10) | (Sn << 5) | Rd)
+#define FMOVgs(Rd, Sn) ((0U << 31) | (0b00 << 29) | (0b11110 << 24) | (0b00 << 22) | (1 << 21) | (0b00 << 19) /*rmode*/ | (0b110 << 16) /*opcode*/ | (0b000000 << 10) | (Sn << 5) | Rd)
 //move general to scalar
-#define FMOVsg(Sd, Rn) ((0 << 31) | (0b00 << 29) | (0b11110 << 24) | (0b00 << 22) | (1 << 21) | (0b00 << 19) /*rmode*/ | (0b111 << 16) /*opcode*/ | (0b000000 << 10) | (Rn << 5) | Sd)
+#define FMOVsg(Sd, Rn) ((0U << 31) | (0b00 << 29) | (0b11110 << 24) | (0b00 << 22) | (1 << 21) | (0b00 << 19) /*rmode*/ | (0b111 << 16) /*opcode*/ | (0b000000 << 10) | (Rn << 5) | Sd)
 //move immediate to scalar
-#define FMOVi(Sd, imm8) ((0 << 31) | (0b00 << 29) | (0b11110 << 24) | (0b00 << 22) | (1 << 21) | ((imm8) << 13) | (0b100 << 10) | (0b00000 << 5) | Sd)
+#define FMOVi(Sd, imm8) ((0U << 31) | (0b00 << 29) | (0b11110 << 24) | (0b00 << 22) | (1 << 21) | ((imm8) << 13) | (0b100 << 10) | (0b00000 << 5) | Sd)
 
 #define VLDR(St, Rn, Rm) ((0b10 << 30) | (0b111 << 27) | (1 << 26) | (0b00 << 24) | (0b01 << 22) /*opc*/ | (1 << 21) | (Rm << 16) | (0b010 << 13) /*UXTW*/ | (0 << 12) /*S*/ | (0b10 << 10) | (Rn << 5) | St)
 #define VSTR(St, Rn, Rm) ((0b10 << 30) | (0b111 << 27) | (1 << 26) | (0b00 << 24) | (0b00 << 22) /*opc*/ | (1 << 21) | (Rm << 16) | (0b010 << 13) /*UXTW*/ | (0 << 12) /*S*/ | (0b10 << 10) | (Rn << 5) | St)
@@ -1976,7 +1976,7 @@ static uint32_t alloc_sx_const(uint32_t pref, uint32_t imm)
     {
       n = sx_list_cache[i];
 
-      if (mask & BIT(n))
+      if (mask & UBIT(n))
       {
         //target register must be unmasked and not present on the opStack
         continue;
@@ -2176,7 +2176,7 @@ dyn_alloc_sx(uint32_t pref)
   {
     n = sx_list_alloc[i];
 
-    if (mask & BIT(n))
+    if (mask & UBIT(n))
     {
       continue;
     }
@@ -4814,7 +4814,7 @@ __recompile:
 int32_t
 VM_CallCompiled(vm_t *vm, qint nargs, int32_t *args)
 {
-  int32_t opStack[MAX_OPSTACK_SIZE];
+  static int32_t opStack[MAX_OPSTACK_SIZE];
   int32_t stackOnEntry;
   int32_t *image;
   qint i;
