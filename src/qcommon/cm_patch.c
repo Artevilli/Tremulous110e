@@ -207,7 +207,7 @@ Swaps the rows and columns in place
 */
 static void CM_TransposeGrid( cGrid_t *grid ) {
 	qint			i, j, l;
-	vec3_t		temp;
+	static vec3_t		temp[MAX_GRID_SIZE][MAX_GRID_SIZE];
 	qbool	tempWrap;
 
 	if ( grid->width > grid->height ) {
@@ -215,9 +215,9 @@ static void CM_TransposeGrid( cGrid_t *grid ) {
 			for ( j = i + 1 ; j < grid->width ; j++ ) {
 				if ( j < grid->height ) {
 					// swap the value
-					VectorCopy( grid->points[i][j], temp );
+					VectorCopy( grid->points[i][j], temp[i][j] );
 					VectorCopy( grid->points[j][i], grid->points[i][j] );
-					VectorCopy( temp, grid->points[j][i] );
+					VectorCopy( temp[j][i], grid->points[j][i] );
 				} else {
 					// just copy
 					VectorCopy( grid->points[j][i], grid->points[i][j] );
@@ -229,9 +229,9 @@ static void CM_TransposeGrid( cGrid_t *grid ) {
 			for ( j = i + 1 ; j < grid->height ; j++ ) {
 				if ( j < grid->width ) {
 					// swap the value
-					VectorCopy( grid->points[j][i], temp );
+					VectorCopy( grid->points[j][i], temp[j][i] );
 					VectorCopy( grid->points[i][j], grid->points[j][i] );
-					VectorCopy( temp, grid->points[i][j] );
+					VectorCopy( temp[i][j], grid->points[i][j] );
 				} else {
 					// just copy
 					VectorCopy( grid->points[i][j], grid->points[j][i] );

@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--01/27/2026--**
+
+* qcommon:<br />fix an uninitialized variable in CM_TransposeGrid()
+
 **--01/26/2026--**
 
 * qcommon:<br />fix more cppcheck problems
