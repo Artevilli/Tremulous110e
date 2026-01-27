@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/27/2026--**
 
+* qcommon:<br />disable alternative float casting
+
 * qcommon:<br />fix an uninitialized variable in CM_TransposeGrid()
 
 **--01/26/2026--**

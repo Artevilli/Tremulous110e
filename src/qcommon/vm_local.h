@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "qcommon.h"
 
 //use alternative float casting behavior, affects physics behavior
-#define VM_ALT_FLOAT_CASTING
+//#define VM_ALT_FLOAT_CASTING
 
 #define	MAX_OPSTACK_SIZE 512
 #define	PROC_OPSTACK_SIZE 30
