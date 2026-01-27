@@ -328,7 +328,7 @@ static void Huff_transmit (huff_t *huff, qint ch, byte *fout) {
 
 void Huff_Decompress(msg_t *mbuf, qint offset) {
 	qint			ch, cch, i, j, size;
-	byte		seq[65536];
+	byte		seq[65536] = {0};
 	byte*		buffer;
 	huff_t		huff;
 

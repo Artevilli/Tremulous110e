@@ -284,7 +284,7 @@ void ByteToDir( qint b, vec3_t dir ) {
 	VectorCopy (bytedirs[b], dir);
 }
 
-
+#if 0
 unsigned ColorBytes3 (float r, float g, float b) {
 	unsigned	i;
 
@@ -305,6 +305,7 @@ unsigned ColorBytes4 (float r, float g, float b, float a) {
 
 	return i;
 }
+#endif
 
 float NormalizeColor( const vec3_t in, vec3_t out ) {
 	float	max;

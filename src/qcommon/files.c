@@ -729,6 +729,7 @@ FS_CopyFile(const qchar *fromOSPath, const qchar *toOSPath)
   {
     fclose(f);
     Com_Error(ERR_FATAL, "Memory alloc error in FS_Copyfiles()");
+    return;
   }
 
   if (fread(buf, 1, len, f) != len)
@@ -736,6 +737,7 @@ FS_CopyFile(const qchar *fromOSPath, const qchar *toOSPath)
     free(buf);
     fclose(f);
     Com_Error(ERR_FATAL, "Short read in FS_Copyfiles()");
+    return;
   }
 
   fclose(f);
@@ -764,6 +766,7 @@ FS_CopyFile(const qchar *fromOSPath, const qchar *toOSPath)
     free(buf);
     fclose(f);
     Com_Error(ERR_FATAL, "Short write in FS_Copyfiles()");
+    return;
   }
 
   fclose(f);

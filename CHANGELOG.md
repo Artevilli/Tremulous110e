@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/26/2026--**
 
+* qcommon:<br />fix more cppcheck problems
+
 * qcommon:<br />fix aarch64 bit shifting
 
 * makefile:<br />enable `-D_FORTIFY_SOURCE` at level 3
