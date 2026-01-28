@@ -5053,536 +5053,594 @@ VM_Compile(vm_t *vm, vmHeader_t *header)
   {
 __compile:
 
-  //translate all instructions
-  ip = 0;
-  compiledOfs = 0;
+    //translate all instructions
+    ip = 0;
+    compiledOfs = 0;
 #if JUMP_OPTIMIZE
-  jumpSizeChanged = 0;
+    jumpSizeChanged = 0;
 #endif
 
-  proc_base = -1;
-  proc_len = 0;
+    proc_base = -1;
+    proc_len = 0;
 #if defined(RET_OPTIMIZE)
-  proc_end = 0;
+    proc_end = 0;
 #endif
 
-  init_opstack();
+    init_opstack();
 
 #if defined(DEBUG_INT)
-  emit_brk();
+    emit_brk();
 #endif
 
 #if idx64
 
-  emit_push(R_EBP); //push rbp
-  emit_push(R_EBX); //push rbx
-  emit_push(R_ESI); //push rsi
-  emit_push(R_EDI); //push rdi
-  emit_push(R_R12); //push r12
-  emit_push(R_R13); //push r13
-  emit_push(R_R14); //push r14
-  emit_push(R_R15); //push r15
+    emit_push(R_EBP); //push rbp
+    emit_push(R_EBX); //push rbx
+    emit_push(R_ESI); //push rsi
+    emit_push(R_EDI); //push rdi
+    emit_push(R_R12); //push r12
+    emit_push(R_R13); //push r13
+    emit_push(R_R14); //push r14
+    emit_push(R_R15); //push r15
 
-  mov_rx_ptr(R_DATABASE, vm->dataBase); //mov rbx, vm->dataBase
+    mov_rx_ptr(R_DATABASE, vm->dataBase); //mov rbx, vm->dataBase
 
-  //do not use wrapper, force constant size there
-  emit_mov_rx_imm64(R_INSPOINTERS, (intptr_t)instructionPointers); //mov r8, vm->instructionPointers
+    //do not use wrapper, force constant size there
+    emit_mov_rx_imm64(R_INSPOINTERS, (intptr_t)instructionPointers); //mov r8, vm->instructionPointers
 
-  mov_rx_imm32(R_DATAMASK, vm->dataMask); //mov r11d, vm->dataMask
-  mov_rx_imm32(R_STACKBOTTOM, vm->stackBottom); //mov r14d, vm->stackBottom
+    mov_rx_imm32(R_DATAMASK, vm->dataMask); //mov r11d, vm->dataMask
+    mov_rx_imm32(R_STACKBOTTOM, vm->stackBottom); //mov r14d, vm->stackBottom
 
-  mov_rx_ptr(R_EAX, &vm->opStack); //mov rax, &vm->opStack
+    mov_rx_ptr(R_EAX, &vm->opStack); //mov rax, &vm->opStack
 
-  emit_load4(R_OPSTACK | R_REX, R_EAX, 0); //mov rdi, [rax]
+    emit_load4(R_OPSTACK | R_REX, R_EAX, 0); //mov rdi, [rax]
 
-  mov_rx_ptr(R_SYSCALL, vm->systemCall); //mov r13, vm->systemCall
+    mov_rx_ptr(R_SYSCALL, vm->systemCall); //mov r13, vm->systemCall
 
-  mov_rx_ptr(R_EAX, &vm->programStack); //mov rax, &vm->programStack
+    mov_rx_ptr(R_EAX, &vm->programStack); //mov rax, &vm->programStack
 
-  emit_load4(R_PSTACK, R_EAX, 0); //mov esi, dword ptr [rax]
+    emit_load4(R_PSTACK, R_EAX, 0); //mov esi, dword ptr [rax]
 
-  emit_lea(R_OPSTACKTOP | R_REX, R_OPSTACK, sizeof(int32_t) * (MAX_OPSTACK_SIZE - 1)); //lea r15, [opStack + opStackSize - 4]
+    emit_lea(R_OPSTACKTOP | R_REX, R_OPSTACK, sizeof(int32_t) * (MAX_OPSTACK_SIZE - 1)); //lea r15, [opStack + opStackSize - 4]
 
-  EmitCallOffset(FUNC_ENTR);
+    EmitCallOffset(FUNC_ENTR);
 
 #if defined(DEBUG_VM)
-  mov_rx_ptr(R_EAX, &vm->programStack); //mov rax, &vm->programStack
-  emit_store_rx(R_PSTACK, R_EAX, 0); //mov [rax], esi
+    mov_rx_ptr(R_EAX, &vm->programStack); //mov rax, &vm->programStack
+    emit_store_rx(R_PSTACK, R_EAX, 0); //mov [rax], esi
 #endif
 
-  emit_pop(R_R15); //pop r15
-  emit_pop(R_R14); //pop r14
-  emit_pop(R_R13); //pop r13
-  emit_pop(R_R12); //pop r12
-  emit_pop(R_EDI); //pop rdi
-  emit_pop(R_ESI); //pop rsi
-  emit_pop(R_EBX); //pop rbx
-  emit_pop(R_EBP); //pop rbp
-  emit_ret(); //ret
+    emit_pop(R_R15); //pop r15
+    emit_pop(R_R14); //pop r14
+    emit_pop(R_R13); //pop r13
+    emit_pop(R_R12); //pop r12
+    emit_pop(R_EDI); //pop rdi
+    emit_pop(R_ESI); //pop rsi
+    emit_pop(R_EBX); //pop rbx
+    emit_pop(R_EBP); //pop rbp
+    emit_ret(); //ret
 
 #else //id386
 
-  emit_pushad(); //pushad
+    emit_pushad(); //pushad
 
-  mov_rx_ptr(R_DATABASE, vm->dataBase); //mov ebx, vm->dataBase
+    mov_rx_ptr(R_DATABASE, vm->dataBase); //mov ebx, vm->dataBase
 
-  emit_load_rx_offset(R_PSTACK, (intptr_t)&vm->programStack); //mov esi, [&vm->programStack]
+    emit_load_rx_offset(R_PSTACK, (intptr_t)&vm->programStack); //mov esi, [&vm->programStack]
 
-  emit_load_rx_offset(R_OPSTACK, (intptr_t)&vm->opStack); //mov edi, [&vm->opStack]
+    emit_load_rx_offset(R_OPSTACK, (intptr_t)&vm->opStack); //mov edi, [&vm->opStack]
 
-  EmitCallOffset(FUNC_ENTR);
+    EmitCallOffset(FUNC_ENTR);
 
 #if defined(DEBUG_VM)
-  emit_store_rx_offset(R_PSTACK, (intptr_t)&vm->programStack); //mov [&vm->programStack], esi 
+    emit_store_rx_offset(R_PSTACK, (intptr_t)&vm->programStack); //mov [&vm->programStack], esi 
 #endif
 
-  //emit_store_rx_offset(R_OPSTACK, (intptr_t)&vm->opStack); // // [&vm->opStack], edi
+    //emit_store_rx_offset(R_OPSTACK, (intptr_t)&vm->opStack); // // [&vm->opStack], edi
 
-  emit_popad(); //popad
-  emit_ret(); //ret
+    emit_popad(); //popad
+    emit_ret(); //ret
 
 #endif //id386
 
-  EmitAlign(FUNC_ALIGN);
+    EmitAlign(FUNC_ALIGN);
 
-  //main function entry offset
-  funcOffset[FUNC_ENTR] = compiledOfs;
+    //main function entry offset
+    funcOffset[FUNC_ENTR] = compiledOfs;
 
-  while(ip < instructionCount)
-  {
-    ci = &inst[ip + 0];
+    while(ip < instructionCount)
+    {
+      ci = &inst[ip + 0];
 
 #if defined(REGS_OPTIMIZE)
-    if (ci->jused)
+      if (ci->jused)
 #endif
-    {
-      //we can safely perform register optimizations only in case if
-      //we are 100% sure that current instruction is not a jump label
-      flush_volatile();
-    }
+      {
+        //we can safely perform register optimizations only in case if
+        //we are 100% sure that current instruction is not a jump label
+        flush_volatile();
+      }
 
-    instructionOffsets[ip++] = compiledOfs;
+      instructionOffsets[ip++] = compiledOfs;
 
-    switch(ci->op)
-    {
-      case
-      OP_UNDEF:
-        emit_brk(); //qint 3
-        break;
+      switch(ci->op)
+      {
+        case
+        OP_UNDEF:
+          emit_brk(); //qint 3
+          break;
 
-      case
-      OP_IGNORE:
-        break;
+        case
+        OP_IGNORE:
+          break;
 
-      case
-      OP_BREAK:
-        emit_brk(); //qint 3
-        break;
+        case
+        OP_BREAK:
+          emit_brk(); //qint 3
+          break;
 
-      case
-      OP_ENTER:
-        EmitAlign(FUNC_ALIGN);
+        case
+        OP_ENTER:
+          EmitAlign(FUNC_ALIGN);
 
-        instructionOffsets[ip - 1] = compiledOfs;
+          instructionOffsets[ip - 1] = compiledOfs;
 
-        proc_base = ip; //this points on next instruction after OP_ENTER
+          proc_base = ip; //this points on next instruction after OP_ENTER
 
-        //locate endproc
-        for(proc_len = -1, i = ip;i < header->instructionCount;i++)
-        {
-          if (inst[i].op == OP_PUSH && inst[i + 1].op == OP_LEAVE)
+          //locate endproc
+          for(proc_len = -1, i = ip;i < header->instructionCount;i++)
           {
-            proc_len = i - proc_base;
+            if (inst[i].op == OP_PUSH && inst[i + 1].op == OP_LEAVE)
+            {
+              proc_len = i - proc_base;
 #if defined(RET_OPTIMIZE)
-            proc_end = i + 1;
+              proc_end = i + 1;
 #endif
+              break;
+            }
+          }
+
+          if (proc_len == 0)
+          {
+            //empty function, just return
+            emit_ret();
+            ip += 2; //OP_PUSH + OP_LEAVE
+            break;
+          }
+
+          emit_push(R_PROCBASE); //procBase
+          emit_push(R_PSTACK); //programStack
+
+          emit_op_rx_imm32(X_SUB, R_PSTACK, ci->value); //sub programStack, 0x12
+
+          emit_lea_base_index(R_PROCBASE | R_REX, R_DATABASE, R_PSTACK); //procBase = dataBase + programStack
+
+          emit_CheckProc(vm, ci);
+          break;
+
+        case
+        OP_LEAVE:
+          flush_opstack();
+          dec_opstack(); //opstack -= 4
+#if defined(DEBUG_VM)
+          if (opstack != 0)
+          {
+            DROP("opStack corrupted on OP_LEAVE");
+          }
+#endif
+
+#if defined(RET_OPTIMIZE)
+          if (!ci->endp && proc_base >= 0)
+          {
+            //jump to last OP_LEAVE instruction in this function
+            if (inst[ip + 0].op == OP_PUSH && inst[ip + 1].op == OP_LEAVE)
+            {
+              //next instruction is proc_end
+            }
+            else
+            {
+              EmitJump(ci, OP_JUMP, proc_end);
+            }
+
+            break;
+          }
+#endif
+
+          emit_pop(R_PSTACK); //pop rsi // programStack
+          emit_pop(R_PROCBASE); //pop rbp // procBase
+
+          emit_ret(); //ret
+          break;
+
+        case
+        OP_CALL:
+          rx[0] = load_rx_opstack(R_EAX | FORCED); //eax = *opstack
+          flush_volatile();
+
+          if (opstack != 1)
+          {
+            emit_op_rx_imm32(X_ADD, R_OPSTACK | R_REX, (opstack - 1) * sizeof(int32_t));
+            EmitCallOffset(FUNC_CALL); //call +FUNC_CALL
+            emit_op_rx_imm32(X_SUB, R_OPSTACK | R_REX, (opstack - 1) * sizeof(int32_t));
+          }
+          else
+          {
+            EmitCallOffset(FUNC_CALL); //call +FUNC_CALL
+          }
+
+          unmask_rx(rx[0]);
+          break;
+
+        case
+        OP_PUSH:
+          inc_opstack(); //opstack += 4
+
+          if ((ci + 1)->op == OP_LEAVE)
+          {
+            proc_base = -1;
+          }
+
+          break;
+
+        case
+        OP_POP:
+          dec_opstack_discard(); //opstack -= 4
+          break;
+
+        case
+        OP_CONST:
+#if defined(CONST_OPTIMIZE)
+          if (ConstOptimize(vm, ci + 0, ci + 1))
+          {
+            break;
+          }
+#endif
+          inc_opstack(); //opstack += 4
+          store_item_opstack(ci);
+          break;
+
+        case
+        OP_LOCAL:
+          inc_opstack(); //opstack += 4
+          store_item_opstack(ci);
+          break;
+
+        case
+        OP_JUMP:
+          //eax = *opstack; opstack -= 4
+          rx[0] = load_rx_opstack(R_EAX | RCONST);
+          dec_opstack();
+
+          flush_volatile();
+          emit_CheckJump(vm, rx[0], proc_base, proc_len); //check if eax is within current proc
+#if idx64
+          emit_jump_index(R_INSPOINTERS, rx[0]); //jmp qword ptr [instructionPointers + rax*8]
+#else
+          emit_jump_index_offset((intptr_t)instructionPointers, rx[0]); //jmp dword ptr [instructionPointers + eax*4]
+#endif
+          unmask_rx(rx[0]);
+          break;
+
+        case
+        OP_EQ:
+
+        case
+        OP_NE:
+
+        case
+        OP_LTI:
+
+        case
+        OP_LEI:
+
+        case
+        OP_GTI:
+
+        case
+        OP_GEI:
+
+        case
+        OP_LTU:
+
+        case
+        OP_LEU:
+
+        case
+        OP_GTU:
+
+        case
+        OP_GEU:
+        {
+          //eax = *opstack; opstack -= 4
+          rx[0] = load_rx_opstack(R_EAX | RCONST);
+          dec_opstack();
+
+          //edx = *opstack; opstack -= 4
+          rx[1] = load_rx_opstack(R_EDX | RCONST);
+          dec_opstack();
+
+          emit_cmp_rx(rx[1], rx[0]); //cmp edx, eax
+          unmask_rx(rx[0]);
+          unmask_rx(rx[1]);
+          EmitJump(ci, ci->op, ci->value);
+          break;
+        }
+
+        case
+        OP_EQF:
+
+        case
+        OP_NEF:
+
+        case
+        OP_LTF:
+
+        case
+        OP_LEF:
+
+        case
+        OP_GTF:
+
+        case
+        OP_GEF:
+        {
+          if (HasSSEFP())
+          {
+            //xmm0 = *opstack; opstack -= 4
+            sx[0] = load_sx_opstack(R_XMM0 | RCONST);
+            dec_opstack();
+
+            //xmm1 = *opstack; opstack -= 4
+            sx[1] = load_sx_opstack(R_XMM1 | RCONST);
+            dec_opstack();
+
+            if (ci->op == OP_EQF || ci->op == OP_NEF)
+            {
+              emit_ucomiss(sx[1], sx[0]); //ucomiss xmm1, xmm0
+            }
+            else
+            {
+              emit_comiss(sx[1], sx[0]); //comiss xmm1, xmm0
+            }
+
+            unmask_sx(sx[0]);
+            unmask_sx(sx[1]);
+            EmitJump(ci, ci->op, ci->value);
+            break;
+          }
+          else
+          {
+            //legacy x87 path
+            flush_opstack_top();
+            dec_opstack();
+            flush_opstack_top();
+            dec_opstack();
+
+            if (HasFCOM())
+            {
+              emit_fld(R_OPSTACK, 8); //fld dword ptr [opStack + 8]
+              emit_fld(R_OPSTACK, 4); //fld dword ptr [opStack+4]
+              EmitString("DF E9"); //fucomip
+              EmitString("DD D8"); //fstp st(0)
+              EmitJump(ci, ci->op, ci->value);
+            }
+            else
+            {
+              alloc_rx(R_EAX | FORCED);
+              emit_fld(R_OPSTACK, 4); //fld dword ptr [opStack + 4]
+              emit_fcomp(R_OPSTACK, 8); //fcomp dword ptr [opStack + 8]
+              EmitString("DF E0"); //fnstsw ax
+              EmitFloatJump(ci, ci->op, ci->value);
+              unmask_rx(R_EAX);
+            }
+
             break;
           }
         }
 
-        if (proc_len == 0)
-        {
-          //empty function, just return
-          emit_ret();
-          ip += 2; //OP_PUSH + OP_LEAVE
-          break;
-        }
+        case
+        OP_LOAD1:
 
-        emit_push(R_PROCBASE); //procBase
-        emit_push(R_PSTACK); //programStack
+        case
+        OP_LOAD2:
 
-        emit_op_rx_imm32(X_SUB, R_PSTACK, ci->value); //sub programStack, 0x12
-
-        emit_lea_base_index(R_PROCBASE | R_REX, R_DATABASE, R_PSTACK); //procBase = dataBase + programStack
-
-        emit_CheckProc(vm, ci);
-        break;
-
-      case
-      OP_LEAVE:
-        flush_opstack();
-        dec_opstack(); //opstack -= 4
-#if defined(DEBUG_VM)
-        if (opstack != 0)
-        {
-          DROP("opStack corrupted on OP_LEAVE");
-        }
-#endif
-
-#if defined(RET_OPTIMIZE)
-        if (!ci->endp && proc_base >= 0)
-        {
-          //jump to last OP_LEAVE instruction in this function
-          if (inst[ip + 0].op == OP_PUSH && inst[ip + 1].op == OP_LEAVE)
-          {
-            //next instruction is proc_end
-          }
-          else
-          {
-            EmitJump(ci, OP_JUMP, proc_end);
-          }
-
-          break;
-        }
-#endif
-
-        emit_pop(R_PSTACK); //pop rsi // programStack
-        emit_pop(R_PROCBASE); //pop rbp // procBase
-
-        emit_ret(); //ret
-        break;
-
-      case
-      OP_CALL:
-        rx[0] = load_rx_opstack(R_EAX | FORCED); //eax = *opstack
-        flush_volatile();
-
-        if (opstack != 1)
-        {
-          emit_op_rx_imm32(X_ADD, R_OPSTACK | R_REX, (opstack - 1) * sizeof(int32_t));
-          EmitCallOffset(FUNC_CALL); //call +FUNC_CALL
-          emit_op_rx_imm32(X_SUB, R_OPSTACK | R_REX, (opstack - 1) * sizeof(int32_t));
-        }
-        else
-        {
-          EmitCallOffset(FUNC_CALL); //call +FUNC_CALL
-        }
-
-        unmask_rx(rx[0]);
-        break;
-
-      case
-      OP_PUSH:
-        inc_opstack(); //opstack += 4
-
-        if ((ci + 1)->op == OP_LEAVE)
-        {
-          proc_base = -1;
-        }
-
-        break;
-
-      case
-      OP_POP:
-        dec_opstack_discard(); //opstack -= 4
-        break;
-
-      case
-      OP_CONST:
-#if defined(CONST_OPTIMIZE)
-        if (ConstOptimize(vm, ci + 0, ci + 1))
-        {
-          break;
-        }
-#endif
-        inc_opstack(); //opstack += 4
-        store_item_opstack(ci);
-        break;
-
-      case
-      OP_LOCAL:
-        inc_opstack(); //opstack += 4
-        store_item_opstack(ci);
-        break;
-
-      case
-      OP_JUMP:
-        //eax = *opstack; opstack -= 4
-        rx[0] = load_rx_opstack(R_EAX | RCONST);
-        dec_opstack();
-
-        flush_volatile();
-        emit_CheckJump(vm, rx[0], proc_base, proc_len); //check if eax is within current proc
-#if idx64
-        emit_jump_index(R_INSPOINTERS, rx[0]); //jmp qword ptr [instructionPointers + rax*8]
-#else
-        emit_jump_index_offset((intptr_t)instructionPointers, rx[0]); //jmp dword ptr [instructionPointers + eax*4]
-#endif
-        unmask_rx(rx[0]);
-        break;
-
-      case
-      OP_EQ:
-
-      case
-      OP_NE:
-
-      case
-      OP_LTI:
-
-      case
-      OP_LEI:
-
-      case
-      OP_GTI:
-
-      case
-      OP_GEI:
-
-      case
-      OP_LTU:
-
-      case
-      OP_LEU:
-
-      case
-      OP_GTU:
-
-      case
-      OP_GEU:
-      {
-        //eax = *opstack; opstack -= 4
-        rx[0] = load_rx_opstack(R_EAX | RCONST);
-        dec_opstack();
-
-        //edx = *opstack; opstack -= 4
-        rx[1] = load_rx_opstack(R_EDX | RCONST);
-        dec_opstack();
-
-        emit_cmp_rx(rx[1], rx[0]); //cmp edx, eax
-        unmask_rx(rx[0]);
-        unmask_rx(rx[1]);
-        EmitJump(ci, ci->op, ci->value);
-        break;
-      }
-
-      case
-      OP_EQF:
-
-      case
-      OP_NEF:
-
-      case
-      OP_LTF:
-
-      case
-      OP_LEF:
-
-      case
-      OP_GTF:
-
-      case
-      OP_GEF:
-      {
-        if (HasSSEFP())
-        {
-          //xmm0 = *opstack; opstack -= 4
-          sx[0] = load_sx_opstack(R_XMM0 | RCONST);
-          dec_opstack();
-
-          //xmm1 = *opstack; opstack -= 4
-          sx[1] = load_sx_opstack(R_XMM1 | RCONST);
-          dec_opstack();
-
-          if (ci->op == OP_EQF || ci->op == OP_NEF)
-          {
-            emit_ucomiss(sx[1], sx[0]); //ucomiss xmm1, xmm0
-          }
-          else
-          {
-            emit_comiss(sx[1], sx[0]); //comiss xmm1, xmm0
-          }
-
-          unmask_sx(sx[0]);
-          unmask_sx(sx[1]);
-          EmitJump(ci, ci->op, ci->value);
-          break;
-        }
-        else
-        {
-          //legacy x87 path
-          flush_opstack_top();
-          dec_opstack();
-          flush_opstack_top();
-          dec_opstack();
-
-          if (HasFCOM())
-          {
-            emit_fld(R_OPSTACK, 8); //fld dword ptr [opStack + 8]
-            emit_fld(R_OPSTACK, 4); //fld dword ptr [opStack+4]
-            EmitString("DF E9"); //fucomip
-            EmitString("DD D8"); //fstp st(0)
-            EmitJump(ci, ci->op, ci->value);
-          }
-          else
-          {
-            alloc_rx(R_EAX | FORCED);
-            emit_fld(R_OPSTACK, 4); //fld dword ptr [opStack + 4]
-            emit_fcomp(R_OPSTACK, 8); //fcomp dword ptr [opStack + 8]
-            EmitString("DF E0"); //fnstsw ax
-            EmitFloatJump(ci, ci->op, ci->value);
-            unmask_rx(R_EAX);
-          }
-
-          break;
-        }
-      }
-
-      case
-      OP_LOAD1:
-
-      case
-      OP_LOAD2:
-
-      case
-      OP_LOAD4:
+        case
+        OP_LOAD4:
 #if defined(FPU_OPTIMIZE)
-        if (ci->op == OP_LOAD4 && ci->fpu && HasSSEFP())
-        {
+          if (ci->op == OP_LOAD4 && ci->fpu && HasSSEFP())
+          {
+            if (addr_on_top(&var))
+            {
+              //address specified by CONST/LOCAL
+              discard_top();
+              var.size = 4;
+
+              if (find_sx_var(&sx[0], &var))
+              {
+                //already cached in some register
+                mask_sx(sx[0]);
+              }
+              else
+              {
+                //not cached, perform load
+                sx[0] = alloc_sx(R_XMM0);
+                emit_load_sx(sx[0], var.base, var.addr); //xmmm0 = var.base[var.addr]
+                set_sx_var(sx[0], &var);
+              }
+            }
+            else
+            {
+              //address stored in register
+              rx[0] = load_rx_opstack(R_EAX | RCONST); //eax = *opstack
+              emit_CheckReg(vm, rx[0], FUNC_DATR);
+              sx[0] = alloc_sx(R_XMM0);
+              emit_load_sx_index(sx[0], R_DATABASE, rx[0]); //xmmm0 = dataBase[eax]
+              unmask_rx(rx[0]);
+            }
+
+            store_sx_opstack(sx[0]); //*opstack = xmm0
+            break;
+          }
+#endif
+          switch(ci->op)
+          {
+            case
+            OP_LOAD1:
+              var_size = 1;
+              sign_extend = OP_SEX8;
+              break;
+
+            case
+            OP_LOAD2:
+              var_size = 2;
+              sign_extend = OP_SEX16;
+              break;
+
+            default:
+              var_size = 4;
+              sign_extend = OP_UNDEF;
+              break;
+          }
+
+          //integer path
           if (addr_on_top(&var))
           {
             //address specified by CONST/LOCAL
             discard_top();
-            var.size = 4;
+            var.size = var_size;
 
-            if (find_sx_var(&sx[0], &var))
+            if ((reg = find_rx_var(&rx[0], &var)) != NULL)
             {
               //already cached in some register
-              mask_sx(sx[0]);
+              //do zero extension if needed
+              switch(ci->op)
+              {
+                case
+                OP_LOAD1:
+                  if (reg->ext != Z_EXT8)
+                  {
+                    emit_zex8(rx[0], rx[0]); //movzx eax, al 
+                    //invalidate any mappings that overlaps with high [8..31] bits 
+                    //var.addr += 1;
+                    //var.size = 3;
+                    //wipe_reg_range(rx_regs + rx[0], &var);
+                    reduce_map_size(reg, 1);
+                    //modify constant
+                    reg->cnst.value &= 0xFF;
+                    reg->ext = Z_EXT8;
+                  }
+
+                  break;
+
+                case
+                OP_LOAD2:
+                  if (reg->ext != Z_EXT16)
+                  {
+                    emit_zex16(rx[0], rx[0]); //movzx eax, ax
+                    //invalidate any mappings that overlaps with high [16..31] bits 
+                    //var.addr += 2;
+                    //var.size = 2;
+                    //wipe_reg_range(rx_regs + rx[0], &var);
+                    reduce_map_size(reg, 2);
+                    //modify constant
+                    reg->cnst.value &= 0xFFFF;
+                    reg->ext = Z_EXT16;
+                  }
+
+                  break;
+
+                case
+                OP_LOAD4:
+                  reg->ext = Z_NONE;
+                  break;
+              }
+
+              mask_rx(rx[0]);
             }
             else
             {
               //not cached, perform load
-              sx[0] = alloc_sx(R_XMM0);
-              emit_load_sx(sx[0], var.base, var.addr); //xmmm0 = var.base[var.addr]
-              set_sx_var(sx[0], &var);
-            }
+              rx[0] = alloc_rx(R_EAX); //allocate new register, wipe its metadata
+
+              if ((ci + 1)->op == sign_extend && sign_extend != OP_UNDEF)
+              {
+                //merge with following sign-extension instruction
+                switch(ci->op)
+                {
+                  case
+                  OP_LOAD1:
+                    emit_load1_sex(rx[0], var.base, var.addr);
+                    var.size = 1;
+                    set_rx_ext(rx[0], S_EXT8);
+                    break; //eax = (signed byte)var.base[var.addr]
+
+                  case
+                  OP_LOAD2:
+                    emit_load2_sex(rx[0], var.base, var.addr);
+                    var.size = 2;
+                    set_rx_ext(rx[0], S_EXT16);
+                    break; //eax = (signed short)var.base[var.addr]
+                }
+
+                ip += 1; //OP_SEX/OP_SEX16
+              }
+              else
+              {
+                //usual load with zero-extension
+                switch(ci->op)
+                {
+                  case
+                  OP_LOAD1:
+                    emit_load1(rx[0], var.base, var.addr);
+                    var.size = 1;
+                    set_rx_ext(rx[0], Z_EXT8);
+                    break; //eax = (unsigned byte)var.base[var.addr]
+
+                  case
+                  OP_LOAD2:
+                    emit_load2(rx[0], var.base, var.addr);
+                    var.size = 2;
+                    set_rx_ext(rx[0], Z_EXT16);
+                    break; //eax = (unsigned short)var.base[var.addr]
+
+                  case
+                  OP_LOAD4:
+                    emit_load4(rx[0], var.base, var.addr);
+                    var.size = 4;
+                    set_rx_ext(rx[0], Z_NONE);
+                    break; //eax = (dword)var.base[var.addr]
+                }
+              } //load with zero-extension
+
+              set_rx_var(rx[0], &var);
+            } //not cached, perform load
           }
           else
           {
             //address stored in register
-            rx[0] = load_rx_opstack(R_EAX | RCONST); //eax = *opstack
-            emit_CheckReg(vm, rx[0], FUNC_DATR);
-            sx[0] = alloc_sx(R_XMM0);
-            emit_load_sx_index(sx[0], R_DATABASE, rx[0]); //xmmm0 = dataBase[eax]
-            unmask_rx(rx[0]);
-          }
+            //rx[0] = rx[1] = load_rx_opstack(R_EAX); //target, address = *opstack
+            load_rx_opstack2(&rx[0], R_EDX, &rx[1], R_EAX); //target, address = *opstack
 
-          store_sx_opstack(sx[0]); //*opstack = xmm0
-          break;
-        }
-#endif
-        switch(ci->op)
-        {
-          case
-          OP_LOAD1:
-            var_size = 1;
-            sign_extend = OP_SEX8;
-            break;
-
-          case
-          OP_LOAD2:
-            var_size = 2;
-            sign_extend = OP_SEX16;
-            break;
-
-          default:
-            var_size = 4;
-            sign_extend = OP_UNDEF;
-            break;
-        }
-
-        //integer path
-        if (addr_on_top(&var))
-        {
-          //address specified by CONST/LOCAL
-          discard_top();
-          var.size = var_size;
-
-          if ((reg = find_rx_var(&rx[0], &var)) != NULL)
-          {
-            //already cached in some register
-            //do zero extension if needed
-            switch(ci->op)
-            {
-              case
-              OP_LOAD1:
-                if (reg->ext != Z_EXT8)
-                {
-                  emit_zex8(rx[0], rx[0]); //movzx eax, al 
-                  //invalidate any mappings that overlaps with high [8..31] bits 
-                  //var.addr += 1;
-                  //var.size = 3;
-                  //wipe_reg_range(rx_regs + rx[0], &var);
-                  reduce_map_size(reg, 1);
-                  //modify constant
-                  reg->cnst.value &= 0xFF;
-                  reg->ext = Z_EXT8;
-                }
-
-                break;
-
-              case
-              OP_LOAD2:
-                if (reg->ext != Z_EXT16)
-                {
-                  emit_zex16(rx[0], rx[0]); //movzx eax, ax
-                  //invalidate any mappings that overlaps with high [16..31] bits 
-                  //var.addr += 2;
-                  //var.size = 2;
-                  //wipe_reg_range(rx_regs + rx[0], &var);
-                  reduce_map_size(reg, 2);
-                  //modify constant
-                  reg->cnst.value &= 0xFFFF;
-                  reg->ext = Z_EXT16;
-                }
-
-                break;
-
-              case
-              OP_LOAD4:
-                reg->ext = Z_NONE;
-                break;
-            }
-
-            mask_rx(rx[0]);
-          }
-          else
-          {
-            //not cached, perform load
-            rx[0] = alloc_rx(R_EAX); //allocate new register, wipe its metadata
+            emit_CheckReg(vm, rx[1], FUNC_DATR); //check address bounds
 
             if ((ci + 1)->op == sign_extend && sign_extend != OP_UNDEF)
             {
               //merge with following sign-extension instruction
               switch(ci->op)
               {
-                case
-                OP_LOAD1:
-                  emit_load1_sex(rx[0], var.base, var.addr);
-                  var.size = 1;
+                case OP_LOAD1:
+                  emit_load1_sex_index(rx[0], R_DATABASE, rx[1]);
                   set_rx_ext(rx[0], S_EXT8);
-                  break; //eax = (signed byte)var.base[var.addr]
+                  break; //target = (signed byte)[dataBase + address]
 
                 case
                 OP_LOAD2:
-                  emit_load2_sex(rx[0], var.base, var.addr);
-                  var.size = 2;
+                  emit_load2_sex_index(rx[0], R_DATABASE, rx[1]);
                   set_rx_ext(rx[0], S_EXT16);
-                  break; //eax = (signed short)var.base[var.addr]
+                  break; //target = (unsigned short)[dataBase + address]
               }
 
-              ip += 1; //OP_SEX/OP_SEX16
+              ip += 1; //OP_SEX8/OP_SEX16
             }
             else
             {
@@ -5591,735 +5649,677 @@ __compile:
               {
                 case
                 OP_LOAD1:
-                  emit_load1(rx[0], var.base, var.addr);
-                  var.size = 1;
+                  emit_load1_index(rx[0], R_DATABASE, rx[1]);
                   set_rx_ext(rx[0], Z_EXT8);
-                  break; //eax = (unsigned byte)var.base[var.addr]
+                  break; //target = (unsigned byte)[dataBase + address]
 
                 case
                 OP_LOAD2:
-                  emit_load2(rx[0], var.base, var.addr);
-                  var.size = 2;
+                  emit_load2_index(rx[0], R_DATABASE, rx[1]);
                   set_rx_ext(rx[0], Z_EXT16);
-                  break; //eax = (unsigned short)var.base[var.addr]
+                  break; //target = (unsigned short)[dataBase + address]
 
-                case
-                OP_LOAD4:
-                  emit_load4(rx[0], var.base, var.addr);
-                  var.size = 4;
+                default:
+                  emit_load4_index(rx[0], R_DATABASE, rx[1]);
                   set_rx_ext(rx[0], Z_NONE);
-                  break; //eax = (dword)var.base[var.addr]
+                  break; //target = (dword)dataBase[dataBase + address]
               }
-            } //load with zero-extension
-
-            set_rx_var(rx[0], &var);
-          } //not cached, perform load
-        }
-        else
-        {
-          //address stored in register
-          //rx[0] = rx[1] = load_rx_opstack(R_EAX); //target, address = *opstack
-          load_rx_opstack2(&rx[0], R_EDX, &rx[1], R_EAX); //target, address = *opstack
-
-          emit_CheckReg(vm, rx[1], FUNC_DATR); //check address bounds
-
-          if ((ci + 1)->op == sign_extend && sign_extend != OP_UNDEF)
-          {
-            //merge with following sign-extension instruction
-            switch(ci->op)
-            {
-              case OP_LOAD1:
-                emit_load1_sex_index(rx[0], R_DATABASE, rx[1]);
-                set_rx_ext(rx[0], S_EXT8);
-                break; //target = (signed byte)[dataBase + address]
-
-              case
-              OP_LOAD2:
-                emit_load2_sex_index(rx[0], R_DATABASE, rx[1]);
-                set_rx_ext(rx[0], S_EXT16);
-                break; //target = (unsigned short)[dataBase + address]
             }
 
-            ip += 1; //OP_SEX8/OP_SEX16
-          }
-          else
-          {
-            //usual load with zero-extension
-            switch(ci->op)
+            if (rx[1] != rx[0])
             {
-              case
-              OP_LOAD1:
-                emit_load1_index(rx[0], R_DATABASE, rx[1]);
-                set_rx_ext(rx[0], Z_EXT8);
-                break; //target = (unsigned byte)[dataBase + address]
-
-              case
-              OP_LOAD2:
-                emit_load2_index(rx[0], R_DATABASE, rx[1]);
-                set_rx_ext(rx[0], Z_EXT16);
-                break; //target = (unsigned short)[dataBase + address]
-
-              default:
-                emit_load4_index(rx[0], R_DATABASE, rx[1]);
-                set_rx_ext(rx[0], Z_NONE);
-                break; //target = (dword)dataBase[dataBase + address]
+              unmask_rx(rx[1]);
             }
           }
 
-          if (rx[1] != rx[0])
+          store_rx_opstack(rx[0]); //*opstack = target
+          break;
+
+        case
+        OP_STORE1:
+
+        case
+        OP_STORE2:
+
+        case
+        OP_STORE4:
+          if (scalar_on_top() && ci->op == OP_STORE4 && HasSSEFP())
           {
-            unmask_rx(rx[1]);
-          }
-        }
-
-        store_rx_opstack(rx[0]); //*opstack = target
-        break;
-
-      case
-      OP_STORE1:
-
-      case
-      OP_STORE2:
-
-      case
-      OP_STORE4:
-        if (scalar_on_top() && ci->op == OP_STORE4 && HasSSEFP())
-        {
-          //xmm0 = *opstack; opstack -= 4
-          sx[0] = load_sx_opstack(R_XMM0 | RCONST);
-          dec_opstack();
-
-          if (addr_on_top(&var))
-          {
-            //address specified by CONST/LOCAL
-            discard_top();
+            //xmm0 = *opstack; opstack -= 4
+            sx[0] = load_sx_opstack(R_XMM0 | RCONST);
             dec_opstack();
 
-            emit_store_sx(sx[0], var.base, var.addr); //baseReg[n] = xmm0
-            var.size = 4;
-            wipe_var_range(&var);
-            set_sx_var(sx[0], &var); //update metadata
-          }
-          else
-          {
-            //edx = *opstack; opstack -= 4
-            rx[1] = load_rx_opstack(R_EDX | RCONST);
-            dec_opstack();
-
-            emit_CheckReg(vm, rx[1], FUNC_DATW);
-            emit_store_sx_index(sx[0], R_DATABASE, rx[1]); //dataBase[edx] = xmm0
-            unmask_rx(rx[1]);
-            wipe_vars(); //unknown/dynamic address, wipe all register mappings
-          }
-
-          unmask_sx(sx[0]);
-        }
-        else
-        {
-          //integer path
-          //eax = *opstack; opstack -= 4
-          rx[0] = load_rx_opstack(R_EAX | RCONST);
-          dec_opstack();
-
-          if (addr_on_top(&var))
-          {
-            //address specified by CONST/LOCAL
-            discard_top();
-            dec_opstack();
-
-            switch(ci->op)
+            if (addr_on_top(&var))
             {
-              case
-              OP_STORE1:
-                emit_store1_rx(rx[0], var.base, var.addr);
-                var.size = 1;
-                break; //(byte *)var.base[var.addr] = al
+              //address specified by CONST/LOCAL
+              discard_top();
+              dec_opstack();
 
-              case
-              OP_STORE2:
-                emit_store2_rx(rx[0], var.base, var.addr);
-                var.size = 2;
-                break; //(short *)var.base[var.addr] = ax
+              emit_store_sx(sx[0], var.base, var.addr); //baseReg[n] = xmm0
+              var.size = 4;
+              wipe_var_range(&var);
+              set_sx_var(sx[0], &var); //update metadata
+            }
+            else
+            {
+              //edx = *opstack; opstack -= 4
+              rx[1] = load_rx_opstack(R_EDX | RCONST);
+              dec_opstack();
 
-              default:
-                emit_store_rx(rx[0], var.base, var.addr);
-                var.size = 4;
-                break; //(dword *)var.base[var.addr] = eax
+              emit_CheckReg(vm, rx[1], FUNC_DATW);
+              emit_store_sx_index(sx[0], R_DATABASE, rx[1]); //dataBase[edx] = xmm0
+              unmask_rx(rx[1]);
+              wipe_vars(); //unknown/dynamic address, wipe all register mappings
             }
 
-            wipe_var_range(&var);
-            set_rx_var(rx[0], &var); //update metadata
+            unmask_sx(sx[0]);
           }
           else
           {
-            //address specified by register
-            //edx = *opstack; opstack -= 4
-            rx[1] = load_rx_opstack(R_EDX | RCONST);
-            dec_opstack();
-
-            emit_CheckReg(vm, rx[1], FUNC_DATW);
-
-            switch(ci->op)
-            {
-              case
-              OP_STORE1:
-                emit_store1_index(rx[0], R_DATABASE, rx[1]);
-                break; //(byte *)dataBase[edx] = al
-
-              case
-              OP_STORE2:
-                emit_store2_index(rx[0], R_DATABASE, rx[1]);
-                break; //(short *)dataBase[edx] = ax
-
-              default:
-                emit_store4_index(rx[0], R_DATABASE, rx[1]);
-                break; //(dword *)dataBase[edx] = eax
-            }
-
-            unmask_rx(rx[1]);
-            wipe_vars(); //unknown/dynamic address, wipe all register mappings
-          }
-
-          unmask_rx(rx[0]);
-        }
-
-        break;
-
-      case
-      OP_ARG:
-        var.base = R_PROCBASE;
-        var.addr = ci->value;
-        var.size = 4;
-        wipe_var_range(&var);
-
-        if (scalar_on_top() && HasSSEFP())
-        {
-          //xmm0 = *opstack; opstack -=4
-          sx[0] = load_sx_opstack(R_XMM0 | RCONST);
-          dec_opstack();
-
-          emit_store_sx(sx[0], var.base, var.addr); //[procBase + v] = xmm0
-          unmask_sx(sx[0]);
-        }
-        else
-        {
-          if (const_on_top() && top_value() != 0)
-          {
-            n = top_value();
-            discard_top();
-            dec_opstack();
-            emit_store_imm32(n, var.base, var.addr); //[procBase + v] = n
-          }
-          else
-          {
-            //eax = *opstack; opstack -=4
+            //integer path
+            //eax = *opstack; opstack -= 4
             rx[0] = load_rx_opstack(R_EAX | RCONST);
             dec_opstack();
 
-            emit_store_rx(rx[0], var.base, var.addr); //[procBase + v] = eax
-            unmask_rx(rx[0]);
-          }
-        }
-
-        break;
-
-      case
-      OP_BLOCK_COPY:
-        //edx - src
-        rx[0] = load_rx_opstack(R_EDX | FORCED);
-        dec_opstack();
-
-        //eax - dst
-        rx[1] = load_rx_opstack(R_EAX | FORCED);
-        dec_opstack();
-
-        rx[2] = alloc_rx(R_ECX | FORCED); //flush and reserve ecx register
-        mov_rx_imm32(rx[2], ci->value >> 2); //mov ecx, 0x12345678 / 4
-        EmitCallOffset(FUNC_BCPY);
-        unmask_rx(rx[2]);
-        unmask_rx(rx[1]);
-        unmask_rx(rx[0]);
-        wipe_vars();
-        break;
-
-
-      case
-      OP_SEX8:
-
-      case
-      OP_SEX16:
-
-      case
-      OP_NEGI:
-
-      case
-      OP_BCOM:
-        if (ci->op == OP_SEX8 || ci->op == OP_SEX16)
-        {
-          //skip sign-extension for `if (var == 0)` tests if we already zero-extended
-          reg = rx_on_top();
-
-          if (reg && (ci + 1)->op == OP_CONST && (ci + 1)->value == 0 && ((ci + 2)->op == OP_EQ || (ci + 2)->op == OP_NE))
-          {
-            if (!(ci + 1)->jused && !(ci + 2)->jused)
+            if (addr_on_top(&var))
             {
-              if (ci->op == OP_SEX8 && reg->ext == Z_EXT8)
+              //address specified by CONST/LOCAL
+              discard_top();
+              dec_opstack();
+
+              switch(ci->op)
               {
-                break;
+                case
+                OP_STORE1:
+                  emit_store1_rx(rx[0], var.base, var.addr);
+                  var.size = 1;
+                  break; //(byte *)var.base[var.addr] = al
+
+                case
+                OP_STORE2:
+                  emit_store2_rx(rx[0], var.base, var.addr);
+                  var.size = 2;
+                  break; //(short *)var.base[var.addr] = ax
+
+                default:
+                  emit_store_rx(rx[0], var.base, var.addr);
+                  var.size = 4;
+                  break; //(dword *)var.base[var.addr] = eax
               }
 
-              if (ci->op == OP_SEX16 && reg->ext == Z_EXT16)
+              wipe_var_range(&var);
+              set_rx_var(rx[0], &var); //update metadata
+            }
+            else
+            {
+              //address specified by register
+              //edx = *opstack; opstack -= 4
+              rx[1] = load_rx_opstack(R_EDX | RCONST);
+              dec_opstack();
+
+              emit_CheckReg(vm, rx[1], FUNC_DATW);
+
+              switch(ci->op)
               {
-                break;
+                case
+                OP_STORE1:
+                  emit_store1_index(rx[0], R_DATABASE, rx[1]);
+                  break; //(byte *)dataBase[edx] = al
+
+                case
+                OP_STORE2:
+                  emit_store2_index(rx[0], R_DATABASE, rx[1]);
+                  break; //(short *)dataBase[edx] = ax
+
+                default:
+                  emit_store4_index(rx[0], R_DATABASE, rx[1]);
+                  break; //(dword *)dataBase[edx] = eax
+              }
+
+              unmask_rx(rx[1]);
+              wipe_vars(); //unknown/dynamic address, wipe all register mappings
+            }
+
+            unmask_rx(rx[0]);
+          }
+
+          break;
+
+        case
+        OP_ARG:
+          var.base = R_PROCBASE;
+          var.addr = ci->value;
+          var.size = 4;
+          wipe_var_range(&var);
+
+          if (scalar_on_top() && HasSSEFP())
+          {
+            //xmm0 = *opstack; opstack -=4
+            sx[0] = load_sx_opstack(R_XMM0 | RCONST);
+            dec_opstack();
+
+            emit_store_sx(sx[0], var.base, var.addr); //[procBase + v] = xmm0
+            unmask_sx(sx[0]);
+          }
+          else
+          {
+            if (const_on_top() && top_value() != 0)
+            {
+              n = top_value();
+              discard_top();
+              dec_opstack();
+              emit_store_imm32(n, var.base, var.addr); //[procBase + v] = n
+            }
+            else
+            {
+              //eax = *opstack; opstack -=4
+              rx[0] = load_rx_opstack(R_EAX | RCONST);
+              dec_opstack();
+
+              emit_store_rx(rx[0], var.base, var.addr); //[procBase + v] = eax
+              unmask_rx(rx[0]);
+            }
+          }
+
+          break;
+
+        case
+        OP_BLOCK_COPY:
+          //edx - src
+          rx[0] = load_rx_opstack(R_EDX | FORCED);
+          dec_opstack();
+
+          //eax - dst
+          rx[1] = load_rx_opstack(R_EAX | FORCED);
+          dec_opstack();
+
+          rx[2] = alloc_rx(R_ECX | FORCED); //flush and reserve ecx register
+          mov_rx_imm32(rx[2], ci->value >> 2); //mov ecx, 0x12345678 / 4
+          EmitCallOffset(FUNC_BCPY);
+          unmask_rx(rx[2]);
+          unmask_rx(rx[1]);
+          unmask_rx(rx[0]);
+          wipe_vars();
+          break;
+
+
+        case
+        OP_SEX8:
+
+        case
+        OP_SEX16:
+
+        case
+        OP_NEGI:
+
+        case
+        OP_BCOM:
+          if (ci->op == OP_SEX8 || ci->op == OP_SEX16)
+          {
+            //skip sign-extension for `if (var == 0)` tests if we already zero-extended
+            reg = rx_on_top();
+
+            if (reg && (ci + 1)->op == OP_CONST && (ci + 1)->value == 0 && ((ci + 2)->op == OP_EQ || (ci + 2)->op == OP_NE))
+            {
+              if (!(ci + 1)->jused && !(ci + 2)->jused)
+              {
+                if (ci->op == OP_SEX8 && reg->ext == Z_EXT8)
+                {
+                  break;
+                }
+
+                if (ci->op == OP_SEX16 && reg->ext == Z_EXT16)
+                {
+                  break;
+                }
               }
             }
           }
-        }
 
-        rx[0] = load_rx_opstack(R_EAX); //eax = *opstack
-
-        switch(ci->op)
-        {
-          case
-          OP_SEX8:
-            emit_sex8(rx[0], rx[0]);//movsx eax, al
-            break;
-
-          case
-          OP_SEX16:
-            emit_sex16(rx[0], rx[0]); //movsx eax, ax
-            break;
-
-          case
-          OP_NEGI:
-            emit_neg_rx(rx[0]); //neg eax
-            break;
-
-          case
-          OP_BCOM:
-            emit_not_rx(rx[0]); //not eax
-            break;
-        }
-
-        store_rx_opstack(rx[0]); //*opstack = eax
-        break;
-
-      case
-      OP_ADD:
-        //eax = *opstack
-        rx[0] = load_rx_opstack(R_EAX | RCONST);
-        dec_opstack();
-
-        rx[1] = load_rx_opstack(R_ECX); //opstack-=4; ecx = *opstack
-#if defined(CONST_OPTIMIZE)
-        //optimize OP_ADD + OP_CONST + OP_ADD
-        if (!(ci + 1)->jused && (ci + 1)->op == OP_CONST && (ci + 2)->op == OP_ADD)
-        {
-          emit_lea_base_index_offset(rx[1], rx[1], rx[0], (ci + 1)->value); //lea ecx, [ecx + eax + const]
-          ip += 2; //OP_CONST + OP_ADD
-        }
-        else
-#endif
-        emit_add_rx(rx[1], rx[0]); //add ecx, eax
-        unmask_rx(rx[0]);
-        store_rx_opstack(rx[1]); //*opstack = ecx
-        break;
-
-      //case
-      //OP_ADD:
-
-      case
-      OP_SUB:
-
-      case
-      OP_MULI:
-
-      case
-      OP_MULU:
-
-      case
-      OP_BAND:
-
-      case
-      OP_BOR:
-
-      case
-      OP_BXOR:
-        //eax = *opstack
-        rx[0] = load_rx_opstack(R_EAX | RCONST);
-        dec_opstack();
-
-        rx[1] = load_rx_opstack(R_ECX); //opstack-=4; ecx = *opstack
-
-        switch(ci->op)
-        {
-          //case
-          //OP_ADD:
-            //emit_add_rx(rx[1], rx[0]); //add ecx, eax
-            //break;
-
-          case
-          OP_SUB:
-            emit_sub_rx(rx[1], rx[0]); //sub ecx, eax
-            break;
-
-          case
-          OP_MULI:
-            emit_mul_rx(rx[1], rx[0]); //imul ecx, eax
-            break;
-
-          case
-          OP_MULU:
-            emit_mul_rx(rx[1], rx[0]); //imul ecx, eax
-            break;
-
-          case
-          OP_BAND:
-            emit_and_rx(rx[1], rx[0]); //and ecx, eax
-            break;
-
-          case
-          OP_BOR:
-            emit_or_rx(rx[1], rx[0]); //or ecx, eax
-            break;
-
-          case
-          OP_BXOR:
-            emit_xor_rx(rx[1], rx[0]); //xor ecx, eax
-            break;
-        }
-
-        unmask_rx(rx[0]);
-        store_rx_opstack(rx[1]); //*opstack = ecx
-        break;
-
-      case
-      OP_LSH:
-
-      case
-      OP_RSHU:
-
-      case
-      OP_RSHI:
-        //ecx = *opstack
-        rx[0] = load_rx_opstack(R_ECX | FORCED | RCONST);
-        dec_opstack();
-
-        rx[1] = load_rx_opstack(R_EAX); //opstack-=4; eax = *opstack
-
-        switch(ci->op)
-        {
-          case
-          OP_LSH:
-            emit_shl_rx(rx[1]); //shl eax, cl
-            break;
-
-          case
-          OP_RSHU:
-            emit_shr_rx(rx[1]); //shr eax, cl
-            break;
-
-          case
-          OP_RSHI:
-            emit_sar_rx(rx[1]); //sar eax, cl
-            break;
-        }
-
-        unmask_rx(rx[0]);
-        store_rx_opstack(rx[1]); //*opstack = eax
-        break;
-
-      case
-      OP_DIVI:
-
-      case
-      OP_DIVU:
-
-      case
-      OP_MODI:
-
-      case
-      OP_MODU:
-        rx[1] = load_rx_opstack(R_EAX | FORCED | SHIFT4); //eax = *(opstack-4)
-        rx[2] = alloc_rx(R_EDX | FORCED); //flush and reserve edx register
-
-        //ecx = *opstack; opstack -= 4
-        rx[0] = load_rx_opstack(R_ECX | RCONST | XMASK);
-        dec_opstack();
-
-        if (rx[0] == rx[2] || rx[1] == rx[2])
-        {
-          DROP("incorrect register setup, rx_mask=%04x", build_rx_mask());
-        }
-
-        if (ci->op == OP_DIVI || ci->op == OP_MODI)
-        {
-          emit_cdq(); //cdq
-          emit_idiv_rx(rx[0]); //idiv eax, ecx
-        }
-        else
-        {
-          emit_xor_rx(rx[2], rx[2]); //xor edx, edx
-          emit_udiv_rx(rx[0]); //div ecx
-        }
-
-        unmask_rx(rx[0]);
-
-        if (ci->op == OP_DIVI || ci->op == OP_DIVU)
-        {
-          unmask_rx(rx[2]);
-          store_rx_opstack(rx[1]); //*opstack = eax
-        }
-        else
-        {
-          unmask_rx(rx[1]);
-          store_rx_opstack(rx[2]); //*opstack = edx
-        }
-
-        break;
-
-      case
-      OP_ADDF:
-
-      case
-      OP_SUBF:
-
-      case
-      OP_MULF:
-
-      case
-      OP_DIVF:
-        if (HasSSEFP())
-        {
-          //xmm0 = *opstack
-          sx[0] = load_sx_opstack(R_XMM0 | RCONST);
-          dec_opstack();
-
-          sx[1] = load_sx_opstack(R_XMM1); //opstack -= 4; xmm1 = *opstack
+          rx[0] = load_rx_opstack(R_EAX); //eax = *opstack
 
           switch(ci->op)
           {
             case
-            OP_ADDF:
-              emit_add_sx(sx[1], sx[0]); //xmm1 = xmm1 + xmm0
+            OP_SEX8:
+              emit_sex8(rx[0], rx[0]);//movsx eax, al
               break;
 
             case
-            OP_SUBF:
-              emit_sub_sx(sx[1], sx[0]); //xmm1 = xmm1 - xmm0
+            OP_SEX16:
+              emit_sex16(rx[0], rx[0]); //movsx eax, ax
               break;
 
             case
-            OP_MULF:
-              emit_mul_sx(sx[1], sx[0]); //xmm1 = xmm1 * xmm0
+            OP_NEGI:
+              emit_neg_rx(rx[0]); //neg eax
               break;
 
             case
-            OP_DIVF:
-              emit_div_sx(sx[1], sx[0]); //xmm1 = xmm1 / xmm0
+            OP_BCOM:
+              emit_not_rx(rx[0]); //not eax
               break;
           }
 
-          unmask_sx(sx[0]);
-          store_sx_opstack(sx[1]); //*opstack = xmm0
-        }
-        else
-        {
-          //legacy x87 path
-          //value
-          flush_opstack_top();
-          dec_opstack();
-
-          flush_opstack_top(); //target
-          emit_fld(R_OPSTACK, opstack * sizeof(int32_t));
-
-          switch(ci->op)
-          {
-            case
-            OP_ADDF:
-              emit_fadd(R_OPSTACK, (opstack + 1) * sizeof(int32_t));
-              break;
-
-            case
-            OP_SUBF:
-              emit_fsub(R_OPSTACK, (opstack + 1) * sizeof(int32_t));
-              break;
-
-            case
-            OP_MULF:
-              emit_fmul(R_OPSTACK, (opstack + 1) * sizeof(int32_t));
-              break;
-
-            case
-            OP_DIVF:
-              emit_fdiv(R_OPSTACK, (opstack + 1) * sizeof(int32_t));
-              break;
-          }
-
-          emit_fstp(R_OPSTACK, opstack * sizeof(int32_t));
-        }
-
-        break;
-
-      case
-      OP_NEGF:
-        if (HasSSEFP())
-        {
-          sx[0] = load_sx_opstack(R_XMM0 | RCONST); //xmm0 = *opstack
-          sx[1] = alloc_sx(R_XMM1);
-          emit_xor_sx(sx[1], sx[1]); //xorps xmm1, xmm1
-          emit_sub_sx(sx[1], sx[0]); //subps xmm1, xmm0
-          unmask_sx(sx[0]);
-          store_sx_opstack(sx[1]); //*opstack = xmm1
-        }
-        else
-        {
-          //legacy x87 path
-          flush_opstack_top();
-          emit_fld(R_OPSTACK, opstack * sizeof(int32_t)); //fld dword ptr [opStack]
-          EmitString("D9 E0"); //fchs
-          emit_fstp(R_OPSTACK, opstack * sizeof(int32_t)); //fstp dword ptr [opStack]
-        }
-
-        break;
-
-      case
-      OP_CVIF:
-        if (HasSSEFP())
-        {
-          sx[0] = alloc_sx(R_XMM0);
-          rx[0] = load_rx_opstack(R_EAX | RCONST); //eax = *opstack
-          emit_cvtsi2ss(sx[0], rx[0]); //cvtsi2ss xmm0, eax
-          unmask_rx(rx[0]);
-          store_sx_opstack(sx[0]); //*opstack = xmm0
-        }
-        else
-        {
-          flush_opstack_top();
-          emit_fild(R_OPSTACK, opstack * sizeof(int32_t)); //fild dword ptr [opStack]
-          emit_fstp(R_OPSTACK, opstack * sizeof(int32_t)); //fstp dword ptr [opStack]
-        }
-
-        break;
-
-      case
-      OP_CVFI:
-        if (HasSSEFP())
-        {
-          rx[0] = alloc_rx(R_EAX);
-          sx[0] = load_sx_opstack(R_XMM0 | RCONST); //xmm0 = *opstack
-          emit_cvttss2si(rx[0], sx[0]); //cvttss2si xmm0, eax
-          unmask_sx(sx[0]);
           store_rx_opstack(rx[0]); //*opstack = eax
-        }
-        else
-        {
-          static int32_t fp_cw[2] = {0x0000, 0x0F7F}; //[0] - current value, [1] - round towards zero
+          break;
 
-          flush_opstack_top();
-          alloc_rx(R_EAX | FORCED);
-          emit_fld(R_OPSTACK, opstack * sizeof(int32_t)); //fld dword ptr [opStack]
-          mov_rx_ptr(R_EAX, &fp_cw);
-          EmitString("9B D9 38"); //fnstcw word ptr [eax]
-          EmitString("D9 68 04"); //fldcw word ptr [eax+4]
-          emit_fistp(R_OPSTACK, opstack * sizeof(int32_t)); //fistp dword ptr [opStack]
-          EmitString("D9 28"); //fldcw word ptr [eax]
-          unmask_rx(R_EAX);
-        }
+        case
+        OP_ADD:
+          //eax = *opstack
+          rx[0] = load_rx_opstack(R_EAX | RCONST);
+          dec_opstack();
 
-        break;
+          rx[1] = load_rx_opstack(R_ECX); //opstack-=4; ecx = *opstack
+#if defined(CONST_OPTIMIZE)
+          //optimize OP_ADD + OP_CONST + OP_ADD
+          if (!(ci + 1)->jused && (ci + 1)->op == OP_CONST && (ci + 2)->op == OP_ADD)
+          {
+            emit_lea_base_index_offset(rx[1], rx[1], rx[0], (ci + 1)->value); //lea ecx, [ecx + eax + const]
+            ip += 2; //OP_CONST + OP_ADD
+          }
+          else
+#endif
+          emit_add_rx(rx[1], rx[0]); //add ecx, eax
+          unmask_rx(rx[0]);
+          store_rx_opstack(rx[1]); //*opstack = ecx
+          break;
+
+        //case
+        //OP_ADD:
+
+        case
+        OP_SUB:
+
+        case
+        OP_MULI:
+
+        case
+        OP_MULU:
+
+        case
+        OP_BAND:
+
+        case
+        OP_BOR:
+
+        case
+        OP_BXOR:
+          //eax = *opstack
+          rx[0] = load_rx_opstack(R_EAX | RCONST);
+          dec_opstack();
+
+          rx[1] = load_rx_opstack(R_ECX); //opstack-=4; ecx = *opstack
+
+          switch(ci->op)
+          {
+            //case
+            //OP_ADD:
+              //emit_add_rx(rx[1], rx[0]); //add ecx, eax
+              //break;
+
+            case
+            OP_SUB:
+              emit_sub_rx(rx[1], rx[0]); //sub ecx, eax
+              break;
+
+            case
+            OP_MULI:
+              emit_mul_rx(rx[1], rx[0]); //imul ecx, eax
+              break;
+
+            case
+            OP_MULU:
+              emit_mul_rx(rx[1], rx[0]); //imul ecx, eax
+              break;
+
+            case
+            OP_BAND:
+              emit_and_rx(rx[1], rx[0]); //and ecx, eax
+              break;
+
+            case
+            OP_BOR:
+              emit_or_rx(rx[1], rx[0]); //or ecx, eax
+              break;
+
+            case
+            OP_BXOR:
+              emit_xor_rx(rx[1], rx[0]); //xor ecx, eax
+              break;
+          }
+
+          unmask_rx(rx[0]);
+          store_rx_opstack(rx[1]); //*opstack = ecx
+          break;
+
+        case
+        OP_LSH:
+
+        case
+        OP_RSHU:
+
+        case
+        OP_RSHI:
+          //ecx = *opstack
+          rx[0] = load_rx_opstack(R_ECX | FORCED | RCONST);
+          dec_opstack();
+
+          rx[1] = load_rx_opstack(R_EAX); //opstack-=4; eax = *opstack
+
+          switch(ci->op)
+          {
+            case
+            OP_LSH:
+              emit_shl_rx(rx[1]); //shl eax, cl
+              break;
+
+            case
+            OP_RSHU:
+              emit_shr_rx(rx[1]); //shr eax, cl
+              break;
+
+            case
+            OP_RSHI:
+              emit_sar_rx(rx[1]); //sar eax, cl
+              break;
+          }
+
+          unmask_rx(rx[0]);
+          store_rx_opstack(rx[1]); //*opstack = eax
+          break;
+
+        case
+        OP_DIVI:
+
+        case
+        OP_DIVU:
+
+        case
+        OP_MODI:
+
+        case
+        OP_MODU:
+          rx[1] = load_rx_opstack(R_EAX | FORCED | SHIFT4); //eax = *(opstack-4)
+          rx[2] = alloc_rx(R_EDX | FORCED); //flush and reserve edx register
+
+          //ecx = *opstack; opstack -= 4
+          rx[0] = load_rx_opstack(R_ECX | RCONST | XMASK);
+          dec_opstack();
+
+          if (rx[0] == rx[2] || rx[1] == rx[2])
+          {
+            DROP("incorrect register setup, rx_mask=%04x", build_rx_mask());
+          }
+
+          if (ci->op == OP_DIVI || ci->op == OP_MODI)
+          {
+            emit_cdq(); //cdq
+            emit_idiv_rx(rx[0]); //idiv eax, ecx
+          }
+          else
+          {
+            emit_xor_rx(rx[2], rx[2]); //xor edx, edx
+            emit_udiv_rx(rx[0]); //div ecx
+          }
+
+          unmask_rx(rx[0]);
+
+          if (ci->op == OP_DIVI || ci->op == OP_DIVU)
+          {
+            unmask_rx(rx[2]);
+            store_rx_opstack(rx[1]); //*opstack = eax
+          }
+          else
+          {
+            unmask_rx(rx[1]);
+            store_rx_opstack(rx[2]); //*opstack = edx
+          }
+
+          break;
+
+        case
+        OP_ADDF:
+
+        case
+        OP_SUBF:
+
+        case
+        OP_MULF:
+
+        case
+        OP_DIVF:
+          if (HasSSEFP())
+          {
+            //xmm0 = *opstack
+            sx[0] = load_sx_opstack(R_XMM0 | RCONST);
+            dec_opstack();
+
+            sx[1] = load_sx_opstack(R_XMM1); //opstack -= 4; xmm1 = *opstack
+
+            switch(ci->op)
+            {
+              case
+              OP_ADDF:
+                emit_add_sx(sx[1], sx[0]); //xmm1 = xmm1 + xmm0
+                break;
+
+              case
+              OP_SUBF:
+                emit_sub_sx(sx[1], sx[0]); //xmm1 = xmm1 - xmm0
+                break;
+
+              case
+              OP_MULF:
+                emit_mul_sx(sx[1], sx[0]); //xmm1 = xmm1 * xmm0
+                break;
+
+              case
+              OP_DIVF:
+                emit_div_sx(sx[1], sx[0]); //xmm1 = xmm1 / xmm0
+                break;
+            }
+
+            unmask_sx(sx[0]);
+            store_sx_opstack(sx[1]); //*opstack = xmm0
+          }
+          else
+          {
+            //legacy x87 path
+            //value
+            flush_opstack_top();
+            dec_opstack();
+
+            flush_opstack_top(); //target
+            emit_fld(R_OPSTACK, opstack * sizeof(int32_t));
+
+            switch(ci->op)
+            {
+              case
+              OP_ADDF:
+                emit_fadd(R_OPSTACK, (opstack + 1) * sizeof(int32_t));
+                break;
+
+              case
+              OP_SUBF:
+                emit_fsub(R_OPSTACK, (opstack + 1) * sizeof(int32_t));
+                break;
+
+              case
+              OP_MULF:
+                emit_fmul(R_OPSTACK, (opstack + 1) * sizeof(int32_t));
+                break;
+
+              case
+              OP_DIVF:
+                emit_fdiv(R_OPSTACK, (opstack + 1) * sizeof(int32_t));
+                break;
+            }
+
+            emit_fstp(R_OPSTACK, opstack * sizeof(int32_t));
+          }
+
+          break;
+
+        case
+        OP_NEGF:
+          if (HasSSEFP())
+          {
+            sx[0] = load_sx_opstack(R_XMM0 | RCONST); //xmm0 = *opstack
+            sx[1] = alloc_sx(R_XMM1);
+            emit_xor_sx(sx[1], sx[1]); //xorps xmm1, xmm1
+            emit_sub_sx(sx[1], sx[0]); //subps xmm1, xmm0
+            unmask_sx(sx[0]);
+            store_sx_opstack(sx[1]); //*opstack = xmm1
+          }
+          else
+          {
+            //legacy x87 path
+            flush_opstack_top();
+            emit_fld(R_OPSTACK, opstack * sizeof(int32_t)); //fld dword ptr [opStack]
+            EmitString("D9 E0"); //fchs
+            emit_fstp(R_OPSTACK, opstack * sizeof(int32_t)); //fstp dword ptr [opStack]
+          }
+
+          break;
+
+        case
+        OP_CVIF:
+          if (HasSSEFP())
+          {
+            sx[0] = alloc_sx(R_XMM0);
+            rx[0] = load_rx_opstack(R_EAX | RCONST); //eax = *opstack
+            emit_cvtsi2ss(sx[0], rx[0]); //cvtsi2ss xmm0, eax
+            unmask_rx(rx[0]);
+            store_sx_opstack(sx[0]); //*opstack = xmm0
+          }
+          else
+          {
+            flush_opstack_top();
+            emit_fild(R_OPSTACK, opstack * sizeof(int32_t)); //fild dword ptr [opStack]
+            emit_fstp(R_OPSTACK, opstack * sizeof(int32_t)); //fstp dword ptr [opStack]
+          }
+
+          break;
+
+        case
+        OP_CVFI:
+          if (HasSSEFP())
+          {
+            rx[0] = alloc_rx(R_EAX);
+            sx[0] = load_sx_opstack(R_XMM0 | RCONST); //xmm0 = *opstack
+            emit_cvttss2si(rx[0], sx[0]); //cvttss2si xmm0, eax
+            unmask_sx(sx[0]);
+            store_rx_opstack(rx[0]); //*opstack = eax
+          }
+          else
+          {
+            static int32_t fp_cw[2] = {0x0000, 0x0F7F}; //[0] - current value, [1] - round towards zero
+
+            flush_opstack_top();
+            alloc_rx(R_EAX | FORCED);
+            emit_fld(R_OPSTACK, opstack * sizeof(int32_t)); //fld dword ptr [opStack]
+            mov_rx_ptr(R_EAX, &fp_cw);
+            EmitString("9B D9 38"); //fnstcw word ptr [eax]
+            EmitString("D9 68 04"); //fldcw word ptr [eax+4]
+            emit_fistp(R_OPSTACK, opstack * sizeof(int32_t)); //fistp dword ptr [opStack]
+            EmitString("D9 28"); //fldcw word ptr [eax]
+            unmask_rx(R_EAX);
+          }
+
+          break;
 
 #if defined(MACRO_OPTIMIZE)
-      case
-      MOP_ADD:
+        case
+        MOP_ADD:
 
-      case
-      MOP_SUB:
+        case
+        MOP_SUB:
 
-      case
-      MOP_BAND:
+        case
+        MOP_BAND:
 
-      case
-      MOP_BOR:
+        case
+        MOP_BOR:
 
-      case
-      MOP_BXOR:
-        if (!EmitMOPs(vm, ci, ci->op))
-        {
-          Com_Error(ERR_FATAL, "VM_CompileX86: bad opcode %02X", ci->op);
-        }
+        case
+        MOP_BXOR:
+          if (!EmitMOPs(vm, ci, ci->op))
+          {
+            Com_Error(ERR_FATAL, "VM_CompileX86: bad opcode %02X", ci->op);
+          }
 
-        break;
+          break;
 #endif
-      default:
-        Com_Error(ERR_FATAL, "VM_CompileX86: bad opcode %02X", ci->op);
-        VM_FreeBuffers();
-        return qfalse;
+        default:
+          Com_Error(ERR_FATAL, "VM_CompileX86: bad opcode %02X", ci->op);
+          VM_FreeBuffers();
+          return qfalse;
+      }
     }
-  }
 
-  //****************
-  //system functions
-  //****************
-  EmitAlign(FUNC_ALIGN);
-  funcOffset[FUNC_CALL] = compiledOfs;
-  EmitCallFunc(vm);
+    //****************
+    //system functions
+    //****************
+    EmitAlign(FUNC_ALIGN);
+    funcOffset[FUNC_CALL] = compiledOfs;
+    EmitCallFunc(vm);
 
-  EmitAlign(FUNC_ALIGN);
-  funcOffset[FUNC_BCPY] = compiledOfs;
-  EmitBCPYFunc(vm);
+    EmitAlign(FUNC_ALIGN);
+    funcOffset[FUNC_BCPY] = compiledOfs;
+    EmitBCPYFunc(vm);
 
-  //***************
-  //error functions
-  //***************
+    //***************
+    //error functions
+    //***************
 
-  //bad jump
-  EmitAlign(FUNC_ALIGN);
-  funcOffset[FUNC_BADJ] = compiledOfs;
-  EmitBADJFunc(vm);
+    //bad jump
+    EmitAlign(FUNC_ALIGN);
+    funcOffset[FUNC_BADJ] = compiledOfs;
+    EmitBADJFunc(vm);
 
-  //error jump
-  EmitAlign(FUNC_ALIGN);
-  funcOffset[FUNC_ERRJ] = compiledOfs;
-  EmitERRJFunc(vm);
+    //error jump
+    EmitAlign(FUNC_ALIGN);
+    funcOffset[FUNC_ERRJ] = compiledOfs;
+    EmitERRJFunc(vm);
 
-  //programStack overflow
-  EmitAlign(FUNC_ALIGN);
-  funcOffset[FUNC_PSOF] = compiledOfs;
-  EmitPSOFFunc(vm);
+    //programStack overflow
+    EmitAlign(FUNC_ALIGN);
+    funcOffset[FUNC_PSOF] = compiledOfs;
+    EmitPSOFFunc(vm);
 
-  //opStack overflow
-  EmitAlign(FUNC_ALIGN);
-  funcOffset[FUNC_OSOF] = compiledOfs;
-  EmitOSOFFunc(vm);
+    //opStack overflow
+    EmitAlign(FUNC_ALIGN);
+    funcOffset[FUNC_OSOF] = compiledOfs;
+    EmitOSOFFunc(vm);
 
-  //read access range violation
-  EmitAlign(FUNC_ALIGN);
-  funcOffset[FUNC_DATR] = compiledOfs;
-  EmitDATRFunc(vm);
+    //read access range violation
+    EmitAlign(FUNC_ALIGN);
+    funcOffset[FUNC_DATR] = compiledOfs;
+    EmitDATRFunc(vm);
 
-  //write access range violation
-  EmitAlign(FUNC_ALIGN);
-  funcOffset[FUNC_DATW] = compiledOfs;
-  EmitDATWFunc(vm);
+    //write access range violation
+    EmitAlign(FUNC_ALIGN);
+    funcOffset[FUNC_DATW] = compiledOfs;
+    EmitDATWFunc(vm);
 
-  EmitAlign(sizeof(intptr_t)); //for instructionPointers
+    EmitAlign(sizeof(intptr_t)); //for instructionPointers
 
 #if JUMP_OPTIMIZE
-  if (pass == PASS_COMPRESS && ++num_compress < NUM_COMPRESSIONS && jumpSizeChanged)
-  {
-    pass = PASS_COMPRESS;
-    goto __compile;
-  }
-
-  if (jumpSizeChanged)
-  {
-    if (pass == PASS_EXPAND_ONLY)
+    if (pass == PASS_COMPRESS && ++num_compress < NUM_COMPRESSIONS && jumpSizeChanged)
     {
-      pass = PASS_EXPAND_ONLY;
+      pass = PASS_COMPRESS;
       goto __compile;
     }
-  }
+
+    if (jumpSizeChanged)
+    {
+      if (pass == PASS_EXPAND_ONLY)
+      {
+        pass = PASS_EXPAND_ONLY;
+        goto __compile;
+      }
+    }
 #endif
   } //for(pass = 0; pass < n; pass++)
 

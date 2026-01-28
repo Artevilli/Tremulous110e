@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--01/28/2026--**
+
+* qcommon:<br />formatting
+
 **--01/27/2026--**
 
 * qcommon:<br />revert "fix an uninitialized variable in CM_TransposeGrid()"
