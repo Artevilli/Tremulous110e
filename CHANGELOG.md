@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/28/2026--**
 
+* qcommon:<br />fix remaining macos defines
+
 * qcommon:<br />formatting
 
 **--01/27/2026--**

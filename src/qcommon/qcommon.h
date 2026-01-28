@@ -1449,7 +1449,7 @@ Sys_DefaultBasePath(void);
 void
 Sys_SetDefaultInstallPath(const qchar *path);
 
-#if defined(MACOS_X)
+#if defined(__APPLE__)
 qchar *
 Sys_DefaultAppPath(void);
 #endif
