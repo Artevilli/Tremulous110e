@@ -1,22 +1,21 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Quake III Arena source code.
 
-Tremulous is free software; you can redistribute it
+Quake III Arena source code is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Quake III Arena source code is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -34,143 +33,6 @@ frame.
 
 */
 
-/*
-==============
-R_AddAnimSurfaces
-==============
-*/
-void R_AddAnimSurfaces( trRefEntity_t *ent ) {
-	md4Header_t		*header;
-	md4Surface_t	*surface;
-	md4LOD_t		*lod;
-	shader_t		*shader;
-	int				i;
-
-	header = (md4Header_t *) tr.currentModel->md4;
-	lod = (md4LOD_t *)( (byte *)header + header->ofsLODs );
-
-	surface = (md4Surface_t *)( (byte *)lod + lod->ofsSurfaces );
-	for ( i = 0 ; i < lod->numSurfaces ; i++ ) {
-		shader = R_GetShaderByHandle( surface->shaderIndex );
-		R_AddDrawSurf( (void *)surface, shader, 0 /*fogNum*/, qfalse );
-		surface = (md4Surface_t *)( (byte *)surface + surface->ofsEnd );
-	}
-}
-
-/*
-==============
-RB_SurfaceAnim
-==============
-*/
-void RB_SurfaceAnim( md4Surface_t *surface ) {
-	int				i, j, k;
-	float			frontlerp, backlerp;
-	int				*triangles;
-	int				indexes;
-	int				baseIndex, baseVertex;
-	int				numVerts;
-	md4Vertex_t		*v;
-	md4Bone_t		bones[MD4_MAX_BONES];
-	md4Bone_t		*bonePtr, *bone;
-	md4Header_t		*header;
-	md4Frame_t		*frame;
-	md4Frame_t		*oldFrame;
-	int				frameSize;
-
-
-	if (  backEnd.currentEntity->e.oldframe == backEnd.currentEntity->e.frame ) {
-		backlerp = 0;
-		frontlerp = 1;
-	} else  {
-		backlerp = backEnd.currentEntity->e.backlerp;
-		frontlerp = 1.0f - backlerp;
-	}
-	header = (md4Header_t *)((byte *)surface + surface->ofsHeader);
-
-	frameSize = (size_t)( &((md4Frame_t *)0)->bones[ header->numBones ] );
-
-	frame = (md4Frame_t *)((byte *)header + header->ofsFrames + 
-			backEnd.currentEntity->e.frame * frameSize );
-	oldFrame = (md4Frame_t *)((byte *)header + header->ofsFrames + 
-			backEnd.currentEntity->e.oldframe * frameSize );
-
-	RB_CheckOverflow( surface->numVerts, surface->numTriangles * 3 );
-
-	triangles = (int *) ((byte *)surface + surface->ofsTriangles);
-	indexes = surface->numTriangles * 3;
-	baseIndex = tess.numIndexes;
-	baseVertex = tess.numVertexes;
-	for (j = 0 ; j < indexes ; j++) {
-		tess.indexes[baseIndex + j] = baseIndex + triangles[j];
-	}
-	tess.numIndexes += indexes;
-
-	//
-	// lerp all the needed bones
-	//
-	if ( !backlerp ) {
-		// no lerping needed
-		bonePtr = frame->bones;
-	} else {
-		bonePtr = bones;
-		for ( i = 0 ; i < header->numBones*12 ; i++ ) {
-			((float *)bonePtr)[i] = frontlerp * ((float *)frame->bones)[i]
-					+ backlerp * ((float *)oldFrame->bones)[i];
-		}
-	}
-
-	//
-	// deform the vertexes by the lerped bones
-	//
-	numVerts = surface->numVerts;
-	// FIXME
-	// This makes TFC's skeletons work.  Shouldn't be necessary anymore, but left
-	// in for reference.
-	//v = (md4Vertex_t *) ((byte *)surface + surface->ofsVerts + 12);
-	v = (md4Vertex_t *) ((byte *)surface + surface->ofsVerts);
-	for ( j = 0; j < numVerts; j++ ) {
-		vec3_t	tempVert, tempNormal;
-		md4Weight_t	*w;
-
-		VectorClear( tempVert );
-		VectorClear( tempNormal );
-		w = v->weights;
-		for ( k = 0 ; k < v->numWeights ; k++, w++ ) {
-			bone = bonePtr + w->boneIndex;
-
-			tempVert[0] += w->boneWeight * ( DotProduct( bone->matrix[0], w->offset ) + bone->matrix[0][3] );
-			tempVert[1] += w->boneWeight * ( DotProduct( bone->matrix[1], w->offset ) + bone->matrix[1][3] );
-			tempVert[2] += w->boneWeight * ( DotProduct( bone->matrix[2], w->offset ) + bone->matrix[2][3] );
-
-			tempNormal[0] += w->boneWeight * DotProduct( bone->matrix[0], v->normal );
-			tempNormal[1] += w->boneWeight * DotProduct( bone->matrix[1], v->normal );
-			tempNormal[2] += w->boneWeight * DotProduct( bone->matrix[2], v->normal );
-		}
-
-		tess.xyz[baseVertex + j][0] = tempVert[0];
-		tess.xyz[baseVertex + j][1] = tempVert[1];
-		tess.xyz[baseVertex + j][2] = tempVert[2];
-
-		tess.normal[baseVertex + j][0] = tempNormal[0];
-		tess.normal[baseVertex + j][1] = tempNormal[1];
-		tess.normal[baseVertex + j][2] = tempNormal[2];
-
-		tess.texCoords[baseVertex + j][0][0] = v->texCoords[0];
-		tess.texCoords[baseVertex + j][0][1] = v->texCoords[1];
-
-		// FIXME
-		// This makes TFC's skeletons work.  Shouldn't be necessary anymore, but left
-		// in for reference.
-		//v = (md4Vertex_t *)( ( byte * )&v->weights[v->numWeights] + 12 );
-		v = (md4Vertex_t *)&v->weights[v->numWeights];
-	}
-
-	tess.numVertexes += surface->numVerts;
-}
-
-
-#ifdef RAVENMD4
-
 // copied and adapted from tr_mesh.c
 
 /*
@@ -178,8 +40,7 @@ void RB_SurfaceAnim( md4Surface_t *surface ) {
 R_MDRCullModel
 =============
 */
-
-static int R_MDRCullModel( mdrHeader_t *header, trRefEntity_t *ent ) {
+static int R_MDRCullModel( mdrHeader_t *header, const trRefEntity_t *ent ) {
 	vec3_t		bounds[2];
 	mdrFrame_t	*oldFrame, *newFrame;
 	int			i, frameSize;
@@ -198,7 +59,7 @@ static int R_MDRCullModel( mdrHeader_t *header, trRefEntity_t *ent ) {
 			switch ( R_CullLocalPointAndRadius( newFrame->localOrigin, newFrame->radius ) )
 			{
 				// Ummm... yeah yeah I know we don't really have an md3 here.. but we pretend
-				// we do. After all, the purpose of md4s are not that different, are they?
+				// we do. After all, the purpose of mdrs are not that different, are they?
 				
 				case CULL_OUT:
 					tr.pc.c_sphere_cull_md3_out++;
@@ -265,16 +126,15 @@ static int R_MDRCullModel( mdrHeader_t *header, trRefEntity_t *ent ) {
 	}
 }
 
+
 /*
 =================
 R_MDRComputeFogNum
-
 =================
 */
-
-int R_MDRComputeFogNum( mdrHeader_t *header, trRefEntity_t *ent ) {
+static int R_MDRComputeFogNum( mdrHeader_t *header, const trRefEntity_t *ent ) {
 	int				i, j;
-	fog_t			*fog;
+	const fog_t			*fog;
 	mdrFrame_t		*mdrFrame;
 	vec3_t			localOrigin;
 	int frameSize;
@@ -327,23 +187,23 @@ void R_MDRAddAnimSurfaces( trRefEntity_t *ent ) {
 	int				cull;
 	qboolean	personalModel;
 
-	header = (mdrHeader_t *) tr.currentModel->md4;
-	
-	personalModel = (ent->e.renderfx & RF_THIRD_PERSON) && !tr.viewParms.isPortal;
-	
+	header = (mdrHeader_t *) tr.currentModel->modelData;
+
+	personalModel = (ent->e.renderfx & RF_THIRD_PERSON) && (tr.viewParms.portalView == PV_NONE);
+
 	if ( ent->e.renderfx & RF_WRAP_FRAMES )
 	{
 		ent->e.frame %= header->numFrames;
 		ent->e.oldframe %= header->numFrames;
-	}	
-	
+	}
+
 	//
 	// Validate the frames so there is no chance of a crash.
 	// This will write directly into the entity structure, so
 	// when the surfaces are rendered, they don't need to be
 	// range checked again.
 	//
-	if ((ent->e.frame >= header->numFrames) 
+	if ((ent->e.frame >= header->numFrames)
 		|| (ent->e.frame < 0)
 		|| (ent->e.oldframe >= header->numFrames)
 		|| (ent->e.oldframe < 0) )
@@ -361,7 +221,7 @@ void R_MDRAddAnimSurfaces( trRefEntity_t *ent ) {
 	cull = R_MDRCullModel (header, ent);
 	if ( cull == CULL_OUT ) {
 		return;
-	}	
+	}
 
 	// figure out the current LOD of the model we're rendering, and set the lod pointer respectively.
 	lodnum = R_ComputeLOD(ent);
@@ -400,9 +260,9 @@ void R_MDRAddAnimSurfaces( trRefEntity_t *ent ) {
 			
 			for(j = 0; j < skin->numSurfaces; j++)
 			{
-				if (!strcmp(skin->surfaces[j]->name, surface->name))
+				if (!strcmp(skin->surfaces[j].name, surface->name))
 				{
-					shader = skin->surfaces[j]->shader;
+					shader = skin->surfaces[j].shader;
 					break;
 				}
 			}
@@ -421,7 +281,7 @@ void R_MDRAddAnimSurfaces( trRefEntity_t *ent ) {
 			&& !(ent->e.renderfx & ( RF_NOSHADOW | RF_DEPTHHACK ) )
 			&& shader->sort == SS_OPAQUE )
 		{
-			R_AddDrawSurf( (void *)surface, tr.shadowShader, 0, qfalse );
+			R_AddDrawSurf( (void *)surface, tr.shadowShader, 0, 0 );
 		}
 
 		// projection shadows work fine with personal models
@@ -430,22 +290,23 @@ void R_MDRAddAnimSurfaces( trRefEntity_t *ent ) {
 			&& (ent->e.renderfx & RF_SHADOW_PLANE )
 			&& shader->sort == SS_OPAQUE )
 		{
-			R_AddDrawSurf( (void *)surface, tr.projectionShadowShader, 0, qfalse );
+			R_AddDrawSurf( (void *)surface, tr.projectionShadowShader, 0, 0 );
 		}
 
 		if (!personalModel)
-			R_AddDrawSurf( (void *)surface, shader, fogNum, qfalse );
+			R_AddDrawSurf( (void *)surface, shader, fogNum, 0 );
 
 		surface = (mdrSurface_t *)( (byte *)surface + surface->ofsEnd );
 	}
 }
+
 
 /*
 ==============
 RB_MDRSurfaceAnim
 ==============
 */
-void RB_MDRSurfaceAnim( md4Surface_t *surface )
+void RB_MDRSurfaceAnim( mdrSurface_t *surface )
 {
 	int				i, j, k;
 	float			frontlerp, backlerp;
@@ -457,9 +318,15 @@ void RB_MDRSurfaceAnim( md4Surface_t *surface )
 	mdrHeader_t		*header;
 	mdrFrame_t		*frame;
 	mdrFrame_t		*oldFrame;
-	mdrBone_t		bones[MD4_MAX_BONES], *bonePtr, *bone;
+	mdrBone_t		bones[MDR_MAX_BONES], *bonePtr, *bone;
 
 	int			frameSize;
+
+#ifdef USE_VBO
+	VBO_Flush();
+#endif
+
+	tess.surfType = SF_MDR;
 
 	// don't lerp if lerping off, or this is the only frame, or the last frame...
 	//
@@ -483,7 +350,7 @@ void RB_MDRSurfaceAnim( md4Surface_t *surface )
 	oldFrame = (mdrFrame_t *)((byte *)header + header->ofsFrames +
 		backEnd.currentEntity->e.oldframe * frameSize );
 
-	RB_CheckOverflow( surface->numVerts, surface->numTriangles );
+	RB_CHECKOVERFLOW( surface->numVerts, surface->numTriangles * 3 );
 
 	triangles	= (int *) ((byte *)surface + surface->ofsTriangles);
 	indexes		= surface->numTriangles * 3;
@@ -536,21 +403,31 @@ void RB_MDRSurfaceAnim( md4Surface_t *surface )
 			tempVert[1] += w->boneWeight * ( DotProduct( bone->matrix[1], w->offset ) + bone->matrix[1][3] );
 			tempVert[2] += w->boneWeight * ( DotProduct( bone->matrix[2], w->offset ) + bone->matrix[2][3] );
 			
-			tempNormal[0] += w->boneWeight * DotProduct( bone->matrix[0], v->normal );
-			tempNormal[1] += w->boneWeight * DotProduct( bone->matrix[1], v->normal );
-			tempNormal[2] += w->boneWeight * DotProduct( bone->matrix[2], v->normal );
+#ifdef USE_TESS_NEEDS_NORMAL
+			if ( tess.needsNormal )
+#endif
+			{
+				tempNormal[0] += w->boneWeight * DotProduct( bone->matrix[0], v->normal );
+				tempNormal[1] += w->boneWeight * DotProduct( bone->matrix[1], v->normal );
+				tempNormal[2] += w->boneWeight * DotProduct( bone->matrix[2], v->normal );
+			}
 		}
 
 		tess.xyz[baseVertex + j][0] = tempVert[0];
 		tess.xyz[baseVertex + j][1] = tempVert[1];
 		tess.xyz[baseVertex + j][2] = tempVert[2];
 
-		tess.normal[baseVertex + j][0] = tempNormal[0];
-		tess.normal[baseVertex + j][1] = tempNormal[1];
-		tess.normal[baseVertex + j][2] = tempNormal[2];
+#ifdef USE_TESS_NEEDS_NORMAL
+		if ( tess.needsNormal )
+#endif
+		{
+			tess.normal[baseVertex + j][0] = tempNormal[0];
+			tess.normal[baseVertex + j][1] = tempNormal[1];
+			tess.normal[baseVertex + j][2] = tempNormal[2];
+		}
 
-		tess.texCoords[baseVertex + j][0][0] = v->texCoords[0];
-		tess.texCoords[baseVertex + j][0][1] = v->texCoords[1];
+		tess.texCoords[0][baseVertex + j][0] = v->texCoords[0];
+		tess.texCoords[0][baseVertex + j][1] = v->texCoords[1];
 
 		v = (mdrVertex_t *)&v->weights[v->numWeights];
 	}
@@ -656,4 +533,3 @@ void MC_UnCompress(float mat[3][4],const unsigned char * comp)
 	val-=1<<(MC_BITS_VECT-1);
 	mat[2][2]=((float)(val))*MC_SCALE_VECT;
 }
-#endif

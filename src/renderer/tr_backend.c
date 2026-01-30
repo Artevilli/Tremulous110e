@@ -1,46 +1,50 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Quake III Arena source code.
 
-Tremulous is free software; you can redistribute it
+Quake III Arena source code is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Quake III Arena source code is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 #include "tr_local.h"
 
-backEndData_t	*backEndData[SMP_FRAMES];
+backEndData_t	*backEndData;
 backEndState_t	backEnd;
 
+const float *GL_Ortho( const float left, const float right, const float bottom, const float top, const float znear, const float zfar )
+{
+	static float m[ 16 ] = { 0 };
 
-static float	s_flipMatrix[16] = {
-	// convert from our coordinate system (looking down X)
-	// to OpenGL's coordinate system (looking down -Z)
-	0, 0, -1, 0,
-	-1, 0, 0, 0,
-	0, 1, 0, 0,
-	0, 0, 0, 1
-};
+	m[0] = 2.0f / (right - left);
+	m[5] = 2.0f / (top - bottom);
+	m[10] = - 2.0f / (zfar - znear);
+	m[12] = - (right + left)/(right - left);
+	m[13] = - (top + bottom) / (top - bottom);
+	m[14] = - (zfar + znear) / (zfar - znear);
+	m[15] = 1.0f;
+
+	return m;
+}
 
 
 /*
 ** GL_Bind
 */
 void GL_Bind( image_t *image ) {
-	int texnum;
+	GLuint texnum;
 
 	if ( !image ) {
 		ri.Printf( PRINT_WARNING, "GL_Bind: NULL image\n" );
@@ -54,11 +58,30 @@ void GL_Bind( image_t *image ) {
 	}
 
 	if ( glState.currenttextures[glState.currenttmu] != texnum ) {
-		image->frameUsed = tr.frameCount;
+		if ( image ) {
+			image->frameUsed = tr.frameCount;
+		}
 		glState.currenttextures[glState.currenttmu] = texnum;
 		qglBindTexture (GL_TEXTURE_2D, texnum);
 	}
 }
+
+
+/*
+** GL_BindTexNum
+*/
+void GL_BindTexNum( GLuint texnum ) {
+
+	if ( r_nobind->integer && tr.dlightImage ) {	// performance evaluation option
+		texnum = tr.dlightImage->texnum;
+	}
+
+	if ( glState.currenttextures[ glState.currenttmu ] != texnum ) {
+		glState.currenttextures[ glState.currenttmu ] = texnum;
+		qglBindTexture( GL_TEXTURE_2D, texnum );
+	}
+}
+
 
 /*
 ** GL_SelectTexture
@@ -70,51 +93,48 @@ void GL_SelectTexture( int unit )
 		return;
 	}
 
-	if ( unit == 0 )
+	if ( unit >= glConfig.numTextureUnits )
 	{
-		qglActiveTextureARB( GL_TEXTURE0_ARB );
-		GLimp_LogComment( "glActiveTextureARB( GL_TEXTURE0_ARB )\n" );
-		qglClientActiveTextureARB( GL_TEXTURE0_ARB );
-		GLimp_LogComment( "glClientActiveTextureARB( GL_TEXTURE0_ARB )\n" );
-	}
-	else if ( unit == 1 )
-	{
-		qglActiveTextureARB( GL_TEXTURE1_ARB );
-		GLimp_LogComment( "glActiveTextureARB( GL_TEXTURE1_ARB )\n" );
-		qglClientActiveTextureARB( GL_TEXTURE1_ARB );
-		GLimp_LogComment( "glClientActiveTextureARB( GL_TEXTURE1_ARB )\n" );
-	} else {
 		ri.Error( ERR_DROP, "GL_SelectTexture: unit = %i", unit );
 	}
+
+	qglActiveTextureARB( GL_TEXTURE0_ARB + unit );
 
 	glState.currenttmu = unit;
 }
 
 
 /*
-** GL_BindMultitexture
+** GL_SelectClientTexture
 */
-void GL_BindMultitexture( image_t *image0, GLuint env0, image_t *image1, GLuint env1 ) {
-	int		texnum0, texnum1;
-
-	texnum0 = image0->texnum;
-	texnum1 = image1->texnum;
-
-	if ( r_nobind->integer && tr.dlightImage ) {		// performance evaluation option
-		texnum0 = texnum1 = tr.dlightImage->texnum;
+static void GL_SelectClientTexture( int unit )
+{
+	if ( glState.currentArray == unit )
+	{
+		return;
 	}
 
-	if ( glState.currenttextures[1] != texnum1 ) {
-		GL_SelectTexture( 1 );
-		image1->frameUsed = tr.frameCount;
-		glState.currenttextures[1] = texnum1;
-		qglBindTexture( GL_TEXTURE_2D, texnum1 );
+	if ( unit >= glConfig.numTextureUnits )
+	{
+		ri.Error( ERR_DROP, "GL_SelectClientTexture: unit = %i", unit );
 	}
-	if ( glState.currenttextures[0] != texnum0 ) {
-		GL_SelectTexture( 0 );
-		image0->frameUsed = tr.frameCount;
-		glState.currenttextures[0] = texnum0;
-		qglBindTexture( GL_TEXTURE_2D, texnum0 );
+
+	qglClientActiveTextureARB( GL_TEXTURE0_ARB + unit );
+
+	glState.currentArray = unit;
+}
+
+
+/*
+** GL_BindTexture
+*/
+void GL_BindTexture( int unit, GLuint texnum )
+{
+	if ( glState.currenttextures[ unit ] != texnum )
+	{
+		GL_SelectTexture( unit );
+		glState.currenttextures[ unit ] = texnum;
+		qglBindTexture( GL_TEXTURE_2D, texnum );
 	}
 }
 
@@ -122,78 +142,57 @@ void GL_BindMultitexture( image_t *image0, GLuint env0, image_t *image1, GLuint 
 /*
 ** GL_Cull
 */
-void GL_Cull( int cullType ) {
+void GL_Cull( cullType_t cullType ) {
 	if ( glState.faceCulling == cullType ) {
 		return;
 	}
 
 	glState.faceCulling = cullType;
 
-	if ( cullType == CT_TWO_SIDED ) 
+	if ( cullType == CT_TWO_SIDED )
 	{
 		qglDisable( GL_CULL_FACE );
-	} 
-	else 
+	}
+	else
 	{
+		qboolean cullFront;
 		qglEnable( GL_CULL_FACE );
 
-		if ( cullType == CT_BACK_SIDED )
+		cullFront = (cullType == CT_FRONT_SIDED);
+		if ( backEnd.viewParms.portalView == PV_MIRROR )
 		{
-			if ( backEnd.viewParms.isMirror )
-			{
-				qglCullFace( GL_FRONT );
-			}
-			else
-			{
-				qglCullFace( GL_BACK );
-			}
+			cullFront = !cullFront;
 		}
-		else
-		{
-			if ( backEnd.viewParms.isMirror )
-			{
-				qglCullFace( GL_BACK );
-			}
-			else
-			{
-				qglCullFace( GL_FRONT );
-			}
-		}
+
+		qglCullFace( cullFront ? GL_FRONT : GL_BACK );
 	}
 }
+
 
 /*
 ** GL_TexEnv
 */
-void GL_TexEnv( int env )
+void GL_TexEnv( GLint env )
 {
-	if ( env == glState.texEnv[glState.currenttmu] )
-	{
+	if ( env == glState.texEnv[ glState.currenttmu ] )
 		return;
-	}
 
-	glState.texEnv[glState.currenttmu] = env;
-
+	glState.texEnv[ glState.currenttmu ] = env;
 
 	switch ( env )
 	{
 	case GL_MODULATE:
-		qglTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
-		break;
 	case GL_REPLACE:
-		qglTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );
-		break;
 	case GL_DECAL:
-		qglTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL );
-		break;
 	case GL_ADD:
-		qglTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_ADD );
+		qglTexEnvi( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, env );
 		break;
 	default:
-		ri.Error( ERR_DROP, "GL_TexEnv: invalid env '%d' passed\n", env );
+		ri.Error( ERR_DROP, "GL_TexEnv: invalid env '%d' passed", env );
 		break;
 	}
 }
+
 
 /*
 ** GL_State
@@ -201,9 +200,9 @@ void GL_TexEnv( int env )
 ** This routine is responsible for setting the most commonly changed state
 ** in Q3.
 */
-void GL_State( unsigned long stateBits )
+void GL_State( unsigned stateBits )
 {
-	unsigned long diff = stateBits ^ glState.glStateBits;
+	unsigned diff = stateBits ^ glState.glStateBits;
 
 	if ( !diff )
 	{
@@ -228,11 +227,11 @@ void GL_State( unsigned long stateBits )
 	//
 	// check blend bits
 	//
-	if ( diff & ( GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS ) )
+	if ( diff & GLS_BLEND_BITS )
 	{
-		GLenum srcFactor, dstFactor;
+		GLenum srcFactor = GL_ONE, dstFactor = GL_ONE;
 
-		if ( stateBits & ( GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS ) )
+		if ( stateBits & GLS_BLEND_BITS )
 		{
 			switch ( stateBits & GLS_SRCBLEND_BITS )
 			{
@@ -264,8 +263,7 @@ void GL_State( unsigned long stateBits )
 				srcFactor = GL_SRC_ALPHA_SATURATE;
 				break;
 			default:
-				srcFactor = GL_ONE;		// to get warning to shut up
-				ri.Error( ERR_DROP, "GL_State: invalid src blend state bits\n" );
+				ri.Error( ERR_DROP, "GL_State: invalid src blend state bits" );
 				break;
 			}
 
@@ -296,8 +294,7 @@ void GL_State( unsigned long stateBits )
 				dstFactor = GL_ONE_MINUS_DST_ALPHA;
 				break;
 			default:
-				dstFactor = GL_ONE;		// to get warning to shut up
-				ri.Error( ERR_DROP, "GL_State: invalid dst blend state bits\n" );
+				ri.Error( ERR_DROP, "GL_State: invalid dst blend state bits" );
 				break;
 			}
 
@@ -378,7 +375,7 @@ void GL_State( unsigned long stateBits )
 			qglAlphaFunc( GL_GEQUAL, 0.5f );
 			break;
 		default:
-			assert( 0 );
+			ri.Error( ERR_DROP, "GL_State: invalid alpha test bits" );
 			break;
 		}
 	}
@@ -387,6 +384,50 @@ void GL_State( unsigned long stateBits )
 }
 
 
+void GL_ClientState( int unit, unsigned stateBits )
+{
+	unsigned diff = stateBits ^ glState.glClientStateBits[ unit ];
+
+	if ( diff == 0 )
+	{
+		if ( stateBits )
+		{
+			GL_SelectClientTexture( unit );
+		}
+		return;
+	}
+
+	GL_SelectClientTexture( unit );
+
+	if ( diff & CLS_COLOR_ARRAY )
+	{
+		if ( stateBits & CLS_COLOR_ARRAY )
+			qglEnableClientState( GL_COLOR_ARRAY );
+		else
+			qglDisableClientState( GL_COLOR_ARRAY );
+	}
+
+	if ( diff & CLS_NORMAL_ARRAY )
+	{
+		if ( stateBits & CLS_NORMAL_ARRAY )
+			qglEnableClientState( GL_NORMAL_ARRAY );
+		else
+			qglDisableClientState( GL_NORMAL_ARRAY );
+	}
+
+	if ( diff & CLS_TEXCOORD_ARRAY )
+	{
+		if ( stateBits & CLS_TEXCOORD_ARRAY )
+			qglEnableClientState( GL_TEXTURE_COORD_ARRAY );
+		else
+			qglDisableClientState( GL_TEXTURE_COORD_ARRAY );
+	}
+
+	glState.glClientStateBits[ unit ] = stateBits;
+}
+
+
+void RB_SetGL2D( void );
 
 /*
 ================
@@ -396,31 +437,54 @@ A player has predicted a teleport, but hasn't arrived yet
 ================
 */
 static void RB_Hyperspace( void ) {
-	float		c;
+	color4ub_t c;
 
 	if ( !backEnd.isHyperspace ) {
 		// do initialization shit
 	}
 
-	c = ( backEnd.refdef.time & 255 ) / 255.0f;
-	qglClearColor( c, c, c, 1 );
-	qglClear( GL_COLOR_BUFFER_BIT );
+	if ( tess.shader != tr.whiteShader ) {
+		RB_EndSurface();
+		RB_BeginSurface( tr.whiteShader, 0 );
+	}
+
+#ifdef USE_VBO
+	VBO_UnBind();
+#endif
+
+	RB_SetGL2D();
+
+	if ( r_teleporterFlash->integer == 0 ) {
+		c.rgba[0] = c.rgba[1] = c.rgba[2] = 0; // fade to black
+	} else {
+		c.rgba[0] = c.rgba[1] = c.rgba[2] = (backEnd.refdef.time & 255); // fade to white
+	}
+	c.rgba[3] = 255;
+
+	RB_AddQuadStamp2( backEnd.refdef.x, backEnd.refdef.y, backEnd.refdef.width, backEnd.refdef.height,
+		0.0, 0.0, 0.0, 0.0, c );
+
+	RB_EndSurface();
+
+	tess.numIndexes = 0;
+	tess.numVertexes = 0;
 
 	backEnd.isHyperspace = qtrue;
 }
 
 
 static void SetViewportAndScissor( void ) {
-	qglMatrixMode(GL_PROJECTION);
+	qglMatrixMode( GL_PROJECTION );
 	qglLoadMatrixf( backEnd.viewParms.projectionMatrix );
-	qglMatrixMode(GL_MODELVIEW);
+	qglMatrixMode( GL_MODELVIEW );
 
 	// set the window clipping
-	qglViewport( backEnd.viewParms.viewportX, backEnd.viewParms.viewportY, 
+	qglViewport( backEnd.viewParms.viewportX, backEnd.viewParms.viewportY,
 		backEnd.viewParms.viewportWidth, backEnd.viewParms.viewportHeight );
-	qglScissor( backEnd.viewParms.viewportX, backEnd.viewParms.viewportY, 
-		backEnd.viewParms.viewportWidth, backEnd.viewParms.viewportHeight );
+	qglScissor( backEnd.viewParms.scissorX, backEnd.viewParms.scissorY,
+		backEnd.viewParms.scissorWidth, backEnd.viewParms.scissorHeight );
 }
+
 
 /*
 =================
@@ -430,15 +494,14 @@ Any mirrored or portaled views have already been drawn, so prepare
 to actually render the visible surfaces for this view
 =================
 */
-void RB_BeginDrawingView (void) {
+static void RB_BeginDrawingView( void ) {
 	int clearBits = 0;
 
 	// sync with gl if needed
 	if ( r_finish->integer == 1 && !glState.finishCalled ) {
-		qglFinish ();
+		qglFinish();
 		glState.finishCalled = qtrue;
-	}
-	if ( r_finish->integer == 0 ) {
+	} else if ( r_finish->integer == 0 ) {
 		glState.finishCalled = qtrue;
 	}
 
@@ -453,14 +516,15 @@ void RB_BeginDrawingView (void) {
 
 	// ensures that depth writes are enabled for the depth clear
 	GL_State( GLS_DEFAULT );
+
 	// clear relevant buffers
 	clearBits = GL_DEPTH_BUFFER_BIT;
 
-	if ( r_measureOverdraw->integer || r_shadows->integer == 2 )
+	if ( r_shadows->integer == 2 )
 	{
 		clearBits |= GL_STENCIL_BUFFER_BIT;
 	}
-	if ( r_fastsky->integer && !( backEnd.refdef.rdflags & RDF_NOWORLDMODEL ) )
+	if ( 0 && r_fastsky->integer && !( backEnd.refdef.rdflags & RDF_NOWORLDMODEL ) )
 	{
 		clearBits |= GL_COLOR_BUFFER_BIT;	// FIXME: only if sky shaders have been used
 #ifdef _DEBUG
@@ -471,13 +535,11 @@ void RB_BeginDrawingView (void) {
 	}
 	qglClear( clearBits );
 
-	if ( ( backEnd.refdef.rdflags & RDF_HYPERSPACE ) )
-	{
+	if ( backEnd.refdef.rdflags & RDF_HYPERSPACE ) {
 		RB_Hyperspace();
-		return;
-	}
-	else
-	{
+		backEnd.projection2D = qfalse;
+		SetViewportAndScissor();
+	} else {
 		backEnd.isHyperspace = qfalse;
 	}
 
@@ -485,64 +547,44 @@ void RB_BeginDrawingView (void) {
 
 	// we will only draw a sun if there was sky rendered in this view
 	backEnd.skyRenderedThisView = qfalse;
-
-	// clip to the plane of the portal
-	if ( backEnd.viewParms.isPortal ) {
-		float	plane[4];
-		double	plane2[4];
-
-		plane[0] = backEnd.viewParms.portalPlane.normal[0];
-		plane[1] = backEnd.viewParms.portalPlane.normal[1];
-		plane[2] = backEnd.viewParms.portalPlane.normal[2];
-		plane[3] = backEnd.viewParms.portalPlane.dist;
-
-		plane2[0] = DotProduct (backEnd.viewParms.or.axis[0], plane);
-		plane2[1] = DotProduct (backEnd.viewParms.or.axis[1], plane);
-		plane2[2] = DotProduct (backEnd.viewParms.or.axis[2], plane);
-		plane2[3] = DotProduct (plane, backEnd.viewParms.or.origin) - plane[3];
-
-		qglLoadMatrixf( s_flipMatrix );
-		qglClipPlane (GL_CLIP_PLANE0, plane2);
-		qglEnable (GL_CLIP_PLANE0);
-	} else {
-		qglDisable (GL_CLIP_PLANE0);
-	}
 }
 
-
-#define	MAC_EVENT_PUMP_MSEC		5
+#ifdef USE_PMLIGHT
+static void RB_LightingPass( void );
+#endif
 
 /*
 ==================
 RB_RenderDrawSurfList
 ==================
 */
-void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
+static void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	shader_t		*shader, *oldShader;
-	int				fogNum, oldFogNum;
+	int				fogNum;
 	int				entityNum, oldEntityNum;
-	int				dlighted, oldDlighted;
+	int				dlighted;
 	qboolean		depthRange, oldDepthRange, isCrosshair, wasCrosshair;
 	int				i;
 	drawSurf_t		*drawSurf;
-	int				oldSort;
-	float			originalTime;
+	unsigned int	oldSort;
+#ifdef USE_PMLIGHT
+	float			oldShaderSort;
+#endif
+	double			originalTime; // -EC-
 
 	// save original time for entity shader offsets
 	originalTime = backEnd.refdef.floatTime;
-
-	// clear the z buffer, set the modelview, etc
-	RB_BeginDrawingView ();
 
 	// draw everything
 	oldEntityNum = -1;
 	backEnd.currentEntity = &tr.worldEntity;
 	oldShader = NULL;
-	oldFogNum = -1;
 	oldDepthRange = qfalse;
 	wasCrosshair = qfalse;
-	oldDlighted = qfalse;
-	oldSort = -1;
+	oldSort = MAX_UINT;
+#ifdef USE_PMLIGHT
+	oldShaderSort = -1;
+#endif
 	depthRange = qfalse;
 
 	backEnd.pc.c_surfaces += numDrawSurfs;
@@ -553,23 +595,37 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 			rb_surfaceTable[ *drawSurf->surface ]( drawSurf->surface );
 			continue;
 		}
-		oldSort = drawSurf->sort;
+
 		R_DecomposeSort( drawSurf->sort, &entityNum, &shader, &fogNum, &dlighted );
 
 		//
 		// change the tess parameters if needed
-		// a "entityMergable" shader is a shader that can have surfaces from seperate
+		// a "entityMergable" shader is a shader that can have surfaces from separate
 		// entities merged into a single batch, like smoke and blood puff sprites
-		if (shader != oldShader || fogNum != oldFogNum || dlighted != oldDlighted 
-			|| ( entityNum != oldEntityNum && !shader->entityMergable ) ) {
-			if (oldShader != NULL) {
+		if ( ( (oldSort ^ drawSurfs->sort ) & ~QSORT_REFENTITYNUM_MASK ) || !shader->entityMergable ) {
+			if ( oldShader != NULL ) {
 				RB_EndSurface();
 			}
+#ifdef USE_PMLIGHT
+			#define INSERT_POINT SS_FOG
+			if ( backEnd.refdef.numLitSurfs && oldShaderSort < INSERT_POINT && shader->sort >= INSERT_POINT ) {
+				//RB_BeginDrawingLitSurfs(); // no need, already setup in RB_BeginDrawingView()
+				if ( depthRange ) {
+					qglDepthRange( 0, 1 );
+					RB_LightingPass();
+					qglDepthRange( 0, 0.3 );
+				} else {
+					RB_LightingPass();
+				}
+				oldEntityNum = -1; // force matrix setup
+			}
+			oldShaderSort = shader->sort;
+#endif
 			RB_BeginSurface( shader, fogNum );
 			oldShader = shader;
-			oldFogNum = fogNum;
-			oldDlighted = dlighted;
 		}
+
+		oldSort = drawSurf->sort;
 
 		//
 		// change the modelview matrix if needed
@@ -577,26 +633,28 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 		if ( entityNum != oldEntityNum ) {
 			depthRange = isCrosshair = qfalse;
 
-			if ( entityNum != ENTITYNUM_WORLD ) {
+			if ( entityNum != REFENTITYNUM_WORLD ) {
 				backEnd.currentEntity = &backEnd.refdef.entities[entityNum];
-				backEnd.refdef.floatTime = originalTime - backEnd.currentEntity->e.shaderTime;
-				// we have to reset the shaderTime as well otherwise image animations start
-				// from the wrong frame
-				tess.shaderTime = backEnd.refdef.floatTime - tess.shader->timeOffset;
+				if ( backEnd.currentEntity->intShaderTime )
+					backEnd.refdef.floatTime = originalTime - (double)(backEnd.currentEntity->e.shaderTime.i) * 0.001;
+				else
+					backEnd.refdef.floatTime = originalTime - (double)backEnd.currentEntity->e.shaderTime.f;
 
 				// set up the transformation matrix
 				R_RotateForEntity( backEnd.currentEntity, &backEnd.viewParms, &backEnd.or );
-
 				// set up the dynamic lighting if needed
+#ifdef USE_LEGACY_DLIGHTS
+#ifdef USE_PMLIGHT
+				if ( !r_dlightMode->integer )
+#endif
 				if ( backEnd.currentEntity->needDlights ) {
 					R_TransformDlights( backEnd.refdef.num_dlights, backEnd.refdef.dlights, &backEnd.or );
 				}
-
-				if(backEnd.currentEntity->e.renderfx & RF_DEPTHHACK)
-				{
+#endif // USE_LEGACY_DLIGHTS
+				if ( backEnd.currentEntity->e.renderfx & RF_DEPTHHACK ) {
 					// hack the depth range to prevent view model from poking into walls
 					depthRange = qtrue;
-					
+
 					if(backEnd.currentEntity->e.renderfx & RF_CROSSHAIR)
 						isCrosshair = qtrue;
 				}
@@ -604,11 +662,17 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 				backEnd.currentEntity = &tr.worldEntity;
 				backEnd.refdef.floatTime = originalTime;
 				backEnd.or = backEnd.viewParms.world;
-				// we have to reset the shaderTime as well otherwise image animations on
-				// the world (like water) continue with the wrong frame
-				tess.shaderTime = backEnd.refdef.floatTime - tess.shader->timeOffset;
+#ifdef USE_LEGACY_DLIGHTS
+#ifdef USE_PMLIGHT
+				if ( !r_dlightMode->integer )
+#endif
 				R_TransformDlights( backEnd.refdef.num_dlights, backEnd.refdef.dlights, &backEnd.or );
+#endif // USE_LEGACY_DLIGHTS
 			}
+
+			// we have to reset the shaderTime as well otherwise image animations on
+			// the world (like water) continue with the wrong frame
+			tess.shaderTime = backEnd.refdef.floatTime - tess.shader->timeOffset;
 
 			qglLoadMatrixf( backEnd.or.modelMatrix );
 
@@ -658,7 +722,6 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 
 					qglDepthRange (0, 1);
 				}
-
 				oldDepthRange = depthRange;
 				wasCrosshair = isCrosshair;
 			}
@@ -670,66 +733,252 @@ void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 		rb_surfaceTable[ *drawSurf->surface ]( drawSurf->surface );
 	}
 
-	backEnd.refdef.floatTime = originalTime;
-
 	// draw the contents of the last shader batch
-	if (oldShader != NULL) {
+	if ( oldShader != NULL ) {
 		RB_EndSurface();
 	}
+
+	backEnd.refdef.floatTime = originalTime;
+
+	// go back to the world modelview matrix
+	qglLoadMatrixf( backEnd.viewParms.world.modelMatrix );
+	if ( depthRange ) {
+		qglDepthRange(0, 1);
+	}
+}
+
+
+#ifdef USE_PMLIGHT
+/*
+=================
+RB_BeginDrawingLitView
+=================
+*/
+static void RB_BeginDrawingLitSurfs( void )
+{
+	// we will need to change the projection matrix before drawing
+	// 2D images again
+	backEnd.projection2D = qfalse;
+
+	// we will only draw a sun if there was sky rendered in this view
+	backEnd.skyRenderedThisView = qfalse;
+
+	//
+	// set the modelview matrix for the viewer
+	//
+	SetViewportAndScissor();
+
+	glState.faceCulling = -1;		// force face culling to set next time
+}
+
+
+/*
+==================
+RB_RenderLitSurfList
+==================
+*/
+static void RB_RenderLitSurfList( dlight_t* dl ) {
+	shader_t		*shader, *oldShader;
+	int				fogNum;
+	int				entityNum, oldEntityNum;
+	qboolean		depthRange, oldDepthRange, isCrosshair, wasCrosshair;
+	const litSurf_t	*litSurf;
+	unsigned int	oldSort;
+	double			originalTime; // -EC-
+
+	// save original time for entity shader offsets
+	originalTime = backEnd.refdef.floatTime;
+
+	// draw everything
+	oldEntityNum = -1;
+	backEnd.currentEntity = &tr.worldEntity;
+	oldShader = NULL;
+	oldDepthRange = qfalse;
+	wasCrosshair = qfalse;
+	oldSort = MAX_UINT;
+	depthRange = qfalse;
+
+	tess.dlightUpdateParams = qtrue;
+
+	for ( litSurf = dl->head; litSurf; litSurf = litSurf->next ) {
+		//if ( litSurf->sort == sort ) {
+		if ( litSurf->sort == oldSort ) {
+			// fast path, same as previous sort
+			rb_surfaceTable[ *litSurf->surface ]( litSurf->surface );
+			continue;
+		}
+
+		R_DecomposeLitSort( litSurf->sort, &entityNum, &shader, &fogNum );
+
+		// anything BEFORE opaque is sky/portal, anything AFTER it should never have been added
+		//assert( shader->sort == SS_OPAQUE );
+		// !!! but MIRRORS can trip that assert, so just do this for now
+		//if ( shader->sort < SS_OPAQUE )
+		//	continue;
+
+		//
+		// change the tess parameters if needed
+		// a "entityMergable" shader is a shader that can have surfaces from separate
+		// entities merged into a single batch, like smoke and blood puff sprites
+		if ( ( (oldSort ^ litSurf->sort) & ~QSORT_REFENTITYNUM_MASK ) || !shader->entityMergable ) {
+			if ( oldShader != NULL ) {
+				RB_EndSurface();
+			}
+			RB_BeginSurface( shader, fogNum );
+			oldShader = shader;
+		}
+
+		oldSort = litSurf->sort;
+
+		//
+		// change the modelview matrix if needed
+		//
+		if ( entityNum != oldEntityNum ) {
+			depthRange = isCrosshair = qfalse;
+
+			if ( entityNum != REFENTITYNUM_WORLD ) {
+				backEnd.currentEntity = &backEnd.refdef.entities[entityNum];
+
+				if ( backEnd.currentEntity->intShaderTime )
+					backEnd.refdef.floatTime = originalTime - (double)(backEnd.currentEntity->e.shaderTime.i) * 0.001;
+				else
+					backEnd.refdef.floatTime = originalTime - (double)backEnd.currentEntity->e.shaderTime.f;
+
+				// set up the transformation matrix
+				R_RotateForEntity( backEnd.currentEntity, &backEnd.viewParms, &backEnd.or );
+
+				if ( backEnd.currentEntity->e.renderfx & RF_DEPTHHACK ) {
+					// hack the depth range to prevent view model from poking into walls
+					depthRange = qtrue;
+
+					if(backEnd.currentEntity->e.renderfx & RF_CROSSHAIR)
+						isCrosshair = qtrue;
+				}
+			} else {
+				backEnd.currentEntity = &tr.worldEntity;
+				backEnd.refdef.floatTime = originalTime;
+				backEnd.or = backEnd.viewParms.world;
+			}
+
+			// we have to reset the shaderTime as well otherwise image animations on
+			// the world (like water) continue with the wrong frame
+			tess.shaderTime = backEnd.refdef.floatTime - tess.shader->timeOffset;
+
+			// set up the dynamic lighting
+			R_TransformDlights( 1, dl, &backEnd.or );
+			tess.dlightUpdateParams = qtrue;
+
+			qglLoadMatrixf( backEnd.or.modelMatrix );
+
+			//
+			// change depthrange. Also change projection matrix so first person weapon does not look like coming
+			// out of the screen.
+			//
+
+			if (oldDepthRange != depthRange || wasCrosshair != isCrosshair)
+			{
+				if (depthRange)
+				{
+					if(backEnd.viewParms.stereoFrame != STEREO_CENTER)
+					{
+						if(isCrosshair)
+						{
+							if(oldDepthRange)
+							{
+								// was not a crosshair but now is, change back proj matrix
+								qglMatrixMode(GL_PROJECTION);
+								qglLoadMatrixf(backEnd.viewParms.projectionMatrix);
+								qglMatrixMode(GL_MODELVIEW);
+							}
+						}
+						else
+						{
+							viewParms_t temp = backEnd.viewParms;
+
+							R_SetupProjection(&temp, r_znear->value, qfalse);
+
+							qglMatrixMode(GL_PROJECTION);
+							qglLoadMatrixf(temp.projectionMatrix);
+							qglMatrixMode(GL_MODELVIEW);
+						}
+					}
+
+					if(!oldDepthRange)
+						qglDepthRange (0, 0.3);
+				}
+				else
+				{
+					if(!wasCrosshair && backEnd.viewParms.stereoFrame != STEREO_CENTER)
+					{
+						qglMatrixMode(GL_PROJECTION);
+						qglLoadMatrixf(backEnd.viewParms.projectionMatrix);
+						qglMatrixMode(GL_MODELVIEW);
+					}
+
+					qglDepthRange (0, 1);
+				}
+				oldDepthRange = depthRange;
+				wasCrosshair = isCrosshair;
+			}
+
+			oldEntityNum = entityNum;
+		}
+
+		// add the triangles for this surface
+		rb_surfaceTable[ *litSurf->surface ]( litSurf->surface );
+	}
+
+	// draw the contents of the last shader batch
+	if ( oldShader != NULL ) {
+		RB_EndSurface();
+	}
+
+	backEnd.refdef.floatTime = originalTime;
 
 	// go back to the world modelview matrix
 	qglLoadMatrixf( backEnd.viewParms.world.modelMatrix );
 	if ( depthRange ) {
 		qglDepthRange (0, 1);
 	}
-
-#if 0
-	RB_DrawSun();
-#endif
-	// darken down any stencil shadows
-	RB_ShadowFinish();		
-
-	// add light flares on lights that aren't obscured
-	RB_RenderFlares();
 }
+#endif // USE_PMLIGHT
 
 
 /*
 ============================================================================
 
-RENDER BACK END THREAD FUNCTIONS
+RENDER BACK END FUNCTIONS
 
 ============================================================================
 */
+
 
 /*
 ================
 RB_SetGL2D
-
 ================
 */
-void	RB_SetGL2D (void) {
+void RB_SetGL2D( void ) {
 	backEnd.projection2D = qtrue;
 
 	// set 2D virtual screen size
 	qglViewport( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
 	qglScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
-	qglMatrixMode(GL_PROJECTION);
-    qglLoadIdentity ();
-	qglOrtho (0, glConfig.vidWidth, glConfig.vidHeight, 0, 0, 1);
-	qglMatrixMode(GL_MODELVIEW);
-    qglLoadIdentity ();
+	qglMatrixMode( GL_PROJECTION );
+	qglLoadMatrixf( GL_Ortho( 0, glConfig.vidWidth, glConfig.vidHeight, 0, 0, 1 ) );
+	qglMatrixMode( GL_MODELVIEW );
+	qglLoadIdentity();
 
 	GL_State( GLS_DEPTHTEST_DISABLE |
-			  GLS_SRCBLEND_SRC_ALPHA |
-			  GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
+		GLS_SRCBLEND_SRC_ALPHA |
+		GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA );
 
-	qglDisable( GL_CULL_FACE );
+	GL_Cull( CT_TWO_SIDED );
 	qglDisable( GL_CLIP_PLANE0 );
 
 	// set time for 2D shaders
 	backEnd.refdef.time = ri.Milliseconds();
-	backEnd.refdef.floatTime = backEnd.refdef.time * 0.001f;
+	backEnd.refdef.floatTime = (double)backEnd.refdef.time * 0.001; // -EC-: cast to double
 }
 
 
@@ -742,19 +991,15 @@ Stretches a raw 32 bit power of 2 bitmap image over the given screen rectangle.
 Used for cinematics.
 =============
 */
-void RE_StretchRaw (int x, int y, int w, int h, int cols, int rows, const byte *data, int client, qboolean dirty) {
+void RE_StretchRaw( int x, int y, int w, int h, int cols, int rows, byte *data, int client, qboolean dirty ) {
 	int			i, j;
 	int			start, end;
 
 	if ( !tr.registered ) {
 		return;
 	}
-	R_SyncRenderThread();
 
-	// we definately want to sync every frame for the cinematics
-	qglFinish();
-
-	start = end = 0;
+	start = 0;
 	if ( r_speeds->integer ) {
 		start = ri.Milliseconds();
 	}
@@ -768,65 +1013,44 @@ void RE_StretchRaw (int x, int y, int w, int h, int cols, int rows, const byte *
 		ri.Error (ERR_DROP, "Draw_StretchRaw: size not a power of 2: %i by %i", cols, rows);
 	}
 
-	GL_Bind( tr.scratchImage[client] );
-
-	// if the scratchImage isn't in the format we want, specify it as a new texture
-	if ( cols != tr.scratchImage[client]->width || rows != tr.scratchImage[client]->height ) {
-		tr.scratchImage[client]->width = tr.scratchImage[client]->uploadWidth = cols;
-		tr.scratchImage[client]->height = tr.scratchImage[client]->uploadHeight = rows;
-		qglTexImage2D( GL_TEXTURE_2D, 0, GL_RGB8, cols, rows, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
-		qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-		qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-		qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );	
-	} else {
-		if (dirty) {
-			// otherwise, just subimage upload it so that drivers can tell we are going to be changing
-			// it and don't try and do a texture compression
-			qglTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, cols, rows, GL_RGBA, GL_UNSIGNED_BYTE, data );
-		}
-	}
+	RE_UploadCinematic( w, h, cols, rows, data, client, dirty );
 
 	if ( r_speeds->integer ) {
 		end = ri.Milliseconds();
 		ri.Printf( PRINT_ALL, "qglTexSubImage2D %i, %i: %i msec\n", cols, rows, end - start );
 	}
 
-	RB_SetGL2D();
-
-	qglColor3f( tr.identityLight, tr.identityLight, tr.identityLight );
-
-	qglBegin (GL_QUADS);
-	qglTexCoord2f ( 0.5f / cols,  0.5f / rows );
-	qglVertex2f (x, y);
-	qglTexCoord2f ( ( cols - 0.5f ) / cols ,  0.5f / rows );
-	qglVertex2f (x+w, y);
-	qglTexCoord2f ( ( cols - 0.5f ) / cols, ( rows - 0.5f ) / rows );
-	qglVertex2f (x+w, y+h);
-	qglTexCoord2f ( 0.5f / cols, ( rows - 0.5f ) / rows );
-	qglVertex2f (x, y+h);
-	qglEnd ();
+	tr.cinematicShader->stages[0]->bundle[0].image[0] = tr.scratchImage[client];
+	RE_StretchPic( x, y, w, h, 0.5f / cols, 0.5f / rows, 1.0f - 0.5f / cols, 1.0f - 0.5 / rows, tr.cinematicShader->index );
 }
 
-void RE_UploadCinematic (int w, int h, int cols, int rows, const byte *data, int client, qboolean dirty) {
 
-	GL_Bind( tr.scratchImage[client] );
+void RE_UploadCinematic( int w, int h, int cols, int rows, byte *data, int client, qboolean dirty ) {
+
+	image_t *image;
+
+	if ( !tr.scratchImage[ client ] ) {
+		tr.scratchImage[ client ] = R_CreateImage( va( "*scratch%i", client ), NULL, data, cols, rows, IMGFLAG_CLAMPTOEDGE | IMGFLAG_RGB | IMGFLAG_NOSCALE );
+		return;
+	}
+
+	image = tr.scratchImage[ client ];
+
+	GL_Bind( image );
 
 	// if the scratchImage isn't in the format we want, specify it as a new texture
-	if ( cols != tr.scratchImage[client]->width || rows != tr.scratchImage[client]->height ) {
-		tr.scratchImage[client]->width = tr.scratchImage[client]->uploadWidth = cols;
-		tr.scratchImage[client]->height = tr.scratchImage[client]->uploadHeight = rows;
-		qglTexImage2D( GL_TEXTURE_2D, 0, GL_RGB8, cols, rows, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
-		qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-		qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
-		qglTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );	
-	} else {
-		if (dirty) {
-			// otherwise, just subimage upload it so that drivers can tell we are going to be changing
-			// it and don't try and do a texture compression
-			qglTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, cols, rows, GL_RGBA, GL_UNSIGNED_BYTE, data );
-		}
+	if ( cols != image->width || rows != image->height ) {
+		image->width = image->uploadWidth = cols;
+		image->height = image->uploadHeight = rows;
+		qglTexImage2D( GL_TEXTURE_2D, 0, image->internalFormat, cols, rows, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
+		qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+		qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, gl_clamp_mode );
+		qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, gl_clamp_mode );
+	} else if ( dirty ) {
+		// otherwise, just subimage upload it so that drivers can tell we are going to be changing
+		// it and don't try and do a texture compression
+		qglTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, cols, rows, GL_RGBA, GL_UNSIGNED_BYTE, data );
 	}
 }
 
@@ -834,37 +1058,32 @@ void RE_UploadCinematic (int w, int h, int cols, int rows, const byte *data, int
 /*
 =============
 RB_SetColor
-
 =============
 */
-const void	*RB_SetColor( const void *data ) {
+static const void *RB_SetColor( const void *data ) {
 	const setColorCommand_t	*cmd;
 
 	cmd = (const setColorCommand_t *)data;
 
-	backEnd.color2D[0] = cmd->color[0] * 255;
-	backEnd.color2D[1] = cmd->color[1] * 255;
-	backEnd.color2D[2] = cmd->color[2] * 255;
-	backEnd.color2D[3] = cmd->color[3] * 255;
+	backEnd.color2D.rgba[0] = cmd->color[0] * 255;
+	backEnd.color2D.rgba[1] = cmd->color[1] * 255;
+	backEnd.color2D.rgba[2] = cmd->color[2] * 255;
+	backEnd.color2D.rgba[3] = cmd->color[3] * 255;
 
 	return (const void *)(cmd + 1);
 }
+
 
 /*
 =============
 RB_StretchPic
 =============
 */
-const void *RB_StretchPic ( const void *data ) {
+static const void *RB_StretchPic( const void *data ) {
 	const stretchPicCommand_t	*cmd;
 	shader_t *shader;
-	int		numVerts, numIndexes;
 
 	cmd = (const stretchPicCommand_t *)data;
-
-	if ( !backEnd.projection2D ) {
-		RB_SetGL2D();
-	}
 
 	shader = cmd->shader;
 	if ( shader != tess.shader ) {
@@ -875,77 +1094,200 @@ const void *RB_StretchPic ( const void *data ) {
 		RB_BeginSurface( shader, 0 );
 	}
 
-	RB_CHECKOVERFLOW( 4, 6 );
-	numVerts = tess.numVertexes;
-	numIndexes = tess.numIndexes;
+#ifdef USE_VBO
+	VBO_UnBind();
+#endif
 
-	tess.numVertexes += 4;
-	tess.numIndexes += 6;
+	if ( !backEnd.projection2D ) {
+		RB_SetGL2D();
+	}
 
-	tess.indexes[ numIndexes ] = numVerts + 3;
-	tess.indexes[ numIndexes + 1 ] = numVerts + 0;
-	tess.indexes[ numIndexes + 2 ] = numVerts + 2;
-	tess.indexes[ numIndexes + 3 ] = numVerts + 2;
-	tess.indexes[ numIndexes + 4 ] = numVerts + 0;
-	tess.indexes[ numIndexes + 5 ] = numVerts + 1;
+#ifdef USE_FBO
+	//Check if it's time for BLOOM!
+	R_BloomScreen();
+#endif
 
-	*(int *)tess.vertexColors[ numVerts ] =
-		*(int *)tess.vertexColors[ numVerts + 1 ] =
-		*(int *)tess.vertexColors[ numVerts + 2 ] =
-		*(int *)tess.vertexColors[ numVerts + 3 ] = *(int *)backEnd.color2D;
-
-	tess.xyz[ numVerts ][0] = cmd->x;
-	tess.xyz[ numVerts ][1] = cmd->y;
-	tess.xyz[ numVerts ][2] = 0;
-
-	tess.texCoords[ numVerts ][0][0] = cmd->s1;
-	tess.texCoords[ numVerts ][0][1] = cmd->t1;
-
-	tess.xyz[ numVerts + 1 ][0] = cmd->x + cmd->w;
-	tess.xyz[ numVerts + 1 ][1] = cmd->y;
-	tess.xyz[ numVerts + 1 ][2] = 0;
-
-	tess.texCoords[ numVerts + 1 ][0][0] = cmd->s2;
-	tess.texCoords[ numVerts + 1 ][0][1] = cmd->t1;
-
-	tess.xyz[ numVerts + 2 ][0] = cmd->x + cmd->w;
-	tess.xyz[ numVerts + 2 ][1] = cmd->y + cmd->h;
-	tess.xyz[ numVerts + 2 ][2] = 0;
-
-	tess.texCoords[ numVerts + 2 ][0][0] = cmd->s2;
-	tess.texCoords[ numVerts + 2 ][0][1] = cmd->t2;
-
-	tess.xyz[ numVerts + 3 ][0] = cmd->x;
-	tess.xyz[ numVerts + 3 ][1] = cmd->y + cmd->h;
-	tess.xyz[ numVerts + 3 ][2] = 0;
-
-	tess.texCoords[ numVerts + 3 ][0][0] = cmd->s1;
-	tess.texCoords[ numVerts + 3 ][0][1] = cmd->t2;
+	RB_AddQuadStamp2( cmd->x, cmd->y, cmd->w, cmd->h, cmd->s1, cmd->t1, cmd->s2, cmd->t2, backEnd.color2D );
 
 	return (const void *)(cmd + 1);
+}
+
+
+#ifdef USE_PMLIGHT
+static void RB_LightingPass( void )
+{
+	dlight_t	*dl;
+	int	i;
+
+#ifdef USE_VBO
+	VBO_Flush();
+
+	tess.allowVBO = qfalse; // for now
+#endif
+
+	tess.dlightPass = qtrue;
+
+	for ( i = 0; i < backEnd.viewParms.num_dlights; i++ )
+	{
+		dl = &backEnd.viewParms.dlights[i];
+		if ( dl->head )
+		{
+			tess.light = dl;
+			RB_RenderLitSurfList( dl );
+		}
+	}
+
+	tess.dlightPass = qfalse;
+
+	backEnd.viewParms.num_dlights = 0;
+	GL_ProgramDisable();
+}
+#endif
+
+
+static void transform_to_eye_space( const vec3_t v, vec3_t v_eye )
+{
+	const float *m = backEnd.viewParms.world.modelMatrix;
+	v_eye[0] = m[0]*v[0] + m[4]*v[1] + m[8 ]*v[2] + m[12];
+	v_eye[1] = m[1]*v[0] + m[5]*v[1] + m[9 ]*v[2] + m[13];
+	v_eye[2] = m[2]*v[0] + m[6]*v[1] + m[10]*v[2] + m[14];
+};
+
+
+/*
+================
+RB_DebugPolygon
+================
+*/
+static void RB_DebugPolygon( int color, int numPoints, float *points ) {
+	vec3_t pa;
+	vec3_t pb;
+	vec3_t p;
+	vec3_t q;
+	vec3_t n;
+	int i;
+
+	if ( numPoints < 3 ) {
+		return;
+	}
+
+	transform_to_eye_space( &points[0], pa );
+	transform_to_eye_space( &points[3], pb );
+	VectorSubtract( pb, pa, p );
+
+	for ( i = 2; i < numPoints; i++ ) {
+		transform_to_eye_space( &points[3*i], pb );
+		VectorSubtract( pb, pa, q );
+		CrossProduct( q, p, n );
+		if ( VectorLength( n ) > 1e-5 ) {
+			break;
+		}
+	}
+
+	if ( DotProduct( n, pa ) >= 0 ) {
+		return; // discard backfacing polygon
+	}
+
+	GL_SelectTexture( 0 );
+	qglDisable( GL_TEXTURE_2D );
+
+	GL_ClientState( 0, CLS_NONE );
+	qglVertexPointer( 3, GL_FLOAT, 0, points );
+
+	// draw solid shade
+	GL_State( GLS_DEPTHMASK_TRUE | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE );
+	qglColor4f( color&1, (color>>1)&1, (color>>2)&1, 1 );
+	qglDrawArrays( GL_TRIANGLE_FAN, 0, numPoints );
+
+	// draw wireframe outline
+	qglDepthRange( 0, 0 );
+	qglColor4f( 1, 1, 1, 1 );
+	qglDrawArrays( GL_LINE_LOOP, 0, numPoints );
+	qglDepthRange( 0, 1 );
+
+	qglEnable( GL_TEXTURE_2D );
+}
+
+
+/*
+====================
+RB_DebugGraphics
+
+Visualization aid for movement clipping debugging
+====================
+*/
+static void RB_DebugGraphics( void ) {
+
+	if ( !r_debugSurface->integer ) {
+		return;
+	}
+
+	GL_Bind( tr.whiteImage );
+	GL_Cull( CT_FRONT_SIDED );
+
+	ri.CM_DrawDebugSurface( RB_DebugPolygon );
 }
 
 
 /*
 =============
 RB_DrawSurfs
-
 =============
 */
-const void	*RB_DrawSurfs( const void *data ) {
-	const drawSurfsCommand_t	*cmd;
+static const void *RB_DrawSurfs( const void *data ) {
+	const drawSurfsCommand_t *cmd;
 
 	// finish any 2D drawing if needed
-	if ( tess.numIndexes ) {
-		RB_EndSurface();
-	}
+	RB_EndSurface();
 
 	cmd = (const drawSurfsCommand_t *)data;
 
 	backEnd.refdef = cmd->refdef;
 	backEnd.viewParms = cmd->viewParms;
 
+#ifdef USE_VBO
+	VBO_UnBind();
+#endif
+
+	// clear the z buffer, set the modelview, etc
+	RB_BeginDrawingView();
+
 	RB_RenderDrawSurfList( cmd->drawSurfs, cmd->numDrawSurfs );
+
+#ifdef USE_VBO
+	VBO_UnBind();
+#endif
+
+	if ( r_drawSun->integer ) {
+		RB_DrawSun( 0.1f, tr.sunShader );
+	}
+
+	// darken down any stencil shadows
+	RB_ShadowFinish();
+
+	// add light flares on lights that aren't obscured
+	RB_RenderFlares();
+
+#ifdef USE_PMLIGHT
+	if ( backEnd.refdef.numLitSurfs ) {
+		RB_BeginDrawingLitSurfs();
+		RB_LightingPass();
+	}
+#endif
+
+#ifdef USE_FBO
+	if ( !backEnd.doneSurfaces && tr.needScreenMap ) {
+		if ( backEnd.viewParms.frameSceneNum == 1 ) {
+			FBO_CopyScreen();
+		}
+	}
+#endif
+
+	// draw main system development information (surface outlines, etc)
+	RB_DebugGraphics();
+
+	//TODO Maybe check for rdf_noworld stuff but q3mme has full 3d ui
+	backEnd.doneSurfaces = qtrue; // for bloom
 
 	return (const void *)(cmd + 1);
 }
@@ -954,15 +1296,23 @@ const void	*RB_DrawSurfs( const void *data ) {
 /*
 =============
 RB_DrawBuffer
-
 =============
 */
-const void	*RB_DrawBuffer( const void *data ) {
+static const void *RB_DrawBuffer( const void *data ) {
 	const drawBufferCommand_t	*cmd;
 
 	cmd = (const drawBufferCommand_t *)data;
 
+#ifdef USE_FBO
+	if ( fboEnabled ) {
+		FBO_BindMain();
+		qglDrawBuffer( GL_COLOR_ATTACHMENT0 );
+	} else {
+		qglDrawBuffer( cmd->buffer );
+	}
+#else
 	qglDrawBuffer( cmd->buffer );
+#endif
 
 	// clear screen for debugging
 	if ( r_clear->integer ) {
@@ -972,6 +1322,7 @@ const void	*RB_DrawBuffer( const void *data ) {
 
 	return (const void *)(cmd + 1);
 }
+
 
 /*
 ===============
@@ -988,6 +1339,8 @@ void RB_ShowImages( void ) {
 	image_t	*image;
 	float	x, y, w, h;
 	int		start, end;
+	const vec2_t t[4] = { {0,0}, {1,0}, {0,1}, {1,1} };
+	vec3_t v[4];
 
 	if ( !backEnd.projection2D ) {
 		RB_SetGL2D();
@@ -997,11 +1350,13 @@ void RB_ShowImages( void ) {
 
 	qglFinish();
 
+	GL_ClientState( 0, CLS_TEXCOORD_ARRAY );
+	qglTexCoordPointer( 2, GL_FLOAT, 0, t );
+
 	start = ri.Milliseconds();
 
-	for ( i=0 ; i<tr.numImages ; i++ ) {
-		image = tr.images[i];
-
+	for ( i = 0; i < tr.numImages; i++ ) {
+		image = tr.images[ i ];
 		w = glConfig.vidWidth / 20;
 		h = glConfig.vidHeight / 15;
 		x = i % 20 * w;
@@ -1014,74 +1369,122 @@ void RB_ShowImages( void ) {
 		}
 
 		GL_Bind( image );
-		qglBegin (GL_QUADS);
-		qglTexCoord2f( 0, 0 );
-		qglVertex2f( x, y );
-		qglTexCoord2f( 1, 0 );
-		qglVertex2f( x + w, y );
-		qglTexCoord2f( 1, 1 );
-		qglVertex2f( x + w, y + h );
-		qglTexCoord2f( 0, 1 );
-		qglVertex2f( x, y + h );
-		qglEnd();
+
+		VectorSet(v[0],x,y,0);
+		VectorSet(v[1],x+w,y,0);
+		VectorSet(v[2],x,y+h,0);
+		VectorSet(v[3],x+w,y+h,0);
+
+		qglVertexPointer( 3, GL_FLOAT, 0, v );
+		qglDrawArrays( GL_TRIANGLE_STRIP, 0, 4 );
 	}
 
 	qglFinish();
 
 	end = ri.Milliseconds();
 	ri.Printf( PRINT_ALL, "%i msec to draw all images\n", end - start );
-
 }
+
 
 /*
 =============
 RB_ColorMask
-
 =============
 */
-const void *RB_ColorMask(const void *data)
+static const void *RB_ColorMask( const void *data )
 {
 	const colorMaskCommand_t *cmd = data;
-	
-	qglColorMask(cmd->rgba[0], cmd->rgba[1], cmd->rgba[2], cmd->rgba[3]);
-	
+
+	qglColorMask( cmd->rgba[0], cmd->rgba[1], cmd->rgba[2], cmd->rgba[3] );
+
 	return (const void *)(cmd + 1);
 }
+
 
 /*
 =============
 RB_ClearDepth
-
 =============
 */
-const void *RB_ClearDepth(const void *data)
+static const void *RB_ClearDepth( const void *data )
 {
 	const clearDepthCommand_t *cmd = data;
-	
-	if(tess.numIndexes)
-		RB_EndSurface();
 
-	// texture swapping test
-	if (r_showImages->integer)
-		RB_ShowImages();
+	RB_EndSurface();
 
-	qglClear(GL_DEPTH_BUFFER_BIT);
-	
+	qglClear( GL_DEPTH_BUFFER_BIT );
+
 	return (const void *)(cmd + 1);
 }
 
+
 /*
 =============
-RB_SwapBuffers
-
+RB_ClearColor
 =============
 */
-const void	*RB_SwapBuffers( const void *data ) {
-	const swapBuffersCommand_t	*cmd;
+static const void *RB_ClearColor( const void *data )
+{
+	const clearColorCommand_t *cmd = data;
 
-	// finish any 2D drawing if needed
-	if ( tess.numIndexes ) {
-		RB_EndSurface();
+	if ( cmd->fullscreen )
+	{
+		qglViewport( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
+		qglScissor( 0, 0, glConfig.vidWidth, glConfig.vidHeight );
+	}
+
+	if ( cmd->colorMask )
+	{
+		qglColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
+	}
+
+	qglClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
+
+	if ( cmd->frontAndBack )
+	{
+		qglDrawBuffer( GL_FRONT );
+		qglClear( GL_COLOR_BUFFER_BIT );
+		qglDrawBuffer( GL_BACK );
+	}
+
+	qglClear( GL_COLOR_BUFFER_BIT );
+
+	return (const void *)(cmd + 1);
+}
+
+
+/*
+=============
+RB_FinishBloom
+=============
+*/
+#ifdef USE_FBO
+static const void *RB_FinishBloom( const void *data )
+{
+	const finishBloomCommand_t *cmd = data;
+
+	RB_EndSurface();
+
+	if ( fboEnabled )
+	{
+		// let's always render console with the same quality
+		// TODO: fix this to work with multiple views and opened console
+		if ( blitMSfbo && tr.frameSceneNum == 1 )
+		{
+			FBO_BlitMS( qfalse );
+			blitMSfbo = qfalse;
+		}
+
+		if ( r_bloom->integer && qglActiveTextureARB )
+		{
+			if ( !backEnd.doneBloom && backEnd.doneSurfaces )
+			{
+				if ( !backEnd.projection2D )
+					RB_SetGL2D();
+				qglColor4f( 1, 1, 1, 1 );
+				FBO_Bloom( 0, 0, qfalse );
+			}
+		}
 	}
 
 	// texture swapping test
@@ -1089,60 +1492,109 @@ const void	*RB_SwapBuffers( const void *data ) {
 		RB_ShowImages();
 	}
 
-	cmd = (const swapBuffersCommand_t *)data;
+	backEnd.drawConsole = qtrue;
 
-	// we measure overdraw by reading back the stencil buffer and
-	// counting up the number of increments that have happened
-	if ( r_measureOverdraw->integer ) {
-		int i;
-		long sum = 0;
-		unsigned char *stencilReadback;
+	return (const void *)(cmd + 1);
+}
+#endif // USE_FBO
 
-		stencilReadback = ri.Hunk_AllocateTempMemory( glConfig.vidWidth * glConfig.vidHeight );
-		qglReadPixels( 0, 0, glConfig.vidWidth, glConfig.vidHeight, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, stencilReadback );
 
-		for ( i = 0; i < glConfig.vidWidth * glConfig.vidHeight; i++ ) {
-			sum += stencilReadback[i];
-		}
+static const void *RB_SwapBuffers( const void *data ) {
 
-		backEnd.pc.c_overDraw += sum;
-		ri.Hunk_FreeTempMemory( stencilReadback );
+	const swapBuffersCommand_t	*cmd;
+
+	// finish any 2D drawing if needed
+	RB_EndSurface();
+
+#ifdef USE_VBO
+	VBO_UnBind();
+#endif
+
+	// texture swapping test
+	if ( r_showImages->integer && !backEnd.drawConsole ) {
+		RB_ShowImages();
 	}
 
+	cmd = (const swapBuffersCommand_t *)data;
 
-	if ( !glState.finishCalled ) {
+	if ( backEnd.doneSurfaces && !glState.finishCalled ) {
 		qglFinish();
 	}
 
-	GLimp_LogComment( "***************** RB_SwapBuffers *****************\n\n\n" );
+#ifdef USE_FBO
+	if ( fboEnabled ) {
+		FBO_PostProcess();
+	}
+#endif
 
-	GLimp_EndFrame();
+	// buffer swap may take undefined time to complete, we can't measure it in a reliable way
+	backEnd.pc.msec = ri.Milliseconds() - backEnd.pc.msec;
+
+	if ( backEnd.screenshotMask && tr.frameCount > 1 ) {
+#ifdef USE_FBO
+		if ( superSampled ) {
+			qglScissor( 0, 0, gls.captureWidth, gls.captureHeight );
+			qglViewport( 0, 0, gls.captureWidth, gls.captureHeight );
+			FBO_BlitSS();
+		}
+#endif
+		if ( backEnd.screenshotMask & SCREENSHOT_TGA && backEnd.screenshotTGA[0] ) {
+			RB_TakeScreenshot( 0, 0, gls.captureWidth, gls.captureHeight, backEnd.screenshotTGA );
+			if ( !backEnd.screenShotTGAsilent ) {
+				ri.Printf( PRINT_ALL, "Wrote %s\n", backEnd.screenshotTGA );
+			}
+		}
+		if ( backEnd.screenshotMask & SCREENSHOT_JPG && backEnd.screenshotJPG[0] ) {
+			RB_TakeScreenshotJPEG( 0, 0, gls.captureWidth, gls.captureHeight, backEnd.screenshotJPG );
+			if ( !backEnd.screenShotJPGsilent ) {
+				ri.Printf( PRINT_ALL, "Wrote %s\n", backEnd.screenshotJPG );
+			}
+		}
+		if ( backEnd.screenshotMask & SCREENSHOT_BMP && ( backEnd.screenshotBMP[0] || ( backEnd.screenshotMask & SCREENSHOT_BMP_CLIPBOARD ) ) ) {
+			RB_TakeScreenshotBMP( 0, 0, gls.captureWidth, gls.captureHeight, backEnd.screenshotBMP, backEnd.screenshotMask & SCREENSHOT_BMP_CLIPBOARD );
+			if ( !backEnd.screenShotBMPsilent ) {
+				ri.Printf( PRINT_ALL, "Wrote %s\n", backEnd.screenshotBMP );
+			}
+		}
+		if ( backEnd.screenshotMask & SCREENSHOT_AVI ) {
+			RB_TakeVideoFrameCmd( &backEnd.vcmd );
+		}
+
+		backEnd.screenshotJPG[0] = '\0';
+		backEnd.screenshotTGA[0] = '\0';
+		backEnd.screenshotBMP[0] = '\0';
+		backEnd.screenshotMask = 0;
+	}
+
+	ri.GLimp_EndFrame();
+
+#ifdef USE_FBO
+	FBO_BindMain();
+#endif
 
 	backEnd.projection2D = qfalse;
+	backEnd.doneBloom = qfalse;
+	backEnd.doneSurfaces = qfalse;
+	backEnd.drawConsole = qfalse;
+
+	r_anaglyphMode->modified = qfalse;
 
 	return (const void *)(cmd + 1);
 }
 
+
 /*
 ====================
 RB_ExecuteRenderCommands
-
-This function will be called synchronously if running without
-smp extensions, or asynchronously by another thread.
 ====================
 */
 void RB_ExecuteRenderCommands( const void *data ) {
-	int		t1, t2;
 
-	t1 = ri.Milliseconds ();
-
-	if ( !r_smp->integer || data == backEndData[0]->commands.cmds ) {
-		backEnd.smpFrame = 0;
-	} else {
-		backEnd.smpFrame = 1;
-	}
+	backEnd.pc.msec = ri.Milliseconds();
 
 	while ( 1 ) {
+		data = PADP(data, sizeof(void *));
+
 		switch ( *(const int *)data ) {
 		case RC_SET_COLOR:
 			data = RB_SetColor( data );
@@ -1159,52 +1611,24 @@ void RB_ExecuteRenderCommands( const void *data ) {
 		case RC_SWAP_BUFFERS:
 			data = RB_SwapBuffers( data );
 			break;
-		case RC_SCREENSHOT:
-			data = RB_TakeScreenshotCmd( data );
+#ifdef USE_FBO
+		case RC_FINISHBLOOM:
+			data = RB_FinishBloom(data);
 			break;
-		case RC_VIDEOFRAME:
-			data = RB_TakeVideoFrameCmd( data );
-			break;
+#endif
 		case RC_COLORMASK:
 			data = RB_ColorMask(data);
 			break;
 		case RC_CLEARDEPTH:
 			data = RB_ClearDepth(data);
 			break;
+		case RC_CLEARCOLOR:
+			data = RB_ClearColor(data);
+			break;
 		case RC_END_OF_LIST:
 		default:
-			// stop rendering on this thread
-			t2 = ri.Milliseconds ();
-			backEnd.pc.msec = t2 - t1;
+			// stop rendering
 			return;
 		}
 	}
-
 }
-
-
-/*
-================
-RB_RenderThread
-================
-*/
-void RB_RenderThread( void ) {
-	const void	*data;
-
-	// wait for either a rendering command or a quit command
-	while ( 1 ) {
-		// sleep until we have work to do
-		data = GLimp_RendererSleep();
-
-		if ( !data ) {
-			return;	// all done, renderer is shutting down
-		}
-
-		renderThreadActive = qtrue;
-
-		RB_ExecuteRenderCommands( data );
-
-		renderThreadActive = qfalse;
-	}
-}
-

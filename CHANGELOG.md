@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--01/30/2026--**
+
+* libs/asm/renderer:<br />initial replacement of core system utilities
+
 **--01/28/2026--**
 
 * qcommon:<br />fix remaining macos defines
