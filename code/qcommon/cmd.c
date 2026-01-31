@@ -662,6 +662,20 @@ Cmd_ArgsBuffer(qchar *buffer, qint bufferLength)
 
 /*
 ============
+Cmd_LiteralArgsBuffer
+
+The interpreted versions use this because
+they can't have pointers returned to them
+============
+*/
+void
+Cmd_LiteralArgsBuffer(qchar *buffer, qint bufferLength)
+{
+  Q_strncpyz(buffer, cmd_cmd, bufferLength);
+}
+
+/*
+============
 Cmd_Cmd
 
 Retrieve the unmodified command string

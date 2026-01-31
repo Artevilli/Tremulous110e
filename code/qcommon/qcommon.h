@@ -562,6 +562,8 @@ qchar *
 Cmd_ArgsFrom(qint arg);
 void
 Cmd_ArgsBuffer(qchar *buffer, qint bufferLength);
+void
+Cmd_LiteralArgsBuffer(qchar *buffer, qint bufferLength);
 qchar *
 Cmd_Cmd(void);
 void

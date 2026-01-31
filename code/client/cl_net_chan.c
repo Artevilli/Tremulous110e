@@ -1,22 +1,21 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Quake III Arena source code.
 
-Tremulous is free software; you can redistribute it
+Quake III Arena source code is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Quake III Arena source code is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -38,28 +37,29 @@ CL_Netchan_Encode
 */
 static void CL_Netchan_Encode( msg_t *msg ) {
 	int serverId, messageAcknowledge, reliableAcknowledge;
-	int i, index, srdc, sbit, soob;
+	int i, index, srdc, sbit;
 	byte key, *string;
+	qboolean soob;
 
 	if ( msg->cursize <= CL_ENCODE_START ) {
 		return;
 	}
 
-        srdc = msg->readcount;
-        sbit = msg->bit;
-        soob = msg->oob;
-        
-        msg->bit = 0;
-        msg->readcount = 0;
-        msg->oob = 0;
-        
-        serverId = MSG_ReadLong(msg);
+	srdc = msg->readcount;
+	sbit = msg->bit;
+	soob = msg->oob;
+
+	msg->bit = 0;
+	msg->readcount = 0;
+	msg->oob = qfalse;
+
+	serverId = MSG_ReadLong(msg);
 	messageAcknowledge = MSG_ReadLong(msg);
 	reliableAcknowledge = MSG_ReadLong(msg);
 
-        msg->oob = soob;
-        msg->bit = sbit;
-        msg->readcount = srdc;
+	msg->oob = soob;
+	msg->bit = sbit;
+	msg->readcount = srdc;
         
 	string = (byte *)clc.serverCommands[ reliableAcknowledge & (MAX_RELIABLE_COMMANDS-1) ];
 	index = 0;
@@ -81,6 +81,7 @@ static void CL_Netchan_Encode( msg_t *msg ) {
 	}
 }
 
+
 /*
 ==============
 CL_Netchan_Decode
@@ -93,19 +94,20 @@ CL_Netchan_Decode
 static void CL_Netchan_Decode( msg_t *msg ) {
 	long reliableAcknowledge, i, index;
 	byte key, *string;
-        int	srdc, sbit, soob;
+	int	srdc, sbit;
+	qboolean soob;
 
-        srdc = msg->readcount;
-        sbit = msg->bit;
-        soob = msg->oob;
-        
-        msg->oob = 0;
-        
-	reliableAcknowledge = MSG_ReadLong(msg);
+	srdc = msg->readcount;
+	sbit = msg->bit;
+	soob = msg->oob;
 
-        msg->oob = soob;
-        msg->bit = sbit;
-        msg->readcount = srdc;
+	msg->oob = qfalse;
+
+	reliableAcknowledge = MSG_ReadLong( msg );
+
+	msg->oob = soob;
+	msg->bit = sbit;
+	msg->readcount = srdc;
 
 	string = (byte *) clc.reliableCommands[ reliableAcknowledge & (MAX_RELIABLE_COMMANDS-1) ];
 	index = 0;
@@ -127,14 +129,23 @@ static void CL_Netchan_Decode( msg_t *msg ) {
 	}
 }
 
+
 /*
 =================
 CL_Netchan_TransmitNextFragment
 =================
 */
-void CL_Netchan_TransmitNextFragment( netchan_t *chan ) {
-	Netchan_TransmitNextFragment( chan );
+static qboolean CL_Netchan_TransmitNextFragment( netchan_t *chan )
+{
+	if ( chan->unsentFragments )
+	{
+		Netchan_TransmitNextFragment( chan );
+		return qtrue;
+	}
+	
+	return qfalse;
 }
+
 
 /*
 ===============
@@ -142,14 +153,44 @@ CL_Netchan_Transmit
 ================
 */
 void CL_Netchan_Transmit( netchan_t *chan, msg_t* msg ) {
-	MSG_WriteByte( msg, clc_EOF );
 
-	CL_Netchan_Encode( msg );
+	if ( chan->compat )
+		CL_Netchan_Encode( msg );
+
 	Netchan_Transmit( chan, msg->cursize, msg->data );
+	
+	// Transmit all fragments without delay
+	while ( CL_Netchan_TransmitNextFragment( chan ) ) {
+		// might happen if server die silently but client continue adding/sending commands
+		Com_DPrintf( S_COLOR_YELLOW "%s: unsent fragments\n", __func__ );
+	}
 }
 
-extern 	int oldsize;
-int newsize = 0;
+
+/*
+===============
+CL_Netchan_Enqueue
+================
+*/
+void CL_Netchan_Enqueue( netchan_t *chan, msg_t* msg, int times ) {
+	int i;
+
+	// make sure we send all pending fragments to get correct chan->outgoingSequence
+	while ( CL_Netchan_TransmitNextFragment( chan ) ) {
+		;
+	}
+
+	if ( chan->compat ) {
+		CL_Netchan_Encode( msg );
+	}
+
+	for ( i = 0; i < times; i++ ) {
+		Netchan_Enqueue( chan, msg->cursize, msg->data );
+	}
+
+	chan->outgoingSequence++;
+}
+
 
 /*
 =================
@@ -157,12 +198,14 @@ CL_Netchan_Process
 =================
 */
 qboolean CL_Netchan_Process( netchan_t *chan, msg_t *msg ) {
-	int ret;
+	qboolean ret;
 
 	ret = Netchan_Process( chan, msg );
-	if (!ret)
+	if ( !ret )
 		return qfalse;
-	CL_Netchan_Decode( msg );
-	newsize += msg->cursize;
+
+	if ( chan->compat )
+		CL_Netchan_Decode( msg );
+
 	return qtrue;
 }

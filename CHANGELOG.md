@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--01/31/2026--**
+
+* makefile/client/sys:<br />initial replacement of client
+
 **--01/30/2026--**
 
 * makefile/src:<br />src -> code

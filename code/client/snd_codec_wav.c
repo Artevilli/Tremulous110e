@@ -1,23 +1,22 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2000-2006 Tim Angus
 Copyright (C) 2005 Stuart Dalton (badcdev@gmail.com)
 
-This file is part of Tremulous.
+This file is part of Quake III Arena source code.
 
-Tremulous is free software; you can redistribute it
+Quake III Arena source code is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Quake III Arena source code is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -101,9 +100,13 @@ static int S_FindRIFFChunk( fileHandle_t f, char *chunk ) {
 	return -1;
 }
 
+
 /*
 =================
 S_ByteSwapRawSamples
+
+If raw data has been loaded in little endian binary form, this must be done.
+If raw data was calculated, as with ADPCM, this should not be called.
 =================
 */
 static void S_ByteSwapRawSamples( int samples, int width, int s_channels, const byte *data ) {
@@ -124,6 +127,7 @@ static void S_ByteSwapRawSamples( int samples, int width, int s_channels, const 
 	}
 }
 
+
 /*
 =================
 S_ReadRIFFHeader
@@ -132,7 +136,6 @@ S_ReadRIFFHeader
 static qboolean S_ReadRIFFHeader(fileHandle_t file, snd_info_t *info)
 {
 	char dump[16];
-	int wav_format;
 	int bits;
 	int fmtlen = 0;
 
@@ -147,7 +150,7 @@ static qboolean S_ReadRIFFHeader(fileHandle_t file, snd_info_t *info)
 	}
 
 	// Save the parameters
-	wav_format = FGetLittleShort(file);
+	FGetLittleShort(file); // wav_format
 	info->channels = FGetLittleShort(file);
 	info->rate = FGetLittleLong(file);
 	FGetLittleLong(file);
@@ -184,7 +187,7 @@ static qboolean S_ReadRIFFHeader(fileHandle_t file, snd_info_t *info)
 // WAV codec
 snd_codec_t wav_codec =
 {
-	".wav",
+	"wav",
 	S_WAV_CodecLoad,
 	S_WAV_CodecOpenStream,
 	S_WAV_CodecReadStream,
@@ -204,10 +207,8 @@ void *S_WAV_CodecLoad(const char *filename, snd_info_t *info)
 
 	// Try to open the file
 	FS_FOpenFileRead(filename, &file, qtrue);
-	if(!file)
+	if ( file == FS_INVALID_HANDLE )
 	{
-		Com_Printf( S_COLOR_RED "ERROR: Could not open \"%s\"\n",
-				filename);
 		return NULL;
 	}
 
@@ -221,7 +222,7 @@ void *S_WAV_CodecLoad(const char *filename, snd_info_t *info)
 	}
 
 	// Allocate some memory
-	buffer = Z_Malloc(info->size);
+	buffer = Hunk_AllocateTempMemory(info->size);
 	if(!buffer)
 	{
 		FS_FCloseFile(file);
