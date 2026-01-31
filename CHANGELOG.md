@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/30/2026--**
 
+* makefile/src:<br />src -> code
+
 * libs/asm/renderer:<br />initial replacement of core system utilities
 
 **--01/28/2026--**

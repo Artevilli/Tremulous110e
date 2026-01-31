@@ -120,7 +120,7 @@ DESTDIR=/usr/local/games/tremulous
 endif
 
 ifndef MOUNT_DIR
-MOUNT_DIR=src
+MOUNT_DIR=code
 endif
 
 ifndef BUILD_DIR
