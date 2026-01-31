@@ -76,14 +76,16 @@ Netchan_Setup
 called to open a channel to a remote system
 ==============
 */
-void Netchan_Setup( const netsrc_t sock, netchan_t *chan, const netadr_t *adr, const qint setupQport ) {
+void Netchan_Setup( const netsrc_t sock, netchan_t *chan, const netadr_t *adr, const qint port, const qint challenge, qbool compat ) {
 	Com_Memset (chan, 0, sizeof(*chan));
 	
 	chan->sock = sock;
 	chan->remoteAddress = *adr;
-	chan->qport = setupQport;
+	chan->qport = port;
 	chan->incomingSequence = 0;
 	chan->outgoingSequence = 1;
+	chan->challenge = challenge;
+	chan->compat = compat;
 	chan->isLANAddress = Sys_IsLANAddress(adr);
 }
 
@@ -197,6 +199,11 @@ void Netchan_TransmitNextFragment( netchan_t *chan ) {
 		MSG_WriteShort( &send, qport->integer );
 	}
 
+        if (!chan->compat)
+        {
+          MSG_WriteLong(&send, NETCHAN_GENCHECKSUM(chan->challenge, chan->outgoingSequence));
+        }
+
 	// copy the reliable message to the packet first
 	fragmentLength = FRAGMENT_SIZE;
 	if ( chan->unsentFragmentStart  + fragmentLength > chan->unsentLength ) {
@@ -254,6 +261,11 @@ static void Netchan_EnqueueFragments( const netchan_t *chan, const qint length, 
 		// send the qport if we are a client
 		if ( chan->sock == NS_CLIENT ) {
 			MSG_WriteShort( &send, qport->integer );
+		}
+
+		if (!chan->compat)
+		{
+		  MSG_WriteLong(&send, NETCHAN_GENCHECKSUM(chan->challenge, chan->outgoingSequence));
 		}
 
 		// copy the reliable message to the packet first
@@ -322,6 +334,11 @@ void Netchan_Transmit( netchan_t *chan, qint length, const byte *data ) {
 		MSG_WriteShort( &send, qport->integer );
 	}
 
+        if (!chan->compat)
+        {
+          MSG_WriteLong(&send, NETCHAN_GENCHECKSUM(chan->challenge, chan->outgoingSequence));
+        }
+
         chan->outgoingSequence++;
 
 	MSG_WriteData( &send, data, length );
@@ -373,6 +390,11 @@ void Netchan_Enqueue( netchan_t *chan, qint length, const byte *data ) {
 	if ( chan->sock == NS_CLIENT )
 		MSG_WriteShort( &send, qport->integer );
 
+	if (!chan->compat)
+	{
+	  MSG_WriteLong(&send, NETCHAN_GENCHECKSUM(chan->challenge, chan->outgoingSequence));
+	}
+
 	MSG_WriteData( &send, data, length );
 
 	// enqueue the datagram
@@ -417,6 +439,17 @@ qbool Netchan_Process( netchan_t *chan, msg_t *msg ) {
 	if ( chan->sock == NS_SERVER ) {
 		/*qport =*/ MSG_ReadShort( msg );
 	}
+
+        if (!chan->compat)
+        {
+          qint checksum = MSG_ReadLong(msg);
+
+          //UDP spoofing protection
+          if (NETCHAN_GENCHECKSUM(chan->challenge, sequence) != checksum)
+          {
+            return qfalse;
+          }
+        }
 
 	// read the fragment information
 	if ( fragmented ) {
@@ -762,19 +795,6 @@ NET_FlushPacketQueue(qint time_diff)
 void
 NET_SendPacket(netsrc_t sock, qint length, const void *data, const netadr_t *to)
 {
-  if (cl_packetloss->integer > 0 || sv_packetloss->integer > 0)
-  {
-    if (((float)rand() / RAND_MAX) * 100 <= (cl_packetloss->integer || sv_packetloss->integer))
-    {
-      if (showpackets->integer)
-      {
-        Com_Printf("drop packet %4i\n", length);
-      }
-
-      return;
-    }
-  }
-
   //sequenced packets are shown in netchan, so just show oob
   if (showpackets->integer && *(int32_t *)data == -1)
   {

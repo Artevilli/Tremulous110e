@@ -193,7 +193,12 @@ SV_Netchan_TransmitNextInQueue(client_t *client)
 
   Com_DPrintf("#462 Netchan_TransmitNextFragment: popping a queued message for transmit\n");
   netbuf = client->netchan_start_queue;
-  SV_Netchan_Encode(client, &netbuf->msg, netbuf->lastClientCommandString);
+
+  if (client->compat)
+  {
+    SV_Netchan_Encode(client, &netbuf->msg, netbuf->lastClientCommandString);
+  }
+
   Netchan_Transmit(&client->netchan, netbuf->msg.cursize, netbuf->msg.data);
 
   //pop from queue
@@ -265,7 +270,12 @@ SV_Netchan_Transmit(client_t *client, msg_t *msg)
 
     //store the msg, we can't store it encoded, as the encoding depends on stuff we still have to finish sending
     MSG_Copy(&netbuf->msg, netbuf->msgBuffer, msg->cursize, msg);
-    Q_strncpyz(netbuf->lastClientCommandString, client->lastClientCommandString, cmdLen);
+
+    if (client->compat)
+    {
+      Q_strncpyz(netbuf->lastClientCommandString, client->lastClientCommandString, cmdLen);
+    }
+
     netbuf->next = NULL;
 
     //insert it in the queue, the message will be encoded and sent later
@@ -274,7 +284,11 @@ SV_Netchan_Transmit(client_t *client, msg_t *msg)
   }
   else
   {
-    SV_Netchan_Encode(client, msg, client->lastClientCommandString);
+    if (client->compat)
+    {
+      SV_Netchan_Encode(client, msg, client->lastClientCommandString);
+    }
+
     Netchan_Transmit(&client->netchan, msg->cursize, msg->data);
   }
 }
@@ -294,7 +308,11 @@ SV_Netchan_Process(client_t *client, msg_t *msg)
     return qfalse;
   }
 
-  SV_Netchan_Decode(client, msg);
+  if (client->compat)
+  {
+    SV_Netchan_Decode(client, msg);
+  }
+
   return qtrue;
 }
 

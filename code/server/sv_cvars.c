@@ -113,7 +113,7 @@ SV_InitCvars(void)
   Cvar_Get("dmflags", "0", CVAR_ARCHIVE | CVAR_SERVERINFO);
   Cvar_Get("timelimit", "0", CVAR_SERVERINFO);
   Cvar_Get ("sv_keywords", "", CVAR_SERVERINFO);
-  Cvar_Get("protocol", va("%i", PROTOCOL_VERSION), CVAR_SERVERINFO | CVAR_ROM);
+  //Cvar_Get("protocol", va("%i", PROTOCOL_VERSION), CVAR_SERVERINFO | CVAR_ROM);
   sv_mapname = Cvar_GetAndDescribe("mapname", "nomap", CVAR_SERVERINFO | CVAR_ROM, "Display the name of the current map being used on the server.");
   sv_privateClients = Cvar_GetAndDescribe("sv_privateClients", "0", CVAR_SERVERINFO, "The number of spots out of sv_maxclients reserved for players with the server password set by sv_privatePassword, also the number of bot slots for ^1Z^7.");
   Cvar_CheckRange(sv_privateClients, "0", va("%i", MAX_CLIENTS - 1), CV_INTEGER);

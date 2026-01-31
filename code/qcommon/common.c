@@ -44,8 +44,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "../client/keys.h"
 
-qint demo_protocols[] =
-{ PROTOCOL_VERSION, 0 };
+const qint demo_protocols[] =
+{OLD_PROTOCOL_VERSION, NEW_PROTOCOL_VERSION, 0};
 
 #define USE_MULTI_SEGMENT //allocate additional zone segments on demand
 
@@ -63,10 +63,8 @@ static jmp_buf abortframe; //an ERR_DROP occured, exit the entire frame
 
 qint CPU_Flags = 0;
 
-FILE *debuglogfile;
-static fileHandle_t pipefile = FS_INVALID_HANDLE;
 static fileHandle_t logfile = FS_INVALID_HANDLE;
-fileHandle_t com_journalFile = FS_INVALID_HANDLE; //events are written here
+static fileHandle_t com_journalFile = FS_INVALID_HANDLE; //events are written here
 fileHandle_t com_journalDataFile = FS_INVALID_HANDLE; //config files are written here
 
 cvar_t *com_viewlog;
@@ -76,7 +74,8 @@ cvar_t *com_dedicated;
 cvar_t *com_timescale;
 static cvar_t *com_fixedtime;
 cvar_t *com_journal;
-cvar_t *com_homepath;
+cvar_t *com_protocol;
+qbool com_protocolCompat;
 #if !defined(DEDICATED)
 cvar_t *com_maxfps;
 cvar_t *com_maxfpsUnfocused;
@@ -86,28 +85,27 @@ cvar_t *com_timedemo;
 #if defined(USE_AFFINITY_MASK)
 cvar_t *com_affinityMask;
 #endif
-cvar_t *com_sv_running;
-cvar_t *com_cl_running;
-#if defined(_WIN32) && defined(_DEBUG)
-cvar_t *com_noErrorInterrupt;
-#endif
-static cvar_t *com_logfile;		// 1 = buffer log, 2 = flush after each print
-cvar_t *com_pipefile;
+static cvar_t *com_logfile; //1 = buffer log, 2 = flush after each print
 static cvar_t *com_showtrace;
 cvar_t *com_version;
-cvar_t *com_blood;
-static cvar_t *com_buildScript;	// for automated data building scripts
+static cvar_t *com_buildScript; //for automated data building scripts
+
 #if !defined(DEDICATED)
 cvar_t *cl_paused;
 cvar_t *cl_packetdelay;
+cvar_t *com_cl_running;
 #endif
+
 cvar_t *sv_paused;
-cvar_t *cl_packetloss;
 cvar_t *sv_packetdelay;
-cvar_t *sv_packetloss;
+cvar_t *com_sv_running;
+
 cvar_t *com_cameraMode;
+#if defined(_WIN32) && defined(_DEBUG)
+cvar_t *com_noErrorInterrupt;
+#endif
+
 cvar_t *com_ansiColor;
-cvar_t *com_homepath;
 
 //com_speeds times
 qint time_game;
@@ -127,11 +125,14 @@ qbool gw_minimized = qfalse; //this will always be true for dedicated servers
 qbool gw_active = qtrue;
 #endif
 
-qchar com_errorMessage[MAXPRINTMSG];
+static qchar com_errorMessage[MAXPRINTMSG];
 
-static void Com_Shutdown(void);
-static void Com_WriteConfig_f( void );
-void CIN_CloseAllVideos( void );
+static void
+Com_Shutdown(void);
+static void
+Com_WriteConfig_f(void);
+void
+CIN_CloseAllVideos(void);
 
 //============================================================================
 
@@ -717,26 +718,6 @@ void Com_StartupVariable( const qchar *match ) {
 		}
 	}
 }
-
-#if 0 //FIXME: broken
-void
-Com_CommandLineCheck(qbool(*clb)(void))
-{
-  qint i;
-
-  for(i = 0;i < com_numConsoleLines;i++)
-  {
-    Cmd_TokenizeString(com_consoleLines[i]);
-
-    if (!clb())
-    {
-      continue;
-    }
-
-    com_consoleLines[i][0] = '\0';
-  }
-}
-#endif
 
 /*
 =================
@@ -3195,12 +3176,9 @@ Com_GameRestart(qint checksumFeed, qbool clientRestart)
     Com_ExecuteCfg();
 
 #if !defined(DEDICATED)
-    //restart sound subsystem so old handles are flushed
-    CL_Snd_Restart();
-
     if (clientRestart)
     {
-      CL_StartHunkUsers(qfalse);
+      CL_StartHunkUsers();
     }
 #endif
     com_gameRestarting = qfalse;
@@ -3842,308 +3820,286 @@ Com_InitRand(void)
   }
 }
 
-#if 0 //FIXME: broken
-static qbool
-Com_InitExecs(void)
-{
-  if (Q_stricmp(Cmd_Argv(0), "exec") && Q_stricmp(Cmd_Argv(0), "execq"))
-  {
-    return qfalse;
-  }
-
-  Cbuf_AddText(va("%s\n", Cmd_ArgsFrom(0)));
-  return qtrue;
-}
-#endif
-
 /*
 =================
 Com_Init
 =================
 */
-void Com_Init( qchar *commandLine ) {
-	//qchar	*s;
-	qint qport;
+void
+Com_Init(qchar *commandLine)
+{
+  //qchar *s;
+  qint qport;
 
-        //get the initial time base
-        Sys_Milliseconds();
+  //get the initial time base
+  Sys_Milliseconds();
 
-	Com_Printf( "%s %s %s\n", Q3_VERSION, PLATFORM_STRING, __DATE__ );
+  Com_Printf("%s %s %s\n", Q3_VERSION, PLATFORM_STRING, __DATE__);
 
-	if ( Q_setjmp (abortframe) ) {
-		Sys_Error ("Error during initialization");
-	}
+  if (Q_setjmp (abortframe))
+  {
+    Sys_Error("Error during initialization");
+  }
 
-	// Clear queues
-	Com_Memset( &eventQueue[ 0 ], 0, MAX_QUEUED_EVENTS * sizeof( sysEvent_t ) );
+  //Clear queues
+  Com_Memset(&eventQueue[0], 0, MAX_QUEUED_EVENTS * sizeof(sysEvent_t));
 
-        //initialize the weak pseudo-random number generator for use later
-        Com_InitRand();
+  //initialize the weak pseudo-random number generator for use later
+  Com_InitRand();
 
-        // do this before anything else decides to push events
-        Com_InitPushEvent();
+  //do this before anything else decides to push events
+  Com_InitPushEvent();
 
-	Com_InitSmallZoneMemory();
-	Cvar_Init();
+  Com_InitSmallZoneMemory();
+  Cvar_Init();
 
 #if defined(_WIN32) && defined(_DEBUG)
-        com_noErrorInterrupt = Cvar_Get("com_noErrorInterrupt", "0", 0);
+  com_noErrorInterrupt = Cvar_Get("com_noErrorInterrupt", "0", 0);
 #endif
 
-	// prepare enough of the subsystems to handle
-	// cvar and command buffer management
-	Com_ParseCommandLine( commandLine );
+  //prepare enough of the subsystems to handle
+  //cvar and command buffer management
+  Com_ParseCommandLine(commandLine);
 
-//	Swap_Init();
-	Cbuf_Init();
+  //Swap_Init();
+  Cbuf_Init();
 
-	// override anything from the config files with command line args
-	Com_StartupVariable( NULL );
+  //override anything from the config files with command line args
+  Com_StartupVariable(NULL);
 
-        Com_InitZoneMemory();
-        Cmd_Init();
+  Com_InitZoneMemory();
+  Cmd_Init();
 
-	// get the developer cvar set as early as possible
-	com_developer = Cvar_Get("developer", "0", CVAR_TEMP);
+  //get the developer cvar set as early as possible
+  com_developer = Cvar_Get("developer", "0", CVAR_TEMP);
 
-	Com_StartupVariable("vm_rtChecks");
-	vm_rtChecks = Cvar_GetAndDescribe("vm_rtChecks", "15", CVAR_INIT | CVAR_PROTECTED | CVAR_SERVERINFO, "Runtime checks in compiled vm code, bitmask:\n1 - program stack overflow\n2 - opcode stack overflow\n4 - jump target range\n8 - data read/write range");
+  Com_StartupVariable("vm_rtChecks");
+  vm_rtChecks = Cvar_GetAndDescribe("vm_rtChecks", "15", CVAR_INIT | CVAR_PROTECTED | CVAR_SERVERINFO, "Runtime checks in compiled vm code, bitmask:\n1 - program stack overflow\n2 - opcode stack overflow\n4 - jump target range\n8 - data read/write range");
 
-	Com_StartupVariable( "journal" );
-	com_journal = Cvar_GetAndDescribe("journal", "0", CVAR_INIT | CVAR_PROTECTED, "When enabled, writes events and its data to 'journal.dat' and 'journaldata.dat'.");
-	Cvar_CheckRange(com_journal, "0", "2", CV_INTEGER);
+  Com_StartupVariable("journal");
+  com_journal = Cvar_GetAndDescribe("journal", "0", CVAR_INIT | CVAR_PROTECTED, "When enabled, writes events and its data to 'journal.dat' and 'journaldata.dat'.");
+  Cvar_CheckRange(com_journal, "0", "2", CV_INTEGER);
 
-	Com_StartupVariable("sv_master1");
-	Cvar_Get("sv_master1", MASTER_SERVER_NAME, CVAR_ARCHIVE_ND | CVAR_PROTECTED);
+  Com_StartupVariable("sv_master1");
+  Cvar_Get("sv_master1", MASTER_SERVER_NAME, CVAR_ARCHIVE_ND | CVAR_PROTECTED);
 
-        com_homepath = Cvar_Get("com_homepath", "", CVAR_INIT | CVAR_PROTECTED);
+  com_protocol = Cvar_GetAndDescribe("protocol", XSTRING(DEFAULT_PROTOCOL_VERSION), 0, "Specify network protocol version number, use -compat suffix for OpenArena compaitiblity.");
 
-#if !defined(DEDICATED)
-	// done early so bind command exists
-	CL_InitKeyCommands();
-#endif
-        com_homepath = Cvar_Get("com_homepath", "", CVAR_INIT);
+  if (Q_stristr(com_protocol->string, "-compat") > com_protocol->string)
+  {
+    //skip -compat suffix
+    Cvar_Set2("protocol", va("%i", com_protocol->integer), qtrue);
 
-        //Com_StartupVariable(
-	FS_InitFilesystem();
+    //enforce legacy stream encoding but with new challenge format
+    com_protocolCompat = qtrue;
+  }
+  else
+  {
+    com_protocolCompat = qfalse;
+  }
 
-	Com_InitJournaling();
+  Cvar_CheckRange(com_protocol, "0", NULL, CV_INTEGER);
+  com_protocol->flags &= ~CVAR_USER_CREATED;
+  com_protocol->flags |= CVAR_SERVERINFO | CVAR_ROM;
 
-        Com_ExecuteCfg();
+  //done early so bind command exists
+  Com_InitKeyCommands();
 
-        //FIXME: broken Com_CommandLineCheck(&Com_InitExecs);
+  //Com_StartupVariable(
+  FS_InitFilesystem();
 
-	// override anything from the config files with command line args
-	Com_StartupVariable( NULL );
+  com_logfile = Cvar_GetAndDescribe("logfile", "0", CVAR_TEMP, "System console logging:\n"
+    " 0 - disabled\n"
+    " 1 - overwrite mode, buffered\n"
+    " 2 - overwrite mode, synced\n"
+    " 3 - append mode, buffered\n"
+    " 4 - append mode, synced\n");
+  Cvar_CheckRange(com_logfile, "0", "4", CV_INTEGER);
+
+  Com_InitJournaling();
+
+  Com_ExecuteCfg();
+
+  //override anything from the config files with command line args
+  Com_StartupVariable( NULL );
 
   // get dedicated here for proper hunk megs initialization
 #if defined(DEDICATED)
-	com_dedicated = Cvar_GetAndDescribe("dedicated", "1", CVAR_INIT, "Enables dedicated server mode.\n 0: Listen server\n 1: Unlisted dedicated server\n 2: Listed dedicated server");
-	Cvar_CheckRange( com_dedicated, "1", "2", CV_INTEGER );
+  com_dedicated = Cvar_GetAndDescribe("dedicated", "1", CVAR_INIT, "Enables dedicated server mode.\n 1: Unlisted dedicated server\n 2: Listed dedicated server");
+  Cvar_CheckRange(com_dedicated, "1", "2", CV_INTEGER);
 #else
-	com_dedicated = Cvar_Get ("dedicated", "0", CVAR_LATCH);
-	Cvar_CheckRange( com_dedicated, "0", "2", CV_INTEGER );
+  com_dedicated = Cvar_GetAndDescribe("dedicated", "0", CVAR_LATCH, "Enables dedicated server mode.\n 0: Listen server\n 1: Unlisted dedicated server\n 2: Listed dedicated server");
+  Cvar_CheckRange(com_dedicated, "0", "2", CV_INTEGER);
 #endif
 
-	// allocate the stack based hunk allocator
-	Com_InitHunkMemory();
+  //allocate the stack based hunk allocator
+  Com_InitHunkMemory();
 
-	// if any archived cvars are modified after this, we will trigger a writing
-	// of the config file
-	cvar_modifiedFlags &= ~CVAR_ARCHIVE;
+  //if any archived cvars are modified after this, we will trigger a writing
+  //of the config file
+  cvar_modifiedFlags &= ~CVAR_ARCHIVE;
 
-	//
-	// init commands and vars
-	//
-	com_blood = Cvar_Get ("com_blood", "1", CVAR_ARCHIVE);
-
-	com_logfile = Cvar_GetAndDescribe("logfile", "0", CVAR_TEMP, "System console logging:\n"
-		" 0 - disabled\n"
-		" 1 - overwrite mode, buffered\n"
-		" 2 - overwrite mode, synced\n"
-		" 3 - append mode, buffered\n"
-		" 4 - append mode, synced\n");
-	Cvar_CheckRange(com_logfile, "0", "4", CV_INTEGER);
-
-	com_timescale = Cvar_GetAndDescribe("timescale", "1", CVAR_CHEAT | CVAR_SYSTEMINFO, "System timing factor:\n < 1: Slows the game down\n = 1: Regular speed\n > 1: Speeds the game up");
-	Cvar_CheckRange(com_timescale, "0", NULL, CV_FLOAT);
-	com_fixedtime = Cvar_GetAndDescribe("fixedtime", "0", CVAR_CHEAT, "Toggle the rendering of every frame the game will wait until each frame is completely rendered before sending the next frame.");
-	com_showtrace = Cvar_GetAndDescribe("com_showtrace", "0", CVAR_CHEAT, "Debugging tool that prints out trace information.");
-	com_viewlog = Cvar_GetAndDescribe("viewlog", "0", 0, "Toggle the display of the startup console window over the game screen.");
-	com_speeds = Cvar_GetAndDescribe("com_speeds", "0", 0, "Prints speed information per frame to the console. Used for debugging.");
+  //
+  //init commands and vars
+  //
 #if !defined(DEDICATED)
-	com_timedemo = Cvar_GetAndDescribe("timedemo", "0", CVAR_CHEAT, "When set to '1' times a demo and returns frames per second like a benchmark.");
-	Cvar_CheckRange(com_timedemo, "0", "1", CV_INTEGER);
-#endif
-	com_cameraMode = Cvar_Get ("com_cameraMode", "0", CVAR_CHEAT);
-
-#if !defined(DEDICATED)
-	cl_paused = Cvar_GetAndDescribe("cl_paused", "0", CVAR_ROM, "Read-only CVAR to toggle functionality of paused games (the variable holds the status of the paused flag on the client side).");
-	cl_packetdelay = Cvar_GetAndDescribe("cl_packetdelay", "0", CVAR_CHEAT, "Artificially set the client's latency. Simulates packet delay, which can lead to packet loss.");
-	com_cl_running = Cvar_GetAndDescribe("cl_running", "0", CVAR_ROM, "Can be used to check the status of the client game.");
-#endif
-	sv_paused = Cvar_Get ("sv_paused", "0", CVAR_ROM);
-	cl_packetloss = Cvar_Get("cl_packetloss", "0", CVAR_CHEAT);
-	sv_packetdelay = Cvar_GetAndDescribe("sv_packetdelay", "0", CVAR_CHEAT, "Simulates packet delay, which can lead to packet loss. Server side.");
-	sv_packetloss = Cvar_Get("sv_packetloss", "0", CVAR_CHEAT);
-	com_sv_running = Cvar_GetAndDescribe("sv_running", "0", CVAR_ROM, "Communicates to game modules if there is a server currently running.");
-	com_buildScript = Cvar_GetAndDescribe("com_buildScript", "0", 0, "Loads all game assets, regardless whether they are required or not.");
-	com_ansiColor = Cvar_GetAndDescribe("com_ansiColor", "0", CVAR_ROM /*CVAR_ARCHIVE*/, "Use ANSI color in the terminal window instead of color codes");
-
-        Cvar_Get("com_errorMessage", "", CVAR_ROM | CVAR_NORESTART);
-
-#if !defined(DEDICATED)
-        com_maxfps = Cvar_GetAndDescribe("com_maxfps", "125", 0, "Sets maximum frames per second."); //try to force that in some light way
-        Cvar_CheckRange(com_maxfps, "0", "1000", CV_INTEGER);
-	com_maxfpsUnfocused = Cvar_GetAndDescribe("com_maxfpsUnfocused", "60", CVAR_ARCHIVE_ND, "Sets maximum frames per second in unfocused game window.");
-	Cvar_CheckRange(com_maxfpsUnfocused, "0", "1000", CV_INTEGER);
-	com_yieldCPU = Cvar_GetAndDescribe("com_yieldCPU", "1", CVAR_ARCHIVE_ND, "Attempt to sleep specified amount of time between rendered frames when game is active, this will greatly reduce CPU load. Use 0 only if you're experiencing some lag.");
-	Cvar_CheckRange(com_yieldCPU, "0", "16", CV_INTEGER);
+  com_maxfps = Cvar_GetAndDescribe("com_maxfps", "125", 0, "Sets maximum frames per second."); //try to force that in some light way
+  Cvar_CheckRange(com_maxfps, "0", "1000", CV_INTEGER);
+  com_maxfpsUnfocused = Cvar_GetAndDescribe("com_maxfpsUnfocused", "60", CVAR_ARCHIVE_ND, "Sets maximum frames per second in unfocused game window.");
+  Cvar_CheckRange(com_maxfpsUnfocused, "0", "1000", CV_INTEGER);
+  com_yieldCPU = Cvar_GetAndDescribe("com_yieldCPU", "1", CVAR_ARCHIVE_ND, "Attempt to sleep specified amount of time between rendered frames when game is active, this will greatly reduce CPU load. Use 0 only if you're experiencing some lag.");
+  Cvar_CheckRange(com_yieldCPU, "0", "16", CV_INTEGER);
 #endif
 
 #if defined(USE_AFFINITY_MASK)
-        com_affinityMask = Cvar_GetAndDescribe("com_affinityMask", "", CVAR_ARCHIVE | CVAR_SERVERINFO, "Bind game process to bitmask-specified CPU core(s), special characters:\n A or a - all default cores\n P or p - performance cores\n E or e - efficiency cores\n 0x<value> - use hexadecimal notation\n + or - can be used to add or exclude particular cores");
-        com_affinityMask->modified = qfalse;
+  com_affinityMask = Cvar_GetAndDescribe("com_affinityMask", "", CVAR_ARCHIVE | CVAR_SERVERINFO, "Bind game process to bitmask-specified CPU core(s), special characters:\n A or a - all default cores\n P or p - performance cores\n E or e - efficiency cores\n 0x<value> - use hexadecimal notation\n + or - can be used to add or exclude particular cores");
+  com_affinityMask->modified = qfalse;
 #endif
 
-        if (com_dedicated->integer)
-        {
-          if (!com_viewlog->integer)
-          {
-            Cvar_Set("viewlog", "1");
-          }
+  //com_blood = Cvar_Get("com_blood", "1", CVAR_ARCHIVE_ND);
 
-          gw_minimized = qtrue;
-        }
-        else
-        {
-          gw_minimized = qfalse;
-        }
+  com_timescale = Cvar_GetAndDescribe("timescale", "1", CVAR_CHEAT | CVAR_SYSTEMINFO, "System timing factor:\n < 1: Slows the game down\n = 1: Regular speed\n > 1: Speeds the game up");
+  Cvar_CheckRange(com_timescale, "0", NULL, CV_FLOAT);
+  com_fixedtime = Cvar_GetAndDescribe("fixedtime", "0", CVAR_CHEAT, "Toggle the rendering of every frame the game will wait until each frame is completely rendered before sending the next frame.");
+  com_showtrace = Cvar_GetAndDescribe("com_showtrace", "0", CVAR_CHEAT, "Debugging tool that prints out trace information.");
+  com_viewlog = Cvar_GetAndDescribe("viewlog", "0", 0, "Toggle the display of the startup console window over the game screen.");
+  com_speeds = Cvar_GetAndDescribe("com_speeds", "0", 0, "Prints speed information per frame to the console. Used for debugging.");
+  com_cameraMode = Cvar_Get("com_cameraMode", "0", CVAR_CHEAT);
 
-        if (com_developer && com_developer->integer)
-        {
-          Cmd_AddCommand("error", Com_Error_f);
-          Cmd_AddCommand("crash", Com_Crash_f);
-          Cmd_AddCommand("freeze", Com_Freeze_f);
-        }
+#if !defined(DEDICATED)
+  com_timedemo = Cvar_GetAndDescribe("timedemo", "0", CVAR_CHEAT, "When set to '1' times a demo and returns frames per second like a benchmark.");
+  Cvar_CheckRange(com_timedemo, "0", "1", CV_INTEGER);
+  cl_paused = Cvar_GetAndDescribe("cl_paused", "0", CVAR_ROM, "Read-only CVAR to toggle functionality of paused games (the variable holds the status of the paused flag on the client side).");
+  cl_packetdelay = Cvar_GetAndDescribe("cl_packetdelay", "0", CVAR_CHEAT, "Artificially set the client's latency. Simulates packet delay, which can lead to packet loss.");
+  com_cl_running = Cvar_GetAndDescribe("cl_running", "0", CVAR_ROM, "Can be used to check the status of the client game.");
+#endif
 
-        Cmd_AddCommand("quit", Com_Quit_f);
-        Cmd_AddCommand("changeVectors", MSG_ReportChangeVectors_f);
-        Cmd_AddCommand("writeconfig", Com_WriteConfig_f);
-        Cmd_SetCommandCompletionFunc("writeconfig", Cmd_CompleteWriteCfgName);
-	Cmd_AddCommand("game_restart", Com_GameRestart_f);
+  sv_paused = Cvar_Get ("sv_paused", "0", CVAR_ROM);
+  sv_packetdelay = Cvar_GetAndDescribe("sv_packetdelay", "0", CVAR_CHEAT, "Simulates packet delay, which can lead to packet loss. Server side.");
+  com_sv_running = Cvar_GetAndDescribe("sv_running", "0", CVAR_ROM, "Communicates to game modules if there is a server currently running.");
 
-	const qchar *s = va("%s %s %s", Q3_VERSION, PLATFORM_STRING, __DATE__ );
-	com_version = Cvar_GetAndDescribe("version", s, CVAR_PROTECTED | CVAR_ROM | CVAR_SERVERINFO, "Read-only CVAR to see the version of the game.");
+  com_buildScript = Cvar_GetAndDescribe("com_buildScript", "0", 0, "Loads all game assets, regardless whether they are required or not.");
+  com_ansiColor = Cvar_GetAndDescribe("com_ansiColor", "0", CVAR_ROM /*CVAR_ARCHIVE*/, "Use ANSI color in the terminal window instead of color codes");
 
-        //this cvar is the single entry point of the entire extension system
-        Cvar_Get("//trap_GetValue", va("%i", COM_TRAP_GETVALUE), CVAR_PROTECTED | CVAR_ROM);
+  Cvar_Get("com_errorMessage", "", CVAR_ROM | CVAR_NORESTART);
 
-	Sys_Init();
+  if (com_dedicated->integer)
+  {
+    if (!com_viewlog->integer)
+    {
+      Cvar_Set("viewlog", "1");
+    }
 
-        //CPU detection
-        Cvar_Get("sys_cpustring", "detect", CVAR_PROTECTED | CVAR_ROM | CVAR_NORESTART);
+    gw_minimized = qtrue;
+  }
+  else
+  {
+    gw_minimized = qfalse;
+  }
 
-        if (!Q_stricmp(Cvar_VariableString("sys_cpustring"), "detect"))
-        {
-          qchar vendor[128];
+  if (com_developer && com_developer->integer)
+  {
+    Cmd_AddCommand("error", Com_Error_f);
+    Cmd_AddCommand("crash", Com_Crash_f);
+    Cmd_AddCommand("freeze", Com_Freeze_f);
+  }
 
-          Com_Printf("...detecting CPU, found ");
-          Sys_GetProcessorId(vendor);
-          Cvar_Set("sys_cpustring", vendor);
-        }
+  Cmd_AddCommand("quit", Com_Quit_f);
+  Cmd_AddCommand("changeVectors", MSG_ReportChangeVectors_f);
+  Cmd_AddCommand("writeconfig", Com_WriteConfig_f);
+  Cmd_SetCommandCompletionFunc("writeconfig", Cmd_CompleteWriteCfgName);
+  Cmd_AddCommand("game_restart", Com_GameRestart_f);
 
-        Com_Printf("%s\n", Cvar_VariableString("sys_cpustring"));
+  const qchar *s = va("%s %s %s", Q3_VERSION, PLATFORM_STRING, __DATE__ );
+  com_version = Cvar_GetAndDescribe("version", s, CVAR_PROTECTED | CVAR_ROM | CVAR_SERVERINFO, "Read-only CVAR to see the version of the game.");
+
+  //this cvar is the single entry point of the entire extension system
+  Cvar_Get("//trap_GetValue", va("%i", COM_TRAP_GETVALUE), CVAR_PROTECTED | CVAR_ROM | CVAR_NOTABCOMPLETE);
+
+  Sys_Init();
+
+  //CPU detection
+  Cvar_Get("sys_cpustring", "detect", CVAR_PROTECTED | CVAR_ROM | CVAR_NORESTART);
+
+  if (!Q_stricmp(Cvar_VariableString("sys_cpustring"), "detect"))
+  {
+    qchar vendor[128];
+
+    Com_Printf("...detecting CPU, found ");
+    Sys_GetProcessorId(vendor);
+    Cvar_Set("sys_cpustring", vendor);
+  }
+
+  Com_Printf("%s\n", Cvar_VariableString("sys_cpustring"));
 
 #if defined(USE_AFFINITY_MASK)
-        //get initial process affinity - we will respect it when setting custom affinity mask
-        eCoreMask = pCoreMask = affinityMask = Sys_GetAffinityMask();
+  //get initial process affinity - we will respect it when setting custom affinity mask
+  eCoreMask = pCoreMask = affinityMask = Sys_GetAffinityMask();
 #if (idx64 || id386)
-        DetectCPUCoresConfig();
+  DetectCPUCoresConfig();
 #endif
-        if (com_affinityMask->string[0] != '\0')
-        {
-          Com_SetAffinityMask(com_affinityMask->string);
-          com_affinityMask->modified = qfalse;
-        }
-#endif
-
-        //pick a random port value
-        Com_RandomBytes((byte *)&qport, sizeof(qport));
-        Netchan_Init(qport & 0xffff);
-
-	VM_Init();
-	SV_Init();
-
-	com_dedicated->modified = qfalse;
-#if !defined(DEDICATED)
-	CL_Init();
-	//Sys_ShowConsole(com_viewlog->integer, qfalse); //moved down
-#endif
-
-	// add + commands from command line
-	if ( !Com_AddStartupCommands() ) {
-		// if the user didn't give any commands, run default action
-		if ( !com_dedicated->integer ) {
-			Cbuf_AddText ("cinematic splash.RoQ\n");
-		}
-	}
-
-	// start in full screen ui mode
-	Cvar_Set("r_uiFullScreen", "1");
-#if !defined(DEDICATED)
-	CL_StartHunkUsers( qfalse );
-#endif
-
-	// set com_frameTime so that if a map is started on the
-	// command line it will still be able to count on com_frameTime
-	// being random enough for a serverid
-	//lastTime = com_frameTime = Com_Milliseconds();
-	Com_FrameInit();
-
-        if (!com_errorEntered)
-        {
-          Sys_ShowConsole(com_viewlog->integer, qfalse);
-        }
-
-#if !defined(DEDICATED)
-	// make sure single player is off by default
-	Cvar_Set("ui_singlePlayerActive", "0");
-#endif
-
-	com_fullyInitialized = qtrue;
-
-	Com_Printf ("--- Common Initialization Complete ---\n");
-
-        NET_Init();
-
-        Com_Printf("Working directory: %s\n", Sys_Pwd());
-}
-
-/*
-===============
-Com_ReadFromPipe
-
-Read whatever is in com_pipefile, if anything, and execute it
-===============
-*/
-void
-Com_ReadFromPipe(void)
-{
-  qchar buffer[MAX_STRING_CHARS] = {""};
-  qbool read;
-
-  if (!pipefile)
+  if (com_affinityMask->string[0] != '\0')
   {
-    return;
+    Com_SetAffinityMask(com_affinityMask->string);
+    com_affinityMask->modified = qfalse;
+  }
+#endif
+
+  //pick a random port value
+  Com_RandomBytes((byte *)&qport, sizeof(qport));
+  Netchan_Init(qport & 0xffff);
+
+  VM_Init();
+  SV_Init();
+
+  com_dedicated->modified = qfalse;
+#if !defined(DEDICATED)
+  if (!com_dedicated->integer)
+  {
+    CL_Init();
+    //Sys_ShowConsole(com_viewlog->integer, qfalse); //moved down
+  }
+#endif
+
+  //add + commands from command line
+  if (!Com_AddStartupCommands())
+  {
+    //if the user didn't give any commands, run default action
+    if (!com_dedicated->integer)
+    {
+#if !defined(DEDICATED)
+      Cbuf_AddText ("cinematic splash.RoQ\n");
+#endif
+    }
   }
 
-  read = FS_Read(buffer, sizeof(buffer), pipefile);
+#if !defined(DEDICATED)
+  CL_StartHunkUsers();
+#endif
 
-  if (read)
+  //set com_frameTime so that if a map is started on the
+  //command line it will still be able to count on com_frameTime
+  //being random enough for a serverid
+  //lastTime = com_frameTime = Com_Milliseconds();
+  Com_FrameInit();
+
+  if (!com_errorEntered)
   {
-    Cbuf_ExecuteText(EXEC_APPEND, buffer);
+    Sys_ShowConsole(com_viewlog->integer, qfalse);
   }
+
+#if !defined(DEDICATED)
+  //make sure single player is off by default
+  Cvar_Set("ui_singlePlayerActive", "0");
+#endif
+
+  com_fullyInitialized = qtrue;
+
+  Com_Printf ("--- Common Initialization Complete ---\n");
+
+  NET_Init();
+
+  Com_Printf("Working directory: %s\n", Sys_Pwd());
 }
 
 //==================================================================
@@ -4602,12 +4558,6 @@ Com_Shutdown(void)
   {
     FS_FCloseFile(com_journalDataFile);
     com_journalDataFile = FS_INVALID_HANDLE;
-  }
-
-  if (pipefile)
-  {
-    FS_FCloseFile(pipefile);
-    FS_HomeRemove(com_pipefile->string);
   }
 }
 

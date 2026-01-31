@@ -117,6 +117,7 @@ const void
 SV_GetChallenge(const netadr_t *from)
 {
   qint challenge;
+  qint clientChallenge;
 
   //create a unique challenge for this client without storing state on server
 #if defined(STATELESS_CHALLENGES_VERSION_ONE)
@@ -132,8 +133,18 @@ SV_GetChallenge(const netadr_t *from)
   }
   else
   {
+    qint sv_proto = com_protocol->integer;
+
+    if (sv_proto == DEFAULT_PROTOCOL_VERSION)
+    {
+      //we support new protocol features by default
+      sv_proto = NEW_PROTOCOL_VERSION;
+    }
+
     //grab the client's challenge to echo back if given
-    NET_OutOfBandPrint(NS_SERVER, from, "challengeResponse %i %i", challenge, PROTOCOL_VERSION);
+    clientChallenge = Q_atoi(Cmd_Argv(1));
+
+    NET_OutOfBandPrint(NS_SERVER, from, "challengeResponse %i %i %i", challenge, clientChallenge, sv_proto);
   }
 }
 
@@ -522,16 +533,19 @@ SV_DirectConnect(const netadr_t *from)
   client_t *newcl;
   //sharedEntity_t *ent;
   qint clientNum;
-  qint version;
   qint qport;
   qint challenge;
   const qchar *password;
   qint startIndex;
   intptr_t denied;
   qint count;
+  qint cl_proto;
+  qint sv_proto;
   const qchar *ip;
   const qchar *v;
   const qchar *info;
+  qbool compat;
+  qbool longstr;
 
   Com_DPrintf("SVC_DirectConnect()\n");
 
@@ -592,14 +606,30 @@ SV_DirectConnect(const netadr_t *from)
     return;
   }
 
-  version = Q_atoi(v);
+  cl_proto = Q_atoi(v);
 
-  if (version != PROTOCOL_VERSION)
+  sv_proto = com_protocol->integer;
+
+  if (sv_proto == DEFAULT_PROTOCOL_VERSION)
   {
-    NET_OutOfBandPrint(NS_SERVER, from, "print\nServer uses protocol version %i\n", PROTOCOL_VERSION);
-    Com_DPrintf("    rejected connect from version %i\n", version);
+    //we support new protocol features by default
+    sv_proto = NEW_PROTOCOL_VERSION;
+  }
 
-    return;
+  if (cl_proto <= OLD_PROTOCOL_VERSION)
+  {
+    compat = qtrue;
+  }
+  else
+  {
+    if (cl_proto != sv_proto)
+    {
+      NET_OutOfBandPrint(NS_SERVER, from, "print\nServer uses protocol version %i (yours is %i).\n", sv_proto, cl_proto);
+      Com_DPrintf("    rejected connection from version %i\n", cl_proto);
+      return;
+    }
+
+    compat = qfalse;
   }
 
   v = Info_ValueForKey(userinfo, "qport");
@@ -611,6 +641,23 @@ SV_DirectConnect(const netadr_t *from)
   }
 
   qport = Q_atoi(Info_ValueForKey(userinfo, "qport"));
+
+  //if "client" is present in userinfo and it is a modern client
+  //then assume it can properly decode long strings and protocol extensions
+  if (!compat && *Info_ValueForKey(userinfo, "client") != '\0')
+  {
+    longstr = qtrue;
+  }
+  else
+  {
+    longstr = qfalse;
+
+    if (com_protocolCompat)
+    {
+      //enforce dm69-compatible stream for other clients
+      compat = qtrue;
+    }
+  }
 
   //we don't need these keys after connection, release some space in userinfo
   Info_RemoveKey(userinfo, "challenge");
@@ -811,13 +858,16 @@ gotnewcl:
   newcl->challenge = challenge;
 
   //save the address
-  Netchan_Setup(NS_SERVER, &newcl->netchan , from, qport);
+  newcl->compat = compat;
+  Netchan_Setup(NS_SERVER, &newcl->netchan , from, qport, challenge, compat);
 
   //init the netchan queue
   newcl->netchan_end_queue = &newcl->netchan_start_queue;
 
   //save the userinfo
   Q_strncpyz(newcl->userinfo, userinfo, sizeof(newcl->userinfo));
+
+  newcl->longstr = longstr;
 
   strcpy(newcl->tld, tld);
   newcl->country = SV_FindCountry(newcl->tld);
@@ -859,7 +909,14 @@ gotnewcl:
   }
 
   //send the connect packet to the client
-  NET_OutOfBandPrint(NS_SERVER, from, "connectResponse %d", challenge);
+  if (longstr /*&& !compat*/)
+  {
+    NET_OutOfBandPrint(NS_SERVER, from, "connectResponse %d %d", challenge, sv_proto);
+  }
+  else
+  {
+    NET_OutOfBandPrint(NS_SERVER, from, "connectResponse %d", challenge);
+  }
 
   SV_SetClientState(newcl, CS_CONNECTED);
 

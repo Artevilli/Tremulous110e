@@ -412,8 +412,7 @@ client_s
 
   qint oldServerTime;
   qbool csUpdated[MAX_CONFIGSTRINGS];
-  qint lastUserinfoChange;
-  qint lastUserinfoCount;
+  qbool compat;
 
   qint invalidValues; //checkedNumberType_t
   qint lastInvalidValuesWarning;
@@ -422,6 +421,9 @@ client_s
   rateLimit_t cmd_rate;
   rateLimit_t info_rate;
   rateLimit_t gamestate_rate;
+
+  //client can decode long strings
+  qbool longstr;
 
   qbool justConnected;
 

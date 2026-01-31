@@ -183,7 +183,7 @@ SV_CompleteDemoName(const qchar *args, qint argNum)
 
   if (argNum == 2)
   {
-    Com_sprintf(demoExt, sizeof(demoExt), ".svdm_%d", PROTOCOL_VERSION);
+    Com_sprintf(demoExt, sizeof(demoExt), ".svdm_%d", com_protocol->integer);
     Field_CompleteFilename("svdemos", demoExt, qtrue, FS_MATCH_PK3s | FS_MATCH_STICK);
   }
 }
@@ -1133,14 +1133,14 @@ SV_Demo_Record_f(void)
 
   if (Cmd_Argc() == 2)
   {
-    sprintf(sv.demoName, "svdemos/%s.svdm_%d", Cmd_Argv(1), PROTOCOL_VERSION);
+    sprintf(sv.demoName, "svdemos/%s.svdm_%d", Cmd_Argv(1), com_protocol->integer);
   }
   else
   {
     //scan for free demo name
     for(number = 0;number >= 0;number++)
     {
-      Com_sprintf(sv.demoName, sizeof(sv.demoName), "svdemos/%d.svdm_%d", number, PROTOCOL_VERSION);
+      Com_sprintf(sv.demoName, sizeof(sv.demoName), "svdemos/%d.svdm_%d", number, com_protocol->integer);
 
       if (!FS_FileExists(sv.demoName))
       {
@@ -1196,13 +1196,13 @@ SV_Demo_Play_f(void)
   //check for extension and protocol
   arg = Cmd_Argv(1);
 
-  if (!strcmp(arg + strlen(arg) - 6, va(".svdm_%d", PROTOCOL_VERSION)))
+  if (!strcmp(arg + strlen(arg) - 6, va(".svdm_%d", com_protocol->integer)))
   {
     Com_sprintf(sv.demoName, sizeof(sv.demoName), "svdemos/%s", arg);
   }
   else
   {
-    Com_sprintf(sv.demoName, sizeof(sv.demoName), "svdemos/%s.svdm_%d", arg, PROTOCOL_VERSION);
+    Com_sprintf(sv.demoName, sizeof(sv.demoName), "svdemos/%s.svdm_%d", arg, com_protocol->integer);
   }
 
   FS_FOpenFileRead(sv.demoName, &sv.demoFile, qtrue);

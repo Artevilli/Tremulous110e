@@ -223,8 +223,9 @@ SV_SendServerCommand(client_t *cl, const qchar *fmt, ...)
 
   if (cl != NULL)
   {
+    //outdated clients can't properly decode 1023-chars-long strings
     //http://aluigi.altervista.org/adv/q3msgboom-adv.txt
-    if (len <= 1022)
+    if (len <= 1022 || cl->longstr)
     {
       SV_AddServerCommand(cl, message);
     }
@@ -255,7 +256,7 @@ SV_SendServerCommand(client_t *cl, const qchar *fmt, ...)
     }
 
     //if(client->state == CS_ACTIVE)
-    if (len <= 1022)
+    if (len <= 1022 || client->longstr)
     {
       SV_AddServerCommand(client, message);
     }
@@ -1135,7 +1136,7 @@ SVC_Info(const netadr_t *from)
   infostring[0] = '\0';
   //echo back the parameter to status. so servers can use it as a challenge to prevent timed spoofed reply packets that add ghost servers
   Info_SetValueForKey(infostring, "challenge", Cmd_Argv(1));
-  Info_SetValueForKey(infostring, "protocol", va("%i", PROTOCOL_VERSION));
+  Info_SetValueForKey(infostring, "protocol", va("%i", com_protocol->integer));
   Info_SetValueForKey(infostring, "hostname", sv_hostname->string);
   Info_SetValueForKey(infostring, "serverload", va("%i", svs.serverLoad)); //Chey: included in SV_Status_f
 

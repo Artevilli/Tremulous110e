@@ -269,14 +269,17 @@ typedef struct {
 	qint			unsentFragmentStart;
 	qint			unsentLength;
 	byte		unsentBuffer[MAX_MSGLEN];
+
+        qint challenge;
 	qint lastSentTime;
 	qint lastSentSize;
 
+        qbool compat; //ioq3 extension
         qbool isLANAddress;
 } netchan_t;
 
 void Netchan_Init( qint qport );
-void Netchan_Setup( const netsrc_t sock, netchan_t *chan, const netadr_t *adr, const qint setupQport );
+void Netchan_Setup( const netsrc_t sock, netchan_t *chan, const netadr_t *adr, const qint port, const qint challenge, qbool compat );
 
 void Netchan_Transmit( netchan_t *chan, qint length, const byte *data );
 void Netchan_TransmitNextFragment( netchan_t *chan );
@@ -294,11 +297,16 @@ PROTOCOL
 ==============================================================
 */
 
-#define	PROTOCOL_VERSION	69
+#define	OLD_PROTOCOL_VERSION	69
+//new protocol with UDP spoofing protection:
+#define	NEW_PROTOCOL_VERSION	72
+//1.31 - 67
+
+#define DEFAULT_PROTOCOL_VERSION OLD_PROTOCOL_VERSION
 
 // maintain a list of compatible protocols for demo playing
 // NOTE: that stuff only works with two digits protocols
-extern qint demo_protocols[];
+extern const qint demo_protocols[];
 
 // override on command line, config files etc.
 #if !defined(MASTER_SERVER_NAME)
@@ -418,7 +426,7 @@ vm_t *
 VM_Restart(vm_t *vm);
 
 intptr_t QDECL
-VM_Call(vm_t *vm, int nargs, int callNum, ...);
+VM_Call(vm_t *vm, qint nargs, qint callNum, ...);
 
 void
 VM_Debug(qint level);
@@ -686,7 +694,7 @@ Cvar_InfoString_Big(qint bit, qbool *truncated);
 void
 Cvar_InfoStringBuffer(qint bit, qchar *buff, qint buffsize);
 void
-Cvar_CheckRange(cvar_t *cv, const char *minVal, const char *maxVal, cvarValidator_t type);
+Cvar_CheckRange(cvar_t *cv, const qchar *minVal, const qchar *maxVal, cvarValidator_t type);
 const void
 Cvar_SetDescription(cvar_t *var, const qchar *var_description);
 cvar_t *
@@ -974,7 +982,7 @@ qint
 FS_VM_ReadFile(void *buffer, qint len, fileHandle_t f, handleOwner_t owner);
 void
 FS_VM_WriteFile(void *buffer, const qint len, fileHandle_t f, handleOwner_t owner);
-int
+qint
 FS_VM_SeekFile(fileHandle_t f, long offset, fsOrigin_t origin, handleOwner_t owner);
 void
 FS_VM_CloseFile(fileHandle_t f, handleOwner_t owner);
@@ -1135,46 +1143,45 @@ extern cvar_t *com_developer;
 extern cvar_t *com_dedicated;
 extern cvar_t *com_speeds;
 extern cvar_t *com_timescale;
-extern cvar_t *com_viewlog; //0 = hidden, 1 = visible, 2 = minimized
-extern cvar_t *com_sv_running;
-extern cvar_t *com_cl_running;
-#if defined(USE_AFFINITY_MASK)
-extern cvar_t *com_affinityMask;
-#endif
+extern cvar_t *com_viewlog; // 0 = hidden, 1 = visible, 2 = minimized
 extern cvar_t *com_version;
-extern cvar_t *com_blood;
-//extern cvar_t *com_buildScript; //for building release pak files
 extern cvar_t *com_journal;
 extern cvar_t *com_cameraMode;
 extern cvar_t *com_ansiColor;
-extern cvar_t *com_unfocused;
-extern cvar_t *com_maxfpsUnfocused;
-extern cvar_t *com_minimized;
-extern cvar_t *com_maxfpsMinimized;
-extern cvar_t *com_altivec;
-extern cvar_t *com_homepath;
+extern cvar_t *com_protocol;
+extern qbool com_protocolCompat;
 
-//both client and server must agree to pause
-extern cvar_t *cl_paused;
+// both client and server must agree to pause
 extern cvar_t *sv_paused;
-
-extern cvar_t *cl_packetdelay;
-extern cvar_t *cl_packetloss;
 extern cvar_t *sv_packetdelay;
-extern cvar_t *sv_packetloss;
+extern cvar_t *com_sv_running;
+
+#ifndef DEDICATED
+extern cvar_t *cl_paused;
+extern cvar_t *cl_packetdelay;
+extern cvar_t *com_cl_running;
+extern cvar_t *com_yieldCPU;
+#endif
 
 extern cvar_t *vm_rtChecks;
+#ifdef USE_AFFINITY_MASK
+extern cvar_t *com_affinityMask;
+#endif
 
-//com_speeds times
+// com_speeds times
 extern qint time_game;
 extern qint time_frontend;
 extern qint time_backend; //renderer backend time
 
 extern qint com_frameTime;
 
+#ifndef DEDICATED
+extern qbool gw_minimized;
+extern qbool gw_active;
+#endif
+
 extern qbool com_errorEntered;
 
-extern fileHandle_t com_journalFile;
 extern fileHandle_t com_journalDataFile;
 
 extern qchar rconPassword2[MAX_CVAR_VALUE_STRING];

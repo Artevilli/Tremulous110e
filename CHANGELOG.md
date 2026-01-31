@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/31/2026--**
 
+* qcommon/server:<br />time for a brand new, alternate method of multiprotocol
+
 * makefile/client/sys:<br />initial replacement of client
 
 **--01/30/2026--**
