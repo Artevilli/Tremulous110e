@@ -30,40 +30,40 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define  CON_TEXTSIZE   65536
 
-int bigchar_width;
-int bigchar_height;
-int smallchar_width;
-int smallchar_height;
+qint bigchar_width;
+qint bigchar_height;
+qint smallchar_width;
+qint smallchar_height;
 
 typedef struct {
-	qboolean	initialized;
+	qbool	initialized;
 
 	short	text[CON_TEXTSIZE];
-	int		current;		// line where next message will be printed
-	int		x;				// offset in current line for next print
-	int		display;		// bottom of console displays this line
+	qint		current;		// line where next message will be printed
+	qint		x;				// offset in current line for next print
+	qint		display;		// bottom of console displays this line
 
-	int 	linewidth;		// characters across screen
-	int		totallines;		// total lines in console scrollback
+	qint 	linewidth;		// characters across screen
+	qint		totallines;		// total lines in console scrollback
 
 	float	xadjust;		// for wide aspect screens
 
 	float	displayFrac;	// aproaches finalFrac at scr_conspeed
 	float	finalFrac;		// 0.0 to 1.0 lines of console to display
 
-	int		vislines;		// in scanlines
+	qint		vislines;		// in scanlines
 
 	vec4_t	color;
 
-	int		viswidth;
-	int		vispage;		
+	qint		viswidth;
+	qint		vispage;		
 
-	qboolean newline;
+	qbool newline;
 
 } console_t;
 
-extern  qboolean    chat_team;
-extern  int         chat_playerNum;
+extern  qbool    chat_team;
+extern  qint         chat_playerNum;
 
 console_t	con;
 
@@ -71,7 +71,7 @@ cvar_t		*con_conspeed;
 cvar_t		*con_autoclear;
 cvar_t		*con_scale;
 
-int			g_console_field_width;
+qint			g_console_field_width;
 
 /*
 ================
@@ -165,7 +165,7 @@ Con_Clear_f
 ================
 */
 static void Con_Clear_f( void ) {
-	int		i;
+	qint		i;
 
 	for ( i = 0 ; i < con.linewidth ; i++ ) {
 		con.text[i] = ( ColorIndex( COLOR_WHITE ) << 8 ) | ' ';
@@ -188,13 +188,13 @@ Save the console contents out to a file
 */
 static void Con_Dump_f( void )
 {
-	int		l, x, i, n;
+	qint		l, x, i, n;
 	short	*line;
 	fileHandle_t	f;
-	int		bufferlen;
-	char	*buffer;
-	char	filename[ MAX_OSPATH ];
-	const char *ext;
+	qint		bufferlen;
+	qchar	*buffer;
+	qchar	filename[ MAX_OSPATH ];
+	const qchar *ext;
 
 	if ( Cmd_Argc() != 2 )
 	{
@@ -227,7 +227,7 @@ static void Con_Dump_f( void )
 		l = 0;
 	}
 
-	bufferlen = con.linewidth + ARRAY_LEN( Q_NEWLINE ) * sizeof( char );
+	bufferlen = con.linewidth + ARRAY_LEN( Q_NEWLINE ) * sizeof( qchar );
 	buffer = Hunk_AllocateTempMemory( bufferlen );
 
 	// write the remaining lines
@@ -276,10 +276,10 @@ If the line width has changed, reformat the buffer.
 */
 void Con_CheckResize( void )
 {
-	int		i, j, width, oldwidth, oldtotallines, oldcurrent, numlines, numchars;
+	qint		i, j, width, oldwidth, oldtotallines, oldcurrent, numlines, numchars;
 	short	tbuf[CON_TEXTSIZE], *src, *dst;
-	static int old_width, old_vispage;
-	int		vispage;
+	static qint old_width, old_vispage;
+	qint		vispage;
 	float	scale;
 
 	if ( con.viswidth == cls.glconfig.vidWidth && !con_scale->modified ) {
@@ -370,7 +370,7 @@ void Con_CheckResize( void )
 Cmd_CompleteTxtName
 ==================
 */
-static void Cmd_CompleteTxtName(const char *args, int argNum ) {
+static void Cmd_CompleteTxtName(const qchar *args, qint argNum ) {
 	if ( argNum == 2 ) {
 		Field_CompleteFilename( "", "txt", qfalse, FS_MATCH_EXTERN | FS_MATCH_STICK );
 	}
@@ -430,7 +430,7 @@ Con_Fixup
 */
 static void Con_Fixup( void ) 
 {
-	int filled;
+	qint filled;
 
 	if ( con.current >= con.totallines ) {
 		filled = con.totallines;
@@ -458,7 +458,7 @@ Move to newline only when we _really_ need this
 static void Con_NewLine( void )
 {
 	short *s;
-	int i;
+	qint i;
 
 	// follow last line
 	if ( con.display == con.current )
@@ -478,7 +478,7 @@ static void Con_NewLine( void )
 Con_Linefeed
 ===============
 */
-static void Con_Linefeed( qboolean skipnotify )
+static void Con_Linefeed( qbool skipnotify )
 {
 	if ( con.newline ) {
 		Con_NewLine();
@@ -500,11 +500,11 @@ All console printing must go through this in order to be logged to disk
 If no console is visible, the text will appear at the top of the game window
 ================
 */
-void CL_ConsolePrint( const char *txt ) {
-	int		y;
-	int		c, l;
-	int		colorIndex;
-	qboolean skipnotify = qfalse;		// NERVE - SMF
+void CL_ConsolePrint( const qchar *txt ) {
+	qint		y;
+	qint		c, l;
+	qint		colorIndex;
+	qbool skipnotify = qfalse;		// NERVE - SMF
 
 	// TTimo - prefix for text that shows up in console but not in notify
 	// backported from RTCW
@@ -606,7 +606,7 @@ Draw the editline after a ] prompt
 ================
 */
 static void Con_DrawInput( void ) {
-	int		y;
+	qint		y;
 
 	if ( cls.state != CA_DISCONNECTED && !(Key_GetCatcher( ) & KEYCATCH_CONSOLE ) ) {
 		return;
@@ -634,17 +634,17 @@ static void Con_DrawSolidConsole( float frac ) {
 
 	static float conColorValue[4] = { 0.0, 0.0, 0.0, 0.0 };
 	// for cvar value change tracking
-	static char  conColorString[ MAX_CVAR_VALUE_STRING ] = { '\0' };
+	static qchar  conColorString[ MAX_CVAR_VALUE_STRING ] = { '\0' };
 
-	int				i, x, y;
-	int				rows;
+	qint				i, x, y;
+	qint				rows;
 	short			*text;
-	int				row;
-	int				lines;
-	int				currentColorIndex;
-	int				colorIndex;
+	qint				row;
+	qint				lines;
+	qint				currentColorIndex;
+	qint				colorIndex;
 	float			yf, wf;
-	char			buf[ MAX_CVAR_VALUE_STRING ], *v[4];
+	qchar			buf[ MAX_CVAR_VALUE_STRING ], *v[4];
 
 	lines = cls.glconfig.vidHeight * frac;
 	if ( lines <= 0 )
@@ -850,7 +850,7 @@ void Con_RunConsole( void )
 }
 
 
-void Con_PageUp( int lines )
+void Con_PageUp( qint lines )
 {
 	if ( lines == 0 )
 		lines = con.vispage - 2;
@@ -861,7 +861,7 @@ void Con_PageUp( int lines )
 }
 
 
-void Con_PageDown( int lines )
+void Con_PageDown( qint lines )
 {
 	if ( lines == 0 )
 		lines = con.vispage - 2;

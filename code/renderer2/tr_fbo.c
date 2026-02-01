@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 R_CheckFBO
 =============
 */
-static qboolean R_CheckFBO(const FBO_t * fbo)
+static qbool R_CheckFBO(const FBO_t * fbo)
 {
 	GLenum code = qglCheckNamedFramebufferStatusEXT(fbo->frameBuffer, GL_FRAMEBUFFER);
 
@@ -77,7 +77,7 @@ static qboolean R_CheckFBO(const FBO_t * fbo)
 FBO_Create
 ============
 */
-static FBO_t          *FBO_Create(const char *name, int width, int height)
+static FBO_t          *FBO_Create(const qchar *name, qint width, qint height)
 {
 	FBO_t          *fbo;
 
@@ -117,11 +117,11 @@ static FBO_t          *FBO_Create(const char *name, int width, int height)
 FBO_CreateBuffer
 =================
 */
-static void FBO_CreateBuffer(FBO_t *fbo, int format, int index, int multisample)
+static void FBO_CreateBuffer(FBO_t *fbo, qint format, qint index, qint multisample)
 {
 	uint32_t *pRenderBuffer;
 	GLenum attachment;
-	qboolean absent;
+	qbool absent;
 
 	switch(format)
 	{
@@ -201,7 +201,7 @@ FBO_AttachImage
 void FBO_AttachImage(FBO_t *fbo, image_t *image, GLenum attachment, GLuint cubemapside)
 {
 	GLenum target = GL_TEXTURE_2D;
-	int index;
+	qint index;
 
 	if (image->flags & IMGFLAG_CUBEMAP)
 		target = GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB + cubemapside;
@@ -246,8 +246,8 @@ FBO_Init
 */
 void FBO_Init(void)
 {
-	int             i;
-	int             hdrFormat, multisample = 0;
+	qint             i;
+	qint             hdrFormat, multisample = 0;
 
 	ri.Printf(PRINT_ALL, "------- FBO_Init -------\n");
 
@@ -423,7 +423,7 @@ FBO_Shutdown
 */
 void FBO_Shutdown(void)
 {
-	int             i, j;
+	qint             i, j;
 	FBO_t          *fbo;
 
 	ri.Printf(PRINT_ALL, "------- FBO_Shutdown -------\n");
@@ -461,7 +461,7 @@ R_FBOList_f
 */
 static void R_FBOList_f(void)
 {
-	int             i;
+	qint             i;
 	FBO_t          *fbo;
 
 	if(!glRefConfig.framebufferObject)
@@ -483,7 +483,7 @@ static void R_FBOList_f(void)
 	ri.Printf(PRINT_ALL, " %i FBOs\n", tr.numFBOs);
 }
 #endif
-void FBO_BlitFromTexture(struct image_s *src, vec4_t inSrcTexCorners, vec2_t inSrcTexScale, FBO_t *dst, ivec4_t inDstBox, struct shaderProgram_s *shaderProgram, const vec4_t inColor, int blend)
+void FBO_BlitFromTexture(struct image_s *src, vec4_t inSrcTexCorners, vec2_t inSrcTexScale, FBO_t *dst, ivec4_t inDstBox, struct shaderProgram_s *shaderProgram, const vec4_t inColor, qint blend)
 {
 	ivec4_t dstBox;
 	vec4_t color;
@@ -492,7 +492,7 @@ void FBO_BlitFromTexture(struct image_s *src, vec4_t inSrcTexCorners, vec2_t inS
 	vec2_t invTexRes;
 	FBO_t *oldFbo = glState.currentFBO;
 	mat4_t projection;
-	int width, height;
+	qint width, height;
 
 	if (!src)
 	{
@@ -588,7 +588,7 @@ void FBO_BlitFromTexture(struct image_s *src, vec4_t inSrcTexCorners, vec2_t inS
 	FBO_Bind(oldFbo);
 }
 
-void FBO_Blit(FBO_t *src, ivec4_t inSrcBox, vec2_t srcTexScale, FBO_t *dst, ivec4_t dstBox, struct shaderProgram_s *shaderProgram, const vec4_t color, int blend)
+void FBO_Blit(FBO_t *src, ivec4_t inSrcBox, vec2_t srcTexScale, FBO_t *dst, ivec4_t dstBox, struct shaderProgram_s *shaderProgram, const vec4_t color, qint blend)
 {
 	vec4_t srcTexCorners;
 
@@ -613,7 +613,7 @@ void FBO_Blit(FBO_t *src, ivec4_t inSrcBox, vec2_t srcTexScale, FBO_t *dst, ivec
 	FBO_BlitFromTexture(src->colorImage[0], srcTexCorners, srcTexScale, dst, dstBox, shaderProgram, color, blend | GLS_DEPTHTEST_DISABLE);
 }
 
-void FBO_FastBlit(FBO_t *src, ivec4_t srcBox, FBO_t *dst, ivec4_t dstBox, int buffers, int filter)
+void FBO_FastBlit(FBO_t *src, ivec4_t srcBox, FBO_t *dst, ivec4_t dstBox, qint buffers, qint filter)
 {
 	ivec4_t srcBoxFinal, dstBoxFinal;
 	GLuint srcFb, dstFb;
@@ -629,8 +629,8 @@ void FBO_FastBlit(FBO_t *src, ivec4_t srcBox, FBO_t *dst, ivec4_t dstBox, int bu
 
 	if (!srcBox)
 	{
-		int width =  src ? src->width  : glConfig.vidWidth;
-		int height = src ? src->height : glConfig.vidHeight;
+		qint width =  src ? src->width  : glConfig.vidWidth;
+		qint height = src ? src->height : glConfig.vidHeight;
 
 		VectorSet4(srcBoxFinal, 0, 0, width, height);
 	}
@@ -641,8 +641,8 @@ void FBO_FastBlit(FBO_t *src, ivec4_t srcBox, FBO_t *dst, ivec4_t dstBox, int bu
 
 	if (!dstBox)
 	{
-		int width  = dst ? dst->width  : glConfig.vidWidth;
-		int height = dst ? dst->height : glConfig.vidHeight;
+		qint width  = dst ? dst->width  : glConfig.vidWidth;
+		qint height = dst ? dst->height : glConfig.vidHeight;
 
 		VectorSet4(dstBoxFinal, 0, 0, width, height);
 	}

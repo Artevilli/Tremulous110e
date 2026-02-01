@@ -22,11 +22,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "tr_local.h"
 
-void RB_ToneMap(FBO_t *hdrFbo, ivec4_t hdrBox, FBO_t *ldrFbo, ivec4_t ldrBox, int autoExposure)
+void RB_ToneMap(FBO_t *hdrFbo, ivec4_t hdrBox, FBO_t *ldrFbo, ivec4_t ldrBox, qint autoExposure)
 {
 	ivec4_t srcBox, dstBox;
 	vec4_t color;
-	static int lastFrameCount = 0;
+	static qint lastFrameCount = 0;
 
 	if (autoExposure)
 	{
@@ -34,7 +34,7 @@ void RB_ToneMap(FBO_t *hdrFbo, ivec4_t hdrBox, FBO_t *ldrFbo, ivec4_t ldrBox, in
 		{
 			// determine average log luminance
 			FBO_t *srcFbo, *dstFbo, *tmp;
-			int size = 256;
+			qint size = 256;
 
 			lastFrameCount = tr.frameCount;
 
@@ -160,7 +160,7 @@ void RB_BokehBlur(FBO_t *src, ivec4_t srcBox, FBO_t *dst, ivec4_t dstBox, float 
 		else if (blur > 2.0f)
 		{
 			// blur 1/16th texture then replace
-			int i;
+			qint i;
 
 			for (i = 0; i < 2; i++)
 			{
@@ -189,7 +189,7 @@ void RB_BokehBlur(FBO_t *src, ivec4_t srcBox, FBO_t *dst, ivec4_t dstBox, float 
 		else if (blur > 1.0f)
 		{
 			// blur quarter texture then replace
-			int i;
+			qint i;
 
 			src = tr.quarterFbo[0];
 			dst = tr.quarterFbo[1];
@@ -224,10 +224,10 @@ void RB_BokehBlur(FBO_t *src, ivec4_t srcBox, FBO_t *dst, ivec4_t dstBox, float 
 }
 
 
-static void RB_RadialBlur(FBO_t *srcFbo, FBO_t *dstFbo, int passes, float stretch, float x, float y, float w, float h, float xcenter, float ycenter, float alpha)
+static void RB_RadialBlur(FBO_t *srcFbo, FBO_t *dstFbo, qint passes, float stretch, float x, float y, float w, float h, float xcenter, float ycenter, float alpha)
 {
 	ivec4_t srcBox, dstBox;
-	int srcWidth, srcHeight;
+	qint srcWidth, srcHeight;
 	vec4_t color;
 	const float inc = 1.f / passes;
 	const float mul = powf(stretch, inc);
@@ -265,7 +265,7 @@ static void RB_RadialBlur(FBO_t *srcFbo, FBO_t *dstFbo, int passes, float stretc
 }
 
 
-static qboolean RB_UpdateSunFlareVis(void)
+static qbool RB_UpdateSunFlareVis(void)
 {
 	GLuint sampleCount = 0;
 	if (!glRefConfig.occlusionQuery)
@@ -278,7 +278,7 @@ static qboolean RB_UpdateSunFlareVis(void)
 	/* debug code */
 	if (0)
 	{
-		int iter;
+		qint iter;
 		for (iter=0 ; ; ++iter)
 		{
 			GLint available = 0;
@@ -299,7 +299,7 @@ void RB_SunRays(FBO_t *srcFbo, ivec4_t srcBox, FBO_t *dstFbo, ivec4_t dstBox)
 	vec4_t color;
 	float dot;
 	const float cutoff = 0.25f;
-	qboolean colorize = qtrue;
+	qbool colorize = qtrue;
 
 //	float w, h, w2, h2;
 	mat4_t mvp;
@@ -340,8 +340,8 @@ void RB_SunRays(FBO_t *srcFbo, ivec4_t srcBox, FBO_t *dstFbo, ivec4_t dstBox)
 	{
 		float mul = 1.f;
 		ivec4_t rayBox, quarterBox;
-		int srcWidth  = srcFbo ? srcFbo->width  : glConfig.vidWidth;
-		int srcHeight = srcFbo ? srcFbo->height : glConfig.vidHeight;
+		qint srcWidth  = srcFbo ? srcFbo->width  : glConfig.vidWidth;
+		qint srcHeight = srcFbo ? srcFbo->height : glConfig.vidHeight;
 
 		VectorSet4(color, mul, mul, mul, 1);
 
@@ -371,7 +371,7 @@ void RB_SunRays(FBO_t *srcFbo, ivec4_t srcBox, FBO_t *dstFbo, ivec4_t dstBox)
 	{
 		const float stretch_add = 2.f/3.f;
 		float stretch = 1.f + stretch_add;
-		int i;
+		qint i;
 		for (i=0; i<2; ++i)
 		{
 			RB_RadialBlur(tr.quarterFbo[i&1], tr.quarterFbo[(~i) & 1], 5, stretch, 0.f, 0.f, tr.quarterFbo[0]->width, tr.quarterFbo[0]->height, pos[0], pos[1], 1.125f);
@@ -389,7 +389,7 @@ void RB_SunRays(FBO_t *srcFbo, ivec4_t srcBox, FBO_t *dstFbo, ivec4_t dstBox)
 	}
 }
 
-static void RB_BlurAxis(FBO_t *srcFbo, FBO_t *dstFbo, float strength, qboolean horizontal)
+static void RB_BlurAxis(FBO_t *srcFbo, FBO_t *dstFbo, float strength, qbool horizontal)
 {
 	float dx, dy;
 	float xmul, ymul;

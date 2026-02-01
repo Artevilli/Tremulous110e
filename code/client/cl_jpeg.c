@@ -53,7 +53,7 @@ q_jpeg_error_mgr_t;
 
 static void CL_JPGErrorExit(j_common_ptr cinfo)
 {
-	char buffer[JMSG_LENGTH_MAX];
+	qchar buffer[JMSG_LENGTH_MAX];
   
 	/* cinfo->err really points to a q_jpeg_error_mgr_s struct, so coerce pointer */
 	q_jpeg_error_mgr_t *jerr = (q_jpeg_error_mgr_t *)cinfo->err;
@@ -69,7 +69,7 @@ static void CL_JPGErrorExit(j_common_ptr cinfo)
 
 static void CL_JPGOutputMessage(j_common_ptr cinfo)
 {
-  char buffer[JMSG_LENGTH_MAX];
+  qchar buffer[JMSG_LENGTH_MAX];
   
   /* Create the message */
   (*cinfo->err->format_message) (cinfo, buffer);
@@ -79,7 +79,7 @@ static void CL_JPGOutputMessage(j_common_ptr cinfo)
 }
 
 
-void CL_LoadJPG( const char *filename, unsigned char **pic, int *width, int *height )
+void CL_LoadJPG( const qchar *filename, unsigned qchar **pic, qint *width, qint *height )
 {
 	/* This struct contains the JPEG decompression parameters and pointers to
 	* working space (which is allocated as needed by the JPEG library).
@@ -100,11 +100,11 @@ void CL_LoadJPG( const char *filename, unsigned char **pic, int *width, int *hei
 	q_jpeg_error_mgr_t jerr;
 	/* More stuff */
 	JSAMPARRAY buffer;		/* Output row buffer */
-	unsigned int row_stride;	/* physical row width in output buffer */
-	unsigned int pixelcount, memcount;
-	unsigned int sindex, dindex;
+	unsigned qint row_stride;	/* physical row width in output buffer */
+	unsigned qint pixelcount, memcount;
+	unsigned qint sindex, dindex;
 	byte *out;
-	int len;
+	qint len;
 	union {
 		byte *b;
 		void *v;
@@ -117,7 +117,7 @@ void CL_LoadJPG( const char *filename, unsigned char **pic, int *width, int *hei
 	 * requires it in order to read binary files.
 	*/
 
-	len = FS_ReadFile( ( char * ) filename, &fbuffer.v );
+	len = FS_ReadFile( ( qchar * ) filename, &fbuffer.v );
 	if ( !fbuffer.b || len < 0 ) {
 		return;
 	}
@@ -274,7 +274,7 @@ typedef struct {
   struct jpeg_destination_mgr pub; /* public fields */
 
   byte* outfile;		/* target stream */
-  int	size;
+  qint	size;
 } my_destination_mgr;
 
 typedef my_destination_mgr * my_dest_ptr;
@@ -351,7 +351,7 @@ static void term_destination(j_compress_ptr cinfo)
  * for closing it after finishing compression.
  */
 
-static void jpegDest (j_compress_ptr cinfo, byte* outfile, int size)
+static void jpegDest (j_compress_ptr cinfo, byte* outfile, qint size)
 {
   my_dest_ptr dest;
 
@@ -383,14 +383,14 @@ Encodes JPEG from image in image_buffer and writes to buffer.
 Expects RGB input data
 =================
 */
-size_t CL_SaveJPGToBuffer(byte *buffer, size_t bufSize, int quality,
-    int image_width, int image_height, byte *image_buffer, int padding)
+size_t CL_SaveJPGToBuffer(byte *buffer, size_t bufSize, qint quality,
+    qint image_width, qint image_height, byte *image_buffer, qint padding)
 {
   struct jpeg_compress_struct cinfo;
   q_jpeg_error_mgr_t jerr;
   JSAMPROW row_pointer[1];	/* pointer to JSAMPLE row[s] */
   my_dest_ptr dest;
-  int row_stride;		/* physical row width in image buffer */
+  qint row_stride;		/* physical row width in image buffer */
   size_t outcount;
 
   /* Step 1: allocate and initialize JPEG compression object */
@@ -462,7 +462,7 @@ size_t CL_SaveJPGToBuffer(byte *buffer, size_t bufSize, int quality,
 }
 
 
-void CL_SaveJPG( const char *filename, int quality, int image_width, int image_height, byte *image_buffer, int padding )
+void CL_SaveJPG( const qchar *filename, qint quality, qint image_width, qint image_height, byte *image_buffer, qint padding )
 {
 	byte *out;
 	size_t bufSize;

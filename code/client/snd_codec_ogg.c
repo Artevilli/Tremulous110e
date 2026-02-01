@@ -55,8 +55,8 @@ snd_codec_t ogg_codec =
 size_t S_OGG_Callback_read( void *ptr, size_t size, size_t nmemb, void *datasource )
 {
 	snd_stream_t *stream;
-	int byteSize = 0;
-	int bytesRead = 0;
+	qint byteSize = 0;
+	qint bytesRead = 0;
 	size_t nMembRead = 0;
 
 	// check if input is valid
@@ -105,10 +105,10 @@ size_t S_OGG_Callback_read( void *ptr, size_t size, size_t nmemb, void *datasour
 }
 
 // fseek() replacement
-int S_OGG_Callback_seek(void *datasource, ogg_int64_t offset, int whence)
+qint S_OGG_Callback_seek(void *datasource, ogg_int64_t offset, qint whence)
 {
 	snd_stream_t *stream;
-	int retVal = 0;
+	qint retVal = 0;
 
 	// check if input is valid
 	if (!datasource)
@@ -135,7 +135,7 @@ int S_OGG_Callback_seek(void *datasource, ogg_int64_t offset, int whence)
 			}
 
 			// keep track of file position
-			stream->pos = (int) offset;
+			stream->pos = (qint) offset;
 			break;
 		}
   
@@ -151,7 +151,7 @@ int S_OGG_Callback_seek(void *datasource, ogg_int64_t offset, int whence)
 			}
 
 			// keep track of file position
-			stream->pos += (int) offset;
+			stream->pos += (qint) offset;
 			break;
 		}
  
@@ -167,7 +167,7 @@ int S_OGG_Callback_seek(void *datasource, ogg_int64_t offset, int whence)
 			}
 
 			// keep track of file position
-			stream->pos = stream->length + (int) offset;
+			stream->pos = stream->length + (qint) offset;
 			break;
 		}
   
@@ -187,7 +187,7 @@ int S_OGG_Callback_seek(void *datasource, ogg_int64_t offset, int whence)
 }
 
 // fclose() replacement
-int S_OGG_Callback_close(void *datasource)
+qint S_OGG_Callback_close(void *datasource)
 {
 	// we do nothing here and close all things manually in S_OGG_CodecCloseStream()
 	return 0;
@@ -225,7 +225,7 @@ const ov_callbacks S_OGG_Callbacks =
 S_OGG_CodecOpenStream
 =================
 */
-snd_stream_t *S_OGG_CodecOpenStream(const char *filename)
+snd_stream_t *S_OGG_CodecOpenStream(const qchar *filename)
 {
 	snd_stream_t *stream;
 
@@ -353,17 +353,17 @@ void S_OGG_CodecCloseStream(snd_stream_t *stream)
 S_OGG_CodecReadStream
 =================
 */
-int S_OGG_CodecReadStream(snd_stream_t *stream, int bytes, void *buffer)
+qint S_OGG_CodecReadStream(snd_stream_t *stream, qint bytes, void *buffer)
 {
 	// buffer handling
-	int bytesRead, bytesLeft, c;
-	char *bufPtr;
+	qint bytesRead, bytesLeft, c;
+	qchar *bufPtr;
 	
 	// Bitstream for the decoder
-	int BS = 0;
+	qint BS = 0;
 
 	// big endian machines want their samples in big endian order
-	int IsBigEndian = 0;
+	qint IsBigEndian = 0;
 
 #	ifdef Q3_BIG_ENDIAN
 	IsBigEndian = 1;
@@ -418,11 +418,11 @@ We handle S_OGG_CodecLoad as a special case of the streaming functions
 where we read the whole stream at once.
 ======================================================================
 */
-void *S_OGG_CodecLoad(const char *filename, snd_info_t *info)
+void *S_OGG_CodecLoad(const qchar *filename, snd_info_t *info)
 {
 	snd_stream_t *stream;
 	byte *buffer;
-	int bytesRead;
+	qint bytesRead;
 	
 	// check if input is valid
 	if (!(filename && info))

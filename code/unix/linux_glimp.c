@@ -100,7 +100,7 @@ typedef struct motifHints_s
 glwstate_t glw_state;
 
 Display *dpy = NULL;
-int scrnum;
+qint scrnum;
 
 Window win = 0;
 #ifdef USE_OPENGL_API
@@ -110,22 +110,22 @@ static Atom wmDeleteEvent = None;
 static Atom motifWMHints = None;
 
 
-static int window_width = 0;
-static int window_height = 0;
-static qboolean window_created;
-static qboolean window_exposed;
+static qint window_width = 0;
+static qint window_height = 0;
+static qbool window_created;
+static qbool window_exposed;
 
 #define KEY_MASK (KeyPressMask | KeyReleaseMask)
 #define MOUSE_MASK (ButtonPressMask | ButtonReleaseMask | PointerMotionMask | ButtonMotionMask )
 #define X_MASK (KEY_MASK | MOUSE_MASK | VisibilityChangeMask | StructureNotifyMask | FocusChangeMask | ExposureMask )
 
-static qboolean mouse_avail;
-static qboolean mouse_active = qfalse;
-static int mwx, mwy;
-static int mx = 0, my = 0;
+static qbool mouse_avail;
+static qbool mouse_active = qfalse;
+static qint mwx, mwy;
+static qint mx = 0, my = 0;
 
 // Time mouse was reset, we ignore the first 50ms of the mouse to allow settling of events
-static int mouseResetTime = 0;
+static qint mouseResetTime = 0;
 #define MOUSE_RESET_DELAY 50
 
 static cvar_t *in_mouse;
@@ -143,11 +143,11 @@ cvar_t   *in_joystickDebug = NULL;
 cvar_t   *joy_threshold    = NULL;
 #endif
 
-static int mouse_accel_numerator;
-static int mouse_accel_denominator;
-static int mouse_threshold;
+static qint mouse_accel_numerator;
+static qint mouse_accel_denominator;
+static qint mouse_threshold;
 
-static int win_x, win_y;
+static qint win_x, win_y;
 
 /*****************************************************************************
 ** KEYBOARD
@@ -161,7 +161,7 @@ static int win_x, win_y;
 ******************************************************************************/
 
 //#define KBD_DBG
-static const char s_keytochar[ 128 ] =
+static const qchar s_keytochar[ 128 ] =
 {
 //0     1     2     3     4     5     6     7     8     9     A     B     C     D     E     F 
  0x0,  0x0,  0x0,  0x0,  0x0,  0x0,  0x0,  0x0,  0x0,  0x0,  '1',  '2',  '3',  '4',  '5',  '6',  // 0
@@ -178,29 +178,29 @@ static const char s_keytochar[ 128 ] =
 
 void IN_ActivateMouse( void );
 void IN_DeactivateMouse( void );
-qboolean IN_MouseActive( void );
+qbool IN_MouseActive( void );
 
 
-static char *XLateKey( XKeyEvent *ev, int *key )
+static qchar *XLateKey( XKeyEvent *ev, qint *key )
 {
-  static unsigned char buf[64];
-  static unsigned char bufnomod[2];
+  static unsigned qchar buf[64];
+  static unsigned qchar bufnomod[2];
   KeySym keysym;
-  int XLookupRet;
+  qint XLookupRet;
 
   *key = 0;
 
-  XLookupRet = XLookupString(ev, (char*)buf, sizeof(buf), &keysym, 0);
+  XLookupRet = XLookupString(ev, (qchar*)buf, sizeof(buf), &keysym, 0);
 #ifdef KBD_DBG
-  Com_Printf( "XLookupString ret: %d buf: %s keysym: %x\n", XLookupRet, buf, (int)keysym) ;
+  Com_Printf( "XLookupString ret: %d buf: %s keysym: %x\n", XLookupRet, buf, (qint)keysym) ;
 #endif
 
   if (!in_shiftedKeys->integer) {
     // also get a buffer without modifiers held
     ev->state = 0;
-    XLookupRet = XLookupString(ev, (char*)bufnomod, sizeof(bufnomod), &keysym, 0);
+    XLookupRet = XLookupString(ev, (qchar*)bufnomod, sizeof(bufnomod), &keysym, 0);
 #ifdef KBD_DBG
-    Com_Printf( "XLookupString (minus modifiers) ret: %d buf: %s keysym: %x\n", XLookupRet, buf, (int)keysym );
+    Com_Printf( "XLookupString (minus modifiers) ret: %d buf: %s keysym: %x\n", XLookupRet, buf, (qint)keysym );
 #endif
   } else {
     bufnomod[0] = '\0';
@@ -212,7 +212,7 @@ static char *XLateKey( XKeyEvent *ev, int *key )
   case XK_twosuperior:
     *key = K_CONSOLE;
     buf[0] = '\0';
-    return (char*)buf;
+    return (qchar*)buf;
 
   case XK_KP_Page_Up:
   case XK_KP_9:  *key = K_KP_PGUP; break;
@@ -355,16 +355,16 @@ static char *XLateKey( XKeyEvent *ev, int *key )
     {
       if (com_developer->value)
       {
-        Com_Printf( "Warning: XLookupString failed on KeySym %d\n", (int)keysym );
+        Com_Printf( "Warning: XLookupString failed on KeySym %d\n", (qint)keysym );
       }
       buf[0] = '\0';
-      return (char*)buf;
+      return (qchar*)buf;
     }
     else
     {
       // XK_* tests failed, but XLookupString got a buffer, so let's try it
       if (in_shiftedKeys->integer) {
-        *key = *(unsigned char *)buf;
+        *key = *(unsigned qchar *)buf;
         if (*key >= 'A' && *key <= 'Z')
           *key = *key - 'A' + 'a';
         // if ctrl is pressed, the keys are not between 'A' and 'Z', for instance ctrl-z == 26 ^Z ^C etc.
@@ -378,7 +378,7 @@ static char *XLateKey( XKeyEvent *ev, int *key )
     break;
   }
 
-  return (char*)buf;
+  return (qchar*)buf;
 }
 
 
@@ -410,7 +410,7 @@ static Cursor CreateNullCursor( Display *display, Window root )
 
 static void install_mouse_grab( void )
 {
-	int res;
+	qint res;
 
 	// move pointer to destination window area
 	XWarpPointer( dpy, None, win, 0, 0, 0, 0, window_width / 2, window_height / 2 );
@@ -466,7 +466,7 @@ static void install_mouse_grab( void )
 
 static void install_kb_grab( void )
 {
-	int res;
+	qint res;
 
 	res = XGrabKeyboard( dpy, win, False, GrabModeAsync, GrabModeAsync, CurrentTime );
 	if ( res != GrabSuccess )
@@ -528,7 +528,7 @@ static void uninstall_kb_grab( void )
  *  same timestamp on press/release event pairs 
  *  for key repeats.
  */
-static qboolean X11_PendingInput( void )
+static qbool X11_PendingInput( void )
 {
 	assert(dpy != NULL);
 
@@ -543,7 +543,7 @@ static qboolean X11_PendingInput( void )
 	// More drastic measures are required -- see if X is ready to talk
 	{
 		static struct timeval zero_time;
-		int x11_fd;
+		qint x11_fd;
 		fd_set fdset;
 
 		x11_fd = ConnectionNumber( dpy );
@@ -560,7 +560,7 @@ static qboolean X11_PendingInput( void )
 }
 
 
-static qboolean repeated_press( XEvent *event )
+static qbool repeated_press( XEvent *event )
 {
 	XEvent        peek;
 
@@ -582,11 +582,11 @@ static qboolean repeated_press( XEvent *event )
 }
 
 
-static qboolean WindowMinimized( Display *dpy, Window win )
+static qbool WindowMinimized( Display *dpy, Window win )
 {
 	unsigned long i, num_items, bytes_after;
 	Atom actual_type, *atoms, nws, nwsh;
-	int actual_format;
+	qint actual_format;
 
 	nws = XInternAtom( dpy, "_NET_WM_STATE", True );
 	if ( nws == BadValue || nws == None )
@@ -600,7 +600,7 @@ static qboolean WindowMinimized( Display *dpy, Window win )
 
 	XGetWindowProperty( dpy, win, nws, 0, 0x7FFFFFFF, False, XA_ATOM,
 		&actual_type, &actual_format, &num_items,
-		&bytes_after, (unsigned char**)&atoms );
+		&bytes_after, (unsigned qchar**)&atoms );
 
 	for ( i = 0; i < num_items; i++ )
 	{
@@ -616,7 +616,7 @@ static qboolean WindowMinimized( Display *dpy, Window win )
 }
 
 
-static qboolean directMap( const byte chr )
+static qbool directMap( const byte chr )
 {
 	if ( !in_forceCharset->integer )
 		return qtrue;
@@ -656,10 +656,10 @@ disable with in_subframe 0
 
 ================
 */
-static int Sys_XTimeToSysTime( Time xtime )
+static qint Sys_XTimeToSysTime( Time xtime )
 {
 	extern unsigned long sys_timeBase;
-	int ret, t, test;
+	qint ret, t, test;
 
 	if ( !in_subframe->integer )
 	{
@@ -676,7 +676,7 @@ static int Sys_XTimeToSysTime( Time xtime )
 	// after around 5s, xtime would have wrapped around
 	// we get 7132, the formula handles the wrap safely
 	unsigned long xtime_aux,base_aux;
-	int test;
+	qint test;
 //	Com_Printf("sys_timeBase: %p\n", sys_timeBase);
 //	Com_Printf("xtime: %p\n", xtime);
 	xtime_aux = 500; // 500 ms after wrap
@@ -705,14 +705,14 @@ static int Sys_XTimeToSysTime( Time xtime )
 void HandleEvents( void )
 {
 	XEvent event;
-	int btn_code;
-	int key;
-	qboolean dowarp = qfalse;
-	char *p;
-	int dx, dy;
-	int t = 0; // default to 0 in case we don't set
-	qboolean btn_press;
-	char buf[2];
+	qint btn_code;
+	qint key;
+	qbool dowarp = qfalse;
+	qchar *p;
+	qint dx, dy;
+	qint t = 0; // default to 0 in case we don't set
+	qbool btn_press;
+	qchar buf[2];
 
 	if ( !dpy )
 		return;
@@ -742,7 +742,7 @@ void HandleEvents( void )
 			}
 			else
 			{
-				int shift = (event.xkey.state & 1);
+				qint shift = (event.xkey.state & 1);
 				p = XLateKey( &event.xkey, &key );
 				if ( *p && event.xkey.keycode == 0x5B )
 				{
@@ -751,11 +751,11 @@ void HandleEvents( void )
 				else
 				if ( !directMap( *p ) && event.xkey.keycode < 0x3F )
 				{
-					char ch;
+					qchar ch;
 					ch = s_keytochar[ event.xkey.keycode ];
 					if ( ch >= 'a' && ch <= 'z' )
 					{
-						unsigned int capital;
+						unsigned qint capital;
 						XkbGetIndicatorState( dpy, XkbUseCoreKbd, &capital );
 						capital &= 1;
 						if ( capital ^ shift )
@@ -829,8 +829,8 @@ void HandleEvents( void )
 						break;
 					}
 
-					dx = ((int)event.xmotion.x - mwx);
-					dy = ((int)event.xmotion.y - mwy);
+					dx = ((qint)event.xmotion.x - mwx);
+					dy = ((qint)event.xmotion.y - mwy);
 					mx += dx;
 					my += dy;
 					mwx = event.xmotion.x;
@@ -891,9 +891,9 @@ void HandleEvents( void )
 
 			if ( !glw_state.cdsFullscreen && window_created && !gw_minimized && window_exposed )
 			{
-				unsigned int w, h, border, depth;
+				unsigned qint w, h, border, depth;
 				Window r;
-				int x, y;
+				qint x, y;
 
 				if ( XGetGeometry( dpy, win, &r, &x, &y, &w, &h, &border, &depth ) ) {
 					// workaround to compensate constant shift added by window decorations
@@ -1007,7 +1007,7 @@ void IN_DeactivateMouse( void )
 IN_MouseActive
 ================
 */
-qboolean IN_MouseActive( void )
+qbool IN_MouseActive( void )
 {
 	return ( in_nograb->integer == 0 && mouse_active );
 }
@@ -1028,11 +1028,11 @@ void IN_Minimize( void )
 }
 
 
-qboolean BuildGammaRampTable( unsigned char *red, unsigned char *green, unsigned char *blue, int gammaRampSize, unsigned short table[3][4096] )
+qbool BuildGammaRampTable( unsigned qchar *red, unsigned qchar *green, unsigned qchar *blue, qint gammaRampSize, unsigned short table[3][4096] )
 {
-	int i, j;
-	int m, m1;
-	int shift;
+	qint i, j;
+	qint m, m1;
+	qint shift;
 
 	switch ( gammaRampSize )
 	{
@@ -1076,7 +1076,7 @@ qboolean BuildGammaRampTable( unsigned char *red, unsigned char *green, unsigned
 **
 ** This routine should only be called if glConfig.deviceSupportsGamma is TRUE
 */
-void GLimp_SetGamma( unsigned char red[256], unsigned char green[256], unsigned char blue[256] )
+void GLimp_SetGamma( unsigned qchar red[256], unsigned qchar green[256], unsigned qchar blue[256] )
 {
 	if ( glw_state.randr_gamma )
 	{
@@ -1102,7 +1102,7 @@ void GLimp_SetGamma( unsigned char red[256], unsigned char green[256], unsigned 
 ** for the window.  The state structure is also nulled out.
 **
 */
-void GLimp_Shutdown( qboolean unloadDLL )
+void GLimp_Shutdown( qbool unloadDLL )
 {
 	IN_DeactivateMouse();
 
@@ -1175,7 +1175,7 @@ void GLimp_Shutdown( qboolean unloadDLL )
 /*
 ** VKimp_Shutdown
 */
-void VKimp_Shutdown( qboolean unloadDLL )
+void VKimp_Shutdown( qbool unloadDLL )
 {
 	IN_DeactivateMouse();
 
@@ -1240,7 +1240,7 @@ void VKimp_Shutdown( qboolean unloadDLL )
 /*
 ** GLimp_LogComment
 */
-void GLimp_LogComment( const char *comment )
+void GLimp_LogComment( const qchar *comment )
 {
 	if ( glw_state.log_fp )
 	{
@@ -1252,9 +1252,9 @@ void GLimp_LogComment( const char *comment )
 /*
 ** GLW_StartDriverAndSetMode
 */
-int GLW_SetMode( int mode, const char *modeFS, qboolean fullscreen, qboolean vulkan );
+qint GLW_SetMode( qint mode, const qchar *modeFS, qbool fullscreen, qbool vulkan );
 
-static rserr_t GLW_StartDriverAndSetMode( int mode, const char *modeFS, qboolean fullscreen, qboolean vulkan )
+static rserr_t GLW_StartDriverAndSetMode( qint mode, const qchar *modeFS, qbool fullscreen, qbool vulkan )
 {
 	rserr_t err;
 	
@@ -1293,7 +1293,7 @@ static rserr_t GLW_StartDriverAndSetMode( int mode, const char *modeFS, qboolean
 
 
 #ifdef USE_OPENGL_API
-static XVisualInfo *GL_SelectVisual( int colorbits, int depthbits, int stencilbits, glconfig_t *config )
+static XVisualInfo *GL_SelectVisual( qint colorbits, qint depthbits, qint stencilbits, glconfig_t *config )
 {
 	// these match in the array
 	#define ATTR_RED_IDX     3
@@ -1303,7 +1303,7 @@ static XVisualInfo *GL_SelectVisual( int colorbits, int depthbits, int stencilbi
 	#define ATTR_DEPTH_IDX   11
 	#define ATTR_STENCIL_IDX 13
 
-	static int attrib[] =
+	static qint attrib[] =
 	{
 		GLX_RGBA,             // 0
 		GLX_DOUBLEBUFFER,     // 1
@@ -1316,7 +1316,7 @@ static XVisualInfo *GL_SelectVisual( int colorbits, int depthbits, int stencilbi
 		None
 	};
 
-	int tcolorbits, tdepthbits, tstencilbits, i;
+	qint tcolorbits, tdepthbits, tstencilbits, i;
 	XVisualInfo *visinfo = NULL;
 
 	for ( i = 0; i < 16; i++ )
@@ -1405,12 +1405,12 @@ static XVisualInfo *GL_SelectVisual( int colorbits, int depthbits, int stencilbi
 
 
 #ifdef USE_VULKAN_API
-static XVisualInfo *VK_SelectVisual( int colorbits, int depthbits, int stencilbits, glconfig_t *config )
+static XVisualInfo *VK_SelectVisual( qint colorbits, qint depthbits, qint stencilbits, glconfig_t *config )
 {
 	static XVisualInfo visinfo;
 	XVisualInfo template;
 	XVisualInfo *list;
-	int i, nvisuals;
+	qint i, nvisuals;
 
 	template.screen = scrnum;
 	list = XGetVisualInfo( dpy, VisualScreenMask, &template, &nvisuals );
@@ -1464,7 +1464,7 @@ static XVisualInfo *VK_SelectVisual( int colorbits, int depthbits, int stencilbi
 /*
 ** GLW_SetMode
 */
-int GLW_SetMode( int mode, const char *modeFS, qboolean fullscreen, qboolean vulkan )
+qint GLW_SetMode( qint mode, const qchar *modeFS, qbool fullscreen, qbool vulkan )
 {
 	glconfig_t *config = glw_state.config;
 	Window root;
@@ -1473,8 +1473,8 @@ int GLW_SetMode( int mode, const char *modeFS, qboolean fullscreen, qboolean vul
 	XSetWindowAttributes attr;
 	XSizeHints sizehints;
 	unsigned long mask;
-	int colorbits, depthbits, stencilbits;
-	int actualWidth, actualHeight, actualRate;
+	qint colorbits, depthbits, stencilbits;
+	qint actualWidth, actualHeight, actualRate;
 
 	window_width = 0;
 	window_height = 0;
@@ -1636,7 +1636,7 @@ int GLW_SetMode( int mode, const char *modeFS, qboolean fullscreen, qboolean vul
 		decohint.input_mode = decohint.status = 0;
 
 		XChangeProperty( dpy, win, motifWMHints, motifWMHints, 32,
-			PropModeReplace, (unsigned char*)& decohint,
+			PropModeReplace, (unsigned qchar*)& decohint,
 			sizeof(decohint) / sizeof(long) );
 	}
 
@@ -1740,15 +1740,15 @@ void GLimp_InitGamma( glconfig_t *config )
 **   but those don't seem to be fatal .. so the default would be to just ignore them
 **   our implementation mimics the default handler behaviour (not completely cause I'm lazy)
 */
-static int qXErrorHandler( Display *dpy, XErrorEvent *ev )
+static qint qXErrorHandler( Display *dpy, XErrorEvent *ev )
 {
-	static char buf[1024];
+	static qchar buf[1024];
 
 	XGetErrorText( dpy, ev->error_code, buf, sizeof( buf ) );
 	Com_Printf( "X Error of failed request: %s\n", buf) ;
 	Com_Printf( "  Major opcode of failed request: %d\n", ev->request_code );
 	Com_Printf( "  Minor opcode of failed request: %d\n", ev->minor_code );
-	Com_Printf( "  Serial number of failed request: %d\n", (int)ev->serial );
+	Com_Printf( "  Serial number of failed request: %d\n", (qint)ev->serial );
 
 #ifdef DEBUG
 	raise( SIGABRT );
@@ -1784,9 +1784,9 @@ static void InitCvars( void )
 ** GLimp_win.c internal function that that attempts to load and use 
 ** a specific OpenGL DLL.
 */
-static qboolean GLW_LoadOpenGL( const char *name )
+static qbool GLW_LoadOpenGL( const qchar *name )
 {
-	qboolean fullscreen;
+	qbool fullscreen;
 
 	if ( r_swapInterval->integer )
 		setenv( "vblank_mode", "2", 1 );
@@ -1830,7 +1830,7 @@ static qboolean GLW_LoadOpenGL( const char *name )
 }
 
 
-static qboolean GLW_StartOpenGL( void )
+static qbool GLW_StartOpenGL( void )
 {
 	//
 	// load and initialize the specific OpenGL driver
@@ -1943,7 +1943,7 @@ void GLimp_EndFrame( void )
 /*
 ** GLW_LoadVulkan
 */
-static qboolean GLW_LoadVulkan( void )
+static qbool GLW_LoadVulkan( void )
 {
 	if ( r_swapInterval->integer )
 		setenv( "vblank_mode", "2", 1 );
@@ -1954,7 +1954,7 @@ static qboolean GLW_LoadVulkan( void )
 	if ( QVK_Init() )
 	{
 		rserr_t err;
-		qboolean fullscreen = (r_fullscreen->integer != 0);
+		qbool fullscreen = (r_fullscreen->integer != 0);
 
 		// create the window and set up the context
 		err = GLW_StartDriverAndSetMode( r_mode->integer, r_modeFullscreen->string, fullscreen, qtrue /* vulkan */ );
@@ -1970,7 +1970,7 @@ static qboolean GLW_LoadVulkan( void )
 }
 
 
-static qboolean GLW_StartVulkan( void )
+static qbool GLW_StartVulkan( void )
 {
 	//
 	// load and initialize the specific Vulkan driver
@@ -2119,15 +2119,15 @@ void IN_Frame( void )
 Sys_GetClipboardData
 =================
 */
-char *Sys_GetClipboardData( void )
+qchar *Sys_GetClipboardData( void )
 {
 	const Atom xtarget = XInternAtom( dpy, "UTF8_STRING", 0 );
 	unsigned long nitems, rem;
-	unsigned char *data;
+	unsigned qchar *data;
 	Atom type;
 	XEvent ev;
-	char *buf;
-	int format;
+	qchar *buf;
+	qint format;
 
 	XConvertSelection( dpy, XA_PRIMARY, xtarget, XA_PRIMARY, win, CurrentTime );
 	XSync( dpy, False );
@@ -2138,7 +2138,7 @@ char *Sys_GetClipboardData( void )
 			if ( format == 8 ) {
 				if ( nitems > 0 ) {
 					buf = Z_Malloc( nitems + 1 );
-					Q_strncpyz( buf, (char*)data, nitems + 1 );
+					Q_strncpyz( buf, (qchar*)data, nitems + 1 );
 					strtok( buf, "\n\r\b" );
 					return buf;
 				}
@@ -2158,7 +2158,7 @@ char *Sys_GetClipboardData( void )
 Sys_SetClipboardBitmap
 =================
 */
-void Sys_SetClipboardBitmap( const byte *bitmap, int length )
+void Sys_SetClipboardBitmap( const byte *bitmap, qint length )
 {
 	// TODO: implement
 }

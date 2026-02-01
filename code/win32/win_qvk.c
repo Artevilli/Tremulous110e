@@ -50,7 +50,7 @@ static PFN_vkCreateWin32SurfaceKHR qvkCreateWin32SurfaceKHR;
 ** Unloads the specified DLL then nulls out all the proc pointers.  This
 ** is only called during a hard shutdown of the Vulkan subsystem (e.g. vid_restart).
 */
-void QVK_Shutdown( qboolean unloadDLL )
+void QVK_Shutdown( qbool unloadDLL )
 {
 	Com_Printf( "...shutting down QVK\n" );
 
@@ -67,13 +67,13 @@ void QVK_Shutdown( qboolean unloadDLL )
 }
 
 
-void *VK_GetInstanceProcAddr( VkInstance instance, const char *name )
+void *VK_GetInstanceProcAddr( VkInstance instance, const qchar *name )
 {
 	return qvkGetInstanceProcAddr( instance, name );
 }
 
 
-qboolean VK_CreateSurface( VkInstance instance, VkSurfaceKHR *pSurface )
+qbool VK_CreateSurface( VkInstance instance, VkSurfaceKHR *pSurface )
 {
 	VkWin32SurfaceCreateInfoKHR desc;
 
@@ -94,7 +94,7 @@ qboolean VK_CreateSurface( VkInstance instance, VkSurfaceKHR *pSurface )
 }
 
 
-static HINSTANCE load_vulkan_library( const char *dllname )
+static HINSTANCE load_vulkan_library( const qchar *dllname )
 {
 	HINSTANCE lib;
 
@@ -123,13 +123,13 @@ static HINSTANCE load_vulkan_library( const char *dllname )
 ** operating systems we need to do the right thing, whatever that
 ** might be.
 */
-qboolean QVK_Init( void )
+qbool QVK_Init( void )
 {
 	Com_Printf( "...initializing QVK\n" );
 
 	if ( glw_state.VulkanLib == NULL )
 	{
-		const char *dllnames[] = {
+		const qchar *dllnames[] = {
 			"vulkan-1.dll",
 #if idx64
 			"amdvlk64.dll",
@@ -139,7 +139,7 @@ qboolean QVK_Init( void )
 			"igvk32.dll"
 #endif
 		};
-		int i;
+		qint i;
 
 		for ( i = 0; i < ARRAY_LEN( dllnames ); i++ )
 		{
@@ -148,7 +148,7 @@ qboolean QVK_Init( void )
 			//Com_Printf( "...loading '%s' : %s\n", dllnames[i], glw_state.VulkanLib ? "success" : "failed" );
 			if ( glw_state.VulkanLib )
 			{
-				char libName[1024];
+				qchar libName[1024];
 #ifdef UNICODE
 				TCHAR buffer[1024];
 

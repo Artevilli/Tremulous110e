@@ -36,14 +36,14 @@ Opens/loads a sound, tries codec based on the sound's file extension
 then tries all supported codecs.
 =================
 */
-static void *S_CodecGetSound( const char *filename, snd_info_t *info )
+static void *S_CodecGetSound( const qchar *filename, snd_info_t *info )
 {
 	snd_codec_t *codec;
 	snd_codec_t *orgCodec = NULL;
-	qboolean	orgNameFailed = qfalse;
-	char		localName[ MAX_QPATH ];
-	const char	*ext;
-	char		altName[ MAX_QPATH ];
+	qbool	orgNameFailed = qfalse;
+	qchar		localName[ MAX_QPATH ];
+	const qchar	*ext;
+	qchar		altName[ MAX_QPATH ];
 	void		*rtn = NULL;
 
 	Q_strncpyz( localName, filename, sizeof( localName ) );
@@ -164,7 +164,7 @@ static void S_CodecRegister( snd_codec_t *codec )
 S_CodecLoad
 =================
 */
-void *S_CodecLoad( const char *filename, snd_info_t *info )
+void *S_CodecLoad( const qchar *filename, snd_info_t *info )
 {
 	return S_CodecGetSound( filename, info );
 }
@@ -175,7 +175,7 @@ void *S_CodecLoad( const char *filename, snd_info_t *info )
 S_CodecOpenStream
 =================
 */
-snd_stream_t *S_CodecOpenStream( const char *filename )
+snd_stream_t *S_CodecOpenStream( const qchar *filename )
 {
 	return S_CodecGetSound( filename, NULL );
 }
@@ -197,7 +197,7 @@ void S_CodecCloseStream( snd_stream_t *stream )
 S_CodecReadStream
 =================
 */
-int S_CodecReadStream( snd_stream_t *stream, int bytes, void *buffer )
+qint S_CodecReadStream( snd_stream_t *stream, qint bytes, void *buffer )
 {
 	return stream->codec->read( stream, bytes, buffer );
 }
@@ -211,11 +211,11 @@ int S_CodecReadStream( snd_stream_t *stream, int bytes, void *buffer )
 S_CodecUtilOpen
 =================
 */
-snd_stream_t *S_CodecUtilOpen( const char *filename, snd_codec_t *codec )
+snd_stream_t *S_CodecUtilOpen( const qchar *filename, snd_codec_t *codec )
 {
 	snd_stream_t *stream;
 	fileHandle_t hnd;
-	int length;
+	qint length;
 
 	// Try to open the file
 	length = FS_FOpenFileRead( filename, &hnd, qtrue );

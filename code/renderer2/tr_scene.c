@@ -22,18 +22,18 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "tr_local.h"
 
-static int			r_firstSceneDrawSurf;
+static qint			r_firstSceneDrawSurf;
 
-static int			r_numdlights;
-static int			r_firstSceneDlight;
+static qint			r_numdlights;
+static qint			r_firstSceneDlight;
 
-static int			r_numentities;
-static int			r_firstSceneEntity;
+static qint			r_numentities;
+static qint			r_firstSceneEntity;
 
-static int			r_numpolys;
-static int			r_firstScenePoly;
+static qint			r_numpolys;
+static qint			r_firstScenePoly;
 
-static int			r_numpolyverts;
+static qint			r_numpolyverts;
 
 
 /*
@@ -88,10 +88,10 @@ Adds all the scene's polys into this view's drawsurf list
 =====================
 */
 void R_AddPolygonSurfaces( void ) {
-	int			i;
+	qint			i;
 	shader_t	*sh;
 	const srfPoly_t	*poly;
-	int		fogMask;
+	qint		fogMask;
 
 	tr.currentEntityNum = REFENTITYNUM_WORLD;
 	tr.shiftedEntityNum = tr.currentEntityNum << QSORT_REFENTITYNUM_SHIFT;
@@ -109,10 +109,10 @@ RE_AddPolyToScene
 
 =====================
 */
-void RE_AddPolyToScene( qhandle_t hShader, int numVerts, const polyVert_t *verts, int numPolys ) {
+void RE_AddPolyToScene( qhandle_t hShader, qint numVerts, const polyVert_t *verts, qint numPolys ) {
 	srfPoly_t	*poly;
-	int			i, j;
-	int			fogIndex;
+	qint			i, j;
+	qint			fogIndex;
 	const fog_t		*fog;
 	vec3_t		bounds[2];
 
@@ -200,7 +200,7 @@ RE_AddRefEntityToScene
 
 =====================
 */
-void RE_AddRefEntityToScene( const refEntity_t *ent, qboolean intShaderTime ) {
+void RE_AddRefEntityToScene( const refEntity_t *ent, qbool intShaderTime ) {
 	vec3_t cross;
 
 	if ( !tr.registered ) {
@@ -211,14 +211,14 @@ void RE_AddRefEntityToScene( const refEntity_t *ent, qboolean intShaderTime ) {
 		return;
 	}
 	if ( Q_isnan(ent->origin[0]) || Q_isnan(ent->origin[1]) || Q_isnan(ent->origin[2]) ) {
-		static qboolean firstTime = qtrue;
+		static qbool firstTime = qtrue;
 		if (firstTime) {
 			firstTime = qfalse;
 			ri.Printf( PRINT_WARNING, "RE_AddRefEntityToScene passed a refEntity which has an origin with a NaN component\n");
 		}
 		return;
 	}
-	if ( (int)ent->reType < 0 || ent->reType >= RT_MAX_REF_ENTITY_TYPE ) {
+	if ( (qint)ent->reType < 0 || ent->reType >= RT_MAX_REF_ENTITY_TYPE ) {
 		ri.Error( ERR_DROP, "RE_AddRefEntityToScene: bad reType %i", ent->reType );
 	}
 
@@ -239,7 +239,7 @@ RE_AddDynamicLightToScene
 
 =====================
 */
-static void RE_AddDynamicLightToScene( const vec3_t org, float intensity, float r, float g, float b, int additive ) {
+static void RE_AddDynamicLightToScene( const vec3_t org, float intensity, float r, float g, float b, qint additive ) {
 	dlight_t	*dl;
 
 	if ( !tr.registered ) {
@@ -308,14 +308,14 @@ void RE_BeginScene(const refdef_t *fd)
 	// will force a reset of the visible leafs even if the view hasn't moved
 	tr.refdef.areamaskModified = qfalse;
 	if ( ! (tr.refdef.rdflags & RDF_NOWORLDMODEL) ) {
-		int		areaDiff;
-		int		i;
+		qint		areaDiff;
+		qint		i;
 
 		// compare the area bits
 		areaDiff = 0;
-		for ( i = 0; i < MAX_MAP_AREA_BYTES/sizeof(int); i++ ) {
-			areaDiff |= ((int *)tr.refdef.areamask)[i] ^ ((int *)fd->areamask)[i];
-			((int *)tr.refdef.areamask)[i] = ((int *)fd->areamask)[i];
+		for ( i = 0; i < MAX_MAP_AREA_BYTES/sizeof(qint); i++ ) {
+			areaDiff |= ((qint *)tr.refdef.areamask)[i] ^ ((qint *)fd->areamask)[i];
+			((qint *)tr.refdef.areamask)[i] = ((qint *)fd->areamask)[i];
 		}
 
 		if ( areaDiff ) {
@@ -458,7 +458,7 @@ to handle mirrors,
 */
 void RE_RenderScene( const refdef_t *fd ) {
 	viewParms_t		parms;
-	int				startTime;
+	qint				startTime;
 
 	if ( !tr.registered ) {
 		return;
@@ -522,7 +522,7 @@ void RE_RenderScene( const refdef_t *fd ) {
 	// this is where dynamic cubemaps would be rendered
 	if (0) //(glRefConfig.framebufferObject && !( fd->rdflags & RDF_NOWORLDMODEL ))
 	{
-		int i, j;
+		qint i, j;
 
 		for (i = 0; i < tr.numCubemaps; i++)
 		{

@@ -36,23 +36,23 @@ typedef struct
 	HINSTANCE   OpenGLLib;  // HINSTANCE for the OpenGL library
 	HINSTANCE   VulkanLib;  // HINSTANCE for the Vulkan library
 
-	qboolean	pixelFormatSet;
+	qbool	pixelFormatSet;
 
-	int			desktopBitsPixel;
-	int			desktopWidth; 
-	int			desktopHeight;
-	int			desktopX;		// can be negative
-	int			desktopY;		// can be negative
+	qint			desktopBitsPixel;
+	qint			desktopWidth; 
+	qint			desktopHeight;
+	qint			desktopX;		// can be negative
+	qint			desktopY;		// can be negative
 
 	RECT		workArea;
 
 	HMONITOR	hMonitor;		// current monitor
 	TCHAR		displayName[CCHDEVICENAME];
-	qboolean	deviceSupportsGamma;
-	qboolean	gammaSet;
+	qbool	deviceSupportsGamma;
+	qbool	gammaSet;
 
-	qboolean	cdsFullscreen;
-	int			monitorCount;
+	qbool	cdsFullscreen;
+	qint			monitorCount;
 
 	FILE		*log_fp;	// TODO: implement?
 

@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 R_DrawElements
 ==================
 */
-void R_DrawElements( int numIndexes, const glIndex_t *indexes ) {
+void R_DrawElements( qint numIndexes, const glIndex_t *indexes ) {
 	qglDrawElements( GL_TRIANGLES, numIndexes, GL_INDEX_TYPE, indexes );
 }
 
@@ -50,7 +50,7 @@ SURFACE SHADERS
 */
 
 shaderCommands_t	tess;
-static qboolean	setArraysOnce;
+static qbool	setArraysOnce;
 
 /*
 =================
@@ -157,7 +157,7 @@ Draws vertex normals for debugging
 ================
 */
 static void DrawNormals( const shaderCommands_t *input ) {
-	int		i;
+	qint		i;
 
 	GL_ClientState( 0, CLS_NONE );
 
@@ -200,7 +200,7 @@ because a surface may be forced to perform a RB_End due
 to overflow.
 ==============
 */
-void RB_BeginSurface( shader_t *shader, int fogNum ) {
+void RB_BeginSurface( shader_t *shader, qint fogNum ) {
 
 	shader_t *state;
 
@@ -265,7 +265,7 @@ t0 = most upstream according to spec
 t1 = most downstream according to spec
 ===================
 */
-static void DrawMultitextured( const shaderCommands_t *input, int stage ) {
+static void DrawMultitextured( const shaderCommands_t *input, qint stage ) {
 	const shaderStage_t *pStage;
 
 	pStage = tess.xstages[ stage ];
@@ -335,7 +335,7 @@ Perform dynamic lighting with another rendering pass
 ===================
 */
 static void ProjectDlightTexture( void ) {
-	int		i, l;
+	qint		i, l;
 	vec3_t	origin;
 	float	*texCoords;
 	float	*colors;
@@ -343,7 +343,7 @@ static void ProjectDlightTexture( void ) {
 	float	texCoordsArray[SHADER_MAX_VERTEXES][2];
 	float	colorArray[SHADER_MAX_VERTEXES][4];
 	glIndex_t hitIndexes[SHADER_MAX_INDEXES];
-	int		numIndexes;
+	qint		numIndexes;
 	float	scale;
 	float	radius;
 	float	modulate = 0.0f;
@@ -367,7 +367,7 @@ static void ProjectDlightTexture( void ) {
 		scale = 1.0f / radius;
 
 		for ( i = 0 ; i < tess.numVertexes ; i++, texCoords += 2, colors += 4 ) {
-			int		clip = 0;
+			qint		clip = 0;
 			vec3_t	dist;
 
 			VectorSubtract( origin, tess.xyz[i], dist );
@@ -403,7 +403,7 @@ static void ProjectDlightTexture( void ) {
 					clip |= 32;
 					modulate = 0.0f;
 				} else {
-					//*((int*)&dist[2]) &= 0x7FFFFFFF;
+					//*((qint*)&dist[2]) &= 0x7FFFFFFF;
 					dist[2] = fabsf( dist[2] );
 					if ( dist[2] < radius * 0.5f ) {
 						modulate = 1.0f;
@@ -422,7 +422,7 @@ static void ProjectDlightTexture( void ) {
 		// build a list of triangles that need light
 		numIndexes = 0;
 		for ( i = 0 ; i < tess.numIndexes ; i += 3 ) {
-			int		a, b, c;
+			qint		a, b, c;
 
 			a = tess.indexes[i];
 			b = tess.indexes[i+1];
@@ -475,7 +475,7 @@ Blends a fog texture on top of everything else
 */
 static void RB_FogPass( void ) {
 	const fog_t *fog = tr.world->fogs + tess.fogNum;
-	int i;
+	qint i;
 
 	for ( i = 0; i < tess.numVertexes; i++ ) {
 		tess.svars.colors[i] = fog->colorInt;
@@ -509,7 +509,7 @@ R_ComputeColors
 */
 void R_ComputeColors( const shaderStage_t *pStage )
 {
-	int		i;
+	qint		i;
 
 	if ( tess.numVertexes == 0 )
 		return;
@@ -527,7 +527,7 @@ void R_ComputeColors( const shaderStage_t *pStage )
 			Com_Memset( tess.svars.colors, tr.identityLightByte, tess.numVertexes * 4 );
 			break;
 		case CGEN_LIGHTING_DIFFUSE:
-			RB_CalcDiffuseColor( ( unsigned char * ) tess.svars.colors );
+			RB_CalcDiffuseColor( ( unsigned qchar * ) tess.svars.colors );
 			break;
 		case CGEN_EXACT_VERTEX:
 			Com_Memcpy( tess.svars.colors, tess.vertexColors, tess.numVertexes * sizeof( tess.vertexColors[0] ) );
@@ -642,7 +642,7 @@ void R_ComputeColors( const shaderStage_t *pStage )
 		{
 			for ( i = 0; i < tess.numVertexes; i++ )
 			{
-				unsigned char alpha;
+				unsigned qchar alpha;
 				float len;
 				vec3_t v;
 
@@ -692,9 +692,9 @@ void R_ComputeColors( const shaderStage_t *pStage )
 R_ComputeTexCoords
 ===============
 */
-void R_ComputeTexCoords( const int b, const textureBundle_t *bundle ) {
-	int	i;
-	int tm;
+void R_ComputeTexCoords( const qint b, const textureBundle_t *bundle ) {
+	qint	i;
+	qint tm;
 	vec2_t *src, *dst;
 
 	if ( !tess.numVertexes )
@@ -820,7 +820,7 @@ void R_ComputeTexCoords( const int b, const textureBundle_t *bundle ) {
 static void RB_IterateStagesGeneric( const shaderCommands_t *input )
 {
 	const shaderStage_t *pStage;
-	int stage;
+	qint stage;
 
 	for ( stage = 0; stage < MAX_SHADER_STAGES; stage++ )
 	{

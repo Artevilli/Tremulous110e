@@ -44,12 +44,12 @@ memory management
 
 static	sndBuffer	*buffer = NULL;
 static	sndBuffer	*freelist = NULL;
-static	int inUse = 0;
-static	int totalInUse = 0;
+static	qint inUse = 0;
+static	qint totalInUse = 0;
 
 short *sfxScratchBuffer = NULL;
 sfx_t *sfxScratchPointer = NULL;
-int	   sfxScratchIndex = 0;
+qint	   sfxScratchIndex = 0;
 
 
 void SND_free( sndBuffer *v )
@@ -81,8 +81,8 @@ void SND_setup( void )
 {
 	sndBuffer *p, *q;
 	cvar_t	*cv;
-	int scs, sz;
-	static int old_scs = -1;
+	qint scs, sz;
+	static qint old_scs = -1;
 
 	cv = Cvar_Get( "com_soundMegs", DEF_COMSOUNDMEGS, CVAR_LATCH | CVAR_ARCHIVE );
 	Cvar_CheckRange( cv, "1", "512", CV_INTEGER );
@@ -166,13 +166,13 @@ ResampleSfx
 resample / decimate to the current source rate
 ================
 */
-static int ResampleSfx( sfx_t *sfx, int channels, int inrate, int inwidth, int samples, byte *data, qboolean compressed ) {
-	int		outcount;
-	int		srcsample;
+static qint ResampleSfx( sfx_t *sfx, qint channels, qint inrate, qint inwidth, qint samples, byte *data, qbool compressed ) {
+	qint		outcount;
+	qint		srcsample;
 	float	stepscale;
-	int		i, j;
-	int		sample, samplefrac, fracstep;
-	int			part;
+	qint		i, j;
+	qint		sample, samplefrac, fracstep;
+	qint			part;
 	sndBuffer	*chunk;
 	
 	stepscale = (float)inrate / dma.speed;	// this is usually 0.5, 1, or 2
@@ -194,7 +194,7 @@ static int ResampleSfx( sfx_t *sfx, int channels, int inrate, int inwidth, int s
 			if( inwidth == 2 ) {
 				sample = ( ((short *)data)[srcsample+j] );
 			} else {
-				sample = (unsigned int)( (unsigned char)(data[srcsample+j]) - 128) << 8;
+				sample = (unsigned qint)( (unsigned qchar)(data[srcsample+j]) - 128) << 8;
 			}
 			part = (i*channels+j)&(SND_CHUNK_SIZE-1);
 			if (part == 0) {
@@ -222,12 +222,12 @@ ResampleSfx
 resample / decimate to the current source rate
 ================
 */
-static int ResampleSfxRaw( short *sfx, int channels, int inrate, int inwidth, int samples, byte *data ) {
-	int			outcount;
-	int			srcsample;
+static qint ResampleSfxRaw( short *sfx, qint channels, qint inrate, qint inwidth, qint samples, byte *data ) {
+	qint			outcount;
+	qint			srcsample;
 	float		stepscale;
-	int			i, j;
-	int			sample, samplefrac, fracstep;
+	qint			i, j;
+	qint			sample, samplefrac, fracstep;
 	
 	stepscale = (float)inrate / dma.speed;	// this is usually 0.5, 1, or 2
 
@@ -247,7 +247,7 @@ static int ResampleSfxRaw( short *sfx, int channels, int inrate, int inwidth, in
 			if( inwidth == 2 ) {
 				sample = LittleShort ( ((short *)data)[srcsample+j] );
 			} else {
-				sample = (int)( (unsigned char)(data[srcsample+j]) - 128) << 8;
+				sample = (qint)( (unsigned qchar)(data[srcsample+j]) - 128) << 8;
 			}
 			sfx[i*channels+j] = sample;
 		}
@@ -265,12 +265,12 @@ The filename may be different than sfx->name in the case
 of a forced fallback of a player specific sound
 ==============
 */
-qboolean S_LoadSound( sfx_t *sfx )
+qbool S_LoadSound( sfx_t *sfx )
 {
 	byte	*data;
 	short	*samples;
 	snd_info_t	info;
-//	int		size;
+//	qint		size;
 
 	// load it in
 	data = S_CodecLoad(sfx->soundName, &info);

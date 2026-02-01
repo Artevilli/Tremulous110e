@@ -50,12 +50,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define ZA_SOUND_MONO		0x1020
 #define ZA_SOUND_STEREO		0x1021
 
-extern	int		s_paintedtime;
-extern	int		s_rawend;
+extern	qint		s_paintedtime;
+extern	qint		s_rawend;
 
 
 static void RoQ_init( void );
-static void CIN_SetLooping (int handle, qboolean loop);
+static void CIN_SetLooping (qint handle, qbool loop);
 
 /******************************************************************************
 *
@@ -81,32 +81,32 @@ typedef struct {
 	byte				file[65536];
 	short				sqrTable[256];
 
-	int		mcomp[256];
+	qint		mcomp[256];
 	byte				*qStatus[2][32768];
 
 	long				oldXOff, oldYOff;
 	unsigned long		oldysize, oldxsize;
 
-	int					currentHandle;
+	qint					currentHandle;
 } cinematics_t;
 
 typedef struct {
-	char				fileName[MAX_OSPATH];
-	int					CIN_WIDTH, CIN_HEIGHT;
-	int					xpos, ypos, width, height;
-	qboolean			looping, holdAtEnd, dirty, alterGameState, silent, shader;
+	qchar				fileName[MAX_OSPATH];
+	qint					CIN_WIDTH, CIN_HEIGHT;
+	qint					xpos, ypos, width, height;
+	qbool			looping, holdAtEnd, dirty, alterGameState, silent, shader;
 	fileHandle_t		iFile;
 	e_status			status;
-	int					startTime;
-	int					lastTime;
+	qint					startTime;
+	qint					lastTime;
 	long				tfps;
 	long				RoQPlayed;
 	long				ROQSize;
-	unsigned int		RoQFrameSize;
+	unsigned qint		RoQFrameSize;
 	long				onQuad;
 	long				numQuads;
 	long				samplesPerLine;
-	unsigned int		roq_id;
+	unsigned qint		roq_id;
 	long				screenDelta;
 
 	void ( *VQ0)(byte *status, void *qdata );
@@ -116,9 +116,9 @@ typedef struct {
 
 	long				samplesPerPixel;				// defaults to 2
 	byte*				gray;
-	unsigned int		xsize, ysize, maxsize, minsize;
+	unsigned qint		xsize, ysize, maxsize, minsize;
 
-	qboolean			half, smootheddouble;
+	qbool			half, smootheddouble;
 	long				inMemory;
 	long				normalBuffer0;
 	long				roq_flags;
@@ -126,22 +126,22 @@ typedef struct {
 	long				roqF1;
 	long				t[2];
 	long				roqFPS;
-	int					playonwalls;
+	qint					playonwalls;
 	byte*				buf;
 	long				drawX, drawY;
 } cin_cache;
 
 static cinematics_t		cin;
 static cin_cache		cinTable[MAX_VIDEO_HANDLES];
-static int				currentHandle = -1;
-static int				CL_handle = -1;
+static qint				currentHandle = -1;
+static qint				CL_handle = -1;
 
-extern int				s_soundtime;		// sample PAIRS
+extern qint				s_soundtime;		// sample PAIRS
 
-extern int				CL_ScaledMilliseconds( void );
+extern qint				CL_ScaledMilliseconds( void );
 
 void CIN_CloseAllVideos( void ) {
-	int		i;
+	qint		i;
 
 	for ( i = 0 ; i < MAX_VIDEO_HANDLES ; i++ ) {
 		if (cinTable[i].fileName[0] != '\0' ) {
@@ -151,8 +151,8 @@ void CIN_CloseAllVideos( void ) {
 }
 
 
-static int CIN_HandleForVideo( void ) {
-	int		i;
+static qint CIN_HandleForVideo( void ) {
+	qint		i;
 
 	for ( i = 0 ; i < MAX_VIDEO_HANDLES ; i++ ) {
 		if ( cinTable[i].fileName[0] == '\0' ) {
@@ -175,7 +175,7 @@ static int CIN_HandleForVideo( void ) {
 //-----------------------------------------------------------------------------
 static void RllSetupTable( void )
 {
-	int z;
+	qint z;
 
 	for (z=0;z<128;z++) {
 		cin.sqrTable[z] = (short)(z*z);
@@ -197,10 +197,10 @@ static void RllSetupTable( void )
 //
 // Returns:		Number of samples placed in output buffer
 //-----------------------------------------------------------------------------
-long RllDecodeMonoToMono(unsigned char *from,short *to,unsigned int size,char signedOutput ,unsigned short flag)
+long RllDecodeMonoToMono(unsigned qchar *from,short *to,unsigned qint size,qchar signedOutput ,unsigned short flag)
 {
-	unsigned int z;
-	int prev;
+	unsigned qint z;
+	qint prev;
 	
 	if (signedOutput)	
 		prev =  flag - 0x8000;
@@ -228,10 +228,10 @@ long RllDecodeMonoToMono(unsigned char *from,short *to,unsigned int size,char si
 //
 // Returns:		Number of samples placed in output buffer
 //-----------------------------------------------------------------------------
-static long RllDecodeMonoToStereo(unsigned char *from,short *to,unsigned int size,char signedOutput,unsigned short flag)
+static long RllDecodeMonoToStereo(unsigned qchar *from,short *to,unsigned qint size,qchar signedOutput,unsigned short flag)
 {
-	unsigned int z;
-	int prev;
+	unsigned qint z;
+	qint prev;
 	
 	if (signedOutput)	
 		prev =  flag - 0x8000;
@@ -260,11 +260,11 @@ static long RllDecodeMonoToStereo(unsigned char *from,short *to,unsigned int siz
 //
 // Returns:		Number of samples placed in output buffer
 //-----------------------------------------------------------------------------
-static long RllDecodeStereoToStereo(unsigned char *from,short *to,unsigned int size,char signedOutput, unsigned short flag)
+static long RllDecodeStereoToStereo(unsigned qchar *from,short *to,unsigned qint size,qchar signedOutput, unsigned short flag)
 {
-	unsigned int z;
-	unsigned char *zz = from;
-	int	prevL, prevR;
+	unsigned qint z;
+	unsigned qchar *zz = from;
+	qint	prevL, prevR;
 
 	if (signedOutput) {
 		prevL = (flag & 0xff00) - 0x8000;
@@ -298,10 +298,10 @@ static long RllDecodeStereoToStereo(unsigned char *from,short *to,unsigned int s
 //
 // Returns:		Number of samples placed in output buffer
 //-----------------------------------------------------------------------------
-long RllDecodeStereoToMono(unsigned char *from,short *to,unsigned int size,char signedOutput, unsigned short flag)
+long RllDecodeStereoToMono(unsigned qchar *from,short *to,unsigned qint size,qchar signedOutput, unsigned short flag)
 {
-	unsigned int z;
-	int prevL,prevR;
+	unsigned qint z;
+	qint prevL,prevR;
 	
 	if (signedOutput) {
 		prevL = (flag & 0xff00) - 0x8000;
@@ -329,9 +329,9 @@ long RllDecodeStereoToMono(unsigned char *from,short *to,unsigned int size,char 
 *
 ******************************************************************************/
 
-static void move8_32( byte *src, byte *dst, int spl )
+static void move8_32( byte *src, byte *dst, qint spl )
 {
-	int i;
+	qint i;
 
 	for(i = 0; i < 8; ++i)
 	{
@@ -350,9 +350,9 @@ static void move8_32( byte *src, byte *dst, int spl )
 *
 ******************************************************************************/
 
-static void move4_32( byte *src, byte *dst, int spl  )
+static void move4_32( byte *src, byte *dst, qint spl  )
 {
-	int i;
+	qint i;
 
 	for(i = 0; i < 4; ++i)
 	{
@@ -371,9 +371,9 @@ static void move4_32( byte *src, byte *dst, int spl  )
 *
 ******************************************************************************/
 
-static void blit8_32( byte *src, byte *dst, int spl  )
+static void blit8_32( byte *src, byte *dst, qint spl  )
 {
-	int i;
+	qint i;
 
 	for(i = 0; i < 8; ++i)
 	{
@@ -391,9 +391,9 @@ static void blit8_32( byte *src, byte *dst, int spl  )
 * Description:	
 *
 ******************************************************************************/
-static void blit4_32( byte *src, byte *dst, int spl  )
+static void blit4_32( byte *src, byte *dst, qint spl  )
 {
-	int i;
+	qint i;
 
 	for(i = 0; i < 4; ++i)
 	{
@@ -412,7 +412,7 @@ static void blit4_32( byte *src, byte *dst, int spl  )
 *
 ******************************************************************************/
 
-static void blit2_32( byte *src, byte *dst, int spl  )
+static void blit2_32( byte *src, byte *dst, qint spl  )
 {
 	memcpy(dst, src, 8);
 	memcpy(dst+spl, src+8, 8);
@@ -427,11 +427,11 @@ static void blit2_32( byte *src, byte *dst, int spl  )
 *
 ******************************************************************************/
 
-static void blitVQQuad32fs( byte **status, unsigned char *data )
+static void blitVQQuad32fs( byte **status, unsigned qchar *data )
 {
 unsigned short	newd, celdata, code;
-unsigned int	index, i;
-int		spl;
+unsigned qint	index, i;
+qint		spl;
 
 	newd	= 0;
 	celdata = 0;
@@ -603,7 +603,7 @@ static unsigned short yuv_to_rgb( long y, long u, long v )
 * Description:	
 *
 ******************************************************************************/
-static unsigned int yuv_to_rgb24( long y, long u, long v )
+static unsigned qint yuv_to_rgb24( long y, long u, long v )
 { 
 	long r,g,b,YY = (long)(ROQ_YY_tab[(y)]);
 
@@ -637,7 +637,7 @@ static void decodeCodeBook( byte *input, unsigned short roq_flags )
 	long	y0,y1,y2,y3,cr,cb;
 	byte	*bbptr, *baptr, *bcptr, *bdptr;
 	union {
-		unsigned int *i;
+		unsigned qint *i;
 		unsigned short *s;
 	} iaptr, ibptr, icptr, idptr;
 
@@ -1078,12 +1078,12 @@ static void initRoQ( void )
 ******************************************************************************/
 /*
 static byte* RoQFetchInterlaced( byte *source ) {
-	int x, *src, *dst;
+	qint x, *src, *dst;
 
 	if (currentHandle < 0) return NULL;
 
-	src = (int *)source;
-	dst = (int *)cinTable[currentHandle].buf2;
+	src = (qint *)source;
+	dst = (qint *)cinTable[currentHandle].buf2;
 
 	for(x=0;x<256*256;x++) {
 		*dst = *src;
@@ -1118,7 +1118,7 @@ static void RoQInterrupt(void)
 {
 	byte				*framedata;
         short		sbuf[32768];
-        int		ssize;
+        qint		ssize;
         
 	if (currentHandle < 0) return;
 
@@ -1221,8 +1221,8 @@ redump:
 	cinTable[currentHandle].roq_id		 = framedata[0] + framedata[1]*256;
 	cinTable[currentHandle].RoQFrameSize = framedata[2] + framedata[3]*256 + framedata[4]*65536;
 	cinTable[currentHandle].roq_flags	 = framedata[6] + framedata[7]*256;
-	cinTable[currentHandle].roqF0		 = (signed char)framedata[7];
-	cinTable[currentHandle].roqF1		 = (signed char)framedata[6];
+	cinTable[currentHandle].roqF0		 = (signed qchar)framedata[7];
+	cinTable[currentHandle].roqF1		 = (signed qchar)framedata[6];
 
 	if (cinTable[currentHandle].RoQFrameSize>65536||cinTable[currentHandle].roq_id==0x1084) {
 		Com_DPrintf("roq_size>65536||roq_id==0x1084\n");
@@ -1283,7 +1283,7 @@ static void RoQ_init( void )
 ******************************************************************************/
 
 static void RoQShutdown( void ) {
-	const char *s;
+	const qchar *s;
 
 	if (!cinTable[currentHandle].buf) {
 		return;
@@ -1322,7 +1322,7 @@ static void RoQShutdown( void ) {
 CIN_StopCinematic
 ==================
 */
-e_status CIN_StopCinematic( int handle ) {
+e_status CIN_StopCinematic( qint handle ) {
 	
 	if (handle < 0 || handle>= MAX_VIDEO_HANDLES || cinTable[handle].status == FMV_EOF) return FMV_EOF;
 	currentHandle = handle;
@@ -1352,10 +1352,10 @@ CIN_RunCinematic
 Fetch and decompress the pending frame
 ==================
 */
-e_status CIN_RunCinematic( int handle )
+e_status CIN_RunCinematic( qint handle )
 {
-	int start = 0;
-	int thisTime = 0;
+	qint start = 0;
+	qint thisTime = 0;
 
 	if (handle < 0 || handle>= MAX_VIDEO_HANDLES || cinTable[handle].status == FMV_EOF) return FMV_EOF;
 
@@ -1424,10 +1424,10 @@ e_status CIN_RunCinematic( int handle )
 CIN_PlayCinematic
 ==================
 */
-int CIN_PlayCinematic( const char *arg, int x, int y, int w, int h, int systemBits ) {
+qint CIN_PlayCinematic( const qchar *arg, qint x, qint y, qint w, qint h, qint systemBits ) {
 	unsigned short RoQID;
-	char	name[MAX_OSPATH];
-	int		i;
+	qchar	name[MAX_OSPATH];
+	qint		i;
 
 	if (strchr(arg, '/') == NULL && strchr(arg, '\\') == NULL) {
 		Com_sprintf (name, sizeof(name), "video/%s", arg);
@@ -1516,7 +1516,7 @@ int CIN_PlayCinematic( const char *arg, int x, int y, int w, int h, int systemBi
 }
 
 
-void CIN_SetExtents( int handle, int x, int y, int w, int h ) {
+void CIN_SetExtents( qint handle, qint x, qint y, qint w, qint h ) {
 	if (handle < 0 || handle>= MAX_VIDEO_HANDLES || cinTable[handle].status == FMV_EOF) return;
 	cinTable[handle].xpos = x;
 	cinTable[handle].ypos = y;
@@ -1526,7 +1526,7 @@ void CIN_SetExtents( int handle, int x, int y, int w, int h ) {
 }
 
 
-static void CIN_SetLooping( int handle, qboolean loop ) {
+static void CIN_SetLooping( qint handle, qbool loop ) {
 	if (handle < 0 || handle>= MAX_VIDEO_HANDLES || cinTable[handle].status == FMV_EOF) return;
 	cinTable[handle].looping = loop;
 }
@@ -1539,8 +1539,8 @@ CIN_ResampleCinematic
 Resample cinematic to 256x256 and store in buf2
 ==================
 */
-static void CIN_ResampleCinematic( int handle, int *buf2 ) {
-	int ix, iy, *buf3, xm, ym, ll;
+static void CIN_ResampleCinematic( qint handle, qint *buf2 ) {
+	qint ix, iy, *buf3, xm, ym, ll;
 	byte	*buf;
 
 	buf = cinTable[handle].buf;
@@ -1552,10 +1552,10 @@ static void CIN_ResampleCinematic( int handle, int *buf2 ) {
 		ll = 9;
 	}
 
-	buf3 = (int*)buf;
+	buf3 = (qint*)buf;
 	if (xm==2 && ym==2) {
 		byte *bc2, *bc3;
-		int	ic, iiy;
+		qint	ic, iiy;
 
 		bc2 = (byte *)buf2;
 		bc3 = (byte *)buf3;
@@ -1570,7 +1570,7 @@ static void CIN_ResampleCinematic( int handle, int *buf2 ) {
 		}
 	} else if (xm==2 && ym==1) {
 		byte *bc2, *bc3;
-		int	ic, iiy;
+		qint	ic, iiy;
 
 		bc2 = (byte *)buf2;
 		bc3 = (byte *)buf3;
@@ -1598,7 +1598,7 @@ static void CIN_ResampleCinematic( int handle, int *buf2 ) {
 CIN_DrawCinematic
 ==================
 */
-void CIN_DrawCinematic( int handle ) {
+void CIN_DrawCinematic( qint handle ) {
 	float	x, y, w, h;
 	byte	*buf;
 
@@ -1629,7 +1629,7 @@ void CIN_DrawCinematic( int handle ) {
 #endif
 
 	if (cinTable[handle].dirty && (cinTable[handle].CIN_WIDTH != cinTable[handle].drawX || cinTable[handle].CIN_HEIGHT != cinTable[handle].drawY)) {
-		int *buf2;
+		qint *buf2;
 
 		buf2 = Hunk_AllocateTempMemory( 256*256*4 );
 
@@ -1647,8 +1647,8 @@ void CIN_DrawCinematic( int handle ) {
 
 
 void CL_PlayCinematic_f( void ) {
-	const char	*arg, *s;
-	int bits = CIN_system;
+	const qchar	*arg, *s;
+	qint bits = CIN_system;
 
 	Com_DPrintf("CL_PlayCinematic_f\n");
 	if (cls.state == CA_CINEMATIC) {
@@ -1699,7 +1699,7 @@ void SCR_StopCinematic( void ) {
 }
 
 
-void CIN_UploadCinematic( int handle ) {
+void CIN_UploadCinematic( qint handle ) {
 	if (handle >= 0 && handle < MAX_VIDEO_HANDLES) {
 		if (!cinTable[handle].buf) {
 			return;
@@ -1718,7 +1718,7 @@ void CIN_UploadCinematic( int handle ) {
 
 		// Resample the video if needed
 		if (cinTable[handle].dirty && (cinTable[handle].CIN_WIDTH != cinTable[handle].drawX || cinTable[handle].CIN_HEIGHT != cinTable[handle].drawY))  {
-			int *buf2;
+			qint *buf2;
 
 			buf2 = Hunk_AllocateTempMemory( 256*256*4 );
 

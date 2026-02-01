@@ -49,10 +49,10 @@ void GLimp_InitGamma( glconfig_t *config )
 GLimp_SetGamma
 =================
 */
-void GLimp_SetGamma( unsigned char red[256], unsigned char green[256], unsigned char blue[256] )
+void GLimp_SetGamma( unsigned qchar red[256], unsigned qchar green[256], unsigned qchar blue[256] )
 {
 	Uint16 table[3][256];
-	int i, j;
+	qint i, j;
 
 	for ( i = 0; i < 256; i++ )
 	{
@@ -71,7 +71,7 @@ void GLimp_SetGamma( unsigned char red[256], unsigned char green[256], unsigned 
 		//GetVersionEx( &vinfo );
 		//if( vinfo.dwMajorVersion >= 5 && vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT )
 		{
-			qboolean clamped = qfalse;
+			qbool clamped = qfalse;
 			for( j = 0 ; j < 3 ; j++ )
 			{
 				for( i = 0 ; i < 128 ; i++ )

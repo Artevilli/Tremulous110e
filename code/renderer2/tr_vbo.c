@@ -65,7 +65,7 @@ void R_VaoUnpackNormal(vec3_t v, int16_t *pack)
 
 void Vao_SetVertexPointers(vao_t *vao)
 {
-	int attribIndex;
+	qint attribIndex;
 
 	// set vertex pointers
 	for (attribIndex = 0; attribIndex < ATTR_INDEX_COUNT; attribIndex++)
@@ -100,10 +100,10 @@ void Vao_SetVertexPointers(vao_t *vao)
 R_CreateVao
 ============
 */
-vao_t *R_CreateVao(const char *name, byte *vertexes, int vertexesSize, byte *indexes, int indexesSize, vaoUsage_t usage)
+vao_t *R_CreateVao(const qchar *name, byte *vertexes, qint vertexesSize, byte *indexes, qint indexesSize, vaoUsage_t usage)
 {
 	vao_t          *vao;
-	int				glUsage;
+	qint				glUsage;
 
 	switch (usage)
 	{
@@ -174,16 +174,16 @@ vao_t *R_CreateVao(const char *name, byte *vertexes, int vertexesSize, byte *ind
 R_CreateVao2
 ============
 */
-vao_t *R_CreateVao2(const char *name, int numVertexes, srfVert_t *verts, int numIndexes, glIndex_t *indexes)
+vao_t *R_CreateVao2(const qchar *name, qint numVertexes, srfVert_t *verts, qint numIndexes, glIndex_t *indexes)
 {
 	vao_t          *vao;
-	int             i;
+	qint             i;
 
 	byte           *data;
-	int             dataSize;
-	int             dataOfs;
+	qint             dataSize;
+	qint             dataOfs;
 
-	int				glUsage = GL_STATIC_DRAW;
+	qint				glUsage = GL_STATIC_DRAW;
 
 	if(!numVertexes || !numIndexes)
 		return NULL;
@@ -412,8 +412,8 @@ R_InitVaos
 */
 void R_InitVaos(void)
 {
-	int             vertexesSize, indexesSize;
-	int             offset;
+	qint             vertexesSize, indexesSize;
+	qint             offset;
 
 	ri.Printf(PRINT_ALL, "------- R_InitVaos -------\n");
 
@@ -506,7 +506,7 @@ R_ShutdownVaos
 */
 void R_ShutdownVaos(void)
 {
-	int             i;
+	qint             i;
 	vao_t          *vao;
 
 	ri.Printf(PRINT_ALL, "------- R_ShutdownVaos -------\n");
@@ -541,10 +541,10 @@ R_VaoList_f
 */
 void R_VaoList_f(void)
 {
-	int             i;
+	qint             i;
 	vao_t          *vao;
-	int             vertexesSize = 0;
-	int             indexesSize = 0;
+	qint             vertexesSize = 0;
+	qint             indexesSize = 0;
 
 	ri.Printf(PRINT_ALL, " size          name\n");
 	ri.Printf(PRINT_ALL, "----------------------------------------------------------\n");
@@ -586,7 +586,7 @@ Adapted from Tess_UpdateVBOs from xreal
 Update the default VAO to replace the client side vertex arrays
 ==============
 */
-void RB_UpdateTessVao(unsigned int attribBits)
+void RB_UpdateTessVao(unsigned qint attribBits)
 {
 //	GLimp_LogComment("--- RB_UpdateTessVao ---\n");
 
@@ -595,8 +595,8 @@ void RB_UpdateTessVao(unsigned int attribBits)
 	// update the default VAO
 	if(tess.numVertexes > 0 && tess.numVertexes <= SHADER_MAX_VERTEXES && tess.numIndexes > 0 && tess.numIndexes <= SHADER_MAX_INDEXES)
 	{
-		int attribIndex;
-		int attribUpload;
+		qint attribIndex;
+		qint attribUpload;
 
 		R_BindVao(tess.vao);
 
@@ -657,22 +657,22 @@ void RB_UpdateTessVao(unsigned int attribBits)
 typedef struct queuedSurface_s
 {
 	srfVert_t *vertexes;
-	int numVerts;
+	qint numVerts;
 	glIndex_t *indexes;
-	int numIndexes;
+	qint numIndexes;
 }
 queuedSurface_t;
 
 static struct
 {
 	queuedSurface_t surfaces[VAOCACHE_QUEUE_MAX_SURFACES];
-	int numSurfaces;
+	qint numSurfaces;
 
 	srfVert_t vertexes[VAOCACHE_QUEUE_MAX_VERTEXES];
-	int vertexCommitSize;
+	qint vertexCommitSize;
 
 	glIndex_t indexes[VAOCACHE_QUEUE_MAX_INDEXES];
-	int indexCommitSize;
+	qint indexCommitSize;
 }
 vcq;
 
@@ -693,8 +693,8 @@ vcq;
 typedef struct buffered_s
 {
 	void *data;
-	int size;
-	int bufferOffset;
+	qint size;
+	qint bufferOffset;
 }
 buffered_t;
 
@@ -702,20 +702,20 @@ static struct
 {
 	vao_t *vao;
 	buffered_t surfaceIndexSets[VAOCACHE_MAX_SURFACES];
-	int numSurfaces;
+	qint numSurfaces;
 
-	int batchLengths[VAOCACHE_MAX_BATCHES];
-	int numBatches;
+	qint batchLengths[VAOCACHE_MAX_BATCHES];
+	qint numBatches;
 
-	int vertexOffset;
-	int indexOffset;
+	qint vertexOffset;
+	qint indexOffset;
 }
 vc;
 
 void VaoCache_Commit(void)
 {
 	buffered_t *indexSet;
-	int *batchLength;
+	qint *batchLength;
 	queuedSurface_t *surf, *end = vcq.surfaces + vcq.numSurfaces;
 
 	R_BindVao(vc.vao);
@@ -746,7 +746,7 @@ void VaoCache_Commit(void)
 	if (indexSet < vc.surfaceIndexSets + vc.numSurfaces)
 	{
 		tess.firstIndex = indexSet->bufferOffset / sizeof(glIndex_t);
-		//ri.Printf(PRINT_ALL, "firstIndex %d numIndexes %d as %d\n", tess.firstIndex, tess.numIndexes, (int)(batchLength - vc.batchLengths));
+		//ri.Printf(PRINT_ALL, "firstIndex %d numIndexes %d as %d\n", tess.firstIndex, tess.numIndexes, (qint)(batchLength - vc.batchLengths));
 		//ri.Printf(PRINT_ALL, "vc.numSurfaces %d vc.numBatches %d\n", vc.numSurfaces, vc.numBatches);
 	}
 	// If not, rebuffer the batch
@@ -766,9 +766,9 @@ void VaoCache_Commit(void)
 		for (surf = vcq.surfaces; surf < end; surf++)
 		{
 			glIndex_t *srcIndex = surf->indexes;
-			int vertexesSize = surf->numVerts * sizeof(srfVert_t);
-			int indexesSize = surf->numIndexes * sizeof(glIndex_t);
-			int i, indexOffset = (vc.vertexOffset + vcq.vertexCommitSize) / sizeof(srfVert_t);
+			qint vertexesSize = surf->numVerts * sizeof(srfVert_t);
+			qint indexesSize = surf->numIndexes * sizeof(glIndex_t);
+			qint i, indexOffset = (vc.vertexOffset + vcq.vertexCommitSize) / sizeof(srfVert_t);
 
 			Com_Memcpy(dstVertex, surf->vertexes, vertexesSize);
 			dstVertex += surf->numVerts;
@@ -787,7 +787,7 @@ void VaoCache_Commit(void)
 			vcq.indexCommitSize += indexesSize;
 		}
 
-		//ri.Printf(PRINT_ALL, "committing %d to %d, %d to %d as %d\n", vcq.vertexCommitSize, vc.vertexOffset, vcq.indexCommitSize, vc.indexOffset, (int)(batchLength - vc.batchLengths));
+		//ri.Printf(PRINT_ALL, "committing %d to %d, %d to %d as %d\n", vcq.vertexCommitSize, vc.vertexOffset, vcq.indexCommitSize, vc.indexOffset, (qint)(batchLength - vc.batchLengths));
 
 		if (vcq.vertexCommitSize)
 		{
@@ -873,10 +873,10 @@ void VaoCache_BindVao(void)
 	R_BindVao(vc.vao);
 }
 
-void VaoCache_CheckAdd(qboolean *endSurface, qboolean *recycleVertexBuffer, qboolean *recycleIndexBuffer, int numVerts, int numIndexes)
+void VaoCache_CheckAdd(qbool *endSurface, qbool *recycleVertexBuffer, qbool *recycleIndexBuffer, qint numVerts, qint numIndexes)
 {
-	int vertexesSize = sizeof(srfVert_t) * numVerts;
-	int indexesSize = sizeof(glIndex_t) * numIndexes;
+	qint vertexesSize = sizeof(srfVert_t) * numVerts;
+	qint indexesSize = sizeof(glIndex_t) * numIndexes;
 
 	if (vc.vao->vertexesSize < vc.vertexOffset + vcq.vertexCommitSize + vertexesSize)
 	{
@@ -949,7 +949,7 @@ void VaoCache_InitQueue(void)
 	vcq.numSurfaces = 0;
 }
 
-void VaoCache_AddSurface(srfVert_t *verts, int numVerts, glIndex_t *indexes, int numIndexes)
+void VaoCache_AddSurface(srfVert_t *verts, qint numVerts, glIndex_t *indexes, qint numIndexes)
 {
 	queuedSurface_t *queueEntry = vcq.surfaces + vcq.numSurfaces;
 	queueEntry->vertexes = verts;

@@ -33,23 +33,23 @@ PCX files are used for 8 bit images
 */
 
 typedef struct {
-	char	manufacturer;
-	char	version;
-	char	encoding;
-	char	bits_per_pixel;
+	qchar	manufacturer;
+	qchar	version;
+	qchar	encoding;
+	qchar	bits_per_pixel;
 	unsigned short	xmin,ymin,xmax,ymax;
 	unsigned short	hres,vres;
-	unsigned char	palette[48];
-	char	reserved;
-	char	color_planes;
+	unsigned qchar	palette[48];
+	qchar	reserved;
+	qchar	color_planes;
 	unsigned short	bytes_per_line;
 	unsigned short	palette_type;
 	unsigned short	hscreensize, vscreensize;
-	char	filler[54];
-	unsigned char	data[];
+	qchar	filler[54];
+	unsigned qchar	data[];
 } pcx_t;
 
-void R_LoadPCX ( const char *filename, byte **pic, int *width, int *height)
+void R_LoadPCX ( const qchar *filename, byte **pic, qint *width, qint *height)
 {
 	union {
 		byte *b;
@@ -57,13 +57,13 @@ void R_LoadPCX ( const char *filename, byte **pic, int *width, int *height)
 	} raw;
 	byte	*end;
 	pcx_t	*pcx;
-	int		len;
-	unsigned char	dataByte = 0, runLength = 0;
+	qint		len;
+	unsigned qchar	dataByte = 0, runLength = 0;
 	byte	*out, *pix;
 	unsigned short w, h;
 	byte	*pic8;
 	byte	*palette;
-	int	i;
+	qint	i;
 	unsigned size = 0;
 
 	if (width)
@@ -75,7 +75,7 @@ void R_LoadPCX ( const char *filename, byte **pic, int *width, int *height)
 	//
 	// load the file
 	//
-	len = ri.FS_ReadFile( ( char * ) filename, &raw.v);
+	len = ri.FS_ReadFile( ( qchar * ) filename, &raw.v);
 	if (!raw.b || len < 0) {
 		return;
 	}
@@ -156,7 +156,7 @@ void R_LoadPCX ( const char *filename, byte **pic, int *width, int *height)
 	pix = out = ri.Malloc(4 * size );
 	for (i = 0 ; i < size ; i++)
 	{
-		unsigned char p = pic8[i];
+		unsigned qchar p = pic8[i];
 		pix[0] = palette[p*3];
 		pix[1] = palette[p*3 + 1];
 		pix[2] = palette[p*3 + 2];

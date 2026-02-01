@@ -42,7 +42,7 @@ void
 Key_WriteBindings(fileHandle_t f);
 void
 Key_SetBinding(qint keynum, const qchar *binding);
-const char *
+const qchar *
 Key_GetBinding(qint keynum);
 void
 Key_ParseBinding(qint key, qbool down, unsigned time);

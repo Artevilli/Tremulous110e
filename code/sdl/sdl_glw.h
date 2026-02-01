@@ -35,17 +35,17 @@ typedef struct
 {
 	FILE *log_fp;
 
-	qboolean isFullscreen;
+	qbool isFullscreen;
 
 	glconfig_t *config; // feedback to renderer module
 
-	int desktop_width;
-	int desktop_height;
+	qint desktop_width;
+	qint desktop_height;
 
-	int window_width;
-	int window_height;
+	qint window_width;
+	qint window_height;
 
-	int monitorCount;
+	qint monitorCount;
 
 } glwstate_t;
 

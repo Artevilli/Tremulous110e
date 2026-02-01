@@ -23,9 +23,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "client.h"
 
-//extern qboolean loadCamera(const char *name);
-//extern void startCamera(int time);
-//extern qboolean getCameraInfo(int time, vec3_t *origin, vec3_t *angles);
+//extern qbool loadCamera(const qchar *name);
+//extern void startCamera(qint time);
+//extern qbool getCameraInfo(qint time, vec3_t *origin, vec3_t *angles);
 
 /*
 ====================
@@ -52,7 +52,7 @@ static void CL_GetGlconfig( glconfig_t *glconfig ) {
 CL_GetUserCmd
 ====================
 */
-static qboolean CL_GetUserCmd( int cmdNumber, usercmd_t *ucmd ) {
+static qbool CL_GetUserCmd( qint cmdNumber, usercmd_t *ucmd ) {
 	// cmds[cmdNumber] is the last properly generated command
 
 	// can't return anything that we haven't created yet
@@ -77,7 +77,7 @@ static qboolean CL_GetUserCmd( int cmdNumber, usercmd_t *ucmd ) {
 CL_GetCurrentCmdNumber
 ====================
 */
-static int CL_GetCurrentCmdNumber( void ) {
+static qint CL_GetCurrentCmdNumber( void ) {
 	return cl.cmdNumber;
 }
 
@@ -87,7 +87,7 @@ static int CL_GetCurrentCmdNumber( void ) {
 CL_GetCurrentSnapshotNumber
 ====================
 */
-static void CL_GetCurrentSnapshotNumber( int *snapshotNumber, int *serverTime ) {
+static void CL_GetCurrentSnapshotNumber( qint *snapshotNumber, qint *serverTime ) {
 	*snapshotNumber = cl.snap.messageNum;
 	*serverTime = cl.snap.serverTime;
 }
@@ -98,9 +98,9 @@ static void CL_GetCurrentSnapshotNumber( int *snapshotNumber, int *serverTime ) 
 CL_GetSnapshot
 ====================
 */
-static qboolean CL_GetSnapshot( int snapshotNumber, snapshot_t *snapshot ) {
+static qbool CL_GetSnapshot( qint snapshotNumber, snapshot_t *snapshot ) {
 	clSnapshot_t	*clSnap;
-	int				i, count;
+	qint				i, count;
 
 	if ( cl.snap.messageNum - snapshotNumber < 0 ) {
 		Com_Error( ERR_DROP, "CL_GetSnapshot: snapshotNumber (%i) > cl.snapshot.messageNum (%i)", snapshotNumber, cl.snap.messageNum );
@@ -152,7 +152,7 @@ static qboolean CL_GetSnapshot( int snapshotNumber, snapshot_t *snapshot ) {
 CL_SetUserCmdValue
 =====================
 */
-static void CL_SetUserCmdValue( int userCmdValue, float sensitivityScale ) {
+static void CL_SetUserCmdValue( qint userCmdValue, float sensitivityScale ) {
 	cl.cgameUserCmdValue = userCmdValue;
 	cl.cgameSensitivity = sensitivityScale;
 }
@@ -163,7 +163,7 @@ static void CL_SetUserCmdValue( int userCmdValue, float sensitivityScale ) {
 CL_AddCgameCommand
 =====================
 */
-static void CL_AddCgameCommand( const char *cmdName ) {
+static void CL_AddCgameCommand( const qchar *cmdName ) {
 	Cmd_AddCommand( cmdName, NULL );
 }
 
@@ -174,11 +174,11 @@ CL_ConfigstringModified
 =====================
 */
 static void CL_ConfigstringModified( void ) {
-	const char	*old, *s;
-	int			i, index;
-	const char	*dup;
+	const qchar	*old, *s;
+	qint			i, index;
+	const qchar	*dup;
 	gameState_t	oldGs;
-	int			len;
+	qint			len;
 
 	index = atoi( Cmd_Argv(1) );
 	if ( (unsigned) index >= MAX_CONFIGSTRINGS ) {
@@ -236,11 +236,11 @@ CL_GetServerCommand
 Set up argc/argv for the given command
 ===================
 */
-static qboolean CL_GetServerCommand( int serverCommandNumber ) {
-	const char *s;
-	const char *cmd;
-	static char bigConfigString[BIG_INFO_STRING];
-	int argc, index;
+static qbool CL_GetServerCommand( qint serverCommandNumber ) {
+	const qchar *s;
+	const qchar *cmd;
+	static qchar bigConfigString[BIG_INFO_STRING];
+	qint argc, index;
 
 	// if we have irretrievably lost a reliable command, drop the connection
 	if ( clc.serverCommandSequence - serverCommandNumber >= MAX_RELIABLE_COMMANDS ) {
@@ -360,8 +360,8 @@ CL_CM_LoadMap
 Just adds default parameters that cgame doesn't need to know about
 ====================
 */
-static void CL_CM_LoadMap( const char *mapname ) {
-	int		checksum;
+static void CL_CM_LoadMap( const qchar *mapname ) {
+	qint		checksum;
 
 	CM_LoadMap( mapname, qtrue, &checksum );
 }
@@ -391,7 +391,7 @@ void CL_ShutdownCGame( void ) {
 }
 
 
-static int FloatAsInt( float f ) {
+static qint FloatAsInt( float f ) {
 	floatint_t fi;
 	fi.f = f;
 	return fi.i;
@@ -410,7 +410,7 @@ static void *VM_ArgPtr( intptr_t intValue ) {
 }
 
 
-static qboolean CL_GetValue( char* value, int valueSize, const char* key ) {
+static qbool CL_GetValue( qchar* value, qint valueSize, const qchar* key ) {
 
 	if ( !Q_stricmp( key, "trap_R_AddRefEntityToScene2" ) ) {
 		Com_sprintf( value, valueSize, "%i", CG_R_ADDREFENTITYTOSCENE2 );
@@ -461,10 +461,10 @@ The cgame module is making a system call
 static intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	switch( args[0] ) {
 	case CG_PRINT:
-		Com_Printf( "%s", (const char*)VMA(1) );
+		Com_Printf( "%s", (const qchar*)VMA(1) );
 		return 0;
 	case CG_ERROR:
-		Com_Error( ERR_DROP, "%s", (const char*)VMA(1) );
+		Com_Error( ERR_DROP, "%s", (const qchar*)VMA(1) );
 		return 0;
 	case CG_MILLISECONDS:
 		return Sys_Milliseconds();
@@ -516,7 +516,7 @@ static intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		return FS_GetFileList(VMA(1), VMA(2), VMA(3), args[4]);
 
 	case CG_SENDCONSOLECOMMAND: {
-		const char *cmd = VMA(1);
+		const qchar *cmd = VMA(1);
 		Cbuf_NestedAdd( cmd );
 		return 0;
 	}
@@ -545,9 +545,9 @@ static intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_CM_INLINEMODEL:
 		return CM_InlineModel( args[1] );
 	case CG_CM_TEMPBOXMODEL:
-		return CM_TempBoxModel( VMA(1), VMA(2), /*int capsule*/ qfalse );
+		return CM_TempBoxModel( VMA(1), VMA(2), /*qint capsule*/ qfalse );
 	case CG_CM_TEMPCAPSULEMODEL:
-		return CM_TempBoxModel( VMA(1), VMA(2), /*int capsule*/ qtrue );
+		return CM_TempBoxModel( VMA(1), VMA(2), /*qint capsule*/ qtrue );
 	case CG_CM_POINTCONTENTS:
 		return CM_PointContents( VMA(1), args[2] );
 	case CG_CM_TRANSFORMEDPOINTCONTENTS:
@@ -731,7 +731,7 @@ static intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_CEIL:
 		return FloatAsInt( ceil( VMF(1) ) );
 	case CG_TESTPRINTINT:
-		return sprintf( VMA(1), "%i", (int)args[2] );
+		return sprintf( VMA(1), "%i", (qint)args[2] );
 	case CG_TESTPRINTFLOAT:
 		return sprintf( VMA(1), "%f", VMF(2) );
 	case CG_ACOS:
@@ -803,7 +803,7 @@ static intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		return clc.demorecording;
 
 	case CG_CVAR_SETDESCRIPTION:
-		Cvar_SetDescription2( (const char*)VMA(1), (const char*)VMA(2) );
+		Cvar_SetDescription2( (const qchar*)VMA(1), (const qchar*)VMA(2) );
 		return 0;
 
 	case CG_TRAP_GETVALUE:
@@ -811,7 +811,7 @@ static intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		return CL_GetValue( VMA(1), args[2], VMA(3) );
 
 	default:
-		Com_Error( ERR_DROP, "Bad cgame system trap: %ld", (long int) args[0] );
+		Com_Error( ERR_DROP, "Bad cgame system trap: %ld", (long qint) args[0] );
 	}
 	return 0;
 }
@@ -826,7 +826,7 @@ static intptr_t QDECL CL_DllSyscall( intptr_t arg, ... ) {
 #if !id386 || defined __clang__
 	intptr_t	args[10]; // max.count for cgame
 	va_list	ap;
-	int i;
+	qint i;
 
 	args[0] = arg;
 	va_start( ap, arg );
@@ -849,9 +849,9 @@ Should only be called by CL_StartHunkUsers
 ====================
 */
 void CL_InitCGame( void ) {
-	const char			*info;
-	const char			*mapname;
-	int					t1, t2;
+	const qchar			*info;
+	const qchar			*mapname;
+	qint					t1, t2;
 	vmInterpret_t		interpret;
 
 	Cbuf_NestedReset();
@@ -926,14 +926,14 @@ See if the current console command is claimed by the cgame
 ====================
 */
 
-qboolean CL_GameCommand( void ) {
-	qboolean bRes;
+qbool CL_GameCommand( void ) {
+	qbool bRes;
 
 	if ( !cgvm ) {
 		return qfalse;
 	}
 
-	bRes = (qboolean)VM_Call( cgvm, 0, CG_CONSOLE_COMMAND );
+	bRes = (qbool)VM_Call( cgvm, 0, CG_CONSOLE_COMMAND );
 
 	Cbuf_NestedReset();
 
@@ -990,8 +990,8 @@ or bursted delayed packets.
 #define	RESET_TIME	500
 
 static void CL_AdjustTimeDelta( void ) {
-	int		newDelta;
-	int		deltaDelta;
+	qint		newDelta;
+	qint		deltaDelta;
 
 	cl.newSnapshots = qfalse;
 
@@ -1082,9 +1082,9 @@ Calculates Average Ping from snapshots in buffer. Used by AutoNudge.
 ==================
 */
 static float CL_AvgPing( void ) {
-	int ping[PACKET_BACKUP];
-	int count = 0;
-	int i, j, iTemp;
+	qint ping[PACKET_BACKUP];
+	qint count = 0;
+	qint i, j, iTemp;
 	float result;
 
 	for ( i = 0; i < PACKET_BACKUP; i++ ) {
@@ -1125,11 +1125,11 @@ CL_TimeNudge
 Returns either auto-nudge or cl_timeNudge value.
 ==================
 */
-static int CL_TimeNudge( void ) {
+static qint CL_TimeNudge( void ) {
 	float autoNudge = cl_autoNudge->value;
 
 	if ( autoNudge != 0.0f )
-		return (int)((CL_AvgPing() * autoNudge) + 0.5f) * -1;
+		return (qint)((CL_AvgPing() * autoNudge) + 0.5f) * -1;
 	else
 		return cl_timeNudge->integer;
 }
@@ -1141,7 +1141,7 @@ CL_SetCGameTime
 ==================
 */
 void CL_SetCGameTime( void ) {
-	qboolean demoFreezed;
+	qbool demoFreezed;
 
 	// getting a valid frame message ends the connection process
 	if ( cls.state != CA_ACTIVE ) {

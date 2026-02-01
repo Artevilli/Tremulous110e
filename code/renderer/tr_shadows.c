@@ -35,18 +35,18 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 typedef struct {
-	int		i2;
-	int		facing;
+	qint		i2;
+	qint		facing;
 } edgeDef_t;
 
 #define	MAX_EDGE_DEFS	32
 
 static	edgeDef_t	edgeDefs[SHADER_MAX_VERTEXES][MAX_EDGE_DEFS];
-static	int			numEdgeDefs[SHADER_MAX_VERTEXES];
-static	int			facing[SHADER_MAX_INDEXES/3];
+static	qint			numEdgeDefs[SHADER_MAX_VERTEXES];
+static	qint			facing[SHADER_MAX_INDEXES/3];
 
-static void R_AddEdgeDef( int i1, int i2, int f ) {
-	int		c;
+static void R_AddEdgeDef( qint i1, qint i2, qint f ) {
+	qint		c;
 
 	c = numEdgeDefs[ i1 ];
 	if ( c == MAX_EDGE_DEFS ) {
@@ -60,11 +60,11 @@ static void R_AddEdgeDef( int i1, int i2, int f ) {
 
 
 static void R_CalcShadowEdges( void ) {
-	qboolean sil_edge;
-	int		i;
-	int		c, c2;
-	int		j, k;
-	int		i2;
+	qbool sil_edge;
+	qint		i;
+	qint		c, c2;
+	qint		j, k;
+	qint		i2;
 
 	tess.numIndexes = 0;
 
@@ -122,8 +122,8 @@ triangleFromEdge[ v1 ][ v2 ]
 =================
 */
 void RB_ShadowTessEnd( void ) {
-	int		i;
-	int		numTris;
+	qint		i;
+	qint		numTris;
 	vec3_t	lightDir;
 	GLboolean rgba[4];
 
@@ -154,7 +154,7 @@ void RB_ShadowTessEnd( void ) {
 
 	numTris = tess.numIndexes / 3;
 	for ( i = 0 ; i < numTris ; i++ ) {
-		int		i1, i2, i3;
+		qint		i1, i2, i3;
 		vec3_t	d1, d2, normal;
 		float	*v1, *v2, *v3;
 		float	d;
@@ -299,7 +299,7 @@ RB_ProjectionShadowDeform
 */
 void RB_ProjectionShadowDeform( void ) {
 	float	*xyz;
-	int		i;
+	qint		i;
 	float	h;
 	vec3_t	ground;
 	vec3_t	light;

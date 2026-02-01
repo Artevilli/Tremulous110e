@@ -14,16 +14,16 @@ static XF86VidModeModeInfo **vidmodes = NULL;
 
 static void *v_lib = NULL;
 
-Bool (*_XF86VidModeQueryExtension)( Display *dpy, int *event_base, int *error_base );
-Bool (*_XF86VidModeQueryVersion)( Display *dpy, int *majorVersion, int *minorVersion );
-Bool (*_XF86VidModeGetModeLine)( Display *dpy, int screen, int *dotclock, XF86VidModeModeLine *modeline );
-Bool (*_XF86VidModeGetAllModeLines)( Display *dpy, int screen, int *modecount, XF86VidModeModeInfo ***modelinesPtr );
-Bool (*_XF86VidModeSwitchToMode)( Display *dpy, int screen, XF86VidModeModeInfo *modeline );
-Bool (*_XF86VidModeSetViewPort)( Display *dpy, int screen, int x, int y );
-Bool (*_XF86VidModeGetGamma)( Display *dpy, int screen, XF86VidModeGamma *Gamma );
-Bool (*_XF86VidModeSetGamma)( Display *dpy, int screen, XF86VidModeGamma *Gamma );
-Bool (*_XF86VidModeGetGammaRampSize)( Display *dpy, int screen, int *size );
-Bool (*_XF86VidModeSetGammaRamp)( Display *dpy, int screen, int size, unsigned short *r, unsigned short *g, unsigned short *b );
+Bool (*_XF86VidModeQueryExtension)( Display *dpy, qint *event_base, qint *error_base );
+Bool (*_XF86VidModeQueryVersion)( Display *dpy, qint *majorVersion, qint *minorVersion );
+Bool (*_XF86VidModeGetModeLine)( Display *dpy, qint screen, qint *dotclock, XF86VidModeModeLine *modeline );
+Bool (*_XF86VidModeGetAllModeLines)( Display *dpy, qint screen, qint *modecount, XF86VidModeModeInfo ***modelinesPtr );
+Bool (*_XF86VidModeSwitchToMode)( Display *dpy, qint screen, XF86VidModeModeInfo *modeline );
+Bool (*_XF86VidModeSetViewPort)( Display *dpy, qint screen, qint x, qint y );
+Bool (*_XF86VidModeGetGamma)( Display *dpy, qint screen, XF86VidModeGamma *Gamma );
+Bool (*_XF86VidModeSetGamma)( Display *dpy, qint screen, XF86VidModeGamma *Gamma );
+Bool (*_XF86VidModeGetGammaRampSize)( Display *dpy, qint screen, qint *size );
+Bool (*_XF86VidModeSetGammaRamp)( Display *dpy, qint screen, qint size, unsigned short *r, unsigned short *g, unsigned short *b );
 
 static sym_t v_list[] =
 {
@@ -39,12 +39,12 @@ static sym_t v_list[] =
 	{ (void**)&_XF86VidModeSetGammaRamp, "XF86VidModeSetGammaRamp" }
 };
 
-qboolean VidMode_Init( void )
+qbool VidMode_Init( void )
 {
-	int ver_major = 0;
-	int ver_minor = 0;
-	int event_base, error_base;
-	int i;
+	qint ver_major = 0;
+	qint ver_minor = 0;
+	qint event_base, error_base;
+	qint i;
 
 	glw_state.vidmode_ext = qfalse;
 	glw_state.vidmode_gamma = qfalse;
@@ -89,7 +89,7 @@ qboolean VidMode_Init( void )
 	if ( glw_state.desktop_ok == qfalse )
 	{
 		XF86VidModeModeLine c;
-		int n;
+		qint n;
 		if ( _XF86VidModeGetModeLine( dpy, scrnum, &n, &c ) )
 		{
 			glw_state.desktop_width = c.hdisplay;
@@ -141,10 +141,10 @@ void VidMode_Done( void )
 }
 
 
-void VidMode_SetGamma( unsigned char red[256], unsigned char green[256], unsigned char blue[256] )
+void VidMode_SetGamma( unsigned qchar red[256], unsigned qchar green[256], unsigned qchar blue[256] )
 {
 	unsigned short table[3][4096];
-	int size;
+	qint size;
 
 	if ( !glw_state.vidmode_ext )
 		return;
@@ -171,13 +171,13 @@ void VidMode_RestoreGamma( void )
 }
 
 
-qboolean VidMode_SetMode( int *width, int *height, int *rate )
+qbool VidMode_SetMode( qint *width, qint *height, qint *rate )
 {
-	int best_fit, best_dist;
-	int dist;
-	int x, y; //, w, h;
-	int num_vidmodes;
-	int i;
+	qint best_fit, best_dist;
+	qint dist;
+	qint x, y; //, w, h;
+	qint num_vidmodes;
+	qint i;
 	
 	if ( !glw_state.vidmode_ext )
 		return qfalse;

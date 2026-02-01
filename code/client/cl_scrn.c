@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "client.h"
 
-static qboolean	scr_initialized;		// ready to draw
+static qbool	scr_initialized;		// ready to draw
 
 cvar_t		*cl_timegraph;
 static cvar_t		*cl_debuggraph;
@@ -38,7 +38,7 @@ SCR_DrawNamedPic
 Coordinates are 640*480 virtual values
 =================
 */
-void SCR_DrawNamedPic( float x, float y, float width, float height, const char *picname ) {
+void SCR_DrawNamedPic( float x, float y, float width, float height, const qchar *picname ) {
 	qhandle_t	hShader;
 
 	assert( width != 0 );
@@ -118,8 +118,8 @@ void SCR_DrawPic( float x, float y, float width, float height, qhandle_t hShader
 ** SCR_DrawChar
 ** chars are drawn at 640*480 virtual screen size
 */
-static void SCR_DrawChar( int x, int y, float size, int ch ) {
-	int row, col;
+static void SCR_DrawChar( qint x, qint y, float size, qint ch ) {
+	qint row, col;
 	float frow, fcol;
 	float	ax, ay, aw, ah;
 
@@ -157,8 +157,8 @@ static void SCR_DrawChar( int x, int y, float size, int ch ) {
 ** SCR_DrawSmallChar
 ** small chars are drawn at native screen resolution
 */
-void SCR_DrawSmallChar( int x, int y, int ch ) {
-	int row, col;
+void SCR_DrawSmallChar( qint x, qint y, qint ch ) {
+	qint row, col;
 	float frow, fcol;
 	float size;
 
@@ -190,8 +190,8 @@ void SCR_DrawSmallChar( int x, int y, int ch ) {
 ** SCR_DrawSmallString
 ** small string are drawn at native screen resolution
 */
-void SCR_DrawSmallString( int x, int y, const char *s, int len ) {
-	int row, col, ch, i;
+void SCR_DrawSmallString( qint x, qint y, const qchar *s, qint len ) {
+	qint row, col, ch, i;
 	float frow, fcol;
 	float size;
 
@@ -228,11 +228,11 @@ to a fixed color.
 Coordinates are at 640 by 480 virtual resolution
 ==================
 */
-void SCR_DrawStringExt( int x, int y, float size, const char *string, const float *setColor, qboolean forceColor,
-		qboolean noColorEscape ) {
+void SCR_DrawStringExt( qint x, qint y, float size, const qchar *string, const float *setColor, qbool forceColor,
+		qbool noColorEscape ) {
 	vec4_t		color;
-	const char	*s;
-	int			xx;
+	const qchar	*s;
+	qint			xx;
 
 	// draw the drop shadow
 	color[0] = color[1] = color[2] = 0.0;
@@ -280,7 +280,7 @@ void SCR_DrawStringExt( int x, int y, float size, const char *string, const floa
 SCR_DrawBigString
 ==================
 */
-void SCR_DrawBigString( int x, int y, const char *s, float alpha, qboolean noColorEscape ) {
+void SCR_DrawBigString( qint x, qint y, const qchar *s, float alpha, qbool noColorEscape ) {
 	float	color[4];
 
 	color[0] = color[1] = color[2] = 1.0;
@@ -297,11 +297,11 @@ Draws a multi-colored string with a drop shadow, optionally forcing
 to a fixed color.
 ==================
 */
-void SCR_DrawSmallStringExt( int x, int y, const char *string, const float *setColor, qboolean forceColor,
-		qboolean noColorEscape ) {
+void SCR_DrawSmallStringExt( qint x, qint y, const qchar *string, const float *setColor, qbool forceColor,
+		qbool noColorEscape ) {
 	vec4_t		color;
-	const char	*s;
-	int			xx;
+	const qchar	*s;
+	qint			xx;
 
 	// draw the colored text
 	s = string;
@@ -330,9 +330,9 @@ void SCR_DrawSmallStringExt( int x, int y, const char *string, const float *setC
 /*
 ** SCR_Strlen -- skips color escape codes
 */
-static int SCR_Strlen( const char *str ) {
-	const char *s = str;
-	int count = 0;
+static qint SCR_Strlen( const qchar *str ) {
+	const qchar *s = str;
+	qint count = 0;
 
 	while ( *s ) {
 		if ( Q_IsColorString( s ) ) {
@@ -350,7 +350,7 @@ static int SCR_Strlen( const char *str ) {
 /*
 ** SCR_GetBigStringWidth
 */ 
-int SCR_GetBigStringWidth( const char *str ) {
+qint SCR_GetBigStringWidth( const qchar *str ) {
 	return SCR_Strlen( str ) * BIGCHAR_WIDTH;
 }
 
@@ -363,8 +363,8 @@ SCR_DrawDemoRecording
 =================
 */
 static void SCR_DrawDemoRecording( void ) {
-	char	string[sizeof(clc.recordNameShort)+32];
-	int		pos;
+	qchar	string[sizeof(clc.recordNameShort)+32];
+	qint		pos;
 
 	if ( !clc.demorecording ) {
 		return;
@@ -392,9 +392,9 @@ SCR_DrawVoipMeter
 =================
 */
 static void SCR_DrawVoipMeter( void ) {
-	char	buffer[16];
-	char	string[256];
-	int limit, i;
+	qchar	buffer[16];
+	qchar	string[256];
+	qint limit, i;
 
 	if (!cl_voipShowMeter->integer)
 		return;  // player doesn't want to show meter at all.
@@ -409,7 +409,7 @@ static void SCR_DrawVoipMeter( void ) {
 	else if (!cl_voip->integer)
 		return;  // client has VoIP support disabled.
 
-	limit = (int) (clc.voipPower * 10.0f);
+	limit = (qint) (clc.voipPower * 10.0f);
 	if (limit > 10)
 		limit = 10;
 
@@ -433,7 +433,7 @@ DEBUG GRAPH
 ===============================================================================
 */
 
-static	int			current;
+static	qint			current;
 static	float		values[1024];
 
 /*
@@ -455,7 +455,7 @@ SCR_DrawDebugGraph
 */
 static void SCR_DrawDebugGraph( void )
 {
-	int		a, x, y, w, i, h;
+	qint		a, x, y, w, i, h;
 	float	v;
 
 	//
@@ -476,8 +476,8 @@ static void SCR_DrawDebugGraph( void )
 		v = v * cl_graphscale->integer + cl_graphshift->integer;
 		
 		if (v < 0)
-			v += cl_graphheight->integer * (1+(int)(-v / cl_graphheight->integer));
-		h = (int)v % cl_graphheight->integer;
+			v += cl_graphheight->integer * (1+(qint)(-v / cl_graphheight->integer));
+		h = (qint)v % cl_graphheight->integer;
 		re.DrawStretchPic( x+w-1-a, y - h, 1, h, 0, 0, 0, 0, cls.whiteShader );
 	}
 }
@@ -520,7 +520,7 @@ This will be called twice if rendering in stereo mode
 ==================
 */
 static void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
-	qboolean uiFullscreen;
+	qbool uiFullscreen;
 
 	re.BeginFrame( stereoFrame );
 
@@ -531,7 +531,7 @@ static void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 	if ( uiFullscreen || cls.state < CA_LOADING ) {
 		if ( cls.glconfig.vidWidth * 480 > cls.glconfig.vidHeight * 640 ) {
 			// draw vertical bars on sides for legacy mods
-			const int w = (cls.glconfig.vidWidth - ((cls.glconfig.vidHeight * 640) / 480)) /2;
+			const qint w = (cls.glconfig.vidWidth - ((cls.glconfig.vidHeight * 640) / 480)) /2;
 			re.SetColor( g_color_table[ ColorIndex( COLOR_BLACK ) ] );
 			re.DrawStretchPic( 0, 0, w, cls.glconfig.vidHeight, 0, 0, 0, 0, cls.whiteShader );
 			re.DrawStretchPic( cls.glconfig.vidWidth - w, 0, w, cls.glconfig.vidHeight, 0, 0, 0, 0, cls.whiteShader );
@@ -609,15 +609,15 @@ text to the screen.
 ==================
 */
 void SCR_UpdateScreen( void ) {
-	static int recursive;
-	static int framecount;
-	static int next_frametime;
+	static qint recursive;
+	static qint framecount;
+	static qint next_frametime;
 
 	if ( !scr_initialized )
 		return; // not initialized yet
 
 	if ( framecount == cls.framecount ) {
-		int ms = Sys_Milliseconds();
+		qint ms = Sys_Milliseconds();
 		if ( next_frametime && ms - next_frametime < 0 ) {
 			re.ThrottleBackend();
 		} else {
@@ -638,7 +638,7 @@ void SCR_UpdateScreen( void ) {
 	if ( uivm )
 	{
 		// XXX
-		int in_anaglyphMode = Cvar_VariableIntegerValue("r_anaglyphMode");
+		qint in_anaglyphMode = Cvar_VariableIntegerValue("r_anaglyphMode");
 		// if running in stereo, we need to draw the frame twice
 		if ( cls.glconfig.stereoEnabled || in_anaglyphMode) {
 			SCR_DrawScreenField( STEREO_LEFT );

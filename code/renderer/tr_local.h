@@ -74,8 +74,8 @@ typedef struct dlight_s {
 
 	vec3_t	transformed;		// origin in local coordinate system
 	vec3_t	transformed2;		// origin2 in local coordinate system
-	int		additive;			// texture detail is lost tho when the lightmap is dark
-	qboolean linear;
+	qint		additive;			// texture detail is lost tho when the lightmap is dark
+	qbool linear;
 #ifdef USE_PMLIGHT
 	struct litSurf_s	*head;
 	struct litSurf_s	*tail;
@@ -90,17 +90,17 @@ typedef struct {
 
 	float		axisLength;		// compensate for non-normalized axis
 #ifdef USE_LEGACY_DLIGHTS
-	int			needDlights;	// 1 for bmodels that touch a dlight
+	qint			needDlights;	// 1 for bmodels that touch a dlight
 #endif
-	qboolean	lightingCalculated;
+	qbool	lightingCalculated;
 	vec3_t		lightDir;		// normalized direction towards light
 	vec3_t		ambientLight;	// color normalized to 0-255
-	int			ambientLightInt;	// 32 bit rgba packed
+	qint			ambientLightInt;	// 32 bit rgba packed
 	vec3_t		directedLight;
 #ifdef USE_PMLIGHT
 	vec3_t		shadowLightDir;	// normalized direction towards light
 #endif
-	qboolean	intShaderTime;
+	qbool	intShaderTime;
 } trRefEntity_t;
 
 
@@ -303,20 +303,20 @@ typedef struct {
 
 typedef struct {
 	image_t			*image[MAX_IMAGE_ANIMATIONS];
-	int				numImageAnimations;
+	qint				numImageAnimations;
 	double			imageAnimationSpeed;	// -EC- set to double
 
 	texCoordGen_t	tcGen;
 	vec3_t			tcGenVectors[2];
 
-	int				numTexMods;
+	qint				numTexMods;
 	texModInfo_t	*texMods;
 
-	int				videoMapHandle;
-	int				lightmap;				// LIGHTMAP_INDEX_NONE, LIGHTMAP_INDEX_SHADER, LIGHTMAP_INDEX_OFFSET
-	qboolean		isVideoMap;
-	unsigned int 	isScreenMap : 1;
-	unsigned int 	dlight : 1;
+	qint				videoMapHandle;
+	qint				lightmap;				// LIGHTMAP_INDEX_NONE, LIGHTMAP_INDEX_SHADER, LIGHTMAP_INDEX_OFFSET
+	qbool		isVideoMap;
+	unsigned qint 	isScreenMap : 1;
+	unsigned qint 	dlight : 1;
 } textureBundle_t;
 
 #define NUM_TEXTURE_BUNDLES 2
@@ -327,7 +327,7 @@ typedef struct {
 #define TESS_ENV1	1<<3
 
 typedef struct {
-	qboolean		active;
+	qbool		active;
 	
 	textureBundle_t	bundle[NUM_TEXTURE_BUNDLES];
 
@@ -344,8 +344,8 @@ typedef struct {
 
 	acff_t			adjustColorsForFog;
 
-	qboolean		isDetail;
-	qboolean		depthFragment;
+	qbool		isDetail;
+	qbool		depthFragment;
 
 	short			vboVPindex[3];		// normal, eye-in, eye-out
 	short			vboFPindex[2];		// normal, fog-blend
@@ -376,39 +376,39 @@ typedef struct {
 } fogParms_t;
 
 typedef struct shader_s {
-	char		name[MAX_QPATH];		// game path, including extension
-	int			lightmapSearchIndex;	// for a shader to match, both name and lightmapIndex must match
-	int			lightmapIndex;			// for rendering
+	qchar		name[MAX_QPATH];		// game path, including extension
+	qint			lightmapSearchIndex;	// for a shader to match, both name and lightmapIndex must match
+	qint			lightmapIndex;			// for rendering
 
-	int			index;					// this shader == tr.shaders[index]
-	int			sortedIndex;			// this shader == tr.sortedShaders[sortedIndex]
+	qint			index;					// this shader == tr.shaders[index]
+	qint			sortedIndex;			// this shader == tr.sortedShaders[sortedIndex]
 
 	float		sort;					// lower numbered shaders draw before higher numbered
 
-	qboolean	defaultShader;			// we want to return index 0 if the shader failed to
+	qbool	defaultShader;			// we want to return index 0 if the shader failed to
 										// load for some reason, but R_FindShader should
 										// still keep a name allocated for it, so if
 										// something calls RE_RegisterShader again with
 										// the same name, we don't try looking for it again
 
-	qboolean	explicitlyDefined;		// found in a .shader file
+	qbool	explicitlyDefined;		// found in a .shader file
 
-	int			surfaceFlags;			// if explicitlyDefined, this will have SURF_* flags
-	int			contentFlags;
+	qint			surfaceFlags;			// if explicitlyDefined, this will have SURF_* flags
+	qint			contentFlags;
 
-	qboolean	entityMergable;			// merge across entites optimizable (smoke, blood)
+	qbool	entityMergable;			// merge across entites optimizable (smoke, blood)
 
-	qboolean	isSky;
+	qbool	isSky;
 	skyParms_t	sky;
 	fogParms_t	fogParms;
 
 	float		portalRange;			// distance to fog out at
 	float		portalRangeR;
 
-	qboolean	multitextureEnv;		// if shader has multitexture stage(s)
+	qbool	multitextureEnv;		// if shader has multitexture stage(s)
 
 	cullType_t	cullType;				// CT_FRONT_SIDED, CT_BACK_SIDED, or CT_TWO_SIDED
-	qboolean	polygonOffset;			// set for decals and other items that must be offset 
+	qbool	polygonOffset;			// set for decals and other items that must be offset 
 	
 	unsigned	noMipMaps:1;			// for console fonts, 2D elements, etc.
 	unsigned	noPicMip:1;				// for images that must always be full resolution
@@ -417,33 +417,33 @@ typedef struct shader_s {
 
 	fogPass_t	fogPass;				// draw a blended pass, possibly with depth test equals
 
-	qboolean	needsNormal;			// not all shaders will need all data to be gathered
-	//qboolean	needsST1;
-	qboolean	needsST2;
-	//qboolean	needsColor;
+	qbool	needsNormal;			// not all shaders will need all data to be gathered
+	//qbool	needsST1;
+	qbool	needsST2;
+	//qbool	needsColor;
 
-	int			numDeforms;
+	qint			numDeforms;
 	deformStage_t	deforms[MAX_SHADER_DEFORMS];
 
 
-	int			numUnfoggedPasses;
+	qint			numUnfoggedPasses;
 	shaderStage_t	*stages[MAX_SHADER_STAGES];
 
 #ifdef USE_PMLIGHT
-	int			lightingStage;
-	int			lightingBundle;
+	qint			lightingStage;
+	qint			lightingBundle;
 #endif
-	qboolean	isStaticShader;
-	int			svarsSize;
-	int			iboOffset;
-	int			vboOffset;
-	int			normalOffset;
-	int			numIndexes;
-	int			numVertexes;
-	int			curVertexes;
-	int			curIndexes;
+	qbool	isStaticShader;
+	qint			svarsSize;
+	qint			iboOffset;
+	qint			vboOffset;
+	qint			normalOffset;
+	qint			numIndexes;
+	qint			numVertexes;
+	qint			curVertexes;
+	qint			curIndexes;
 
-	int			hasScreenMap;
+	qint			hasScreenMap;
 
 	void	(*optimalStageIteratorFunc)( void );
 
@@ -459,57 +459,57 @@ typedef struct shader_s {
 // trRefdef_t holds everything that comes in refdef_t,
 // as well as the locally generated scene information
 typedef struct {
-	int			x, y, width, height;
+	qint			x, y, width, height;
 	float		fov_x, fov_y;
 	vec3_t		vieworg;
 	vec3_t		viewaxis[3];		// transformation matrix
 
 	stereoFrame_t	stereoFrame;
 
-	int			time;				// time in milliseconds for shader effects and other time dependent rendering issues
-	int			rdflags;			// RDF_NOWORLDMODEL, etc
+	qint			time;				// time in milliseconds for shader effects and other time dependent rendering issues
+	qint			rdflags;			// RDF_NOWORLDMODEL, etc
 
 	// 1 bits will prevent the associated area from rendering at all
 	byte		areamask[MAX_MAP_AREA_BYTES];
-	qboolean	areamaskModified;	// qtrue if areamask changed since last scene
+	qbool	areamaskModified;	// qtrue if areamask changed since last scene
 
 	double		floatTime;			// tr.refdef.time / 1000.0 -EC- set to double
 
 	// text messages for deform text shaders
-	char		text[MAX_RENDER_STRINGS][MAX_RENDER_STRING_LENGTH];
+	qchar		text[MAX_RENDER_STRINGS][MAX_RENDER_STRING_LENGTH];
 
-	int			num_entities;
+	qint			num_entities;
 	trRefEntity_t	*entities;
 
-	unsigned int num_dlights;
+	unsigned qint num_dlights;
 	struct dlight_s	*dlights;
 
-	int			numPolys;
+	qint			numPolys;
 	struct srfPoly_s	*polys;
 
-	int			numDrawSurfs;
+	qint			numDrawSurfs;
 	struct drawSurf_s	*drawSurfs;
 #ifdef USE_PMLIGHT
-	int			numLitSurfs;
+	qint			numLitSurfs;
 	struct litSurf_s	*litSurfs;
 #endif
 } trRefdef_t;
 
 
 typedef struct image_s {
-	char		*imgName;			// image path, including extension
-	char		*imgName2;			// image path with real file extension
+	qchar		*imgName;			// image path, including extension
+	qchar		*imgName2;			// image path with real file extension
 	struct image_s *next;			// for hash search
-	int			width, height;		// source image
-	int			uploadWidth;		// after power of two and picmip but not including clamp to MAX_TEXTURE_SIZE
-	int			uploadHeight;
+	qint			width, height;		// source image
+	qint			uploadWidth;		// after power of two and picmip but not including clamp to MAX_TEXTURE_SIZE
+	qint			uploadHeight;
 	imgFlags_t	flags;
 	GLuint		texnum;				// gl texture binding
 
-	int			frameUsed;			// for texture usage in frame statistics
+	qint			frameUsed;			// for texture usage in frame statistics
 
 	GLint		internalFormat;
-	int			TMU;				// only needed for voodoo2
+	qint			TMU;				// only needed for voodoo2
 
 } image_t;
 
@@ -524,19 +524,19 @@ typedef struct image_s {
 
 // skins allow models to be retextured without modifying the model file
 typedef struct {
-	char		name[MAX_QPATH];
+	qchar		name[MAX_QPATH];
 	shader_t	*shader;
 } skinSurface_t;
 
 typedef struct skin_s {
-	char		name[MAX_QPATH];		// game path, including extension
-	int			numSurfaces;
+	qchar		name[MAX_QPATH];		// game path, including extension
+	qint			numSurfaces;
 	skinSurface_t	*surfaces;			// dynamically allocated array of surfaces
 } skin_t;
 
 
 typedef struct {
-	int			originalBrushNumber;
+	qint			originalBrushNumber;
 	vec3_t		bounds[2];
 
 	color4ub_t	colorInt;				// in packed byte format
@@ -545,13 +545,13 @@ typedef struct {
 	fogParms_t	parms;
 
 	// for clipping distance in fog when outside
-	qboolean	hasSurface;
+	qbool	hasSurface;
 	float		surface[4];
 } fog_t;
 
 typedef struct {
 	float		eyeT;
-	qboolean	eyeOutside;
+	qbool	eyeOutside;
 	vec4_t		fogDistanceVector;
 	vec4_t		fogDepthVector;
 	const float *fogColor; // vec4_t
@@ -569,11 +569,11 @@ typedef struct {
 	orientationr_t	world;
 	vec3_t		pvsOrigin;			// may be different than or.origin for portals
 	portalView_t portalView;
-	int			frameSceneNum;		// copied from tr.frameSceneNum
-	int			frameCount;			// copied from tr.frameCount
+	qint			frameSceneNum;		// copied from tr.frameSceneNum
+	qint			frameCount;			// copied from tr.frameCount
 	cplane_t	portalPlane;		// clip anything behind this if mirroring
-	int			viewportX, viewportY, viewportWidth, viewportHeight;
-	int			scissorX, scissorY, scissorWidth, scissorHeight;
+	qint			viewportX, viewportY, viewportWidth, viewportHeight;
+	qint			scissorX, scissorY, scissorWidth, scissorHeight;
 	float		fovX, fovY;
 	float		projectionMatrix[16];
 	cplane_t	frustum[5];
@@ -582,7 +582,7 @@ typedef struct {
 	stereoFrame_t	stereoFrame;
 #ifdef USE_PMLIGHT
 	// each view will have its own dlight set
-	unsigned int num_dlights;
+	unsigned qint num_dlights;
 	struct dlight_s	*dlights;
 #endif
 } viewParms_t;
@@ -610,17 +610,17 @@ typedef enum {
 	SF_ENTITY,				// beams, rails, lightning, etc that can be determined by entity
 
 	SF_NUM_SURFACE_TYPES,
-	SF_MAX = 0x7fffffff			// ensures that sizeof( surfaceType_t ) == sizeof( int )
+	SF_MAX = 0x7fffffff			// ensures that sizeof( surfaceType_t ) == sizeof( qint )
 } surfaceType_t;
 
 typedef struct drawSurf_s {
-	unsigned int		sort;			// bit combination for fast compares
+	unsigned qint		sort;			// bit combination for fast compares
 	surfaceType_t		*surface;		// any of surface*_t
 } drawSurf_t;
 
 #ifdef USE_PMLIGHT
 typedef struct litSurf_s {
-	unsigned int		sort;			// bit combination for fast compares
+	unsigned qint		sort;			// bit combination for fast compares
 	surfaceType_t		*surface;		// any of surface*_t
 	struct litSurf_s	*next;
 } litSurf_t;
@@ -636,8 +636,8 @@ typedef struct litSurf_s {
 typedef struct srfPoly_s {
 	surfaceType_t	surfaceType;
 	qhandle_t		hShader;
-	int				fogIndex;
-	int				numVerts;
+	qint				fogIndex;
+	qint				numVerts;
 	polyVert_t		*verts;
 } srfPoly_t;
 
@@ -653,7 +653,7 @@ typedef struct srfGridMesh_s {
 	surfaceType_t	surfaceType;
 
 	// dynamic lighting information
-	int				dlightBits;
+	qint				dlightBits;
 
 	// culling information
 	vec3_t			meshBounds[2];
@@ -665,15 +665,15 @@ typedef struct srfGridMesh_s {
 	// groups of curves that LOD as a unit
 	vec3_t			lodOrigin;
 	float			lodRadius;
-	int				lodFixed;
-	int				lodStitched;
+	qint				lodFixed;
+	qint				lodStitched;
 
-	int				vboItemIndex;
-	int				vboExpectIndices;
-	int				vboExpectVertices;
+	qint				vboItemIndex;
+	qint				vboExpectIndices;
+	qint				vboExpectVertices;
 
 	// vertexes
-	int				width, height;
+	qint				width, height;
 	float			*widthLodError;
 	float			*heightLodError;
 	drawVert_t		verts[1];		// variable sized
@@ -687,15 +687,15 @@ typedef struct {
 
 	// dynamic lighting information
 #ifdef USE_LEGACY_DLIGHTS
-	int			dlightBits;
+	qint			dlightBits;
 #endif
-	int			vboItemIndex;
+	qint			vboItemIndex;
 	float		*normals;
 
 	// triangle definitions (no normals at points)
-	int			numPoints;
-	int			numIndices;
-	int			ofsIndices;
+	qint			numPoints;
+	qint			numIndices;
+	qint			ofsIndices;
 	float		points[1][VERTEXSIZE];	// variable sized
 										// there is a variable length list of indices here also
 } srfSurfaceFace_t;
@@ -707,9 +707,9 @@ typedef struct {
 
 	// dynamic lighting information
 #ifdef USE_LEGACY_DLIGHTS
-	int				dlightBits;
+	qint				dlightBits;
 #endif
-	int				vboItemIndex;
+	qint				vboItemIndex;
 
 	// culling information (FIXME: use this!)
 	vec3_t			bounds[2];
@@ -717,10 +717,10 @@ typedef struct {
 	float			radius;
 
 	// triangle definitions
-	int				numIndexes;
-	int				*indexes;
+	qint				numIndexes;
+	qint				*indexes;
 
-	int				numVerts;
+	qint				numVerts;
 	drawVert_t		*verts;
 } srfTriangles_t;
 
@@ -732,15 +732,15 @@ typedef struct {
 
 // inter-quake-model
 typedef struct {
-	int		num_vertexes;
-	int		num_triangles;
-	int		num_frames;
-	int		num_surfaces;
-	int		num_joints;
-	int		num_poses;
+	qint		num_vertexes;
+	qint		num_triangles;
+	qint		num_frames;
+	qint		num_surfaces;
+	qint		num_joints;
+	qint		num_poses;
 	struct srfIQModel_s	*surfaces;
 
-	int		*triangles;
+	qint		*triangles;
 
 	// vertex arrays
 	float		*positions;
@@ -748,7 +748,7 @@ typedef struct {
 	float		*normals;
 	float		*tangents;
 	byte		*colors;
-	int		*influences; // [num_vertexes] indexes into influenceBlendVertexes
+	qint		*influences; // [num_vertexes] indexes into influenceBlendVertexes
 
 	// unique list of vertex blend indexes/weights for faster CPU vertex skinning
 	byte		*influenceBlendIndexes; // [num_influences]
@@ -757,13 +757,13 @@ typedef struct {
 		byte	*b;
 	} influenceBlendWeights; // [num_influences]
 
-	// depending upon the exporter, blend indices and weights might be int/float
+	// depending upon the exporter, blend indices and weights might be qint/float
 	// as opposed to the recommended byte/byte, for example Noesis exports
-	// int/float whereas the official IQM tool exports byte/byte
-	int		blendWeightsType; // IQM_UBYTE or IQM_FLOAT
+	// qint/float whereas the official IQM tool exports byte/byte
+	qint		blendWeightsType; // IQM_UBYTE or IQM_FLOAT
 
-	char		*jointNames;
-	int		*jointParents;
+	qchar		*jointNames;
+	qint		*jointParents;
 	float		*bindJoints; // [num_joints * 12]
 	float		*invBindJoints; // [num_joints * 12]
 	iqmTransform_t	*poses; // [num_frames * num_poses]
@@ -773,12 +773,12 @@ typedef struct {
 // inter-quake-model surface
 typedef struct srfIQModel_s {
 	surfaceType_t	surfaceType;
-	char		name[MAX_QPATH];
+	qchar		name[MAX_QPATH];
 	shader_t	*shader;
 	iqmData_t	*data;
-	int		first_vertex, num_vertexes;
-	int		first_triangle, num_triangles;
-	int		first_influence, num_influences;
+	qint		first_vertex, num_vertexes;
+	qint		first_triangle, num_triangles;
+	qint		first_influence, num_influences;
 } srfIQModel_t;
 
 
@@ -802,12 +802,12 @@ BRUSH MODELS
 #define	SIDE_ON		2
 
 typedef struct msurface_s {
-	int					viewCount;		// if == tr.viewCount, already added
+	qint					viewCount;		// if == tr.viewCount, already added
 	struct shader_s		*shader;
-	int					fogIndex;
+	qint					fogIndex;
 #ifdef USE_PMLIGHT
-	int					vcVisible;		// if == tr.viewCount, is actually VISIBLE in this frame, i.e. passed facecull and has been added to the drawsurf list
-	int					lightCount;		// if == tr.lightCount, already added to the litsurf list for the current light
+	qint					vcVisible;		// if == tr.viewCount, is actually VISIBLE in this frame, i.e. passed facecull and has been added to the drawsurf list
+	qint					lightCount;		// if == tr.lightCount, already added to the litsurf list for the current light
 #endif // USE_PMLIGHT
 	surfaceType_t		*data;			// any of srf*_t
 } msurface_t;
@@ -815,8 +815,8 @@ typedef struct msurface_s {
 
 typedef struct mnode_s {
 	// common with leaf and node
-	int			contents;		// -1 for nodes, to differentiate from leafs
-	int			visframe;		// node needs to be traversed if current
+	qint			contents;		// -1 for nodes, to differentiate from leafs
+	qint			visframe;		// node needs to be traversed if current
 	vec3_t		mins, maxs;		// for bounding box culling
 	struct mnode_s	*parent;
 
@@ -825,61 +825,61 @@ typedef struct mnode_s {
 	struct mnode_s	*children[2];	
 
 	// leaf specific
-	int			cluster;
-	int			area;
+	qint			cluster;
+	qint			area;
 
 	msurface_t	**firstmarksurface;
-	int			nummarksurfaces;
+	qint			nummarksurfaces;
 } mnode_t;
 
 typedef struct {
 	vec3_t		bounds[2];		// for culling
 	msurface_t	*firstSurface;
-	int			numSurfaces;
+	qint			numSurfaces;
 } bmodel_t;
 
 typedef struct {
-	char		name[MAX_QPATH];		// ie: maps/tim_dm2.bsp
-	char		baseName[MAX_QPATH];	// ie: tim_dm2
+	qchar		name[MAX_QPATH];		// ie: maps/tim_dm2.bsp
+	qchar		baseName[MAX_QPATH];	// ie: tim_dm2
 
-	int			dataSize;
+	qint			dataSize;
 
-	int			numShaders;
+	qint			numShaders;
 	dshader_t	*shaders;
 
 	bmodel_t	*bmodels;
 
-	int			numplanes;
+	qint			numplanes;
 	cplane_t	*planes;
 
-	int			numnodes;		// includes leafs
-	int			numDecisionNodes;
+	qint			numnodes;		// includes leafs
+	qint			numDecisionNodes;
 	mnode_t		*nodes;
 
-	int			numsurfaces;
+	qint			numsurfaces;
 	msurface_t	*surfaces;
 
-	int			nummarksurfaces;
+	qint			nummarksurfaces;
 	msurface_t	**marksurfaces;
 
-	int			numfogs;
+	qint			numfogs;
 	fog_t		*fogs;
 
 	vec3_t		lightGridOrigin;
 	vec3_t		lightGridSize;
 	vec3_t		lightGridInverseSize;
-	int			lightGridBounds[3];
+	qint			lightGridBounds[3];
 	byte		*lightGridData;
 
 
-	int			numClusters;
-	int			clusterBytes;
+	qint			numClusters;
+	qint			clusterBytes;
 	const byte	*vis;			// may be passed in by CM_LoadMap to save space
 
 	byte		*novis;			// clusterBytes of 0xff
 
-	char		*entityString;
-	const char	*entityParsePoint;
+	qchar		*entityString;
+	const qchar	*entityParsePoint;
 } world_t;
 
 //======================================================================
@@ -893,24 +893,24 @@ typedef enum {
 } modtype_t;
 
 typedef struct model_s {
-	char		name[MAX_QPATH];
+	qchar		name[MAX_QPATH];
 	modtype_t	type;
-	int			index;		// model = tr.models[model->index]
+	qint			index;		// model = tr.models[model->index]
 
-	int			dataSize;	// just for listing purposes
+	qint			dataSize;	// just for listing purposes
 	bmodel_t	*bmodel;		// only if type == MOD_BRUSH
 	md3Header_t	*md3[MD3_MAX_LODS];	// only if type == MOD_MESH
 	void	*modelData;			// only if type == (MOD_MDR | MOD_IQM)
 
-	int			 numLods;
+	qint			 numLods;
 } model_t;
 
 #define	MAX_MOD_KNOWN	1024
 
 void		R_ModelInit (void);
 model_t		*R_GetModelByHandle( qhandle_t hModel );
-int			R_LerpTag( orientation_t *tag, qhandle_t handle, int startFrame, int endFrame, 
-					 float frac, const char *tagName );
+qint			R_LerpTag( orientation_t *tag, qhandle_t handle, qint startFrame, qint endFrame, 
+					 float frac, const qchar *tagName );
 void		R_ModelBounds( qhandle_t handle, vec3_t mins, vec3_t maxs );
 
 void		R_Modellist_f (void);
@@ -943,7 +943,7 @@ the bits are allocated as follows:
 7-16  : entity index
 17-30 : sorted shader index
 */
-#define	DLIGHT_BITS 1 // qboolean in opengl1 renderer
+#define	DLIGHT_BITS 1 // qbool in opengl1 renderer
 #define	DLIGHT_MASK ((1<<DLIGHT_BITS)-1)
 #define	FOGNUM_BITS 5
 #define	FOGNUM_MASK ((1<<FOGNUM_BITS)-1)
@@ -956,27 +956,27 @@ the bits are allocated as follows:
 #endif
 #define QSORT_REFENTITYNUM_MASK (REFENTITYNUM_MASK << QSORT_REFENTITYNUM_SHIFT)
 
-extern	int			gl_filter_min, gl_filter_max;
+extern	qint			gl_filter_min, gl_filter_max;
 
 /*
 ** performanceCounters_t
 */
 typedef struct {
-	int		c_sphere_cull_patch_in, c_sphere_cull_patch_clip, c_sphere_cull_patch_out;
-	int		c_box_cull_patch_in, c_box_cull_patch_clip, c_box_cull_patch_out;
-	int		c_sphere_cull_md3_in, c_sphere_cull_md3_clip, c_sphere_cull_md3_out;
-	int		c_box_cull_md3_in, c_box_cull_md3_clip, c_box_cull_md3_out;
+	qint		c_sphere_cull_patch_in, c_sphere_cull_patch_clip, c_sphere_cull_patch_out;
+	qint		c_box_cull_patch_in, c_box_cull_patch_clip, c_box_cull_patch_out;
+	qint		c_sphere_cull_md3_in, c_sphere_cull_md3_clip, c_sphere_cull_md3_out;
+	qint		c_box_cull_md3_in, c_box_cull_md3_clip, c_box_cull_md3_out;
 
-	int		c_leafs;
-	int		c_dlightSurfaces;
-	int		c_dlightSurfacesCulled;
+	qint		c_leafs;
+	qint		c_dlightSurfaces;
+	qint		c_dlightSurfacesCulled;
 #ifdef USE_PMLIGHT
-	int		c_light_cull_out;
-	int		c_light_cull_in;
-	int		c_lit_leafs;
-	int		c_lit_surfs;
-	int		c_lit_culls;
-	int		c_lit_masks;
+	qint		c_light_cull_out;
+	qint		c_light_cull_in;
+	qint		c_lit_leafs;
+	qint		c_lit_surfs;
+	qint		c_lit_culls;
+	qint		c_lit_masks;
 #endif
 } frontEndCounters_t;
 
@@ -988,54 +988,54 @@ typedef struct {
 // the renderer front end should never modify glstate_t
 typedef struct {
 	GLuint		currenttextures[ MAX_TEXTURE_UNITS ];
-	int			currenttmu;
-	qboolean	finishCalled;
+	qint			currenttmu;
+	qbool	finishCalled;
 	GLint		texEnv[2];
 	cullType_t	faceCulling;
 	unsigned	glStateBits;
 	unsigned	glClientStateBits[ MAX_TEXTURE_UNITS ];
-	int			currentArray;
+	qint			currentArray;
 } glstate_t;
 
 typedef struct glstatic_s {
 	// unmodified width/height according to actual \r_mode*
-	int windowWidth;
-	int windowHeight;
-	int captureWidth;
-	int captureHeight;
-	int initTime;
-	qboolean deviceSupportsGamma;
+	qint windowWidth;
+	qint windowHeight;
+	qint captureWidth;
+	qint captureHeight;
+	qint initTime;
+	qbool deviceSupportsGamma;
 } glstatic_t;
 
 typedef struct {
-	int		c_surfaces, c_shaders, c_vertexes, c_indexes, c_totalIndexes;
+	qint		c_surfaces, c_shaders, c_vertexes, c_indexes, c_totalIndexes;
 	float	c_overDraw;
 	
-	int		c_dlightVertexes;
-	int		c_dlightIndexes;
+	qint		c_dlightVertexes;
+	qint		c_dlightIndexes;
 
-	int		c_flareAdds;
-	int		c_flareTests;
-	int		c_flareRenders;
+	qint		c_flareAdds;
+	qint		c_flareTests;
+	qint		c_flareRenders;
 
-	int		msec;			// total msec for backend run
+	qint		msec;			// total msec for backend run
 #ifdef USE_PMLIGHT
-	int		c_lit_batches;
-	int		c_lit_vertices;
-	int		c_lit_indices;
-	int		c_lit_indices_latecull_in;
-	int		c_lit_indices_latecull_out;
-	int		c_lit_vertices_lateculltest;
+	qint		c_lit_batches;
+	qint		c_lit_vertices;
+	qint		c_lit_indices;
+	qint		c_lit_indices_latecull_in;
+	qint		c_lit_indices_latecull_out;
+	qint		c_lit_vertices_lateculltest;
 #endif
 } backEndCounters_t;
 
 typedef struct videoFrameCommand_s {
-	int					commandId;
-	int					width;
-	int					height;
+	qint					commandId;
+	qint					width;
+	qint					height;
 	byte				*captureBuffer;
 	byte				*encodeBuffer;
-	qboolean			motionJpeg;
+	qbool			motionJpeg;
 } videoFrameCommand_t;
 
 enum {
@@ -1053,28 +1053,28 @@ typedef struct {
 	viewParms_t	viewParms;
 	orientationr_t	or;
 	backEndCounters_t	pc;
-	qboolean	isHyperspace;
+	qbool	isHyperspace;
 	const trRefEntity_t *currentEntity;
-	qboolean	skyRenderedThisView;	// flag for drawing sun
+	qbool	skyRenderedThisView;	// flag for drawing sun
 
-	qboolean	projection2D;	// if qtrue, drawstretchpic doesn't need to change modes
+	qbool	projection2D;	// if qtrue, drawstretchpic doesn't need to change modes
 	color4ub_t	color2D;
-	qboolean	doneBloom;		// done bloom this frame
-	qboolean	doneSurfaces;   // done any 3d surfaces already
+	qbool	doneBloom;		// done bloom this frame
+	qbool	doneSurfaces;   // done any 3d surfaces already
 	trRefEntity_t	entity2D;	// currentEntity will point at this when doing 2D rendering
 
-	int		screenshotMask;		// tga | jpg | bmp
-	char	screenshotTGA[ MAX_OSPATH ];
-	char	screenshotJPG[ MAX_OSPATH ];
-	char	screenshotBMP[ MAX_OSPATH ];
-	qboolean screenShotTGAsilent;
-	qboolean screenShotJPGsilent;
-	qboolean screenShotBMPsilent;
+	qint		screenshotMask;		// tga | jpg | bmp
+	qchar	screenshotTGA[ MAX_OSPATH ];
+	qchar	screenshotJPG[ MAX_OSPATH ];
+	qchar	screenshotBMP[ MAX_OSPATH ];
+	qbool screenShotTGAsilent;
+	qbool screenShotJPGsilent;
+	qbool screenShotBMPsilent;
 	videoFrameCommand_t	vcmd;	// avi capture
 	
-	qboolean throttle;
-	qboolean drawConsole;
-	qboolean doneShadows;
+	qbool throttle;
+	qbool drawConsole;
+	qbool doneShadows;
 
 } backEndState_t;
 
@@ -1087,21 +1087,21 @@ typedef struct {
 ** by the frontend.
 */
 typedef struct {
-	qboolean				registered;		// cleared at shutdown, set at beginRegistration
-	qboolean				inited;			// cleared at shutdown, set at InitOpenGL
+	qbool				registered;		// cleared at shutdown, set at beginRegistration
+	qbool				inited;			// cleared at shutdown, set at InitOpenGL
 
-	int						visCount;		// incremented every time a new vis cluster is entered
-	int						frameCount;		// incremented every frame
-	int						sceneCount;		// incremented every scene
-	int						viewCount;		// incremented every view (twice a scene if portaled)
+	qint						visCount;		// incremented every time a new vis cluster is entered
+	qint						frameCount;		// incremented every frame
+	qint						sceneCount;		// incremented every scene
+	qint						viewCount;		// incremented every view (twice a scene if portaled)
 											// and every R_MarkFragments call
 #ifdef USE_PMLIGHT
-	int						lightCount;		// incremented for each dlight in the view
+	qint						lightCount;		// incremented for each dlight in the view
 #endif
 
-	int						frameSceneNum;	// zeroed at RE_BeginFrame
+	qint						frameSceneNum;	// zeroed at RE_BeginFrame
 
-	qboolean				worldMapLoaded;
+	qbool				worldMapLoaded;
 	world_t					*world;
 
 	const byte				*externalVisData;	// from RE_SetWorldVisData, shared with CM_Load
@@ -1123,31 +1123,31 @@ typedef struct {
 	shader_t				*flareShader;
 	shader_t				*sunShader;
 
-	int						numLightmaps;
+	qint						numLightmaps;
 	image_t					**lightmaps;
 
-	qboolean				mergeLightmaps;
+	qbool				mergeLightmaps;
 	float					lightmapOffset[2];	// current shader lightmap offset
 	float					lightmapScale[2];	// for lightmap atlases
-	int						lightmapMod;		// for lightmap atlases
+	qint						lightmapMod;		// for lightmap atlases
 
 	trRefEntity_t			*currentEntity;
 	trRefEntity_t			worldEntity;		// point currentEntity at this when rendering world
-	int						currentEntityNum;
-	int						shiftedEntityNum;	// currentEntityNum << QSORT_REFENTITYNUM_SHIFT
+	qint						currentEntityNum;
+	qint						shiftedEntityNum;	// currentEntityNum << QSORT_REFENTITYNUM_SHIFT
 	model_t					*currentModel;
 
 	viewParms_t				viewParms;
 
 	float					identityLight;		// 1.0 / ( 1 << overbrightBits )
-	int						identityLightByte;	// identityLight * 255
-	int						overbrightBits;		// r_overbrightBits->integer, but set to 0 if no hw gamma
+	qint						identityLightByte;	// identityLight * 255
+	qint						overbrightBits;		// r_overbrightBits->integer, but set to 0 if no hw gamma
 
 	orientationr_t			or;					// for current entity
 
 	trRefdef_t				refdef;
 
-	int						viewCluster;
+	qint						viewCluster;
 #ifdef USE_PMLIGHT
 	dlight_t				*light;				// current light during R_RecursiveLightNode
 #endif
@@ -1155,26 +1155,26 @@ typedef struct {
 	vec3_t					sunDirection;
 
 	frontEndCounters_t		pc;
-	int						frontEndMsec;		// not in pc due to clearing issue
+	qint						frontEndMsec;		// not in pc due to clearing issue
 
 	//
 	// put large tables at the end, so most elements will be
 	// within the +/32K indexed range on risc processors
 	//
 	model_t					*models[MAX_MOD_KNOWN];
-	int						numModels;
+	qint						numModels;
 
-	int						numImages;
+	qint						numImages;
 	image_t					*images[MAX_DRAWIMAGES];
 
 	// shader indexes from other modules will be looked up in tr.shaders[]
 	// shader indexes from drawsurfs will be looked up in sortedShaders[]
 	// lower indexed sortedShaders must be rendered first (opaque surfaces before translucent)
-	int						numShaders;
+	qint						numShaders;
 	shader_t				*shaders[MAX_SHADERS];
 	shader_t				*sortedShaders[MAX_SHADERS];
 
-	int						numSkins;
+	qint						numSkins;
 	skin_t					*skins[MAX_SKINS];
 
 	float					sinTable[FUNCTABLE_SIZE];
@@ -1184,25 +1184,25 @@ typedef struct {
 	float					inverseSawToothTable[FUNCTABLE_SIZE];
 	float					fogTable[FOG_TABLE_SIZE];
 
-	qboolean				mapLoading;
-	qboolean				needScreenMap;
+	qbool				mapLoading;
+	qbool				needScreenMap;
 
-	qboolean				vertexLightingAllowed;
+	qbool				vertexLightingAllowed;
 
 } trGlobals_t;
 
 extern backEndState_t	backEnd;
 extern trGlobals_t	tr;
 
-extern int					gl_clamp_mode;
+extern qint					gl_clamp_mode;
 
 extern glstate_t	glState;		// outside of TR since it shouldn't be cleared during ref re-init
 
 extern glstatic_t gls;
 
 #ifdef USE_FBO
-extern	qboolean			windowAdjusted;
-extern	qboolean			superSampled;
+extern	qbool			windowAdjusted;
+extern	qbool			superSampled;
 #endif
 
 //
@@ -1330,25 +1330,25 @@ extern cvar_t	*r_marksOnTriangleMeshes;
 
 //====================================================================
 
-void R_SwapBuffers( int );
+void R_SwapBuffers( qint );
 
 void R_RenderView( const viewParms_t *parms );
 
 void R_AddMD3Surfaces( trRefEntity_t *e );
 void R_AddNullModelSurfaces( trRefEntity_t *e );
 void R_AddBeamSurfaces( trRefEntity_t *e );
-void R_AddRailSurfaces( trRefEntity_t *e, qboolean isUnderwater );
+void R_AddRailSurfaces( trRefEntity_t *e, qbool isUnderwater );
 void R_AddLightningBoltSurfaces( trRefEntity_t *e );
 
 void R_AddPolygonSurfaces( void );
 
-void R_DecomposeSort( unsigned sort, int *entityNum, shader_t **shader, 
-					 int *fogNum, int *dlightMap );
+void R_DecomposeSort( unsigned sort, qint *entityNum, shader_t **shader, 
+					 qint *fogNum, qint *dlightMap );
 
-void R_AddDrawSurf( surfaceType_t *surface, shader_t *shader, int fogIndex, int dlightMap );
+void R_AddDrawSurf( surfaceType_t *surface, shader_t *shader, qint fogIndex, qint dlightMap );
 #ifdef USE_PMLIGHT
-void R_DecomposeLitSort( unsigned sort, int *entityNum, shader_t **shader, int *fogNum );
-void R_AddLitSurf( surfaceType_t *surface, shader_t *shader, int fogIndex );
+void R_DecomposeLitSort( unsigned sort, qint *entityNum, shader_t **shader, qint *fogNum );
+void R_AddLitSurf( surfaceType_t *surface, shader_t *shader, qint fogIndex );
 #endif
 
 #define	CULL_IN		0		// completely unclipped
@@ -1356,12 +1356,12 @@ void R_AddLitSurf( surfaceType_t *surface, shader_t *shader, int fogIndex );
 #define	CULL_OUT	2		// completely outside the clipping planes
 
 void R_LocalPointToWorld( const vec3_t local, vec3_t world );
-int R_CullLocalBox( const vec3_t bounds[2] );
-int R_CullPointAndRadius( const vec3_t origin, float radius );
-int R_CullLocalPointAndRadius( const vec3_t origin, float radius );
-int R_CullDlight( const dlight_t *dl );
+qint R_CullLocalBox( const vec3_t bounds[2] );
+qint R_CullPointAndRadius( const vec3_t origin, float radius );
+qint R_CullLocalPointAndRadius( const vec3_t origin, float radius );
+qint R_CullDlight( const dlight_t *dl );
 
-void R_SetupProjection( viewParms_t *dest, float zProj, qboolean computeFrustum );
+void R_SetupProjection( viewParms_t *dest, float zProj, qbool computeFrustum );
 void R_RotateForEntity( const trRefEntity_t *ent, const viewParms_t *viewParms, orientationr_t *or );
 
 /*
@@ -1370,12 +1370,12 @@ void R_RotateForEntity( const trRefEntity_t *ent, const viewParms_t *viewParms, 
 const float *GL_Ortho( const float left, const float right, const float bottom, const float top, const float znear, const float zfar );
 void	GL_Bind( image_t *image );
 void	GL_BindTexNum( GLuint texnum );
-void	GL_SelectTexture( int unit );
-void	GL_BindTexture( int unit, GLuint texnum );
-void	GL_TextureMode( const char *string );
+void	GL_SelectTexture( qint unit );
+void	GL_BindTexture( qint unit, GLuint texnum );
+void	GL_TextureMode( const qchar *string );
 void	GL_CheckErrors( void );
 void	GL_State( unsigned stateVector );
-void	GL_ClientState( int unit, unsigned stateVector );
+void	GL_ClientState( qint unit, unsigned stateVector );
 void	GL_TexEnv( GLint env );
 void	GL_Cull( cullType_t cullType );
 
@@ -1423,25 +1423,25 @@ void	GL_Cull( cullType_t cullType );
 #define CLS_TEXCOORD_ARRAY						0x00000002
 #define CLS_NORMAL_ARRAY						0x00000004
 
-void		RE_StretchRaw( int x, int y, int w, int h, int cols, int rows, byte *data, int client, qboolean dirty );
-void		RE_UploadCinematic( int w, int h, int cols, int rows, byte *data, int client, qboolean dirty );
+void		RE_StretchRaw( qint x, qint y, qint w, qint h, qint cols, qint rows, byte *data, qint client, qbool dirty );
+void		RE_UploadCinematic( qint w, qint h, qint cols, qint rows, byte *data, qint client, qbool dirty );
 
 void		RE_BeginFrame( stereoFrame_t stereoFrame );
 void		RE_BeginRegistration( glconfig_t *glconfig );
-void		RE_LoadWorldMap( const char *mapname );
+void		RE_LoadWorldMap( const qchar *mapname );
 void		RE_SetWorldVisData( const byte *vis );
-qhandle_t	RE_RegisterModel( const char *name );
-qhandle_t	RE_RegisterSkin( const char *name );
+qhandle_t	RE_RegisterModel( const qchar *name );
+qhandle_t	RE_RegisterSkin( const qchar *name );
 
-qboolean	RE_GetEntityToken( char *buffer, int size );
+qbool	RE_GetEntityToken( qchar *buffer, qint size );
 
 model_t		*R_AllocModel( void );
 
 void		R_Init( void );
 
 void		R_SetColorMappings( void );
-void		R_GammaCorrect( byte *buffer, int bufSize );
-void		R_ColorShiftLightingBytes( const byte in[4], byte out[4], qboolean hasAlpha );
+void		R_GammaCorrect( byte *buffer, qint bufSize );
+void		R_ColorShiftLightingBytes( const byte in[4], byte out[4], qbool hasAlpha );
 
 void	R_ImageList_f( void );
 void	R_SkinList_f( void );
@@ -1450,11 +1450,11 @@ void	R_InitFogTable( void );
 float	R_FogFactor( float s, float t );
 void	R_InitImages( void );
 void	R_DeleteTextures( void );
-int		R_SumOfUsedImages( void );
+qint		R_SumOfUsedImages( void );
 void	R_InitSkins( void );
 skin_t	*R_GetSkinByHandle( qhandle_t hSkin );
 
-int R_ComputeLOD( trRefEntity_t *ent );
+qint R_ComputeLOD( trRefEntity_t *ent );
 
 const void *RB_TakeVideoFrameCmd( const void *data );
 
@@ -1463,19 +1463,19 @@ float R_ClampDenorm( float v );
 //
 // tr_shader.c
 //
-shader_t	*R_FindShader( const char *name, int lightmapIndex, qboolean mipRawImage );
+shader_t	*R_FindShader( const qchar *name, qint lightmapIndex, qbool mipRawImage );
 shader_t	*R_GetShaderByHandle( qhandle_t hShader );
-shader_t	*R_GetShaderByState( int index, long *cycleTime );
-shader_t	*R_FindShaderByName( const char *name );
+shader_t	*R_GetShaderByState( qint index, long *cycleTime );
+shader_t	*R_FindShaderByName( const qchar *name );
 void		R_InitShaders( void );
 void		R_ShaderList_f( void );
-void		RE_RemapShader(const char *oldShader, const char *newShader, const char *timeOffset);
+void		RE_RemapShader(const qchar *oldShader, const qchar *newShader, const qchar *timeOffset);
 
 
 //
 // tr_surface.c
 //
-void		RB_SurfaceGridEstimate( srfGridMesh_t *cv, int *numVertexes, int *numIndexes ); 
+void		RB_SurfaceGridEstimate( srfGridMesh_t *cv, qint *numVertexes, qint *numIndexes ); 
 
 /*
 ====================================================================
@@ -1502,7 +1502,7 @@ typedef struct shaderCommands_s
 	vec2_t		texCoords00[SHADER_MAX_VERTEXES] QALIGN(16);
 	color4ub_t	vertexColors[SHADER_MAX_VERTEXES] QALIGN(16);
 #ifdef USE_LEGACY_DLIGHTS
-	int			vertexDlightBits[SHADER_MAX_VERTEXES] QALIGN(16);
+	qint			vertexDlightBits[SHADER_MAX_VERTEXES] QALIGN(16);
 #endif
 	stageVars_t	svars QALIGN(16);
 
@@ -1510,43 +1510,43 @@ typedef struct shaderCommands_s
 #pragma pack(pop)
 
 	surfaceType_t	surfType;
-	int			vboIndex;
-	qboolean	allowVBO;
+	qint			vboIndex;
+	qbool	allowVBO;
 
 	shader_t	*shader;
 	double		shaderTime;	// -EC- set to double for frameloss fix
-	int			fogNum;
+	qint			fogNum;
 #ifdef USE_LEGACY_DLIGHTS
-	int			dlightBits;	// or together of all vertexDlightBits
+	qint			dlightBits;	// or together of all vertexDlightBits
 #endif
-	int			numIndexes;
-	int			numVertexes;
+	qint			numIndexes;
+	qint			numVertexes;
 
 #ifdef USE_PMLIGHT
 	const dlight_t* light;
-	qboolean	dlightPass;
-	qboolean	dlightUpdateParams;
+	qbool	dlightPass;
+	qbool	dlightUpdateParams;
 	cullType_t	cullType;
 #endif
 
 	// info extracted from current shader
 #ifdef USE_TESS_NEEDS_NORMAL
-	int			needsNormal;
+	qint			needsNormal;
 #endif
 #ifdef USE_TESS_NEEDS_ST2
-	int			needsST2;
+	qint			needsST2;
 #endif
 
-	int			numPasses;
+	qint			numPasses;
 	shaderStage_t **xstages;
 
 } shaderCommands_t;
 
 extern	shaderCommands_t	tess;
 
-void RB_BeginSurface( shader_t *shader, int fogNum );
+void RB_BeginSurface( shader_t *shader, qint fogNum );
 void RB_EndSurface( void );
-void RB_CheckOverflow( int verts, int indexes );
+void RB_CheckOverflow( qint verts, qint indexes );
 #define RB_CHECKOVERFLOW(v,i) RB_CheckOverflow(v,i)
 
 void RB_StageIteratorGeneric( void );
@@ -1569,7 +1569,7 @@ WORLD MAP
 
 void R_AddBrushModelSurfaces( trRefEntity_t *e );
 void R_AddWorldSurfaces( void );
-qboolean R_inPVS( const vec3_t p1, const vec3_t p2 );
+qbool R_inPVS( const vec3_t p1, const vec3_t p2 );
 
 
 /*
@@ -1582,7 +1582,7 @@ FLARES
 
 void R_ClearFlares( void );
 
-void RB_AddFlare( void *surface, int fogNum, vec3_t point, vec3_t color, vec3_t normal );
+void RB_AddFlare( void *surface, qint fogNum, vec3_t point, vec3_t color, vec3_t normal );
 void RB_AddDlightFlares( void );
 void RB_RenderFlares( void );
 
@@ -1595,40 +1595,40 @@ LIGHTS
 */
 void R_DlightBmodel( bmodel_t *bmodel );
 void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent );
-void R_TransformDlights( int count, dlight_t *dl, orientationr_t *or );
-int R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir );
+void R_TransformDlights( qint count, dlight_t *dl, orientationr_t *or );
+qint R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir );
 
 #ifdef USE_PMLIGHT
 void ARB_SetupLightParams( void );
 void ARB_LightingPass( void );
-qboolean R_LightCullBounds( const dlight_t* dl, const vec3_t mins, const vec3_t maxs );
+qbool R_LightCullBounds( const dlight_t* dl, const vec3_t mins, const vec3_t maxs );
 #endif // USE_PMLIGHT
 
 void R_BindAnimatedImage( const textureBundle_t *bundle );
-void R_DrawElements( int numIndexes, const glIndex_t *indexes );
+void R_DrawElements( qint numIndexes, const glIndex_t *indexes );
 void R_ComputeColors( const shaderStage_t *pStage );
-void R_ComputeTexCoords( const int b, const textureBundle_t *bundle );
+void R_ComputeTexCoords( const qint b, const textureBundle_t *bundle );
 
 void QGL_InitARB( void );
 void QGL_DoneARB( void );
 #ifdef USE_FBO
 void QGL_InitFBO( void );
 #endif
-qboolean ARB_UpdatePrograms( void );
+qbool ARB_UpdatePrograms( void );
 
-qboolean GL_ProgramAvailable( void );
+qbool GL_ProgramAvailable( void );
 void GL_ProgramDisable( void );
 void GL_ProgramEnable( void );
 
 #ifdef USE_FBO
-extern qboolean		fboEnabled;
-extern qboolean		blitMSfbo;
+extern qbool		fboEnabled;
+extern qbool		blitMSfbo;
 
 void FBO_BindMain( void );
 void FBO_PostProcess( void );
-void FBO_BlitMS( qboolean depthOnly );
+void FBO_BlitMS( qbool depthOnly );
 void FBO_BlitSS( void );
-qboolean FBO_Bloom( const float gamma, const float obScale, qboolean finalPass );
+qbool FBO_Bloom( const float gamma, const float obScale, qbool finalPass );
 void FBO_CopyScreen( void );
 GLuint FBO_ScreenTexture( void );
 #endif //  USE_FBO
@@ -1667,10 +1667,10 @@ CURVE TESSELATION
 
 #define PATCH_STITCHING
 
-srfGridMesh_t *R_SubdividePatchToGrid( int width, int height,
+srfGridMesh_t *R_SubdividePatchToGrid( qint width, qint height,
 								drawVert_t points[MAX_PATCH_SIZE*MAX_PATCH_SIZE] );
-srfGridMesh_t *R_GridInsertColumn( srfGridMesh_t *grid, int column, int row, vec3_t point, float loderror );
-srfGridMesh_t *R_GridInsertRow( srfGridMesh_t *grid, int row, int column, vec3_t point, float loderror );
+srfGridMesh_t *R_GridInsertColumn( srfGridMesh_t *grid, qint column, qint row, vec3_t point, float loderror );
+srfGridMesh_t *R_GridInsertRow( srfGridMesh_t *grid, qint row, qint column, vec3_t point, float loderror );
 void R_FreeSurfaceGridMesh( srfGridMesh_t *grid );
 
 /*
@@ -1681,8 +1681,8 @@ MARKERS, POLYGON PROJECTION ON WORLD POLYGONS
 ============================================================
 */
 
-int R_MarkFragments( int numPoints, const vec3_t *points, const vec3_t projection,
-				   int maxPoints, vec3_t pointBuffer, int maxFragments, markFragment_t *fragmentBuffer );
+qint R_MarkFragments( qint numPoints, const vec3_t *points, const vec3_t projection,
+				   qint maxPoints, vec3_t pointBuffer, qint maxFragments, markFragment_t *fragmentBuffer );
 
 
 /*
@@ -1696,8 +1696,8 @@ SCENE GENERATION
 void R_InitNextFrame( void );
 
 void RE_ClearScene( void );
-void RE_AddRefEntityToScene( const refEntity_t *ent, qboolean intShaderTime );
-void RE_AddPolyToScene( qhandle_t hShader , int numVerts, const polyVert_t *verts, int num );
+void RE_AddRefEntityToScene( const refEntity_t *ent, qbool intShaderTime );
+void RE_AddPolyToScene( qhandle_t hShader , qint numVerts, const polyVert_t *verts, qint num );
 void RE_AddLightToScene( const vec3_t org, float intensity, float r, float g, float b );
 void RE_AddAdditiveLightToScene( const vec3_t org, float intensity, float r, float g, float b );
 void RE_AddLinearLightToScene( const vec3_t start, const vec3_t end, float intensity, float r, float g, float b );
@@ -1721,7 +1721,7 @@ UNCOMPRESSING BONES
 #define MC_SCALE_Y (1.0f/64)
 #define MC_SCALE_Z (1.0f/64)
 
-void MC_UnCompress(float mat[3][4],const unsigned char * comp);
+void MC_UnCompress(float mat[3][4],const unsigned qchar * comp);
 
 /*
 =============================================================
@@ -1733,12 +1733,12 @@ ANIMATED MODELS
 
 void R_MDRAddAnimSurfaces( trRefEntity_t *ent );
 void RB_MDRSurfaceAnim( mdrSurface_t *surface );
-qboolean R_LoadIQM (model_t *mod, void *buffer, int filesize, const char *name );
+qbool R_LoadIQM (model_t *mod, void *buffer, qint filesize, const qchar *name );
 void R_AddIQMSurfaces( trRefEntity_t *ent );
 void RB_IQMSurfaceAnim( const surfaceType_t *surface );
-int R_IQMLerpTag( orientation_t *tag, iqmData_t *data,
-                  int startFrame, int endFrame,
-                  float frac, const char *tagName );
+qint R_IQMLerpTag( orientation_t *tag, iqmData_t *data,
+                  qint startFrame, qint endFrame,
+                  float frac, const qchar *tagName );
 
 /*
 =============================================================
@@ -1751,7 +1751,7 @@ void	R_TransformClipToWindow( const vec4_t clip, const viewParms_t *view, vec4_t
 void	RB_DeformTessGeometry( void );
 
 void	RB_CalcEnvironmentTexCoords( float *dstTexCoords );
-void	RB_CalcEnvironmentTexCoordsFP( float *dstTexCoords, qboolean screenMap );
+void	RB_CalcEnvironmentTexCoordsFP( float *dstTexCoords, qbool screenMap );
 void	RB_CalcFogTexCoords( float *dstTexCoords );
 const fogProgramParms_t *RB_CalcFogProgramParms( void );
 void	RB_CalcScrollTexCoords( const float scroll[2], float *srcTexCoords, float *dstTexCoords );
@@ -1759,18 +1759,18 @@ void	RB_CalcRotateTexCoords( float rotSpeed, float *srcTexCoords, float *dstTexC
 void	RB_CalcScaleTexCoords( const float scale[2], float *srcTexCoords, float *dstTexCoords );
 void	RB_CalcTurbulentTexCoords( const waveForm_t *wf, float *srcTexCoords, float *dstTexCoords );
 void	RB_CalcTransformTexCoords( const texModInfo_t *tmi, float *srcTexCoords, float *dstTexCoords );
-void	RB_CalcModulateColorsByFog( unsigned char *dstColors );
-void	RB_CalcModulateAlphasByFog( unsigned char *dstColors );
-void	RB_CalcModulateRGBAsByFog( unsigned char *dstColors );
-void	RB_CalcWaveAlpha( const waveForm_t *wf, unsigned char *dstColors );
-void	RB_CalcWaveColor( const waveForm_t *wf, unsigned char *dstColors );
-void	RB_CalcAlphaFromEntity( unsigned char *dstColors );
-void	RB_CalcAlphaFromOneMinusEntity( unsigned char *dstColors );
+void	RB_CalcModulateColorsByFog( unsigned qchar *dstColors );
+void	RB_CalcModulateAlphasByFog( unsigned qchar *dstColors );
+void	RB_CalcModulateRGBAsByFog( unsigned qchar *dstColors );
+void	RB_CalcWaveAlpha( const waveForm_t *wf, unsigned qchar *dstColors );
+void	RB_CalcWaveColor( const waveForm_t *wf, unsigned qchar *dstColors );
+void	RB_CalcAlphaFromEntity( unsigned qchar *dstColors );
+void	RB_CalcAlphaFromOneMinusEntity( unsigned qchar *dstColors );
 void	RB_CalcStretchTexCoords( const waveForm_t *wf, float *srcTexCoords, float *dstTexCoords );
-void	RB_CalcColorFromEntity( unsigned char *dstColors );
-void	RB_CalcColorFromOneMinusEntity( unsigned char *dstColors );
-void	RB_CalcSpecularAlpha( unsigned char *alphas );
-void	RB_CalcDiffuseColor( unsigned char *colors );
+void	RB_CalcColorFromEntity( unsigned qchar *dstColors );
+void	RB_CalcColorFromOneMinusEntity( unsigned qchar *dstColors );
+void	RB_CalcSpecularAlpha( unsigned qchar *alphas );
+void	RB_CalcDiffuseColor( unsigned qchar *colors );
 
 /*
 =============================================================
@@ -1794,37 +1794,37 @@ RENDERER BACK END COMMAND QUEUE
 
 typedef struct {
 	byte	cmds[MAX_RENDER_COMMANDS];
-	int		used;
+	qint		used;
 } renderCommandList_t;
 
 typedef struct {
-	int		commandId;
+	qint		commandId;
 	float	color[4];
 } setColorCommand_t;
 
 typedef struct {
-	int		commandId;
-	int		buffer;
+	qint		commandId;
+	qint		buffer;
 } drawBufferCommand_t;
 
 typedef struct {
-	int		commandId;
+	qint		commandId;
 	image_t	*image;
-	int		width;
-	int		height;
+	qint		width;
+	qint		height;
 	void	*data;
 } subImageCommand_t;
 
 typedef struct {
-	int		commandId;
+	qint		commandId;
 } swapBuffersCommand_t;
 
 typedef struct {
-	int		commandId;
+	qint		commandId;
 } finishBloomCommand_t;
 
 typedef struct {
-	int		commandId;
+	qint		commandId;
 	shader_t	*shader;
 	float	x, y;
 	float	w, h;
@@ -1833,31 +1833,31 @@ typedef struct {
 } stretchPicCommand_t;
 
 typedef struct {
-	int		commandId;
+	qint		commandId;
 	trRefdef_t	refdef;
 	viewParms_t	viewParms;
 	drawSurf_t *drawSurfs;
-	int		numDrawSurfs;
+	qint		numDrawSurfs;
 } drawSurfsCommand_t;
 
 typedef struct
 {
-	int commandId;
+	qint commandId;
 
 	GLboolean rgba[4];
 } colorMaskCommand_t;
 
 typedef struct
 {
-	int commandId;
+	qint commandId;
 } clearDepthCommand_t;
 
 typedef struct
 {
-	int commandId;
-	qboolean fullscreen;
-	qboolean frontAndBack;
-	qboolean colorMask;
+	qint commandId;
+	qbool fullscreen;
+	qbool frontAndBack;
+	qbool colorMask;
 } clearColorCommand_t;
 
 typedef enum {
@@ -1899,33 +1899,33 @@ typedef struct {
 	renderCommandList_t	commands;
 } backEndData_t;
 
-extern	int		max_polys;
-extern	int		max_polyverts;
+extern	qint		max_polys;
+extern	qint		max_polyverts;
 
 extern	backEndData_t	*backEndData;
 
 void RB_ExecuteRenderCommands( const void *data );
-void RB_TakeScreenshot( int x, int y, int width, int height, const char *fileName );
-void RB_TakeScreenshotJPEG( int x, int y, int width, int height, const char *fileName );
-void RB_TakeScreenshotBMP( int x, int y, int width, int height, const char *fileName, int clipboard );
+void RB_TakeScreenshot( qint x, qint y, qint width, qint height, const qchar *fileName );
+void RB_TakeScreenshotJPEG( qint x, qint y, qint width, qint height, const qchar *fileName );
+void RB_TakeScreenshotBMP( qint x, qint y, qint width, qint height, const qchar *fileName, qint clipboard );
 
 void R_IssuePendingRenderCommands( void );
 
-void R_AddDrawSurfCmd( drawSurf_t *drawSurfs, int numDrawSurfs );
+void R_AddDrawSurfCmd( drawSurf_t *drawSurfs, qint numDrawSurfs );
 
 void RE_SetColor( const float *rgba );
 void RE_StretchPic ( float x, float y, float w, float h, 
 					  float s1, float t1, float s2, float t2, qhandle_t hShader );
 void RE_BeginFrame( stereoFrame_t stereoFrame );
-void RE_EndFrame( int *frontEndMsec, int *backEndMsec );
-void RE_TakeVideoFrame( int width, int height,
-		byte *captureBuffer, byte *encodeBuffer, qboolean motionJpeg );
+void RE_EndFrame( qint *frontEndMsec, qint *backEndMsec );
+void RE_TakeVideoFrame( qint width, qint height,
+		byte *captureBuffer, byte *encodeBuffer, qbool motionJpeg );
 
 void RE_FinishBloom( void );
 void RE_ThrottleBackend( void );
-qboolean RE_CanMinimize( void );
+qbool RE_CanMinimize( void );
 const glconfig_t *RE_GetConfig( void );
-void RE_VertexLighting( qboolean allowed );
+void RE_VertexLighting( qbool allowed );
 
 
 //Bloom Stuff
@@ -1948,14 +1948,14 @@ void R_BloomScreen( void );
 // VBO functions
 #ifdef USE_VBO
 extern void RB_StageIteratorVBO( void );
-extern void R_BuildWorldVBO( msurface_t *surf, int surfCount );
+extern void R_BuildWorldVBO( msurface_t *surf, qint surfCount );
 
-extern void VBO_PushData( int itemIndex, shaderCommands_t *input );
+extern void VBO_PushData( qint itemIndex, shaderCommands_t *input );
 extern void VBO_UnBind( void );
-extern int VBO_Active( void );
+extern qint VBO_Active( void );
 
 extern void VBO_Cleanup( void );
-extern void VBO_QueueItem( int itemIndex );
+extern void VBO_QueueItem( qint itemIndex );
 extern void VBO_ClearQueue( void );
 extern void VBO_Flush( void );
 #endif
@@ -2008,14 +2008,14 @@ typedef enum {
 
 } programNum;
 
-extern const char *fogOutVPCode;
-extern const char *fogInVPCode;
+extern const qchar *fogOutVPCode;
+extern const qchar *fogInVPCode;
 
-qboolean ARB_CompileProgram( programType ptype, const char *text, GLuint program );
+qbool ARB_CompileProgram( programType ptype, const qchar *text, GLuint program );
 void ARB_ProgramEnableExt( GLuint vertexProgram, GLuint fragmentProgram );
 
-void QGL_SetRenderScale( qboolean verbose );
+void QGL_SetRenderScale( qbool verbose );
 
-int R_GetLightmapCoords( const int lightmapIndex, float *x, float *y );
+qint R_GetLightmapCoords( const qint lightmapIndex, float *x, float *y );
 
 #endif //TR_LOCAL_H

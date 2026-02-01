@@ -12,13 +12,13 @@
 
 typedef struct
 {
-	int x, y;
-	int w, h;
+	qint x, y;
+	qint w, h;
 	RROutput outputn;
 	RRCrtc crtcn;
 	RRMode curMode;
 	RRMode oldMode;
-	char name[32];
+	qchar name[32];
 } monitor_t;
 
 monitor_t monitors[ MAX_MONITORS ];
@@ -26,16 +26,16 @@ monitor_t *current_monitor;
 monitor_t desktop_monitor;
 
 unsigned short old_gamma[3][4096]; // backup
-int old_gamma_size;
+qint old_gamma_size;
 
-static qboolean BackupMonitorGamma( void );
+static qbool BackupMonitorGamma( void );
 
 // we resolve all functions dynamically
 
 static void *r_lib = NULL;
 
-Bool (*_XRRQueryExtension)( Display *dpy, int *event_base_return, int *error_base_return );
-Status (*_XRRQueryVersion)( Display *dpy, int *major_version_return, int *minor_version_return );
+Bool (*_XRRQueryExtension)( Display *dpy, qint *event_base_return, qint *error_base_return );
+Status (*_XRRQueryVersion)( Display *dpy, qint *major_version_return, qint *minor_version_return );
 XRRScreenResources* (*_XRRGetScreenResources)( Display *dpy, Window window );
 void (*_XRRFreeScreenResources)( XRRScreenResources *resources );
 XRROutputInfo *(*_XRRGetOutputInfo)( Display *dpy, XRRScreenResources *resources, RROutput output );
@@ -43,11 +43,11 @@ void (*_XRRFreeOutputInfo)( XRROutputInfo *outputInfo );
 XRRCrtcInfo *(*_XRRGetCrtcInfo)( Display *dpy, XRRScreenResources *resources, RRCrtc crtc );
 void (*_XRRFreeCrtcInfo)( XRRCrtcInfo *crtcInfo );
 Status (*_XRRSetCrtcConfig)( Display *dpy, XRRScreenResources *resources, RRCrtc crtc,
-		Time timestamp, int x, int y, RRMode mode, Rotation rotation,
-		RROutput *outputs, int noutputs );
-int (*_XRRGetCrtcGammaSize)( Display *dpy, RRCrtc crtc );
+		Time timestamp, qint x, qint y, RRMode mode, Rotation rotation,
+		RROutput *outputs, qint noutputs );
+qint (*_XRRGetCrtcGammaSize)( Display *dpy, RRCrtc crtc );
 XRRCrtcGamma *(*_XRRGetCrtcGamma)( Display *dpy, RRCrtc crtc );
-XRRCrtcGamma *(*_XRRAllocGamma)( int size );
+XRRCrtcGamma *(*_XRRAllocGamma)( qint size );
 void (*_XRRSetCrtcGamma)( Display *dpy, RRCrtc crtc, XRRCrtcGamma *gamma );
 void (*_XRRFreeGamma)( XRRCrtcGamma *gamma );
 
@@ -70,9 +70,9 @@ static sym_t r_list[] =
 };
 
 
-static qboolean monitor_in_list( int x, int y, int w, int h, RROutput outputn, RRCrtc crtcn )
+static qbool monitor_in_list( qint x, qint y, qint w, qint h, RROutput outputn, RRCrtc crtcn )
 {
-	int i;
+	qint i;
 
 	for ( i = 0; i < glw_state.monitorCount; i++ )
 	{
@@ -92,7 +92,7 @@ static qboolean monitor_in_list( int x, int y, int w, int h, RROutput outputn, R
 }
 
 
-void monitor_add( int x, int y, int w, int h, const char *name, RROutput outputn, RRCrtc crtcn, RRMode mode )
+void monitor_add( qint x, qint y, qint w, qint h, const qchar *name, RROutput outputn, RRCrtc crtcn, RRMode mode )
 {
 	monitor_t *m;
 	
@@ -119,7 +119,7 @@ void monitor_add( int x, int y, int w, int h, const char *name, RROutput outputn
 }
 
 
-static int getRefreshRate( const XRRModeInfo *mode_info )
+static qint getRefreshRate( const XRRModeInfo *mode_info )
 {
 	if ( mode_info->hTotal && mode_info->vTotal )
 		return ( (double)mode_info->dotClock / ( (double)mode_info->hTotal * (double)mode_info->vTotal ) );
@@ -130,7 +130,7 @@ static int getRefreshRate( const XRRModeInfo *mode_info )
 
 static const XRRModeInfo* getModeInfo( const XRRScreenResources* sr, RRMode id )
 {
-	int i;
+	qint i;
 
 	for ( i = 0; i < sr->nmode; i++ )
 		if ( sr->modes[ i ].id == id )
@@ -140,7 +140,7 @@ static const XRRModeInfo* getModeInfo( const XRRScreenResources* sr, RRMode id )
 }
 
 
-qboolean RandR_SetMode( int *width, int *height, int *rate )
+qbool RandR_SetMode( qint *width, qint *height, qint *rate )
 {
 	monitor_t *m = &desktop_monitor;
 	XRRScreenResources *sr;
@@ -148,10 +148,10 @@ qboolean RandR_SetMode( int *width, int *height, int *rate )
 	XRROutputInfo *output_info;
 	XRRCrtcInfo *crtc_info;
 	RRMode newMode;
-	int best_fit, best_dist, best_rate;
-	int dist, r, rr;
-	int x, y, w, h;
-	int n;
+	qint best_fit, best_dist, best_rate;
+	qint dist, r, rr;
+	qint x, y, w, h;
+	qint n;
 
 	glw_state.randr_active = qfalse;
 
@@ -213,7 +213,7 @@ qboolean RandR_SetMode( int *width, int *height, int *rate )
 	
 	if ( best_fit != -1 )
 	{
-		//Com_Printf( "...setting new mode 0x%x via xrandr \n", (int)newMode );
+		//Com_Printf( "...setting new mode 0x%x via xrandr \n", (qint)newMode );
 		_XRRSetCrtcConfig( dpy, sr, m->crtcn, CurrentTime, crtc_info->x, crtc_info->y,
 			newMode, crtc_info->rotation, crtc_info->outputs, crtc_info->noutput );
 
@@ -272,7 +272,7 @@ static void BuildMonitorList( void )
 	XRRScreenResources *sr;
 	XRRCrtcInfo *crtc_info;
 	XRROutputInfo *info;
-	int outn;
+	qint outn;
 
 	glw_state.monitorCount = 0;
 
@@ -294,7 +294,7 @@ static void BuildMonitorList( void )
 					//fprintf( stderr, "%ix%i @%ix%i outn:%i (crtc:%i) %s\n",
 					//		crtc_info->width, crtc_info->height,
 					//		crtc_info->x, crtc_info->y,
-					//		(int)outn, (int)info->crtc, info->name );
+					//		(qint)outn, (qint)info->crtc, info->name );
 					if ( crtc_info->width && crtc_info->height )
 					{
 						monitor_add( crtc_info->x, crtc_info->y, crtc_info->width, crtc_info->height,
@@ -310,12 +310,12 @@ static void BuildMonitorList( void )
 }
 
 
-static monitor_t *FindNearestMonitor( int x, int y, int w, int h )
+static monitor_t *FindNearestMonitor( qint x, qint y, qint w, qint h )
 {
 	monitor_t *m, *found, *list[ MAX_MONITORS ];
 	unsigned long dx, dy, dist, nearest;
-	int cx, cy;
-	int i, cnt, minx, maxx, slen;
+	qint cx, cy;
+	qint i, cnt, minx, maxx, slen;
 
 	cx = x + w/2;
 
@@ -378,10 +378,10 @@ static monitor_t *FindNearestMonitor( int x, int y, int w, int h )
 }
 
 
-void RandR_UpdateMonitor( int x, int y, int w, int h )
+void RandR_UpdateMonitor( qint x, qint y, qint w, qint h )
 {
 	monitor_t *cm;
-//	int i;
+//	qint i;
 	
 	if ( !glw_state.monitorCount || glw_state.cdsFullscreen )
 		return;
@@ -394,7 +394,7 @@ void RandR_UpdateMonitor( int x, int y, int w, int h )
 
 	if ( cm != current_monitor )
 	{
-		qboolean gammaSet = glw_state.gammaSet;
+		qbool gammaSet = glw_state.gammaSet;
 
 		if ( glw_state.randr_gamma && gammaSet )
 		{
@@ -427,10 +427,10 @@ void RandR_UpdateMonitor( int x, int y, int w, int h )
 }
 
 
-static qboolean BackupMonitorGamma( void )
+static qbool BackupMonitorGamma( void )
 {
 	XRRCrtcGamma* gamma;
-	int gammaRampSize;
+	qint gammaRampSize;
 
 	if ( !glw_state.monitorCount || !glw_state.randr_gamma )
 	{
@@ -463,7 +463,7 @@ static qboolean BackupMonitorGamma( void )
 }
 
 
-static void SetMonitorGamma( unsigned short *red, unsigned short *green, unsigned short *blue, int size )
+static void SetMonitorGamma( unsigned short *red, unsigned short *green, unsigned short *blue, qint size )
 {
 	XRRCrtcGamma* gamma;
 
@@ -487,7 +487,7 @@ void RandR_RestoreGamma( void )
 }
 
 
-void RandR_SetGamma( unsigned char red[256], unsigned char green[256], unsigned char blue[256] )
+void RandR_SetGamma( unsigned qchar red[256], unsigned qchar green[256], unsigned qchar blue[256] )
 {
 	unsigned short table[3][4096];
 	
@@ -499,11 +499,11 @@ void RandR_SetGamma( unsigned char red[256], unsigned char green[256], unsigned 
 }
 
 
-qboolean RandR_Init( int x, int y, int w, int h )
+qbool RandR_Init( qint x, qint y, qint w, qint h )
 {
-	int event_base, error_base;
-	int ver_major = 1, ver_minor = 2;
-	int i;
+	qint event_base, error_base;
+	qint ver_major = 1, ver_minor = 2;
+	qint i;
 
 	glw_state.randr_ext = qfalse;
 	glw_state.randr_active = qfalse;

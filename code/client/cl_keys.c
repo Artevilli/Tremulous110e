@@ -29,11 +29,11 @@ key up events are sent even if in console mode
 
 field_t		g_consoleField;
 field_t		chatField;
-qboolean	chat_team;
+qbool	chat_team;
 
-int			chat_playerNum;
+qint			chat_playerNum;
 
-static void Field_CharEvent( field_t *edit, int ch );
+static void Field_CharEvent( field_t *edit, qint ch );
 
 /*
 =============================================================================
@@ -52,15 +52,15 @@ Handles horizontal scrolling and cursor blinking
 x, y, and width are in pixels
 ===================
 */
-static void Field_VariableSizeDraw( field_t *edit, int x, int y, int width, int size, qboolean showCursor,
-		qboolean noColorEscape ) {
-	int		len;
-	int		drawLen;
-	int		prestep;
-	int		cursorChar;
-	char	str[MAX_STRING_CHARS], *s;
-	int		i;
-	int		curColor;
+static void Field_VariableSizeDraw( field_t *edit, qint x, qint y, qint width, qint size, qbool showCursor,
+		qbool noColorEscape ) {
+	qint		len;
+	qint		drawLen;
+	qint		prestep;
+	qint		cursorChar;
+	qchar	str[MAX_STRING_CHARS], *s;
+	qint		i;
+	qint		curColor;
 
 	drawLen = edit->widthInChars - 1; // - 1 so there is always a space for the cursor
 	len = strlen( edit->buffer );
@@ -151,13 +151,13 @@ static void Field_VariableSizeDraw( field_t *edit, int x, int y, int width, int 
 }
 
 
-void Field_Draw( field_t *edit, int x, int y, int width, qboolean showCursor, qboolean noColorEscape )
+void Field_Draw( field_t *edit, qint x, qint y, qint width, qbool showCursor, qbool noColorEscape )
 {
 	Field_VariableSizeDraw( edit, x, y, width, smallchar_width, showCursor, noColorEscape );
 }
 
 
-void Field_BigDraw( field_t *edit, int x, int y, int width, qboolean showCursor, qboolean noColorEscape )
+void Field_BigDraw( field_t *edit, qint x, qint y, qint width, qbool showCursor, qbool noColorEscape )
 {
 	Field_VariableSizeDraw( edit, x, y, width, bigchar_width, showCursor, noColorEscape );
 }
@@ -169,8 +169,8 @@ Field_Paste
 ================
 */
 static void Field_Paste( field_t *edit ) {
-	char	*cbd;
-	int		pasteLen, i;
+	qchar	*cbd;
+	qint		pasteLen, i;
 
 	cbd = Sys_GetClipboardData();
 
@@ -193,7 +193,7 @@ static void Field_Paste( field_t *edit ) {
 Field_NextWord
 =================
 */
-static void Field_SeekWord( field_t *edit, int direction )
+static void Field_SeekWord( field_t *edit, qint direction )
 {
 	if ( direction > 0 ) {
 		while ( edit->buffer[ edit->cursor ] == ' ' )
@@ -220,11 +220,11 @@ Field_KeyDownEvent
 Performs the basic line editing functions for the console,
 in-game talk, and menu fields
 
-Key events are used for non-printable characters, others are gotten from char events.
+Key events are used for non-printable characters, others are gotten from qchar events.
 =================
 */
-static void Field_KeyDownEvent( field_t *edit, int key ) {
-	int		len;
+static void Field_KeyDownEvent( field_t *edit, qint key ) {
+	qint		len;
 
 	// shift-insert is paste
 	if ( ( ( key == K_INS ) || ( key == K_KP_INS ) ) && keys[K_SHIFT].down ) {
@@ -292,8 +292,8 @@ static void Field_KeyDownEvent( field_t *edit, int key ) {
 Field_CharEvent
 ==================
 */
-static void Field_CharEvent( field_t *edit, int ch ) {
-	int		len;
+static void Field_CharEvent( field_t *edit, qint ch ) {
+	qint		len;
 
 	if ( ch == 'v' - 'a' + 1 ) {	// ctrl-v is paste
 		Field_Paste( edit );
@@ -382,7 +382,7 @@ Console_Key
 Handles history and console scrollback
 ====================
 */
-static void Console_Key( int key ) {
+static void Console_Key( qint key ) {
 	// ctrl-L clears screen
 	if ( key == 'l' && keys[K_CTRL].down ) {
 		Cbuf_AddText( "clear\n" );
@@ -396,7 +396,7 @@ static void Console_Key( int key ) {
 			&& g_consoleField.buffer[0] != '\0'
 			&& g_consoleField.buffer[0] != '\\'
 			&& g_consoleField.buffer[0] != '/' ) {
-			char	temp[MAX_EDIT_LINE-1];
+			qchar	temp[MAX_EDIT_LINE-1];
 
 			Q_strncpyz( temp, g_consoleField.buffer, sizeof( temp ) );
 			Com_sprintf( g_consoleField.buffer, sizeof( g_consoleField.buffer ), "\\%s", temp );
@@ -500,9 +500,9 @@ Message_Key
 In game talk message
 ================
 */
-static void Message_Key( int key ) {
+static void Message_Key( qint key ) {
 
-	char	buffer[MAX_STRING_CHARS];
+	qchar	buffer[MAX_STRING_CHARS];
 
 	if (key == K_ESCAPE) {
 		Key_SetCatcher( Key_GetCatcher( ) & ~KEYCATCH_MESSAGE );
@@ -543,7 +543,7 @@ CL_KeyDownEvent
 Called by CL_KeyEvent to handle a keypress
 ===================
 */
-static void CL_KeyDownEvent( int key, unsigned time )
+static void CL_KeyDownEvent( qint key, unsigned time )
 {
 	keys[key].down = qtrue;
 	keys[key].bound = qfalse;
@@ -668,9 +668,9 @@ CL_KeyUpEvent
 Called by CL_KeyEvent to handle a keyrelease
 ===================
 */
-static void CL_KeyUpEvent( int key, unsigned time )
+static void CL_KeyUpEvent( qint key, unsigned time )
 {
-	const qboolean bound = keys[key].bound;
+	const qbool bound = keys[key].bound;
 
 	keys[key].repeats = 0;
 	keys[key].down = qfalse;
@@ -721,7 +721,7 @@ CL_KeyEvent
 Called by the system for both key up and key down events
 ===================
 */
-void CL_KeyEvent( int key, qboolean down, unsigned time )
+void CL_KeyEvent( qint key, qbool down, unsigned time )
 {
 	if ( down )
 		CL_KeyDownEvent( key, time );
@@ -737,7 +737,7 @@ CL_CharEvent
 Normal keyboard characters, already shifted / capslocked / etc
 ===================
 */
-void CL_CharEvent( int key )
+void CL_CharEvent( qint key )
 {
 	// delete is not a printable character and is
 	// otherwise handled by Field_KeyDownEvent
@@ -771,7 +771,7 @@ Key_ClearStates
 */
 void Key_ClearStates( void )
 {
-	int		i;
+	qint		i;
 
 	anykeydown = 0;
 
@@ -786,14 +786,14 @@ void Key_ClearStates( void )
 }
 
 
-static int keyCatchers = 0;
+static qint keyCatchers = 0;
 
 /*
 ====================
 Key_GetCatcher
 ====================
 */
-int Key_GetCatcher( void )
+qint Key_GetCatcher( void )
 {
 	return keyCatchers;
 }
@@ -804,7 +804,7 @@ int Key_GetCatcher( void )
 Key_SetCatcher
 ====================
 */
-void Key_SetCatcher( int catcher )
+void Key_SetCatcher( qint catcher )
 {
 	// If the catcher state is changing, clear all key states
 	if ( catcher != keyCatchers )

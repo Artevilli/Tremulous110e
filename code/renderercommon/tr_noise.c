@@ -30,42 +30,42 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define INDEX( x, y, z, t ) VAL( x + VAL( y + VAL( z + VAL( t ) ) ) )
 
 static float s_noise_table[NOISE_SIZE];
-static int s_noise_perm[NOISE_SIZE];
+static qint s_noise_perm[NOISE_SIZE];
 
-static float GetNoiseValue( int x, int y, int z, int t )
+static float GetNoiseValue( qint x, qint y, qint z, qint t )
 {
-	int index = INDEX( ( int ) x, ( int ) y, ( int ) z, ( int ) t );
+	qint index = INDEX( ( qint ) x, ( qint ) y, ( qint ) z, ( qint ) t );
 
 	return s_noise_table[index];
 }
 
 void R_NoiseInit( void )
 {
-	int i;
+	qint i;
 
 	for ( i = 0; i < NOISE_SIZE; i++ )
 	{
 		s_noise_table[i] = ( float ) ( ( ( rand() / ( float ) RAND_MAX ) * 2.0 - 1.0 ) );
-		s_noise_perm[i] = ( unsigned char ) ( rand() / ( float ) RAND_MAX * 255 );
+		s_noise_perm[i] = ( unsigned qchar ) ( rand() / ( float ) RAND_MAX * 255 );
 	}
 }
 
 float R_NoiseGet4f( float x, float y, float z, double t )
 {
-	int i;
-	int ix, iy, iz, it;
+	qint i;
+	qint ix, iy, iz, it;
 	float fx, fy, fz, ft;
 	float front[4];
 	float back[4];
 	float fvalue, bvalue, value[2], finalvalue;
 
-	ix = ( int ) floor( x );
+	ix = ( qint ) floor( x );
 	fx = x - ix;
-	iy = ( int ) floor( y );
+	iy = ( qint ) floor( y );
 	fy = y - iy;
-	iz = ( int ) floor( z );
+	iz = ( qint ) floor( z );
 	fz = z - iz;
-	it = ( int ) floor( t );
+	it = ( qint ) floor( t );
 	ft = t - it;
 
 	for ( i = 0; i < 2; i++ )

@@ -9,9 +9,9 @@
 
 static void *d_lib = NULL;
 
-Bool (*_XF86DGAQueryVersion)( Display *dpy, int *majorVersion, int *minorVersion );
-Bool (*_XF86DGAQueryExtension)( Display *dpy, int *event_base, int *error_base );
-Status (*_XF86DGADirectVideo)( Display *dpy, int screen, int enable );
+Bool (*_XF86DGAQueryVersion)( Display *dpy, qint *majorVersion, qint *minorVersion );
+Bool (*_XF86DGAQueryExtension)( Display *dpy, qint *event_base, qint *error_base );
+Status (*_XF86DGADirectVideo)( Display *dpy, qint screen, qint enable );
 
 static sym_t d_list[] =
 {
@@ -20,11 +20,11 @@ static sym_t d_list[] =
 	{ (void**)&_XF86DGADirectVideo, "XF86DGADirectVideo" }
 };
 
-qboolean DGA_Init( Display *_dpy )
+qbool DGA_Init( Display *_dpy )
 {
-	int event_base, error_base;
-	int ver_major = 0, ver_minor = 0;
-	int i;
+	qint event_base, error_base;
+	qint ver_major = 0, ver_minor = 0;
+	qint i;
 
 	glw_state.dga_ext = qfalse;
 
@@ -82,7 +82,7 @@ void DGA_Done( void )
 	glw_state.dga_ext = qfalse;
 }
 
-void DGA_Mouse( qboolean enable )
+void DGA_Mouse( qbool enable )
 {
 	if ( !glw_state.dga_ext )
 		return;

@@ -29,8 +29,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 FGetLittleLong
 =================
 */
-static int FGetLittleLong( fileHandle_t f ) {
-	int		v;
+static qint FGetLittleLong( fileHandle_t f ) {
+	qint		v;
 
 	FS_Read( &v, sizeof(v), f );
 
@@ -55,9 +55,9 @@ static short FGetLittleShort( fileHandle_t f ) {
 S_ReadChunkInfo
 =================
 */
-static int S_ReadChunkInfo(fileHandle_t f, char *name)
+static qint S_ReadChunkInfo(fileHandle_t f, qchar *name)
 {
-	int len, r;
+	qint len, r;
 
 	name[4] = 0;
 
@@ -81,9 +81,9 @@ S_FindRIFFChunk
 Returns the length of the data in the chunk, or -1 if not found
 =================
 */
-static int S_FindRIFFChunk( fileHandle_t f, char *chunk ) {
-	char	name[5];
-	int		len;
+static qint S_FindRIFFChunk( fileHandle_t f, qchar *chunk ) {
+	qchar	name[5];
+	qint		len;
 
 	while( ( len = S_ReadChunkInfo(f, name) ) >= 0 )
 	{
@@ -109,8 +109,8 @@ If raw data has been loaded in little endian binary form, this must be done.
 If raw data was calculated, as with ADPCM, this should not be called.
 =================
 */
-static void S_ByteSwapRawSamples( int samples, int width, int s_channels, const byte *data ) {
-	int		i;
+static void S_ByteSwapRawSamples( qint samples, qint width, qint s_channels, const byte *data ) {
+	qint		i;
 
 	if ( width != 2 ) {
 		return;
@@ -133,11 +133,11 @@ static void S_ByteSwapRawSamples( int samples, int width, int s_channels, const 
 S_ReadRIFFHeader
 =================
 */
-static qboolean S_ReadRIFFHeader(fileHandle_t file, snd_info_t *info)
+static qbool S_ReadRIFFHeader(fileHandle_t file, snd_info_t *info)
 {
-	char dump[16];
-	int bits;
-	int fmtlen = 0;
+	qchar dump[16];
+	qint bits;
+	qint fmtlen = 0;
 
 	// skip the riff wav header
 	FS_Read(dump, 12, file);
@@ -200,7 +200,7 @@ snd_codec_t wav_codec =
 S_WAV_CodecLoad
 =================
 */
-void *S_WAV_CodecLoad(const char *filename, snd_info_t *info)
+void *S_WAV_CodecLoad(const qchar *filename, snd_info_t *info)
 {
 	fileHandle_t file;
 	void *buffer;
@@ -245,7 +245,7 @@ void *S_WAV_CodecLoad(const char *filename, snd_info_t *info)
 S_WAV_CodecOpenStream
 =================
 */
-snd_stream_t *S_WAV_CodecOpenStream(const char *filename)
+snd_stream_t *S_WAV_CodecOpenStream(const qchar *filename)
 {
 	snd_stream_t *rv;
 
@@ -279,10 +279,10 @@ void S_WAV_CodecCloseStream(snd_stream_t *stream)
 S_WAV_CodecReadStream
 =================
 */
-int S_WAV_CodecReadStream(snd_stream_t *stream, int bytes, void *buffer)
+qint S_WAV_CodecReadStream(snd_stream_t *stream, qint bytes, void *buffer)
 {
-	int remaining = stream->info.size - stream->pos;
-	int samples;
+	qint remaining = stream->info.size - stream->pos;
+	qint samples;
 
 	if(remaining <= 0)
 		return 0;

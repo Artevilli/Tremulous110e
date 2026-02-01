@@ -46,22 +46,22 @@ LAN_LoadCachedServers
 */
 static void LAN_LoadCachedServers( void ) {
 	fileHandle_t fileIn;
-	int size, file_size;
+	qint size, file_size;
 
 	cls.numglobalservers = cls.numfavoriteservers = 0;
 	cls.numGlobalServerAddresses = 0;
 
 	file_size = FS_Home_FOpenFileRead( "servercache.dat", &fileIn );
-	if ( file_size < (3*sizeof(int)) ) {
+	if ( file_size < (3*sizeof(qint)) ) {
 		if ( fileIn != FS_INVALID_HANDLE ) {
 			FS_FCloseFile( fileIn );
 		}
 		return;
 	}
 
-	FS_Read( &cls.numglobalservers, sizeof(int), fileIn );
-	FS_Read( &cls.numfavoriteservers, sizeof(int), fileIn );
-	FS_Read( &size, sizeof(int), fileIn );
+	FS_Read( &cls.numglobalservers, sizeof(qint), fileIn );
+	FS_Read( &cls.numfavoriteservers, sizeof(qint), fileIn );
+	FS_Read( &size, sizeof(qint), fileIn );
 
 	if ( size == sizeof(cls.globalServers) + sizeof(cls.favoriteServers) ) {
 		FS_Read( &cls.globalServers, sizeof(cls.globalServers), fileIn );
@@ -82,16 +82,16 @@ LAN_SaveServersToCache
 */
 static void LAN_SaveServersToCache( void ) {
 	fileHandle_t fileOut;
-	int size;
+	qint size;
 
 	fileOut = FS_FOpenFileWrite( "servercache.dat" );
 	if ( fileOut == FS_INVALID_HANDLE )
 		return;
 
-	FS_Write(&cls.numglobalservers, sizeof(int), fileOut);
-	FS_Write(&cls.numfavoriteservers, sizeof(int), fileOut);
+	FS_Write(&cls.numglobalservers, sizeof(qint), fileOut);
+	FS_Write(&cls.numfavoriteservers, sizeof(qint), fileOut);
 	size = sizeof(cls.globalServers) + sizeof(cls.favoriteServers);
-	FS_Write(&size, sizeof(int), fileOut);
+	FS_Write(&size, sizeof(qint), fileOut);
 	FS_Write(&cls.globalServers, sizeof(cls.globalServers), fileOut);
 	FS_Write(&cls.favoriteServers, sizeof(cls.favoriteServers), fileOut);
 
@@ -104,8 +104,8 @@ static void LAN_SaveServersToCache( void ) {
 LAN_ResetPings
 ====================
 */
-static void LAN_ResetPings(int source) {
-	int count,i;
+static void LAN_ResetPings(qint source) {
+	qint count,i;
 	serverInfo_t *servers = NULL;
 	count = 0;
 
@@ -137,8 +137,8 @@ static void LAN_ResetPings(int source) {
 LAN_AddServer
 ====================
 */
-static int LAN_AddServer(int source, const char *name, const char *address) {
-	int max, *count, i;
+static qint LAN_AddServer(qint source, const qchar *name, const qchar *address) {
+	qint max, *count, i;
 	netadr_t adr;
 	serverInfo_t *servers = NULL;
 	max = MAX_OTHER_SERVERS;
@@ -185,8 +185,8 @@ static int LAN_AddServer(int source, const char *name, const char *address) {
 LAN_RemoveServer
 ====================
 */
-static void LAN_RemoveServer(int source, const char *addr) {
-	int *count, i;
+static void LAN_RemoveServer(qint source, const qchar *addr) {
+	qint *count, i;
 	serverInfo_t *servers = NULL;
 	count = NULL;
 	switch (source) {
@@ -209,7 +209,7 @@ static void LAN_RemoveServer(int source, const char *addr) {
 		NET_StringToAdr( addr, &comp, NA_UNSPEC );
 		for (i = 0; i < *count; i++) {
 			if (NET_CompareAdr( &comp, &servers[i].adr)) {
-				int j = i;
+				qint j = i;
 				while (j < *count - 1) {
 					Com_Memcpy(&servers[j], &servers[j+1], sizeof(servers[j]));
 					j++;
@@ -227,7 +227,7 @@ static void LAN_RemoveServer(int source, const char *addr) {
 LAN_GetServerCount
 ====================
 */
-static int LAN_GetServerCount( int source ) {
+static qint LAN_GetServerCount( qint source ) {
 	switch (source) {
 		case AS_LOCAL :
 			return cls.numlocalservers;
@@ -249,7 +249,7 @@ static int LAN_GetServerCount( int source ) {
 LAN_GetLocalServerAddressString
 ====================
 */
-static void LAN_GetServerAddressString( int source, int n, char *buf, int buflen ) {
+static void LAN_GetServerAddressString( qint source, qint n, qchar *buf, qint buflen ) {
 	switch (source) {
 		case AS_LOCAL :
 			if (n >= 0 && n < MAX_OTHER_SERVERS) {
@@ -280,8 +280,8 @@ static void LAN_GetServerAddressString( int source, int n, char *buf, int buflen
 LAN_GetServerInfo
 ====================
 */
-static void LAN_GetServerInfo( int source, int n, char *buf, int buflen ) {
-	char info[MAX_STRING_CHARS];
+static void LAN_GetServerInfo( qint source, qint n, qchar *buf, qint buflen ) {
+	qchar info[MAX_STRING_CHARS];
 	serverInfo_t *server = NULL;
 	info[0] = '\0';
 	switch (source) {
@@ -332,7 +332,7 @@ static void LAN_GetServerInfo( int source, int n, char *buf, int buflen ) {
 LAN_GetServerPing
 ====================
 */
-static int LAN_GetServerPing( int source, int n ) {
+static qint LAN_GetServerPing( qint source, qint n ) {
 	serverInfo_t *server = NULL;
 	switch (source) {
 		case AS_LOCAL :
@@ -363,7 +363,7 @@ static int LAN_GetServerPing( int source, int n ) {
 LAN_GetServerPtr
 ====================
 */
-static serverInfo_t *LAN_GetServerPtr( int source, int n ) {
+static serverInfo_t *LAN_GetServerPtr( qint source, qint n ) {
 	switch (source) {
 		case AS_LOCAL :
 			if (n >= 0 && n < MAX_OTHER_SERVERS) {
@@ -391,8 +391,8 @@ static serverInfo_t *LAN_GetServerPtr( int source, int n ) {
 LAN_CompareServers
 ====================
 */
-static int LAN_CompareServers( int source, int sortKey, int sortDir, int s1, int s2 ) {
-	int res;
+static qint LAN_CompareServers( qint source, qint sortKey, qint sortDir, qint s1, qint s2 ) {
+	qint res;
 	serverInfo_t *server1, *server2;
 
 	server1 = LAN_GetServerPtr(source, s1);
@@ -461,7 +461,7 @@ static int LAN_CompareServers( int source, int sortKey, int sortDir, int s1, int
 LAN_GetPingQueueCount
 ====================
 */
-static int LAN_GetPingQueueCount( void ) {
+static qint LAN_GetPingQueueCount( void ) {
 	return (CL_GetPingQueueCount());
 }
 
@@ -471,7 +471,7 @@ static int LAN_GetPingQueueCount( void ) {
 LAN_ClearPing
 ====================
 */
-static void LAN_ClearPing( int n ) {
+static void LAN_ClearPing( qint n ) {
 	CL_ClearPing( n );
 }
 
@@ -481,7 +481,7 @@ static void LAN_ClearPing( int n ) {
 LAN_GetPing
 ====================
 */
-static void LAN_GetPing( int n, char *buf, int buflen, int *pingtime ) {
+static void LAN_GetPing( qint n, qchar *buf, qint buflen, qint *pingtime ) {
 	CL_GetPing( n, buf, buflen, pingtime );
 }
 
@@ -491,7 +491,7 @@ static void LAN_GetPing( int n, char *buf, int buflen, int *pingtime ) {
 LAN_GetPingInfo
 ====================
 */
-static void LAN_GetPingInfo( int n, char *buf, int buflen ) {
+static void LAN_GetPingInfo( qint n, qchar *buf, qint buflen ) {
 	CL_GetPingInfo( n, buf, buflen );
 }
 
@@ -501,9 +501,9 @@ static void LAN_GetPingInfo( int n, char *buf, int buflen ) {
 LAN_MarkServerVisible
 ====================
 */
-static void LAN_MarkServerVisible(int source, int n, qboolean visible ) {
+static void LAN_MarkServerVisible(qint source, qint n, qbool visible ) {
 	if (n == -1) {
-		int count = MAX_OTHER_SERVERS;
+		qint count = MAX_OTHER_SERVERS;
 		serverInfo_t *server = NULL;
 		switch (source) {
 			case AS_LOCAL :
@@ -552,7 +552,7 @@ static void LAN_MarkServerVisible(int source, int n, qboolean visible ) {
 LAN_ServerIsVisible
 =======================
 */
-static int LAN_ServerIsVisible(int source, int n ) {
+static qint LAN_ServerIsVisible(qint source, qint n ) {
 	switch (source) {
 		case AS_LOCAL :
 			if (n >= 0 && n < MAX_OTHER_SERVERS) {
@@ -580,7 +580,7 @@ static int LAN_ServerIsVisible(int source, int n ) {
 LAN_UpdateVisiblePings
 =======================
 */
-static qboolean LAN_UpdateVisiblePings(int source ) {
+static qbool LAN_UpdateVisiblePings(qint source ) {
 	return CL_UpdateVisiblePings_f(source);
 }
 
@@ -590,7 +590,7 @@ static qboolean LAN_UpdateVisiblePings(int source ) {
 LAN_GetServerStatus
 ====================
 */
-static int LAN_GetServerStatus( const char *serverAddress, char *serverStatus, int maxLen ) {
+static qint LAN_GetServerStatus( const qchar *serverAddress, qchar *serverStatus, qint maxLen ) {
 	return CL_ServerStatus( serverAddress, serverStatus, maxLen );
 }
 
@@ -610,8 +610,8 @@ static void CL_GetGlconfig( glconfig_t *config ) {
 CL_GetClipboardData
 ====================
 */
-static void CL_GetClipboardData( char *buf, int buflen ) {
-	char	*cbd;
+static void CL_GetClipboardData( qchar *buf, qint buflen ) {
+	qchar	*cbd;
 
 	cbd = Sys_GetClipboardData();
 
@@ -631,7 +631,7 @@ static void CL_GetClipboardData( char *buf, int buflen ) {
 Key_KeynumToStringBuf
 ====================
 */
-static void Key_KeynumToStringBuf( int keynum, char *buf, int buflen ) {
+static void Key_KeynumToStringBuf( qint keynum, qchar *buf, qint buflen ) {
 	Q_strncpyz( buf, Key_KeynumToString( keynum ), buflen );
 }
 
@@ -641,8 +641,8 @@ static void Key_KeynumToStringBuf( int keynum, char *buf, int buflen ) {
 Key_GetBindingBuf
 ====================
 */
-static void Key_GetBindingBuf( int keynum, char *buf, int buflen ) {
-	const char *value;
+static void Key_GetBindingBuf( qint keynum, qchar *buf, qint buflen ) {
+	const qchar *value;
 
 	value = Key_GetBinding( keynum );
 	if ( value ) {
@@ -659,9 +659,9 @@ static void Key_GetBindingBuf( int keynum, char *buf, int buflen ) {
 CLUI_GetCDKey
 ====================
 */
-static void CLUI_GetCDKey( char *buf, int buflen ) {
+static void CLUI_GetCDKey( qchar *buf, qint buflen ) {
 #ifndef STANDALONE
-	const char *gamedir;
+	const qchar *gamedir;
 	gamedir = Cvar_VariableString( "fs_game" );
 	if ( UI_usesUniqueCDKey() && gamedir[0] != '\0' ) {
 		Com_Memcpy( buf, &cl_cdkey[16], 16 );
@@ -682,8 +682,8 @@ CLUI_SetCDKey
 ====================
 */
 #ifndef STANDALONE
-static void CLUI_SetCDKey( char *buf ) {
-	const char *gamedir;
+static void CLUI_SetCDKey( qchar *buf ) {
+	const qchar *gamedir;
 	gamedir = Cvar_VariableString( "fs_game" );
 	if ( UI_usesUniqueCDKey() && gamedir[0] != '\0' ) {
 		Com_Memcpy( &cl_cdkey[16], buf, 16 );
@@ -704,9 +704,9 @@ static void CLUI_SetCDKey( char *buf ) {
 GetConfigString
 ====================
 */
-static int GetConfigString(int index, char *buf, int size)
+static qint GetConfigString(qint index, qchar *buf, qint size)
 {
-	int		offset;
+	qint		offset;
 
 	if (index < 0 || index >= MAX_CONFIGSTRINGS)
 		return qfalse;
@@ -730,7 +730,7 @@ static int GetConfigString(int index, char *buf, int size)
 FloatAsInt
 ====================
 */
-static int FloatAsInt( float f ) {
+static qint FloatAsInt( float f ) {
 	floatint_t fi;
 	fi.f = f;
 	return fi.i;
@@ -754,7 +754,7 @@ static void *VM_ArgPtr( intptr_t intValue ) {
 }
 
 
-static qboolean UI_GetValue( char* value, int valueSize, const char* key ) {
+static qbool UI_GetValue( qchar* value, qint valueSize, const qchar* key ) {
 
 	if ( !Q_stricmp( key, "trap_R_AddRefEntityToScene2" ) ) {
 		Com_sprintf( value, valueSize, "%i", UI_R_ADDREFENTITYTOSCENE2 );
@@ -785,11 +785,11 @@ The ui module is making a system call
 static intptr_t CL_UISystemCalls( intptr_t *args ) {
 	switch( args[0] ) {
 	case UI_ERROR:
-		Com_Error( ERR_DROP, "%s", (const char*)VMA(1) );
+		Com_Error( ERR_DROP, "%s", (const qchar*)VMA(1) );
 		return 0;
 
 	case UI_PRINT:
-		Com_Printf( "%s", (const char*)VMA(1) );
+		Com_Printf( "%s", (const qchar*)VMA(1) );
 		return 0;
 
 	case UI_MILLISECONDS:
@@ -847,7 +847,7 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		|| !strncmp(VMA(2), "disconnect", 10)
 		|| !strncmp(VMA(2), "quit", 5)))
 		{
-			Com_Printf (S_COLOR_YELLOW "turning EXEC_NOW '%.11s' into EXEC_INSERT\n", (const char*)VMA(2));
+			Com_Printf (S_COLOR_YELLOW "turning EXEC_NOW '%.11s' into EXEC_INSERT\n", (const qchar*)VMA(2));
 			args[1] = EXEC_INSERT;
 		}
 		Cbuf_ExecuteText( args[1], VMA(2) );
@@ -1170,7 +1170,7 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return 0;
 
 	case UI_CVAR_SETDESCRIPTION:
-		Cvar_SetDescription2( (const char*)VMA(1), (const char*)VMA(2) );
+		Cvar_SetDescription2( (const qchar*)VMA(1), (const qchar*)VMA(2) );
 		return 0;
 
 	case UI_TRAP_GETVALUE:
@@ -1178,7 +1178,7 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return UI_GetValue( VMA(1), args[2], VMA(3) );
 
 	default:
-		Com_Error( ERR_DROP, "Bad UI system trap: %ld", (long int) args[0] );
+		Com_Error( ERR_DROP, "Bad UI system trap: %ld", (long qint) args[0] );
 
 	}
 
@@ -1195,7 +1195,7 @@ static intptr_t QDECL UI_DllSyscall( intptr_t arg, ... ) {
 #if !id386 || defined __clang__
 	intptr_t	args[10]; // max.count for UI
 	va_list	ap;
-	int i;
+	qint i;
 
 	args[0] = arg;
 	va_start( ap, arg );
@@ -1236,7 +1236,7 @@ CL_InitUI
 #define UI_OLD_API_VERSION	4
 
 void CL_InitUI( void ) {
-	int		v;
+	qint		v;
 	vmInterpret_t		interpret;
 
 	// disallow vl.collapse for UI elements
@@ -1292,7 +1292,7 @@ void CL_InitUI( void ) {
 
 
 #ifndef STANDALONE
-qboolean UI_usesUniqueCDKey( void ) {
+qbool UI_usesUniqueCDKey( void ) {
 	if (uivm) {
 		return (VM_Call( uivm, 0, UI_HASUNIQUECDKEY ) != 0);
 	} else {
@@ -1309,7 +1309,7 @@ UI_GameCommand
 See if the current console command is claimed by the ui
 ====================
 */
-qboolean UI_GameCommand( void ) {
+qbool UI_GameCommand( void ) {
 	if ( !uivm ) {
 		return qfalse;
 	}

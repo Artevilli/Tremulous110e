@@ -86,63 +86,63 @@ extern cvar_t *s_device;
 static void *t_lib = NULL;
 
 #ifdef USE_SPINLOCK
-static int (*_pthread_spin_init)(pthread_spinlock_t *lock, int pshared);
-static int (*_pthread_spin_destroy)(pthread_spinlock_t *lock);
-static int (*_pthread_spin_lock)(pthread_spinlock_t *lock);
-static int (*_pthread_spin_unlock)(pthread_spinlock_t *lock);
+static qint (*_pthread_spin_init)(pthread_spinlock_t *lock, qint pshared);
+static qint (*_pthread_spin_destroy)(pthread_spinlock_t *lock);
+static qint (*_pthread_spin_lock)(pthread_spinlock_t *lock);
+static qint (*_pthread_spin_unlock)(pthread_spinlock_t *lock);
 #else
-static int (*_pthread_mutex_init)(pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexattr);
-static int (*_pthread_mutex_destroy)(pthread_mutex_t *mutex);
-static int (*_pthread_mutex_lock)(pthread_mutex_t *mutex);
-static int (*_pthread_mutex_unlock)(pthread_mutex_t *mutex);
+static qint (*_pthread_mutex_init)(pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexattr);
+static qint (*_pthread_mutex_destroy)(pthread_mutex_t *mutex);
+static qint (*_pthread_mutex_lock)(pthread_mutex_t *mutex);
+static qint (*_pthread_mutex_unlock)(pthread_mutex_t *mutex);
 #endif
-static int (*_pthread_join)(pthread_t __th, void **__thread_return);
-static int (*_pthread_create)(pthread_t *thread, const pthread_attr_t *attr, void *(*func) (void *), void *arg);
+static qint (*_pthread_join)(pthread_t __th, void **__thread_return);
+static qint (*_pthread_create)(pthread_t *thread, const pthread_attr_t *attr, void *(*func) (void *), void *arg);
 static void (*_pthread_exit)(void *retval);
 
 /* alsa private variables */
 
 static void *a_lib = NULL;
 
-static const char *(*_snd_strerror)(int errnum);
-static int (*_snd_pcm_open)(snd_pcm_t **pcm, const char *name, snd_pcm_stream_t stream, int mode);
-static int (*_snd_pcm_drain)(snd_pcm_t *pcm);
-static int (*_snd_pcm_drop)(snd_pcm_t *pcm);
-static int (*_snd_pcm_close)(snd_pcm_t *pcm);
+static const qchar *(*_snd_strerror)(qint errnum);
+static qint (*_snd_pcm_open)(snd_pcm_t **pcm, const qchar *name, snd_pcm_stream_t stream, qint mode);
+static qint (*_snd_pcm_drain)(snd_pcm_t *pcm);
+static qint (*_snd_pcm_drop)(snd_pcm_t *pcm);
+static qint (*_snd_pcm_close)(snd_pcm_t *pcm);
 static size_t (*_snd_pcm_hw_params_sizeof)(void);
 static size_t (*_snd_pcm_sw_params_sizeof)(void);
 static snd_pcm_t* (*_snd_async_handler_get_pcm)(snd_async_handler_t *handler);
-static int (*_snd_async_add_pcm_handler)(snd_async_handler_t **handler, snd_pcm_t *pcm, snd_async_callback_t callback, void *private_data);
-static int (*_snd_pcm_hw_params_any)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params);
-static int (*_snd_pcm_hw_params_set_rate_resample)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params, unsigned int val);
-static int (*_snd_pcm_hw_params_set_access)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params, snd_pcm_access_t _access);
-static int (*_snd_pcm_hw_params_set_format)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params, snd_pcm_format_t val);
-static int (*_snd_pcm_hw_params_set_channels)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params, unsigned int val);
-static int (*_snd_pcm_hw_params_set_rate_near)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params, unsigned int *val, int *dir);
-static int (*_snd_pcm_hw_params_set_period_time_near)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params, unsigned int *val, int *dir);
-static int (*_snd_pcm_hw_params_set_periods)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params, unsigned int val, int dir);
-static int (*_snd_pcm_hw_params_set_periods_near)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params, unsigned int *val, int *dir);
-static int (*_snd_pcm_hw_params_get_period_size_min)(const snd_pcm_hw_params_t *params, snd_pcm_uframes_t *frames, int *dir);
-static int (*_snd_pcm_hw_params)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params);
-static int (*_snd_pcm_sw_params_current)(snd_pcm_t *pcm, snd_pcm_sw_params_t *params);
-static int (*_snd_pcm_sw_params_set_start_threshold)(snd_pcm_t *pcm, snd_pcm_sw_params_t *params, snd_pcm_uframes_t val);
-static int (*_snd_pcm_sw_params_set_stop_threshold)(snd_pcm_t *pcm, snd_pcm_sw_params_t *params, snd_pcm_uframes_t val);
-static int (*_snd_pcm_sw_params_set_avail_min)(snd_pcm_t *pcm, snd_pcm_sw_params_t *params, snd_pcm_uframes_t val);
-static int (*_snd_pcm_sw_params)(snd_pcm_t *pcm, snd_pcm_sw_params_t *params);
-static int (*_snd_pcm_start)(snd_pcm_t *pcm);
-static int (*_snd_pcm_prepare)(snd_pcm_t *pcm);
-static int (*_snd_pcm_resume)(snd_pcm_t *pcm);
-static int (*_snd_pcm_wait)(snd_pcm_t *pcm, int timeout);
+static qint (*_snd_async_add_pcm_handler)(snd_async_handler_t **handler, snd_pcm_t *pcm, snd_async_callback_t callback, void *private_data);
+static qint (*_snd_pcm_hw_params_any)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params);
+static qint (*_snd_pcm_hw_params_set_rate_resample)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params, unsigned qint val);
+static qint (*_snd_pcm_hw_params_set_access)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params, snd_pcm_access_t _access);
+static qint (*_snd_pcm_hw_params_set_format)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params, snd_pcm_format_t val);
+static qint (*_snd_pcm_hw_params_set_channels)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params, unsigned qint val);
+static qint (*_snd_pcm_hw_params_set_rate_near)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params, unsigned qint *val, qint *dir);
+static qint (*_snd_pcm_hw_params_set_period_time_near)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params, unsigned qint *val, qint *dir);
+static qint (*_snd_pcm_hw_params_set_periods)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params, unsigned qint val, qint dir);
+static qint (*_snd_pcm_hw_params_set_periods_near)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params, unsigned qint *val, qint *dir);
+static qint (*_snd_pcm_hw_params_get_period_size_min)(const snd_pcm_hw_params_t *params, snd_pcm_uframes_t *frames, qint *dir);
+static qint (*_snd_pcm_hw_params)(snd_pcm_t *pcm, snd_pcm_hw_params_t *params);
+static qint (*_snd_pcm_sw_params_current)(snd_pcm_t *pcm, snd_pcm_sw_params_t *params);
+static qint (*_snd_pcm_sw_params_set_start_threshold)(snd_pcm_t *pcm, snd_pcm_sw_params_t *params, snd_pcm_uframes_t val);
+static qint (*_snd_pcm_sw_params_set_stop_threshold)(snd_pcm_t *pcm, snd_pcm_sw_params_t *params, snd_pcm_uframes_t val);
+static qint (*_snd_pcm_sw_params_set_avail_min)(snd_pcm_t *pcm, snd_pcm_sw_params_t *params, snd_pcm_uframes_t val);
+static qint (*_snd_pcm_sw_params)(snd_pcm_t *pcm, snd_pcm_sw_params_t *params);
+static qint (*_snd_pcm_start)(snd_pcm_t *pcm);
+static qint (*_snd_pcm_prepare)(snd_pcm_t *pcm);
+static qint (*_snd_pcm_resume)(snd_pcm_t *pcm);
+static qint (*_snd_pcm_wait)(snd_pcm_t *pcm, qint timeout);
 static snd_pcm_state_t (*__snd_pcm_state)(snd_pcm_t *pcm);
 static snd_pcm_sframes_t (*_snd_pcm_avail)(snd_pcm_t *pcm);
 static snd_pcm_sframes_t (*_snd_pcm_avail_update)(snd_pcm_t *pcm);
-static int (*_snd_pcm_mmap_begin)(snd_pcm_t *pcm, const snd_pcm_channel_area_t **areas, snd_pcm_uframes_t *offset, snd_pcm_uframes_t *frames);
+static qint (*_snd_pcm_mmap_begin)(snd_pcm_t *pcm, const snd_pcm_channel_area_t **areas, snd_pcm_uframes_t *offset, snd_pcm_uframes_t *frames);
 static snd_pcm_sframes_t (*_snd_pcm_mmap_commit)(snd_pcm_t *pcm, snd_pcm_uframes_t offset, snd_pcm_uframes_t frames);
 static snd_pcm_sframes_t (*_snd_pcm_writei)(snd_pcm_t *pcm, const void *buffer, snd_pcm_uframes_t size);
 
 typedef struct {
 	void **symbol;
-	const char *name;
+	const qchar *name;
 } sym_t;
 
 sym_t t_list[] = {
@@ -202,7 +202,7 @@ sym_t a_list[] = {
 
 #endif
 
-qboolean alsa_used = qfalse; /* will be checked in oss engine */
+qbool alsa_used = qfalse; /* will be checked in oss engine */
 
 static pthread_t thread;
 #ifdef USE_SPINLOCK
@@ -211,29 +211,29 @@ static pthread_spinlock_t lock;
 static pthread_mutex_t mutex;
 #endif
 
-static qboolean snd_inited = qfalse;
+static qbool snd_inited = qfalse;
 
 /* we will use static dma buffer */
-static unsigned char buffer[ BUFFER_SIZE ];
-static unsigned int periods;
-static unsigned int period_time;  // wishable latency
+static unsigned qchar buffer[ BUFFER_SIZE ];
+static unsigned qint periods;
+static unsigned qint period_time;  // wishable latency
 static snd_pcm_t *handle;
 
 
-static volatile qboolean snd_loop;
-static volatile qboolean snd_async;
+static volatile qbool snd_loop;
+static volatile qbool snd_async;
 
 static snd_pcm_uframes_t period_size;
 static snd_pcm_sframes_t buffer_pos;	// buffer position, in mono samples
-static int buffer_sz;					// buffers size, in bytes
-static int frame_sz;					// frame size, in bytes
+static qint buffer_sz;					// buffers size, in bytes
+static qint frame_sz;					// frame size, in bytes
 
 static void async_proc( snd_async_handler_t *ahandler );
 static void thread_proc_mmap( void );
 static void thread_proc_direct( void );
 
 
-void Snd_Memset( void* dest, const int val, const size_t count )
+void Snd_Memset( void* dest, const qint val, const size_t count )
 {
     Com_Memset( dest, val, count );
 }
@@ -267,15 +267,15 @@ typedef enum {
 	SND_MODE_DIRECT
 } smode_t;
 
-static qboolean setup_ALSA( smode_t mode )
+static qbool setup_ALSA( smode_t mode )
 {
 	snd_async_handler_t *ahandler;
 	snd_pcm_hw_params_t *hwparams;
 	snd_pcm_sw_params_t *swparams;
-	unsigned int speed, rrate;
-	int err, dir, bps, channels;
-	qboolean use_mmap;
-	int i;
+	unsigned qint speed, rrate;
+	qint err, dir, bps, channels;
+	qbool use_mmap;
+	qint i;
 
 	if ( snd_inited == qtrue )
 	{
@@ -349,14 +349,14 @@ static qboolean setup_ALSA( smode_t mode )
 	hwparams = alloca( _snd_pcm_hw_params_sizeof() );
 	if ( hwparams == NULL )
 	{
-		Com_Printf( "Error allocating %i bytes of memory for hwparams\n", (int)_snd_pcm_hw_params_sizeof() );
+		Com_Printf( "Error allocating %i bytes of memory for hwparams\n", (qint)_snd_pcm_hw_params_sizeof() );
 		goto __fail;
 	}
 
 	swparams = alloca( _snd_pcm_sw_params_sizeof() );
 	if ( swparams == NULL )
 	{
-		Com_Printf( "Error allocating %i bytes of memory for swparams\n", (int)_snd_pcm_sw_params_sizeof() );
+		Com_Printf( "Error allocating %i bytes of memory for swparams\n", (qint)_snd_pcm_sw_params_sizeof() );
 		goto __fail;
 	}
 
@@ -539,9 +539,9 @@ static qboolean setup_ALSA( smode_t mode )
 		goto __fail;
 	}
 
-#ifdef INT
+#ifdef qint
 	Com_Printf( "period_time=%i\n", period_time );
-	Com_Printf( "period_size=%i\n", (int)period_size );
+	Com_Printf( "period_size=%i\n", (qint)period_size );
 #endif
 
 	dma.isfloat = qfalse;
@@ -639,7 +639,7 @@ __fail:
 }
 
 
-qboolean SNDDMA_Init( void )
+qbool SNDDMA_Init( void )
 {
 	//Com_Printf( "...trying ASYNC mode\n" );
 	//if ( !setup_ALSA( SND_MODE_ASYNC ) )
@@ -694,7 +694,7 @@ void SNDDMA_Shutdown( void )
 
 static void print_state( snd_pcm_state_t state )
 {
-	const char *s;
+	const qchar *s;
 
 	switch( state )
 	{
@@ -713,7 +713,7 @@ static void print_state( snd_pcm_state_t state )
 	Com_Printf( "%s\n", s );
 }
 
-static int xrun_recovery( snd_pcm_t *handle, int err )
+static qint xrun_recovery( snd_pcm_t *handle, qint err )
 {
 	if ( err == -EPIPE ) /* underrun */
 	{
@@ -728,7 +728,7 @@ static int xrun_recovery( snd_pcm_t *handle, int err )
 	}
 	else if ( err == -ESTRPIPE )
 	{
-		int tries = 0;
+		qint tries = 0;
 		struct timespec req;
 		req.tv_sec = period_time / 1000000;
 		req.tv_nsec = ( period_time % 1000000 ) * 1000;
@@ -759,10 +759,10 @@ static int xrun_recovery( snd_pcm_t *handle, int err )
 }
 
 
-static int restore_transfer( void )
+static qint restore_transfer( void )
 {
 	snd_pcm_state_t state;
-	int err;
+	qint err;
 
 	state = __snd_pcm_state( handle );
 
@@ -802,9 +802,9 @@ inside the recirculating dma buffer, so the mixing code will know
 how many sample are required to fill it up.
 ===============
 */
-int SNDDMA_GetDMAPos( void )
+qint SNDDMA_GetDMAPos( void )
 {
-	int samples;
+	qint samples;
 
 	if ( snd_inited == qfalse )
 		return 0;
@@ -838,9 +838,9 @@ static void thread_proc_mmap( void )
 	snd_pcm_uframes_t offset;
 	snd_pcm_sframes_t avail;
 	snd_pcm_state_t state;
-	unsigned char *addr;
-	int sz0, sz1;
-	int err, p;
+	unsigned qchar *addr;
+	qint sz0, sz1;
+	qint err, p;
 	pid_t thread_id;
 
 	// adjust thread priority
@@ -952,7 +952,7 @@ static void thread_proc_direct( void )
 	snd_pcm_sframes_t avail, x;
 	snd_pcm_state_t state;
 	pid_t thread_id;
-	int err;
+	qint err;
 
 	// adjust thread priority
 	thread_id = syscall( SYS_gettid );
@@ -1040,7 +1040,7 @@ static void async_proc( snd_async_handler_t *ahandler )
 	snd_pcm_sframes_t x;
 	snd_pcm_uframes_t pos;
 	snd_pcm_uframes_t size;
-	int err;
+	qint err;
 
 	if ( !snd_async || !dma.samples )
 		return;
@@ -1113,32 +1113,32 @@ static void async_proc( snd_async_handler_t *ahandler )
 #include "../client/snd_local.h"
 #include "../qcommon/q_shared.h"
 
-static qboolean snd_inited = qfalse;
-static int audio_fd;
-static int map_size;
+static qbool snd_inited = qfalse;
+static qint audio_fd;
+static qint map_size;
 
 static cvar_t *snddevice;
 
 /* Some devices may work only with 48000 */
-static int tryrates[] = { 22050, 11025, 44100, 48000, 8000 };
+static qint tryrates[] = { 22050, 11025, 44100, 48000, 8000 };
 
-void Snd_Memset( void* dest, const int val, const size_t count )
+void Snd_Memset( void* dest, const qint val, const size_t count )
 {
 	Com_Memset( dest, val, count );
 }
 
-qboolean SNDDMA_Init( void )
+qbool SNDDMA_Init( void )
 {
 	cvar_t *sndbits;
 	cvar_t *sndspeed;
 	cvar_t *sndchannels;
 
 	struct audio_buf_info info;
-	int rc;
-	int fmt;
-	int tmp;
-	int i;
-	int caps;
+	qint rc;
+	qint fmt;
+	qint tmp;
+	qint i;
+	qint caps;
 
 	if (snd_inited)
 		return qtrue;
@@ -1179,7 +1179,7 @@ qboolean SNDDMA_Init( void )
 	/* SNDCTL_DSP_GETOSPACE moved to be called later */
 
 	// set sample bits & speed
-	dma.samplebits = (int)sndbits->value;
+	dma.samplebits = (qint)sndbits->value;
 	if (dma.samplebits != 16 && dma.samplebits != 8) {
 		ioctl(audio_fd, SNDCTL_DSP_GETFMTS, &fmt);
 		if (fmt & AFMT_S16_LE) 
@@ -1188,7 +1188,7 @@ qboolean SNDDMA_Init( void )
 			dma.samplebits = 8;
 	}
 
-	dma.speed = (int)sndspeed->value;
+	dma.speed = (qint)sndspeed->value;
 	if (!dma.speed) {
 		for (i=0 ; i<sizeof(tryrates)/4 ; i++)
 			if (!ioctl(audio_fd, SNDCTL_DSP_SPEED, &tryrates[i])) 
@@ -1196,7 +1196,7 @@ qboolean SNDDMA_Init( void )
 		dma.speed = tryrates[i];
 	}
 
-	dma.channels = (int)sndchannels->value;
+	dma.channels = (qint)sndchannels->value;
 	if (dma.channels < 1 || dma.channels > 2)
 		dma.channels = 2;
 
@@ -1270,14 +1270,14 @@ qboolean SNDDMA_Init( void )
 	// checking Alsa bug, doesn't allow dma alloc with PROT_READ?
 
 	if (dma.buffer == NULL)
-		dma.buffer = (unsigned char *) mmap(NULL, map_size, PROT_WRITE|PROT_READ,
+		dma.buffer = (unsigned qchar *) mmap(NULL, map_size, PROT_WRITE|PROT_READ,
 			MAP_FILE|MAP_SHARED, audio_fd, 0);
 
 	if (dma.buffer == MAP_FAILED)
 	{
 		Com_Printf("Could not mmap dma buffer PROT_WRITE|PROT_READ\n");
 		Com_Printf("trying mmap PROT_WRITE (with associated better compatibility / less performance code)\n");
-		dma.buffer = (unsigned char *) mmap(NULL, map_size, PROT_WRITE,
+		dma.buffer = (unsigned qchar *) mmap(NULL, map_size, PROT_WRITE,
 			MAP_FILE|MAP_SHARED, audio_fd, 0);
 	}
 
@@ -1315,7 +1315,7 @@ qboolean SNDDMA_Init( void )
 }
 
 
-int SNDDMA_GetDMAPos( void )
+qint SNDDMA_GetDMAPos( void )
 {
 	struct count_info count;
 

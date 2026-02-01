@@ -25,8 +25,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 extern cvar_t *s_khz;
 
-static qboolean	dsound_init;
-static qboolean SNDDMA_InitDS( void );
+static qbool	dsound_init;
+static qbool SNDDMA_InitDS( void );
 
 // Visual Studio 2012+ or MINGW
 #if ( _MSC_VER >= 1700 ) || defined(MINGW)
@@ -36,7 +36,7 @@ static qboolean SNDDMA_InitDS( void );
 #endif
 
 #if USE_WASAPI
-static qboolean wasapi_init;
+static qbool wasapi_init;
 
 #include <mmreg.h>
 #include <mmdeviceapi.h>
@@ -45,7 +45,7 @@ static qboolean wasapi_init;
 // Ugly hack to detect Win10 without manifest
 // http://www.codeproject.com/Articles/678606/Part-Overcoming-Windows-s-deprecation-of-GetVe?msg=5080848#xx5080848xx
 typedef LONG( WINAPI *RtlGetVersionPtr )( RTL_OSVERSIONINFOEXW* );
-static qboolean IsWindows7OrGreater( void ) {
+static qbool IsWindows7OrGreater( void ) {
 	RtlGetVersionPtr rtl_get_version_f = NULL;
 	HMODULE ntdll = GetModuleHandle( T( "ntdll" ) );
 	RTL_OSVERSIONINFOEXW osver;
@@ -73,7 +73,7 @@ UINT32				bufferFrameCount;
 UINT32				bufferPosition; // in fullsamples
 UINT32				bufferSampleSize;
 
-static int			inPlay;
+static qint			inPlay;
 static HANDLE		hEvent;
 static HANDLE		hThread;
 
@@ -93,14 +93,14 @@ const GUID PcmSubformatGuid = { 0x00000001, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 
 const GUID FloatSubformatGuid = { 0x00000003, 0x0000, 0x0010, { 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71 } };
 
 static LPWSTR DeviceID = NULL;
-static qboolean doSndRestart = qfalse;
+static qbool doSndRestart = qfalse;
 
 static IAudioRenderClient	*iAudioRenderClient = NULL;
 static IAudioClient			*iAudioClient = NULL; 
 static IMMDeviceEnumerator	*pEnumerator = NULL;
 static IMMDevice			*iMMDevice = NULL;
 
-static void initFormat( WAVEFORMATEXTENSIBLE *wave, int nChannels, int nSamples, int nBits )
+static void initFormat( WAVEFORMATEXTENSIBLE *wave, qint nChannels, qint nSamples, qint nBits )
 {
 	Com_Memset( wave, 0, sizeof( *wave ) );
 
@@ -174,7 +174,7 @@ static DWORD WINAPI ThreadProc( HANDLE hInited )
 			Com_Printf( S_COLOR_YELLOW "WASAPI: GetStreamLatency() failed\n" );
 			goto err_exit;
 		}
-		Com_Printf( S_COLOR_CYAN "WASAPI stream latency: %ims\n", (int)( streamLatency / 10000 ) );
+		Com_Printf( S_COLOR_CYAN "WASAPI stream latency: %ims\n", (qint)( streamLatency / 10000 ) );
 	}
 
 	inPlay = 1;
@@ -377,7 +377,7 @@ static const IMMNotificationClientVtbl notification_client_vtbl = {
 static NotificationClient_t notification_client = { &notification_client_vtbl, 1 };
 
 
-static qboolean SNDDMA_InitWASAPI( void )
+static qbool SNDDMA_InitWASAPI( void )
 {
 	static byte				buffer[ 64 * 1024 ];
 	DWORD					dwStreamFlags = AUDCLNT_STREAMFLAGS_EVENTCALLBACK;
@@ -385,7 +385,7 @@ static qboolean SNDDMA_InitWASAPI( void )
 	WAVEFORMATEXTENSIBLE	*closest = NULL;
 	DWORD					dwThreadID;
 	HANDLE					hInited;
-	qboolean				isfloat;
+	qbool				isfloat;
 	HRESULT					hr;
 
 	InitializeCriticalSection( &cs );
@@ -509,7 +509,7 @@ static qboolean SNDDMA_InitWASAPI( void )
 		}
 
 		// use wasapi resampler
-		Com_DPrintf( "WASAPI resample from %iHz to %iHz\n", dma.speed, (int)desiredFormat.Format.nSamplesPerSec );
+		Com_DPrintf( "WASAPI resample from %iHz to %iHz\n", dma.speed, (qint)desiredFormat.Format.nSamplesPerSec );
 		desiredFormat.Format.nSamplesPerSec = dma.speed;
 		desiredFormat.Format.nAvgBytesPerSec = dma.speed * desiredFormat.Format.nBlockAlign;
 		dwStreamFlags |= AUDCLNT_STREAMFLAGS_RATEADJUST;
@@ -522,7 +522,7 @@ static qboolean SNDDMA_InitWASAPI( void )
 		REFERENCE_TIME defDuration;
 		iAudioClient->lpVtbl->GetDevicePeriod( iAudioClient, &defDuration, NULL );
 		Com_Printf( S_COLOR_CYAN "WASAPI buffer duration: %i.%i millisecons\n", 
-			(int)(defDuration / 10000), (int)(( ( defDuration + 500 ) / 1000 ) % 10) );
+			(qint)(defDuration / 10000), (qint)(( ( defDuration + 500 ) / 1000 ) % 10) );
 	}
 
 	// initialize sound device with desired format in shared mode
@@ -685,14 +685,14 @@ HRESULT (WINAPI *pDirectSoundCreate)(GUID FAR *lpGUID, LPDIRECTSOUND FAR *lplpDS
 
 #define SECONDARY_BUFFER_SIZE	0x10000
 
-static int		sample16;
+static qint		sample16;
 static DWORD	gSndBufSize;
 static DWORD	locksize;
 static LPDIRECTSOUND pDS;
 static LPDIRECTSOUNDBUFFER pDSBuf, pDSPBuf;
 static HINSTANCE hInstDS;
 
-static const char *DSoundError( int error ) {
+static const qchar *DSoundError( qint error ) {
 	switch ( error ) {
 	case DSERR_BUFFERLOST:
 		return "DSERR_BUFFERLOST";
@@ -773,10 +773,10 @@ Initialize direct sound
 Returns false if failed
 ==================
 */
-qboolean SNDDMA_Init( void ) {
+qbool SNDDMA_Init( void ) {
 
 #if USE_WASAPI
-	const char *defdrv;
+	const qchar *defdrv;
 	cvar_t *s_driver;
 
 	if ( IsWindows7OrGreater() )
@@ -837,13 +837,13 @@ DEFINE_GUID(IID_IDirectSound8, 0xC50A7E93, 0xF395, 0x4834, 0x9E, 0xF6, 0x7F, 0xA
 DEFINE_GUID(IID_IDirectSound, 0x279AFA83, 0x4981, 0x11CE, 0xA5, 0x21, 0x00, 0x20, 0xAF, 0x0B, 0xE5, 0x60);
 
 
-static qboolean SNDDMA_InitDS( void )
+static qbool SNDDMA_InitDS( void )
 {
 	HRESULT			hresult;
 	DSBUFFERDESC	dsbuf;
 	DSBCAPS			dsbcaps;
 	WAVEFORMATEX	format;
-	int				use8;
+	qint				use8;
 
 	Com_Printf( "Initializing DirectSound\n" );
 
@@ -971,7 +971,7 @@ inside the recirculating dma buffer, so the mixing code will know
 how many sample are required to fill it up.
 ===============
 */
-int SNDDMA_GetDMAPos( void ) {
+qint SNDDMA_GetDMAPos( void ) {
 #if USE_WASAPI
 	if ( wasapi_init ) {
 		// restart sound system if needed
@@ -1005,7 +1005,7 @@ Makes sure dma.buffer is valid
 ===============
 */
 void SNDDMA_BeginPainting( void ) {
-	int		reps;
+	qint		reps;
 	DWORD	dwSize2;
 	DWORD	*pbuf, *pbuf2;
 	HRESULT	hresult;

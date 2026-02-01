@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "client.h"
 
 static unsigned frame_msec;
-static int old_com_frameTime;
+static qint old_com_frameTime;
 
 /*
 ===============================================================================
@@ -47,11 +47,11 @@ at the same time.
 */
 
 typedef struct {
-	int			down[2];		// key nums holding it down
+	qint			down[2];		// key nums holding it down
 	unsigned	downtime;		// msec timestamp
 	unsigned	msec;			// msec down this frame if both a down and up happened
-	qboolean	active;			// current state
-	qboolean	wasPressed;		// set when down, not cleared when up
+	qbool	active;			// current state
+	qbool	wasPressed;		// set when down, not cleared when up
 } kbutton_t;
 
 static kbutton_t in_left, in_right, in_forward, in_back;
@@ -86,7 +86,7 @@ static cvar_t *m_forward;
 static cvar_t *m_side;
 static cvar_t *m_filter;
 
-static qboolean in_mlooking;
+static qbool in_mlooking;
 
 static void IN_CenterView( void ) {
 	cl.viewangles[PITCH] = -SHORT2ANGLE(cl.snap.ps.delta_angles[PITCH]);
@@ -106,8 +106,8 @@ static void IN_MLookUp( void ) {
 
 
 static void IN_KeyDown( kbutton_t *b ) {
-	const char *c;
-	int	k;
+	const qchar *c;
+	qint	k;
 
 	c = Cmd_Argv(1);
 	if ( c[0] ) {
@@ -144,8 +144,8 @@ static void IN_KeyDown( kbutton_t *b ) {
 
 static void IN_KeyUp( kbutton_t *b ) {
 	unsigned uptime;
-	const char *c;
-	int		k;
+	const qchar *c;
+	qint		k;
 
 	c = Cmd_Argv(1);
 	if ( c[0] ) {
@@ -192,7 +192,7 @@ Returns the fraction of the frame that the key was down
 */
 static float CL_KeyState( kbutton_t *key ) {
 	float		val;
-	int			msec;
+	qint			msec;
 
 	msec = key->msec;
 	key->msec = 0;
@@ -322,8 +322,8 @@ Sets the usercmd_t based on key states
 ================
 */
 static void CL_KeyMove( usercmd_t *cmd ) {
-	int		movespeed;
-	int		forward, side, up;
+	qint		movespeed;
+	qint		forward, side, up;
 
 	//
 	// adjust for speed key / running
@@ -367,7 +367,7 @@ static void CL_KeyMove( usercmd_t *cmd ) {
 CL_MouseEvent
 =================
 */
-void CL_MouseEvent( int dx, int dy /*, int time*/ ) {
+void CL_MouseEvent( qint dx, qint dy /*, qint time*/ ) {
 	if ( Key_GetCatcher() & KEYCATCH_UI ) {
 		VM_Call( uivm, 2, UI_MOUSE_EVENT, dx, dy );
 	} else if ( Key_GetCatcher() & KEYCATCH_CGAME ) {
@@ -386,7 +386,7 @@ CL_JoystickEvent
 Joystick values stay set until changed
 =================
 */
-void CL_JoystickEvent( int axis, int value, int time ) {
+void CL_JoystickEvent( qint axis, qint value, qint time ) {
 	if ( axis < 0 || axis >= MAX_JOYSTICK_AXIS ) {
 		Com_Error( ERR_DROP, "CL_JoystickEvent: bad axis %i", axis );
 	} else {
@@ -401,7 +401,7 @@ CL_JoystickMove
 =================
 */
 static void CL_JoystickMove( usercmd_t *cmd ) {
-	//int		movespeed;
+	//qint		movespeed;
 	float	anglespeed;
 
 	if ( in_speed.active ^ cl_run->integer ) {
@@ -535,7 +535,7 @@ CL_CmdButtons
 ==============
 */
 static void CL_CmdButtons( usercmd_t *cmd ) {
-	int		i;
+	qint		i;
 
 	//
 	// figure button bits
@@ -567,7 +567,7 @@ CL_FinishMove
 ==============
 */
 static void CL_FinishMove( usercmd_t *cmd ) {
-	int		i;
+	qint		i;
 
 	// copy the state that the cgame is currently sending
 	cmd->weapon = cl.cgameUserCmdValue;
@@ -640,7 +640,7 @@ Create a new usercmd_t structure for this frame
 =================
 */
 static void CL_CreateNewCommands( void ) {
-	int			cmdNum;
+	qint			cmdNum;
 
 	// no need to create usercmds until we have a gamestate
 	if ( cls.state < CA_PRIMED ) {
@@ -681,9 +681,9 @@ delivered in the next packet, but saving a header and
 getting more delta compression will reduce total bandwidth.
 =================
 */
-static qboolean CL_ReadyToSendPacket( void ) {
-	int		oldPacketNum;
-	int		delta;
+static qbool CL_ReadyToSendPacket( void ) {
+	qint		oldPacketNum;
+	qint		delta;
 
 	// don't send anything if playing back a demo
 	if ( clc.demoplaying || cls.state == CA_CINEMATIC ) {
@@ -746,15 +746,15 @@ During normal gameplay, a client packet will contain something like:
 
 ===================
 */
-void CL_WritePacket( int repeat ) {
+void CL_WritePacket( qint repeat ) {
 	msg_t		buf;
 	byte		data[ MAX_MSGLEN_BUF ];
-	int			i, j, n;
+	qint			i, j, n;
 	usercmd_t	*cmd, *oldcmd;
 	usercmd_t	nullcmd;
-	int			packetNum;
-	int			oldPacketNum;
-	int			count, key;
+	qint			packetNum;
+	qint			oldPacketNum;
+	qint			count, key;
 
 	// don't send anything if playing back a demo
 	if ( clc.demoplaying || cls.state == CA_CINEMATIC ) {
@@ -782,7 +782,7 @@ void CL_WritePacket( int repeat ) {
 	// write any unacknowledged clientCommands
 	n = clc.reliableSequence - clc.reliableAcknowledge;
 	for ( i = 0; i < n; i++ ) {
-		const int index = clc.reliableAcknowledge + 1 + i;
+		const qint index = clc.reliableAcknowledge + 1 + i;
 		MSG_WriteByte( &buf, clc_clientCommand );
 		MSG_WriteLong( &buf, index );
 		MSG_WriteString( &buf, clc.reliableCommands[ index & ( MAX_RELIABLE_COMMANDS - 1 ) ] );

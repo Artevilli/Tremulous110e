@@ -41,7 +41,7 @@ R_DrawElements
 ==================
 */
 
-void R_DrawElements( int numIndexes, glIndex_t firstIndex)
+void R_DrawElements( qint numIndexes, glIndex_t firstIndex)
 {
 	qglDrawElements(GL_TRIANGLES, numIndexes, GL_INDEX_TYPE, BUFFER_OFFSET(firstIndex * sizeof(glIndex_t)));
 }
@@ -64,7 +64,7 @@ R_BindAnimatedImageToTMU
 
 =================
 */
-static void R_BindAnimatedImageToTMU( const textureBundle_t *bundle, int tmu ) {
+static void R_BindAnimatedImageToTMU( const textureBundle_t *bundle, qint tmu ) {
 	int64_t index;
 	double	v;
 
@@ -147,7 +147,7 @@ because a surface may be forced to perform a RB_End due
 to overflow.
 ==============
 */
-void RB_BeginSurface( shader_t *shader, int fogNum, int cubemapIndex ) {
+void RB_BeginSurface( shader_t *shader, qint fogNum, qint cubemapIndex ) {
 
 	shader_t *state = (shader->remappedShader) ? shader->remappedShader : shader;
 
@@ -182,9 +182,9 @@ extern float EvalWaveForm( const waveForm_t *wf );
 extern float EvalWaveFormClamped( const waveForm_t *wf );
 
 
-static void ComputeTexMods( shaderStage_t *pStage, int bundleNum, float *outMatrix, float *outOffTurb)
+static void ComputeTexMods( shaderStage_t *pStage, qint bundleNum, float *outMatrix, float *outOffTurb)
 {
-	int tm;
+	qint tm;
 	float matrix[6], currentmatrix[6];
 	textureBundle_t *bundle = &pStage->bundle[bundleNum];
 
@@ -279,7 +279,7 @@ static void ComputeTexMods( shaderStage_t *pStage, int bundleNum, float *outMatr
 }
 
 
-static void ComputeDeformValues(int *deformGen, vec5_t deformParams)
+static void ComputeDeformValues(qint *deformGen, vec5_t deformParams)
 {
 	// u_DeformGen
 	*deformGen = DGEN_NONE;
@@ -320,11 +320,11 @@ static void ComputeDeformValues(int *deformGen, vec5_t deformParams)
 
 
 static void ProjectDlightTexture( void ) {
-	int		l;
+	qint		l;
 	vec3_t	origin;
 	float	scale;
 	float	radius;
-	int deformGen;
+	qint deformGen;
 	vec5_t deformParams;
 
 	if ( !backEnd.refdef.num_dlights ) {
@@ -398,14 +398,14 @@ static void ProjectDlightTexture( void ) {
 }
 
 
-static void ComputeShaderColors( const shaderStage_t *pStage, vec4_t baseColor, vec4_t vertColor, int blend )
+static void ComputeShaderColors( const shaderStage_t *pStage, vec4_t baseColor, vec4_t vertColor, qint blend )
 {
-	qboolean isBlend = ((blend & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_DST_COLOR)
+	qbool isBlend = ((blend & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_DST_COLOR)
 		|| ((blend & GLS_SRCBLEND_BITS) == GLS_SRCBLEND_ONE_MINUS_DST_COLOR)
 		|| ((blend & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_SRC_COLOR)
 		|| ((blend & GLS_DSTBLEND_BITS) == GLS_DSTBLEND_ONE_MINUS_SRC_COLOR);
 
-	qboolean is2DDraw = backEnd.currentEntity == &backEnd.entity2D;
+	qbool is2DDraw = backEnd.currentEntity == &backEnd.entity2D;
 
 	float overbright = (isBlend || is2DDraw) ? 1.0f : (float)(1 << tr.overbrightBits);
 
@@ -468,10 +468,10 @@ static void ComputeShaderColors( const shaderStage_t *pStage, vec4_t baseColor, 
 		case CGEN_FOG:
 			fog = tr.world->fogs + tess.fogNum;
 
-			baseColor[0] = ((unsigned char *)(&fog->colorInt))[0] / 255.0f;
-			baseColor[1] = ((unsigned char *)(&fog->colorInt))[1] / 255.0f;
-			baseColor[2] = ((unsigned char *)(&fog->colorInt))[2] / 255.0f;
-			baseColor[3] = ((unsigned char *)(&fog->colorInt))[3] / 255.0f;
+			baseColor[0] = ((unsigned qchar *)(&fog->colorInt))[0] / 255.0f;
+			baseColor[1] = ((unsigned qchar *)(&fog->colorInt))[1] / 255.0f;
+			baseColor[2] = ((unsigned qchar *)(&fog->colorInt))[2] / 255.0f;
+			baseColor[3] = ((unsigned qchar *)(&fog->colorInt))[3] / 255.0f;
 			break;
 		case CGEN_WAVEFORM:
 			baseColor[0] = 
@@ -558,7 +558,7 @@ static void ComputeShaderColors( const shaderStage_t *pStage, vec4_t baseColor, 
 	// if in greyscale rendering mode turn all color values into greyscale.
 	if(r_greyscale->integer)
 	{
-		int scale;
+		qint scale;
 		
 		for(i = 0; i < tess.numVertexes; i++)
 		{
@@ -640,12 +640,12 @@ static void ComputeFogColorMask( const shaderStage_t *pStage, vec4_t fogColorMas
 
 
 static void ForwardDlight( void ) {
-	int		l;
+	qint		l;
 	//vec3_t	origin;
 	//float	scale;
 	float	radius;
 
-	int deformGen;
+	qint deformGen;
 	vec5_t deformParams;
 	
 	vec4_t fogDistanceVector, fogDepthVector = {0, 0, 0, 0};
@@ -680,7 +680,7 @@ static void ForwardDlight( void ) {
 
 		//if (pStage->glslShaderGroup == tr.lightallShader)
 		{
-			int index = pStage->glslShaderIndex;
+			qint index = pStage->glslShaderIndex;
 
 			index &= ~LIGHTDEF_LIGHTTYPE_MASK;
 			index |= LIGHTDEF_USE_LIGHT_VECTOR;
@@ -813,11 +813,11 @@ static void ForwardDlight( void ) {
 
 
 static void ProjectPshadowVBOGLSL( void ) {
-	int		l;
+	qint		l;
 	vec3_t	origin;
 	float	radius;
 
-	int deformGen;
+	qint deformGen;
 	vec5_t deformParams;
 
 	const shaderCommands_t *input = &tess;
@@ -896,13 +896,13 @@ static void RB_FogPass( void ) {
 	float	eyeT = 0;
 	shaderProgram_t *sp;
 
-	int deformGen;
+	qint deformGen;
 	vec5_t deformParams;
 
 	ComputeDeformValues(&deformGen, deformParams);
 
 	{
-		int index = 0;
+		qint index = 0;
 
 		if (deformGen != DGEN_NONE)
 			index |= FOGDEF_USE_DEFORM_VERTEXES;
@@ -937,10 +937,10 @@ static void RB_FogPass( void ) {
 		GLSL_SetUniformFloat(sp, UNIFORM_TIME, tess.shaderTime);
 	}
 
-	color[0] = ((unsigned char *)(&fog->colorInt))[0] / 255.0f;
-	color[1] = ((unsigned char *)(&fog->colorInt))[1] / 255.0f;
-	color[2] = ((unsigned char *)(&fog->colorInt))[2] / 255.0f;
-	color[3] = ((unsigned char *)(&fog->colorInt))[3] / 255.0f;
+	color[0] = ((unsigned qchar *)(&fog->colorInt))[0] / 255.0f;
+	color[1] = ((unsigned qchar *)(&fog->colorInt))[1] / 255.0f;
+	color[2] = ((unsigned qchar *)(&fog->colorInt))[2] / 255.0f;
+	color[3] = ((unsigned qchar *)(&fog->colorInt))[3] / 255.0f;
 	GLSL_SetUniformVec4(sp, UNIFORM_COLOR, color);
 
 	ComputeFogValues(fogDistanceVector, fogDepthVector, &eyeT);
@@ -960,9 +960,9 @@ static void RB_FogPass( void ) {
 }
 
 
-static unsigned int RB_CalcShaderVertexAttribs( const shaderCommands_t *input )
+static unsigned qint RB_CalcShaderVertexAttribs( const shaderCommands_t *input )
 {
-	unsigned int vertexAttribs = input->shader->vertexAttribs;
+	unsigned qint vertexAttribs = input->shader->vertexAttribs;
 
 	if(glState.vertexAnimation)
 	{
@@ -979,15 +979,15 @@ static unsigned int RB_CalcShaderVertexAttribs( const shaderCommands_t *input )
 
 static void RB_IterateStagesGeneric( const shaderCommands_t *input )
 {
-	int stage;
+	qint stage;
 	
 	vec4_t fogDistanceVector, fogDepthVector = {0, 0, 0, 0};
 	float eyeT = 0;
 
-	int deformGen;
+	qint deformGen;
 	vec5_t deformParams;
 
-	qboolean renderToCubemap = tr.renderCubeFbo && glState.currentFBO == tr.renderCubeFbo;
+	qbool renderToCubemap = tr.renderCubeFbo && glState.currentFBO == tr.renderCubeFbo;
 
 	ComputeDeformValues(&deformGen, deformParams);
 
@@ -1009,7 +1009,7 @@ static void RB_IterateStagesGeneric( const shaderCommands_t *input )
 		{
 			if (pStage->glslShaderGroup == tr.lightallShader)
 			{
-				int index = 0;
+				qint index = 0;
 
 				if (backEnd.currentEntity && backEnd.currentEntity != &tr.worldEntity)
 				{
@@ -1032,7 +1032,7 @@ static void RB_IterateStagesGeneric( const shaderCommands_t *input )
 			}
 			else
 			{
-				int shaderAttribs = 0;
+				qint shaderAttribs = 0;
 
 				if (tess.shader->numDeforms && !ShaderRequiresCPUDeforms(tess.shader))
 				{
@@ -1058,7 +1058,7 @@ static void RB_IterateStagesGeneric( const shaderCommands_t *input )
 		}
 		else if (pStage->glslShaderGroup == tr.lightallShader)
 		{
-			int index = pStage->glslShaderIndex;
+			qint index = pStage->glslShaderIndex;
 
 			if (backEnd.currentEntity && backEnd.currentEntity != &tr.worldEntity)
 			{
@@ -1243,7 +1243,7 @@ static void RB_IterateStagesGeneric( const shaderCommands_t *input )
 		}
 		else if ( pStage->glslShaderGroup == tr.lightallShader )
 		{
-			int i;
+			qint i;
 			vec4_t enableTextures;
 
 			if (r_sunlightMode->integer && (backEnd.viewParms.flags & VPF_USESUNLIGHT) && (pStage->glslShaderIndex & LIGHTDEF_LIGHTTYPE_MASK))
@@ -1291,8 +1291,8 @@ static void RB_IterateStagesGeneric( const shaderCommands_t *input )
 			}
 			else
 			{
-				qboolean light = (pStage->glslShaderIndex & LIGHTDEF_LIGHTTYPE_MASK) != 0;
-				qboolean fastLight = !(r_normalMapping->integer || r_specularMapping->integer);
+				qbool light = (pStage->glslShaderIndex & LIGHTDEF_LIGHTTYPE_MASK) != 0;
+				qbool fastLight = !(r_normalMapping->integer || r_specularMapping->integer);
 
 				if (pStage->bundle[TB_DIFFUSEMAP].image[0])
 					R_BindAnimatedImageToTMU( &pStage->bundle[TB_DIFFUSEMAP], TB_DIFFUSEMAP);
@@ -1393,7 +1393,7 @@ static void RB_IterateStagesGeneric( const shaderCommands_t *input )
 
 static void RB_RenderShadowmap( const shaderCommands_t *input )
 {
-	int deformGen;
+	qint deformGen;
 	vec5_t deformParams;
 
 	ComputeDeformValues(&deformGen, deformParams);
@@ -1461,7 +1461,7 @@ static void RB_RenderShadowmap( const shaderCommands_t *input )
 void RB_StageIteratorGeneric( void )
 {
 	const shaderCommands_t *input;
-	unsigned int vertexAttribs = 0;
+	unsigned qint vertexAttribs = 0;
 
 	input = &tess;
 	
@@ -1495,7 +1495,7 @@ void RB_StageIteratorGeneric( void )
 	}
 	else
 	{
-		qboolean cullFront = (input->shader->cullType == CT_FRONT_SIDED);
+		qbool cullFront = (input->shader->cullType == CT_FRONT_SIDED);
 
 		if ( backEnd.viewParms.flags & VPF_DEPTHSHADOW )
 			cullFront = !cullFront;

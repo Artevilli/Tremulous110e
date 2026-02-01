@@ -38,14 +38,14 @@ Out must have space for two more vertexes than in
 #define	SIDE_FRONT	0
 #define	SIDE_BACK	1
 #define	SIDE_ON		2
-static void R_ChopPolyBehindPlane( int numInPoints, vec3_t inPoints[MAX_VERTS_ON_POLY],
-								int *numOutPoints, vec3_t outPoints[MAX_VERTS_ON_POLY],
+static void R_ChopPolyBehindPlane( qint numInPoints, vec3_t inPoints[MAX_VERTS_ON_POLY],
+								qint *numOutPoints, vec3_t outPoints[MAX_VERTS_ON_POLY],
 							vec3_t normal, vec_t dist, vec_t epsilon) {
 	float		dists[MAX_VERTS_ON_POLY+4];
-	int			sides[MAX_VERTS_ON_POLY+4];
-	int			counts[3];
+	qint			sides[MAX_VERTS_ON_POLY+4];
+	qint			counts[3];
 	float		dot;
-	int			i, j;
+	qint			i, j;
 	float		*p1, *p2, *clip;
 	float		d;
 
@@ -133,11 +133,11 @@ R_BoxSurfaces_r
 
 =================
 */
-static void R_BoxSurfaces_r(mnode_t *node, vec3_t mins, vec3_t maxs, surfaceType_t **list, int listsize, int *listlength, vec3_t dir) {
+static void R_BoxSurfaces_r(mnode_t *node, vec3_t mins, vec3_t maxs, surfaceType_t **list, qint listsize, qint *listlength, vec3_t dir) {
 
-	int			s, c;
+	qint			s, c;
 	msurface_t	*surf;
-	int *mark;
+	qint *mark;
 
 	// do the tail recursion in a loop
 	while ( node->contents == -1 ) {
@@ -156,7 +156,7 @@ static void R_BoxSurfaces_r(mnode_t *node, vec3_t mins, vec3_t maxs, surfaceType
 	mark = tr.world->marksurfaces + node->firstmarksurface;
 	c = node->nummarksurfaces;
 	while (c--) {
-		int *surfViewCount;
+		qint *surfViewCount;
 		//
 		if (*listlength >= listsize) break;
 		//
@@ -198,13 +198,13 @@ R_AddMarkFragments
 
 =================
 */
-static void R_AddMarkFragments(int numClipPoints, vec3_t clipPoints[2][MAX_VERTS_ON_POLY],
-				   int numPlanes, vec3_t *normals, float *dists,
-				   int maxPoints, vec3_t pointBuffer,
-				   int maxFragments, markFragment_t *fragmentBuffer,
-				   int *returnedPoints, int *returnedFragments,
+static void R_AddMarkFragments(qint numClipPoints, vec3_t clipPoints[2][MAX_VERTS_ON_POLY],
+				   qint numPlanes, vec3_t *normals, float *dists,
+				   qint maxPoints, vec3_t pointBuffer,
+				   qint maxFragments, markFragment_t *fragmentBuffer,
+				   qint *returnedPoints, qint *returnedFragments,
 				   vec3_t mins, vec3_t maxs) {
-	int pingPong, i;
+	qint pingPong, i;
 	markFragment_t	*mf;
 
 	// chop the surface by all the bounding planes of the to be projected polygon
@@ -232,7 +232,7 @@ static void R_AddMarkFragments(int numClipPoints, vec3_t clipPoints[2][MAX_VERTS
 	/*
 	// all the clip points should be within the bounding box
 	for ( i = 0 ; i < numClipPoints ; i++ ) {
-		int j;
+		qint j;
 		for ( j = 0 ; j < 3 ; j++ ) {
 			if (clipPoints[pingPong][i][j] < mins[j] - 0.5) break;
 			if (clipPoints[pingPong][i][j] > maxs[j] + 0.5) break;
@@ -257,18 +257,18 @@ R_MarkFragments
 
 =================
 */
-int R_MarkFragments( int numPoints, const vec3_t *points, const vec3_t projection,
-				   int maxPoints, vec3_t pointBuffer, int maxFragments, markFragment_t *fragmentBuffer ) {
-	int				numsurfaces, numPlanes;
-	int				i, j, k, m, n;
+qint R_MarkFragments( qint numPoints, const vec3_t *points, const vec3_t projection,
+				   qint maxPoints, vec3_t pointBuffer, qint maxFragments, markFragment_t *fragmentBuffer ) {
+	qint				numsurfaces, numPlanes;
+	qint				i, j, k, m, n;
 	surfaceType_t	*surfaces[64];
 	vec3_t			mins, maxs;
-	int				returnedFragments;
-	int				returnedPoints;
+	qint				returnedFragments;
+	qint				returnedPoints;
 	vec3_t			normals[MAX_VERTS_ON_POLY+2];
 	float			dists[MAX_VERTS_ON_POLY+2];
 	vec3_t			clipPoints[2][MAX_VERTS_ON_POLY];
-	int				numClipPoints;
+	qint				numClipPoints;
 	float			*v;
 	const srfBspSurface_t	*cv;
 	glIndex_t		*tri;

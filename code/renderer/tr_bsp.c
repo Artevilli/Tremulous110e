@@ -29,20 +29,20 @@ Loads and prepares a map file for scene rendering.
 
 A single entry point:
 
-void RE_LoadWorldMap( const char *name );
+void RE_LoadWorldMap( const qchar *name );
 
 */
 
 static	world_t		s_worldData;
 static	byte		*fileBase;
 
-static int	c_gridVerts;
+static qint	c_gridVerts;
 
 //===============================================================================
 
 static void HSVtoRGB( float h, float s, float v, float rgb[3] )
 {
-	int i;
+	qint i;
 	float f;
 	float p, q, t;
 
@@ -112,8 +112,8 @@ float R_ClampDenorm( float v ) {
 R_ColorShiftLightingBytes
 ===============
 */
-void R_ColorShiftLightingBytes( const byte in[4], byte out[4], qboolean hasAlpha ) {
-	int		shift, r, g, b;
+void R_ColorShiftLightingBytes( const byte in[4], byte out[4], qbool hasAlpha ) {
+	qint		shift, r, g, b;
 
 	// shift the color data based on overbright range
 	shift = r_mapOverBrightBits->integer - tr.overbrightBits;
@@ -125,7 +125,7 @@ void R_ColorShiftLightingBytes( const byte in[4], byte out[4], qboolean hasAlpha
 		b = in[2] << shift;
 		// normalize by color instead of saturating to white
 		if ( ( r | g | b ) > 255 ) {
-			int max = r > g ? r : g;
+			qint max = r > g ? r : g;
 			max = max > b ? max : b;
 			r = r * 255 / max;
 			g = g * 255 / max;
@@ -164,19 +164,19 @@ void R_ColorShiftLightingBytes( const byte in[4], byte out[4], qboolean hasAlpha
 #define LIGHTMAP_BORDER 2
 #define LIGHTMAP_LEN (LIGHTMAP_SIZE + LIGHTMAP_BORDER*2)
 
-static const int lightmapFlags = IMGFLAG_NOLIGHTSCALE | IMGFLAG_NO_COMPRESSION | IMGFLAG_LIGHTMAP | IMGFLAG_NOSCALE;
+static const qint lightmapFlags = IMGFLAG_NOLIGHTSCALE | IMGFLAG_NO_COMPRESSION | IMGFLAG_LIGHTMAP | IMGFLAG_NOSCALE;
 
-static int lightmapWidth;
-static int lightmapHeight;
-static int lightmapCountX;
-static int lightmapCountY;
+static qint lightmapWidth;
+static qint lightmapHeight;
+static qint lightmapCountX;
+static qint lightmapCountY;
 
 static void FillBorders( byte *img )
 {
 #define PIX(xx,yy,offs) img[((yy)*LIGHTMAP_LEN + (xx))*4+(offs)]
-	int x0, y0;
-	int x1, y1;
-	int n, len, i;
+	qint x0, y0;
+	qint x1, y1;
+	qint n, len, i;
 
 	for ( n = LIGHTMAP_BORDER; n > 0; n-- )
 	{
@@ -207,25 +207,25 @@ static void FillBorders( byte *img )
 		}
 
 		// interpolate corners
-		PIX( x0, y0, 0 ) = (int)(PIX( x0, y0+1, 0 ) + PIX( x0+1, y0, 0 )) >> 1;
-		PIX( x0, y0, 1 ) = (int)(PIX( x0, y0+1, 1 ) + PIX( x0+1, y0, 1 )) >> 1;
-		PIX( x0, y0, 2 ) = (int)(PIX( x0, y0+1, 2 ) + PIX( x0+1, y0, 2 )) >> 1;
-		PIX( x0, y0, 3 ) = (int)(PIX( x0, y0+1, 3 ) + PIX( x0+1, y0, 3 )) >> 1;
+		PIX( x0, y0, 0 ) = (qint)(PIX( x0, y0+1, 0 ) + PIX( x0+1, y0, 0 )) >> 1;
+		PIX( x0, y0, 1 ) = (qint)(PIX( x0, y0+1, 1 ) + PIX( x0+1, y0, 1 )) >> 1;
+		PIX( x0, y0, 2 ) = (qint)(PIX( x0, y0+1, 2 ) + PIX( x0+1, y0, 2 )) >> 1;
+		PIX( x0, y0, 3 ) = (qint)(PIX( x0, y0+1, 3 ) + PIX( x0+1, y0, 3 )) >> 1;
 		
-		PIX( x1, y0, 0 ) = (int)(PIX( x1-1, y0, 0 ) + PIX( x1, y0+1, 0 )) >> 1;
-		PIX( x1, y0, 1 ) = (int)(PIX( x1-1, y0, 1 ) + PIX( x1, y0+1, 1 )) >> 1;
-		PIX( x1, y0, 2 ) = (int)(PIX( x1-1, y0, 2 ) + PIX( x1, y0+1, 2 )) >> 1;
-		PIX( x1, y0, 3 ) = (int)(PIX( x1-1, y0, 3 ) + PIX( x1, y0+1, 3 )) >> 1;
+		PIX( x1, y0, 0 ) = (qint)(PIX( x1-1, y0, 0 ) + PIX( x1, y0+1, 0 )) >> 1;
+		PIX( x1, y0, 1 ) = (qint)(PIX( x1-1, y0, 1 ) + PIX( x1, y0+1, 1 )) >> 1;
+		PIX( x1, y0, 2 ) = (qint)(PIX( x1-1, y0, 2 ) + PIX( x1, y0+1, 2 )) >> 1;
+		PIX( x1, y0, 3 ) = (qint)(PIX( x1-1, y0, 3 ) + PIX( x1, y0+1, 3 )) >> 1;
 	
-		PIX( x0, y1, 0 ) = (int)(PIX( x0, y1-1, 0 ) + PIX( x0+1, y1, 0 )) >> 1;
-		PIX( x0, y1, 1 ) = (int)(PIX( x0, y1-1, 1 ) + PIX( x0+1, y1, 1 )) >> 1;
-		PIX( x0, y1, 2 ) = (int)(PIX( x0, y1-1, 2 ) + PIX( x0+1, y1, 2 )) >> 1;
-		PIX( x0, y1, 3 ) = (int)(PIX( x0, y1-1, 3 ) + PIX( x0+1, y1, 3 )) >> 1;
+		PIX( x0, y1, 0 ) = (qint)(PIX( x0, y1-1, 0 ) + PIX( x0+1, y1, 0 )) >> 1;
+		PIX( x0, y1, 1 ) = (qint)(PIX( x0, y1-1, 1 ) + PIX( x0+1, y1, 1 )) >> 1;
+		PIX( x0, y1, 2 ) = (qint)(PIX( x0, y1-1, 2 ) + PIX( x0+1, y1, 2 )) >> 1;
+		PIX( x0, y1, 3 ) = (qint)(PIX( x0, y1-1, 3 ) + PIX( x0+1, y1, 3 )) >> 1;
 
-		PIX( x1, y1, 0 ) = (int)(PIX( x1, y1-1, 0 ) + PIX( x1-1, y1, 0 )) >> 1;
-		PIX( x1, y1, 1 ) = (int)(PIX( x1, y1-1, 1 ) + PIX( x1-1, y1, 1 )) >> 1;
-		PIX( x1, y1, 2 ) = (int)(PIX( x1, y1-1, 2 ) + PIX( x1-1, y1, 2 )) >> 1;
-		PIX( x1, y1, 3 ) = (int)(PIX( x1, y1-1, 3 ) + PIX( x1-1, y1, 3 )) >> 1;
+		PIX( x1, y1, 0 ) = (qint)(PIX( x1, y1-1, 0 ) + PIX( x1-1, y1, 0 )) >> 1;
+		PIX( x1, y1, 1 ) = (qint)(PIX( x1, y1-1, 1 ) + PIX( x1-1, y1, 1 )) >> 1;
+		PIX( x1, y1, 2 ) = (qint)(PIX( x1, y1-1, 2 ) + PIX( x1-1, y1, 2 )) >> 1;
+		PIX( x1, y1, 3 ) = (qint)(PIX( x1, y1-1, 3 ) + PIX( x1-1, y1, 3 )) >> 1;
 	}
 }
 
@@ -239,10 +239,10 @@ expand the 24 bit on-disk to 32 bit and return max.intensity
 */
 static float R_ProcessLightmap( byte *image, const byte *buf_p, float maxIntensity )
 {
-	int x, y;
+	qint x, y;
 
 	if ( 0 && r_lightmap->integer == 2 ) {
-		int j;
+		qint j;
 		// color code by intensity as development tool	(FIXME: check range)
 		for ( j = 0; j < LIGHTMAP_SIZE * LIGHTMAP_SIZE; j++ )
 		{
@@ -297,7 +297,7 @@ static float R_ProcessLightmap( byte *image, const byte *buf_p, float maxIntensi
 }
 
 
-static int SetLightmapParams( int numLightmaps, int maxTextureSize )
+static qint SetLightmapParams( qint numLightmaps, qint maxTextureSize )
 {
 	lightmapWidth = log2pad( LIGHTMAP_LEN, 1 );
 	lightmapHeight = log2pad( LIGHTMAP_LEN, 1 );
@@ -326,12 +326,12 @@ static int SetLightmapParams( int numLightmaps, int maxTextureSize )
 }
 
 
-int R_GetLightmapCoords( const int lightmapIndex, float *x, float *y )
+qint R_GetLightmapCoords( const qint lightmapIndex, float *x, float *y )
 {
-	const int lightmapNum = lightmapIndex / tr.lightmapMod;
-	const int cN = lightmapIndex % tr.lightmapMod;
-	const int cX = cN % lightmapCountX;
-	const int cY = cN / lightmapCountX;
+	const qint lightmapNum = lightmapIndex / tr.lightmapMod;
+	const qint cN = lightmapIndex % tr.lightmapMod;
+	const qint cX = cN % lightmapCountX;
+	const qint cY = cN / lightmapCountX;
 
 	*x = (float)( LIGHTMAP_BORDER + cX * LIGHTMAP_LEN ) / (float) lightmapWidth;
 	*y = (float)( LIGHTMAP_BORDER + cY * LIGHTMAP_LEN ) / (float) lightmapHeight;
@@ -348,8 +348,8 @@ R_LoadMergedLightmaps
 static void R_LoadMergedLightmaps( const lump_t *l, byte *image )
 {
 	const byte	*buf;
-	int			offs;
-	int			i, x, y;
+	qint			offs;
+	qint			i, x, y;
  	float		maxIntensity = 0;
 
 	if ( l->filelen < LIGHTMAP_SIZE * LIGHTMAP_SIZE * 3 )
@@ -392,7 +392,7 @@ static void R_LoadMergedLightmaps( const lump_t *l, byte *image )
 	}
 
 	//if ( r_lightmap->integer == 2 )	{
-	//	ri.Printf( PRINT_ALL, "Brightest lightmap value: %d\n", ( int ) ( maxIntensity * 255 ) );
+	//	ri.Printf( PRINT_ALL, "Brightest lightmap value: %d\n", ( qint ) ( maxIntensity * 255 ) );
 	//}
 }
 
@@ -405,7 +405,7 @@ R_LoadLightmaps
 static void R_LoadLightmaps( const lump_t *l ) {
 	const byte	*buf;
 	byte		image[LIGHTMAP_LEN*LIGHTMAP_LEN*4];
-	int			i, numLightmaps;
+	qint			i, numLightmaps;
 	float		maxIntensity = 0;
 
 	tr.numLightmaps = 0;
@@ -457,7 +457,7 @@ static void R_LoadLightmaps( const lump_t *l ) {
 	}
 
 	//if ( r_lightmap->integer == 2 )	{
-	//	ri.Printf( PRINT_ALL, "Brightest lightmap value: %d\n", ( int ) ( maxIntensity * 255 ) );
+	//	ri.Printf( PRINT_ALL, "Brightest lightmap value: %d\n", ( qint ) ( maxIntensity * 255 ) );
 	//}
 }
 
@@ -481,7 +481,7 @@ R_LoadVisibility
 =================
 */
 static void R_LoadVisibility( const lump_t *l ) {
-	int		len;
+	qint		len;
 	byte	*buf;
 
 	len = PAD( s_worldData.numClusters, 64 );
@@ -494,8 +494,8 @@ static void R_LoadVisibility( const lump_t *l ) {
 	}
 	buf = fileBase + l->fileofs;
 
-	s_worldData.numClusters = LittleLong( ((int *)buf)[0] );
-	s_worldData.clusterBytes = LittleLong( ((int *)buf)[1] );
+	s_worldData.numClusters = LittleLong( ((qint *)buf)[0] );
+	s_worldData.clusterBytes = LittleLong( ((qint *)buf)[1] );
 
 	// CM_Load should have given us the vis data to share, so
 	// we don't need to allocate another copy
@@ -518,7 +518,7 @@ static void R_LoadVisibility( const lump_t *l ) {
 ShaderForShaderNum
 ===============
 */
-static shader_t *ShaderForShaderNum( const int shaderNum, int lightmapNum ) {
+static shader_t *ShaderForShaderNum( const qint shaderNum, qint lightmapNum ) {
 	shader_t	*shader;
 	const dshader_t *dsh;
 
@@ -556,9 +556,9 @@ static void GenerateNormals( srfSurfaceFace_t *face )
 {
 	vec3_t ba, ca, cross;
 	float *v1, *v2, *v3, *n1, *n2, *n3;
-	int i, *indices, i0, i1, i2;
+	qint i, *indices, i0, i1, i2;
 
-	indices = ((int *)((byte *)face + face->ofsIndices));
+	indices = ((qint *)((byte *)face + face->ofsIndices));
 
 	// store as vec4_t so we can simply use memcpy() during tesselation
 	face->normals = ri.Hunk_Alloc( face->numPoints * sizeof( tess.normal[0] ), h_low );
@@ -599,13 +599,13 @@ static void GenerateNormals( srfSurfaceFace_t *face )
 ParseFace
 ===============
 */
-static void ParseFace( const dsurface_t *ds, const drawVert_t *verts, msurface_t *surf, int *indexes ) {
-	int			i, j;
+static void ParseFace( const dsurface_t *ds, const drawVert_t *verts, msurface_t *surf, qint *indexes ) {
+	qint			i, j;
 	srfSurfaceFace_t	*cv;
-	int			numPoints, numIndexes;
-	int			lightmapNum;
+	qint			numPoints, numIndexes;
+	qint			lightmapNum;
 	float		lightmapX, lightmapY;
-	int			sfaceSize, ofsIndexes;
+	qint			sfaceSize, ofsIndexes;
 	// get fog volume
 	surf->fogIndex = LittleLong( ds->fogNum ) + 1;
 
@@ -634,7 +634,7 @@ static void ParseFace( const dsurface_t *ds, const drawVert_t *verts, msurface_t
 	// create the srfSurfaceFace_t
 	sfaceSize = sizeof( *cv ) - sizeof( cv->points ) + sizeof( cv->points[0] ) * numPoints;
 	ofsIndexes = sfaceSize;
-	sfaceSize += sizeof( int ) * numIndexes;
+	sfaceSize += sizeof( qint ) * numIndexes;
 
 	cv = ri.Hunk_Alloc( sfaceSize, h_low );
 	cv->surfaceType = SF_FACE;
@@ -661,7 +661,7 @@ static void ParseFace( const dsurface_t *ds, const drawVert_t *verts, msurface_t
 
 	indexes += LittleLong( ds->firstIndex );
 	for ( i = 0 ; i < numIndexes ; i++ ) {
-		((int *)((byte *)cv + cv->ofsIndices ))[i] = LittleLong( indexes[ i ] );
+		((qint *)((byte *)cv + cv->ofsIndices ))[i] = LittleLong( indexes[ i ] );
 	}
 
 	// take the plane information from the lightmap vector
@@ -705,10 +705,10 @@ ParseMesh
 */
 static void ParseMesh( const dsurface_t *ds, const drawVert_t *verts, msurface_t *surf ) {
 	srfGridMesh_t	*grid;
-	int				i, j;
-	int				width, height, numPoints;
+	qint				i, j;
+	qint				width, height, numPoints;
 	drawVert_t points[MAX_PATCH_SIZE*MAX_PATCH_SIZE];
-	int				lightmapNum;
+	qint				lightmapNum;
 	float			lightmapX, lightmapY;
 	vec3_t			bounds[2];
 	vec3_t			tmpVec;
@@ -782,11 +782,11 @@ static void ParseMesh( const dsurface_t *ds, const drawVert_t *verts, msurface_t
 ParseTriSurf
 ===============
 */
-static void ParseTriSurf( const dsurface_t *ds, const drawVert_t *verts, msurface_t *surf, int *indexes ) {
+static void ParseTriSurf( const dsurface_t *ds, const drawVert_t *verts, msurface_t *surf, qint *indexes ) {
 	srfTriangles_t	*tri;
-	int				i, j;
-	int				numVerts, numIndexes;
-	int				lightmapNum;
+	qint				i, j;
+	qint				numVerts, numIndexes;
+	qint				lightmapNum;
 	float			lightmapX, lightmapY;
 
 	// get fog volume
@@ -814,7 +814,7 @@ static void ParseTriSurf( const dsurface_t *ds, const drawVert_t *verts, msurfac
 	tri->numVerts = numVerts;
 	tri->numIndexes = numIndexes;
 	tri->verts = (drawVert_t *)(tri + 1);
-	tri->indexes = (int *)(tri->verts + tri->numVerts );
+	tri->indexes = (qint *)(tri->verts + tri->numVerts );
 
 	surf->data = (surfaceType_t *)tri;
 
@@ -856,9 +856,9 @@ static void ParseTriSurf( const dsurface_t *ds, const drawVert_t *verts, msurfac
 ParseFlare
 ===============
 */
-static void ParseFlare( const dsurface_t *ds, const drawVert_t *verts, msurface_t *surf, int *indexes ) {
+static void ParseFlare( const dsurface_t *ds, const drawVert_t *verts, msurface_t *surf, qint *indexes ) {
 	srfFlare_t		*flare;
-	int				i;
+	qint				i;
 
 	// get fog volume
 	surf->fogIndex = LittleLong( ds->fogNum ) + 1;
@@ -886,8 +886,8 @@ R_MergedWidthPoints
 returns qtrue if there are grid points merged on a width edge
 =================
 */
-static qboolean R_MergedWidthPoints( const srfGridMesh_t *grid, int offset ) {
-	int i, j;
+static qbool R_MergedWidthPoints( const srfGridMesh_t *grid, qint offset ) {
+	qint i, j;
 
 	for (i = 1; i < grid->width-1; i++) {
 		for (j = i + 1; j < grid->width-1; j++) {
@@ -908,8 +908,8 @@ R_MergedHeightPoints
 returns qtrue if there are grid points merged on a height edge
 =================
 */
-static qboolean R_MergedHeightPoints( const srfGridMesh_t *grid, int offset ) {
-	int i, j;
+static qbool R_MergedHeightPoints( const srfGridMesh_t *grid, qint offset ) {
+	qint i, j;
 
 	for (i = 1; i < grid->height-1; i++) {
 		for (j = i + 1; j < grid->height-1; j++) {
@@ -932,8 +932,8 @@ NOTE: never sync LoD through grid edges with merged points!
 FIXME: write generalized version that also avoids cracks between a patch and one that meets half way?
 =================
 */
-static void R_FixSharedVertexLodError_r( int start, srfGridMesh_t *grid1 ) {
-	int j, k, l, m, n, offset1, offset2, touch;
+static void R_FixSharedVertexLodError_r( qint start, srfGridMesh_t *grid1 ) {
+	qint j, k, l, m, n, offset1, offset2, touch;
 	srfGridMesh_t *grid2;
 
 	for ( j = start; j < s_worldData.numsurfaces; j++ ) {
@@ -1046,7 +1046,7 @@ If this is not the case this function will still do its job but won't fix the hi
 =================
 */
 static void R_FixSharedVertexLodError( void ) {
-	int i;
+	qint i;
 	srfGridMesh_t *grid1;
 
 	for ( i = 0; i < s_worldData.numsurfaces; i++ ) {
@@ -1071,10 +1071,10 @@ static void R_FixSharedVertexLodError( void ) {
 R_StitchPatches
 ===============
 */
-static int R_StitchPatches( int grid1num, int grid2num ) {
+static qint R_StitchPatches( qint grid1num, qint grid2num ) {
 	float *v1, *v2;
 	srfGridMesh_t *grid1, *grid2;
-	int k, l, m, n, offset1, offset2, row, column;
+	qint k, l, m, n, offset1, offset2, row, column;
 
 	grid1 = (srfGridMesh_t *) s_worldData.surfaces[grid1num].data;
 	grid2 = (srfGridMesh_t *) s_worldData.surfaces[grid2num].data;
@@ -1487,8 +1487,8 @@ of the patch (on the same row or column) the vertices will not be joined and cra
 might still appear at that side.
 ===============
 */
-static int R_TryStitchingPatch( int grid1num ) {
-	int j, numstitches;
+static qint R_TryStitchingPatch( qint grid1num ) {
+	qint j, numstitches;
 	srfGridMesh_t *grid1, *grid2;
 
 	numstitches = 0;
@@ -1520,7 +1520,7 @@ R_StitchAllPatches
 ===============
 */
 static void R_StitchAllPatches( void ) {
-	int i, stitched, numstitches;
+	qint i, stitched, numstitches;
 	srfGridMesh_t *grid1;
 
 	numstitches = 0;
@@ -1554,7 +1554,7 @@ R_MovePatchSurfacesToHunk
 ===============
 */
 static void R_MovePatchSurfacesToHunk( void ) {
-	int i, j, k, n, size;
+	qint i, j, k, n, size;
 	srfGridMesh_t *grid, *hunkgrid;
 
 	for ( i = 0; i < s_worldData.numsurfaces; i++ ) {
@@ -1598,10 +1598,10 @@ static void R_LoadSurfaces( const lump_t *surfs, const lump_t *verts, const lump
 	const dsurface_t *in;
 	msurface_t	*out;
 	const drawVert_t *dv;
-	int			*indexes;
-	int			count;
-	int			numFaces, numMeshes, numTriSurfs, numFlares;
-	int			i;
+	qint			*indexes;
+	qint			count;
+	qint			numFaces, numMeshes, numTriSurfs, numFlares;
+	qint			i;
 
 	numFaces = 0;
 	numMeshes = 0;
@@ -1672,7 +1672,7 @@ R_LoadSubmodels
 static void R_LoadSubmodels( const lump_t *l ) {
 	const dmodel_t *in;
 	bmodel_t	*out;
-	int			i, j, count;
+	qint			i, j, count;
 
 	in = (void *)(fileBase + l->fileofs);
 	if (l->filelen % sizeof(*in))
@@ -1729,11 +1729,11 @@ R_LoadNodesAndLeafs
 =================
 */
 static void R_LoadNodesAndLeafs( const lump_t *nodeLump, const lump_t *leafLump ) {
-	int			i, j, p;
+	qint			i, j, p;
 	const dnode_t		*in;
 	dleaf_t		*inLeaf;
 	mnode_t 	*out;
-	int			numNodes, numLeafs;
+	qint			numNodes, numLeafs;
 
 	in = (void *)(fileBase + nodeLump->fileofs);
 	if (nodeLump->filelen % sizeof(dnode_t) ||
@@ -1809,7 +1809,7 @@ R_ReplaceShaders
 replaces some buggy map shaders
 =================
 */
-static void R_ReplaceMapShaders( dshader_t *out, int count ) 
+static void R_ReplaceMapShaders( dshader_t *out, qint count ) 
 {
 	if ( Q_stricmp( s_worldData.baseName, "mapel4b" ) == 0 && count == 86 ) {
 		if ( crc32_buffer( (const byte*)out, count*sizeof(*out) ) == 0x1593623C ) {
@@ -1827,7 +1827,7 @@ R_LoadShaders
 =================
 */
 static void R_LoadShaders( const lump_t *l ) {
-	int		i, count;
+	qint		i, count;
 	dshader_t	*in, *out;
 	
 	in = (void *)(fileBase + l->fileofs);
@@ -1857,8 +1857,8 @@ R_LoadMarksurfaces
 */
 static void R_LoadMarksurfaces( const lump_t *l )
 {	
-	int		i, j, count;
-	int		*in;
+	qint		i, j, count;
+	qint		*in;
 	msurface_t **out;
 	
 	in = (void *)(fileBase + l->fileofs);
@@ -1884,11 +1884,11 @@ R_LoadPlanes
 =================
 */
 static	void R_LoadPlanes( const lump_t *l ) {
-	int			i, j;
+	qint			i, j;
 	cplane_t	*out;
 	const dplane_t 	*in;
-	int			count;
-	int			bits;
+	qint			count;
+	qint			bits;
 
 	in = (void *)(fileBase + l->fileofs);
 	if (l->filelen % sizeof(*in))
@@ -1921,17 +1921,17 @@ R_LoadFogs
 =================
 */
 static void R_LoadFogs( const lump_t *l, const lump_t *brushesLump, const lump_t *sidesLump ) {
-	int			i, n;
+	qint			i, n;
 	fog_t		*out;
 	const dfog_t		*fogs;
 	const dbrush_t 	*brushes, *brush;
 	const dbrushside_t	*sides;
-	int			count, brushesCount, sidesCount;
-	int			sideNum;
-	int			planeNum;
+	qint			count, brushesCount, sidesCount;
+	qint			sideNum;
+	qint			planeNum;
 	shader_t	*shader;
 	float		d;
-	int			firstSide;
+	qint			firstSide;
 	vec3_t		fogColor;
 
 	fogs = (void *)(fileBase + l->fileofs);
@@ -2032,7 +2032,7 @@ static void R_LoadFogs( const lump_t *l, const lump_t *brushesLump, const lump_t
 		if ( sideNum == -1 ) {
 			out->hasSurface = qfalse;
 		} else {
-			int sideOffset = firstSide + sideNum;
+			qint sideOffset = firstSide + sideNum;
 			if ( (unsigned)sideOffset >= sidesCount ) {
 				ri.Printf( PRINT_WARNING, "bad fog side offset %i\n", sideOffset );
 				out->hasSurface = qfalse;
@@ -2056,9 +2056,9 @@ R_LoadLightGrid
 ================
 */
 static void R_LoadLightGrid( const lump_t *l ) {
-	int		i;
+	qint		i;
 	vec3_t	maxs;
-	int		numGridPoints;
+	qint		numGridPoints;
 	world_t	*w;
 	float	*wMins, *wMaxs;
 
@@ -2102,9 +2102,9 @@ R_LoadEntities
 ================
 */
 static void R_LoadEntities( const lump_t *l ) {
-	const char *p, *token, *s;
-	char keyname[MAX_TOKEN_CHARS];
-	char value[MAX_TOKEN_CHARS], *v[3];
+	const qchar *p, *token, *s;
+	qchar keyname[MAX_TOKEN_CHARS];
+	qchar value[MAX_TOKEN_CHARS], *v[3];
 	world_t	*w;
 
 	w = &s_worldData;
@@ -2112,7 +2112,7 @@ static void R_LoadEntities( const lump_t *l ) {
 	w->lightGridSize[1] = 64;
 	w->lightGridSize[2] = 128;
 
-	p = (const char *)(fileBase + l->fileofs);
+	p = (const qchar *)(fileBase + l->fileofs);
 
 	// store for reference by the cgame
 	w->entityString = ri.Hunk_Alloc( l->filelen + 1, h_low );
@@ -2145,7 +2145,7 @@ static void R_LoadEntities( const lump_t *l ) {
 		// check for remapping of shaders for vertex lighting
 		s = "vertexremapshader";
 		if (!Q_strncmp(keyname, s, strlen(s)) ) {
-			char *vs = strchr(value, ';');
+			qchar *vs = strchr(value, ';');
 			if (!vs) {
 				ri.Printf( PRINT_WARNING, "WARNING: no semi colon in vertexshaderremap '%s'\n", value );
 				break;
@@ -2158,8 +2158,8 @@ static void R_LoadEntities( const lump_t *l ) {
 		}
 		// check for remapping of shaders
 		s = "remapshader";
-		if (!Q_strncmp(keyname, s, (int)strlen(s)) ) {
-			char *vs = strchr(value, ';');
+		if (!Q_strncmp(keyname, s, (qint)strlen(s)) ) {
+			qchar *vs = strchr(value, ';');
 			if (!vs) {
 				ri.Printf( PRINT_WARNING, "WARNING: no semi colon in shaderremap '%s'\n", value );
 				break;
@@ -2186,8 +2186,8 @@ static void R_LoadEntities( const lump_t *l ) {
 RE_GetEntityToken
 =================
 */
-qboolean RE_GetEntityToken( char *buffer, int size ) {
-	const char	*s;
+qbool RE_GetEntityToken( qchar *buffer, qint size ) {
+	const qchar	*s;
 
 	s = COM_Parse( &s_worldData.entityParsePoint );
 	Q_strncpyz( buffer, s, size );
@@ -2207,8 +2207,8 @@ RE_LoadWorldMap
 Called directly from cgame
 =================
 */
-void RE_LoadWorldMap( const char *name ) {
-	int			i;
+void RE_LoadWorldMap( const qchar *name ) {
+	qint			i;
 	int32_t		size;
 	dheader_t	*header;
 	union {

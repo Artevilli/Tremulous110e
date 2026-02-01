@@ -99,7 +99,7 @@ void GL_Bind( image_t *image ) {
 /*
 ** GL_SelectTexture
 */
-void GL_SelectTexture( int unit )
+void GL_SelectTexture( qint unit )
 {
 #ifndef USE_VULKAN
 	if ( glState.currenttmu == unit )
@@ -123,7 +123,7 @@ void GL_SelectTexture( int unit )
 ** GL_SelectClientTexture
 */
 #ifndef USE_VULKAN
-static void GL_SelectClientTexture( int unit )
+static void GL_SelectClientTexture( qint unit )
 {
 	if ( glState.currentArray == unit )
 	{
@@ -158,7 +158,7 @@ void GL_Cull( cullType_t cullType ) {
 	}
 	else
 	{
-		qboolean cullFront;
+		qbool cullFront;
 		qglEnable( GL_CULL_FACE );
 
 		cullFront = (cullType == CT_FRONT_SIDED);
@@ -393,7 +393,7 @@ void GL_State( unsigned stateBits )
 
 
 #ifndef USE_VULKAN
-void GL_ClientState( int unit, unsigned stateBits )
+void GL_ClientState( qint unit, unsigned stateBits )
 {
 	unsigned diff = stateBits ^ glState.glClientStateBits[ unit ];
 
@@ -513,7 +513,7 @@ to actually render the visible surfaces for this view
 */
 static void RB_BeginDrawingView( void ) {
 #ifndef USE_VULKAN
-	int clearBits = 0;
+	qint clearBits = 0;
 #endif
 
 	// sync with gl if needed
@@ -585,18 +585,18 @@ static void RB_LightingPass( void );
 RB_RenderDrawSurfList
 ==================
 */
-static void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
+static void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, qint numDrawSurfs ) {
 	shader_t		*shader, *oldShader;
-	int				fogNum;
-	int				entityNum, oldEntityNum;
-	int				dlighted;
-	qboolean		depthRange, isCrosshair;
+	qint				fogNum;
+	qint				entityNum, oldEntityNum;
+	qint				dlighted;
+	qbool		depthRange, isCrosshair;
 #ifndef USE_VULKAN
-	qboolean		oldDepthRange, wasCrosshair;
+	qbool		oldDepthRange, wasCrosshair;
 #endif
-	int				i;
+	qint				i;
 	drawSurf_t		*drawSurf;
-	unsigned int	oldSort;
+	unsigned qint	oldSort;
 #ifdef USE_PMLIGHT
 	float			oldShaderSort;
 #endif
@@ -833,14 +833,14 @@ RB_RenderLitSurfList
 */
 static void RB_RenderLitSurfList( dlight_t* dl ) {
 	shader_t		*shader, *oldShader;
-	int				fogNum;
-	int				entityNum, oldEntityNum;
+	qint				fogNum;
+	qint				entityNum, oldEntityNum;
 #ifndef USE_VULKAN
-	qboolean		oldDepthRange, wasCrosshair;
+	qbool		oldDepthRange, wasCrosshair;
 #endif
-	qboolean		depthRange, isCrosshair;
+	qbool		depthRange, isCrosshair;
 	const litSurf_t	*litSurf;
-	unsigned int	oldSort;
+	unsigned qint	oldSort;
 	double			originalTime; // -EC-
 
 	// save original time for entity shader offsets
@@ -1072,9 +1072,9 @@ Stretches a raw 32 bit power of 2 bitmap image over the given screen rectangle.
 Used for cinematics.
 =============
 */
-void RE_StretchRaw( int x, int y, int w, int h, int cols, int rows, byte *data, int client, qboolean dirty ) {
-	int			i, j;
-	int			start, end;
+void RE_StretchRaw( qint x, qint y, qint w, qint h, qint cols, qint rows, byte *data, qint client, qbool dirty ) {
+	qint			i, j;
+	qint			start, end;
 
 	if ( !tr.registered ) {
 		return;
@@ -1107,7 +1107,7 @@ void RE_StretchRaw( int x, int y, int w, int h, int cols, int rows, byte *data, 
 }
 
 
-void RE_UploadCinematic( int w, int h, int cols, int rows, byte *data, int client, qboolean dirty ) {
+void RE_UploadCinematic( qint w, qint h, qint cols, qint rows, byte *data, qint client, qbool dirty ) {
 
 	image_t *image;
 
@@ -1211,7 +1211,7 @@ static const void *RB_StretchPic( const void *data ) {
 static void RB_LightingPass( void )
 {
 	dlight_t	*dl;
-	int	i;
+	qint	i;
 
 #ifdef USE_VBO
 	//VBO_Flush();
@@ -1251,13 +1251,13 @@ static void transform_to_eye_space( const vec3_t v, vec3_t v_eye )
 RB_DebugPolygon
 ================
 */
-static void RB_DebugPolygon( int color, int numPoints, float *points ) {
+static void RB_DebugPolygon( qint color, qint numPoints, float *points ) {
 	vec3_t pa;
 	vec3_t pb;
 	vec3_t p;
 	vec3_t q;
 	vec3_t n;
-	int i;
+	qint i;
 
 	if ( numPoints < 3 ) {
 		return;
@@ -1480,7 +1480,7 @@ Also called by RE_EndRegistration
 #ifdef USE_VULKAN
 void RB_ShowImages( void )
 {
-	int i;
+	qint i;
 
 	if ( !backEnd.projection2D ) {
 		RB_SetGL2D();
@@ -1561,10 +1561,10 @@ void RB_ShowImages( void )
 }
 #else
 void RB_ShowImages( void ) {
-	int		i;
+	qint		i;
 	image_t	*image;
 	float	x, y, w, h;
-	int		start, end;
+	qint		start, end;
 	const vec2_t t[4] = { {0,0}, {1,0}, {0,1}, {1,1} };
 	vec3_t v[4];
 
@@ -1794,7 +1794,7 @@ void RB_ExecuteRenderCommands( const void *data ) {
 	while ( 1 ) {
 		data = PADP(data, sizeof(void *));
 
-		switch ( *(const int *)data ) {
+		switch ( *(const qint *)data ) {
 		case RC_SET_COLOR:
 			data = RB_SetColor( data );
 			break;

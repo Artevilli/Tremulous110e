@@ -81,7 +81,7 @@ void Mat4Transform( const mat4_t in1, const vec4_t in2, vec4_t out )
 	out[ 3] = in1[ 3] * in2[ 0] + in1[ 7] * in2[ 1] + in1[11] * in2[ 2] + in1[15] * in2[ 3];
 }
 
-qboolean Mat4Compare( const mat4_t a, const mat4_t b )
+qbool Mat4Compare( const mat4_t a, const mat4_t b )
 {
 	return !(a[ 0] != b[ 0] || a[ 4] != b[ 4] || a[ 8] != b[ 8] || a[12] != b[12] ||
              a[ 1] != b[ 1] || a[ 5] != b[ 5] || a[ 9] != b[ 9] || a[13] != b[13] ||
@@ -163,7 +163,7 @@ void VectorLerp( vec3_t a, vec3_t b, float lerp, vec3_t c)
 	c[2] = a[2] * (1.0f - lerp) + b[2] * lerp;
 }
 
-qboolean SpheresIntersect(vec3_t origin1, float radius1, vec3_t origin2, float radius2)
+qbool SpheresIntersect(vec3_t origin1, float radius1, vec3_t origin2, float radius2)
 {
 	float radiusSum = radius1 + radius2;
 	vec3_t diff;
@@ -189,9 +189,9 @@ void BoundingSphereOfSpheres(vec3_t origin1, float radius1, vec3_t origin2, floa
 	*radius3 = VectorLength(diff) * 0.5f + MAX(radius1, radius2);
 }
 
-int NextPowerOfTwo(int in)
+qint NextPowerOfTwo(qint in)
 {
-	int out;
+	qint out;
 
 	for (out = 1; out < in; out <<= 1)
 		;
@@ -203,18 +203,18 @@ union f32_u {
 	float f;
 	uint32_t ui;
 	struct {
-		unsigned int fraction:23;
-		unsigned int exponent:8;
-		unsigned int sign:1;
+		unsigned qint fraction:23;
+		unsigned qint exponent:8;
+		unsigned qint sign:1;
 	} pack;
 };
 
 union f16_u {
 	uint16_t ui;
 	struct {
-		unsigned int fraction:10;
-		unsigned int exponent:5;
-		unsigned int sign:1;
+		unsigned qint fraction:10;
+		unsigned qint exponent:5;
+		unsigned qint sign:1;
 	} pack;
 };
 
@@ -225,7 +225,7 @@ uint16_t FloatToHalf(float in)
 
 	f32.f = in;
 
-	f16.pack.exponent = CLAMP((int)(f32.pack.exponent) - 112, 0, 31);
+	f16.pack.exponent = CLAMP((qint)(f32.pack.exponent) - 112, 0, 31);
 	f16.pack.fraction = f32.pack.fraction >> 13;
 	f16.pack.sign     = f32.pack.sign;
 
@@ -239,7 +239,7 @@ float HalfToFloat(uint16_t in)
 
 	f16.ui = in;
 
-	f32.pack.exponent = (int)(f16.pack.exponent) + 112;
+	f32.pack.exponent = (qint)(f16.pack.exponent) + 112;
 	f32.pack.fraction = f16.pack.fraction << 13;
 	f32.pack.sign = f16.pack.sign;
 

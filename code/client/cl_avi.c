@@ -29,42 +29,42 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 typedef struct audioFormat_s
 {
-  int rate;
-  int format;
-  int channels;
-  int bits;
+  qint rate;
+  qint format;
+  qint channels;
+  qint bits;
 
-  int sampleSize;
-  unsigned int totalBytes;
+  qint sampleSize;
+  unsigned qint totalBytes;
 } audioFormat_t;
 
 typedef struct aviFileData_s
 {
-  qboolean      fileOpen;
-  qboolean      pipe;
+  qbool      fileOpen;
+  qbool      pipe;
   fileHandle_t  f;
-  char          fileName[ MAX_QPATH ];
-  unsigned int  fileSize;
-  unsigned int  moviOffset;
-  unsigned int  moviSize;
+  qchar          fileName[ MAX_QPATH ];
+  unsigned qint  fileSize;
+  unsigned qint  moviOffset;
+  unsigned qint  moviSize;
 
   fileHandle_t  idxF;
-  int           numIndices;
+  qint           numIndices;
 
-  int           frameRate;
-  int           framePeriod;
-  int           width, height;
-  int           numVideoFrames;
-  int           maxRecordSize;
-  qboolean      motionJpeg;
+  qint           frameRate;
+  qint           framePeriod;
+  qint           width, height;
+  qint           numVideoFrames;
+  qint           maxRecordSize;
+  qbool      motionJpeg;
 
-  qboolean      audio;
+  qbool      audio;
   audioFormat_t a;
-  int           numAudioFrames;
-  int           audioFrameSize;
+  qint           numAudioFrames;
+  qint           audioFrameSize;
 
-  int           chunkStack[ MAX_RIFF_CHUNKS ];
-  int           chunkStackTop;
+  qint           chunkStack[ MAX_RIFF_CHUNKS ];
+  qint           chunkStackTop;
 
   byte          *cBuffer, *eBuffer;
 } aviFileData_t;
@@ -74,7 +74,7 @@ static aviFileData_t afd;
 #define MAX_AVI_BUFFER 2048
 
 static byte buffer[ MAX_AVI_BUFFER ];
-static int  bufIndex;
+static qint  bufIndex;
 
 
 /*
@@ -82,7 +82,7 @@ static int  bufIndex;
 SafeFS_Write
 ===============
 */
-static ID_INLINE void SafeFS_Write( const void *buf, int len, fileHandle_t f )
+static ID_INLINE void SafeFS_Write( const void *buf, qint len, fileHandle_t f )
 {
   if ( FS_Write( buf, len, f ) < len )
 		Com_Error( ERR_DROP, "Failed to write avi file" );
@@ -94,7 +94,7 @@ static ID_INLINE void SafeFS_Write( const void *buf, int len, fileHandle_t f )
 WRITE_STRING
 ===============
 */
-static ID_INLINE void WRITE_STRING( const char *s )
+static ID_INLINE void WRITE_STRING( const qchar *s )
 {
   Com_Memcpy( &buffer[ bufIndex ], s, strlen( s ) );
   bufIndex += strlen( s );
@@ -106,7 +106,7 @@ static ID_INLINE void WRITE_STRING( const char *s )
 WRITE_4BYTES
 ===============
 */
-static ID_INLINE void WRITE_4BYTES( int x )
+static ID_INLINE void WRITE_4BYTES( qint x )
 {
   buffer[ bufIndex + 0 ] = (byte)( ( x >>  0 ) & 0xFF );
   buffer[ bufIndex + 1 ] = (byte)( ( x >>  8 ) & 0xFF );
@@ -121,7 +121,7 @@ static ID_INLINE void WRITE_4BYTES( int x )
 WRITE_2BYTES
 ===============
 */
-static ID_INLINE void WRITE_2BYTES( int x )
+static ID_INLINE void WRITE_2BYTES( qint x )
 {
   buffer[ bufIndex + 0 ] = (byte)( ( x >>  0 ) & 0xFF );
   buffer[ bufIndex + 1 ] = (byte)( ( x >>  8 ) & 0xFF );
@@ -134,7 +134,7 @@ static ID_INLINE void WRITE_2BYTES( int x )
 START_CHUNK
 ===============
 */
-static ID_INLINE void START_CHUNK( const char *s )
+static ID_INLINE void START_CHUNK( const qchar *s )
 {
 	if( afd.chunkStackTop >= MAX_RIFF_CHUNKS )
 	{
@@ -157,7 +157,7 @@ END_CHUNK
 */
 static ID_INLINE void END_CHUNK( void )
 {
-	int endIndex = bufIndex;
+	qint endIndex = bufIndex;
 
 	if( afd.chunkStackTop <= 0 )
 	{
@@ -329,7 +329,7 @@ static void CL_WriteAVIHeader( void )
 }
 
 
-static qboolean CL_ValidatePipeFormat( const char *s )
+static qbool CL_ValidatePipeFormat( const qchar *s )
 {
 	while ( *s != '\0' ) 
 	{
@@ -353,7 +353,7 @@ Creates an AVI file and gets it into a state where
 writing the actual data can begin
 ===============
 */
-qboolean CL_OpenAVIForWriting( const char *fileName, qboolean pipe, qboolean reopen )
+qbool CL_OpenAVIForWriting( const qchar *fileName, qbool pipe, qbool reopen )
 {
 	if ( afd.fileOpen )
 		return qfalse;
@@ -374,9 +374,9 @@ qboolean CL_OpenAVIForWriting( const char *fileName, qboolean pipe, qboolean reo
 
 	if ( pipe )
 	{
-		char cmd[MAX_OSPATH * 4];
-		const char *cmd_fmt = "ffmpeg -f avi -i - -threads 0 -y %s \"%s\" 2> \"%s-log.txt\"";
-		const char *ospath;
+		qchar cmd[MAX_OSPATH * 4];
+		const qchar *cmd_fmt = "ffmpeg -f avi -i - -threads 0 -y %s \"%s\" 2> \"%s-log.txt\"";
+		const qchar *ospath;
 
 		if ( !CL_ValidatePipeFormat( cl_aviPipeFormat->string ) ) {
 			Com_Printf( S_COLOR_YELLOW "Invalid pipe format: %s\n", cl_aviPipeFormat->string );
@@ -403,7 +403,7 @@ qboolean CL_OpenAVIForWriting( const char *fileName, qboolean pipe, qboolean reo
 	Q_strncpyz( afd.fileName, fileName, sizeof( afd.fileName ) );
 
 	afd.frameRate = cl_aviFrameRate->integer;
-	afd.framePeriod = (int)(1000000.0 / afd.frameRate);
+	afd.framePeriod = (qint)(1000000.0 / afd.frameRate);
 
 	afd.width = cls.captureWidth;
 	afd.height = cls.captureHeight;
@@ -477,9 +477,9 @@ qboolean CL_OpenAVIForWriting( const char *fileName, qboolean pipe, qboolean reo
 CL_CheckFileSize
 ===============
 */
-static qboolean CL_CheckFileSize( int bytesToAdd )
+static qbool CL_CheckFileSize( qint bytesToAdd )
 {
-	unsigned int newFileSize;
+	unsigned qint newFileSize;
 
 	if ( afd.pipe )
 	{
@@ -515,11 +515,11 @@ static qboolean CL_CheckFileSize( int bytesToAdd )
 CL_WriteAVIVideoFrame
 ===============
 */
-void CL_WriteAVIVideoFrame( const byte *imageBuffer, int size )
+void CL_WriteAVIVideoFrame( const byte *imageBuffer, qint size )
 {
-	unsigned int chunkOffset;
-	int		chunkSize = 8 + size;
-	int		paddingSize = PADLEN( size, 2 );
+	unsigned qint chunkOffset;
+	qint		chunkSize = 8 + size;
+	qint		paddingSize = PADLEN( size, 2 );
 	byte	padding[ 4 ] = { 0 };
 
 	if ( !afd.fileOpen )
@@ -564,7 +564,7 @@ void CL_WriteAVIVideoFrame( const byte *imageBuffer, int size )
 #define PCM_BUFFER_SIZE 44100
 
 static byte pcmCaptureBuffer[ PCM_BUFFER_SIZE ];
-static int  bytesInBuffer = 0;
+static qint  bytesInBuffer = 0;
 
 /*
 ===============
@@ -573,9 +573,9 @@ CL_FlushAudioBuffer
 */
 static void CL_FlushCaptureBuffer( void ) 
 {
-	unsigned int chunkOffset = afd.fileSize - afd.moviOffset - 8;
-	int   chunkSize = 8 + bytesInBuffer;
-	int   paddingSize = PADLEN( bytesInBuffer, 2 );
+	unsigned qint chunkOffset = afd.fileSize - afd.moviOffset - 8;
+	qint   chunkSize = 8 + bytesInBuffer;
+	qint   paddingSize = PADLEN( bytesInBuffer, 2 );
 	byte  padding[ 4 ] = { 0 };
 
 	if ( !bytesInBuffer )
@@ -615,7 +615,7 @@ static void CL_FlushCaptureBuffer( void )
 CL_WriteAVIAudioFrame
 ===============
 */
-void CL_WriteAVIAudioFrame( const byte *pcmBuffer, int size )
+void CL_WriteAVIAudioFrame( const byte *pcmBuffer, qint size )
 {
 	if ( !afd.audio )
 		return;
@@ -669,11 +669,11 @@ CL_CloseAVI
 Closes the AVI file and writes an index chunk
 ===============
 */
-qboolean CL_CloseAVI( qboolean reopen )
+qbool CL_CloseAVI( qbool reopen )
 {
-	int indexRemainder;
-	int indexSize;
-	const char *idxFileName;
+	qint indexRemainder;
+	qint indexSize;
+	const qchar *idxFileName;
 
 	// AVI file isn't open
 	if ( !afd.fileOpen )
@@ -768,7 +768,7 @@ qboolean CL_CloseAVI( qboolean reopen )
 CL_VideoRecording
 ===============
 */
-qboolean CL_VideoRecording( void )
+qbool CL_VideoRecording( void )
 {
 	return afd.fileOpen;
 }

@@ -61,9 +61,9 @@ cvar_t *in_nograb;
 GLimp_Shutdown
 ===============
 */
-void GLimp_Shutdown( qboolean unloadDLL )
+void GLimp_Shutdown( qbool unloadDLL )
 {
-	const char* drv = SDL_GetCurrentVideoDriver();
+	const qchar* drv = SDL_GetCurrentVideoDriver();
 
 	IN_Shutdown();
 
@@ -103,16 +103,16 @@ void GLimp_Minimize( void )
 GLimp_LogComment
 ===============
 */
-void GLimp_LogComment( const char *comment )
+void GLimp_LogComment( const qchar *comment )
 {
 }
 
 
-static int FindNearestDisplay( int *x, int *y, int w, int h )
+static qint FindNearestDisplay( qint *x, qint *y, qint w, qint h )
 {
-	const int cx = *x + w / 2;
-	const int cy = *y + h / 2;
-	int i, index, numDisplays;
+	const qint cx = *x + w / 2;
+	const qint cy = *y + h / 2;
+	qint i, index, numDisplays;
 	SDL_Rect *list, *m;
 
 	index = -1; // selected display index
@@ -146,7 +146,7 @@ static int FindNearestDisplay( int *x, int *y, int w, int h )
 	if ( index == -1 )
 	{
 		unsigned long nearest, dist;
-		int dx, dy;
+		qint dx, dy;
 		nearest = ~0UL;
 		for ( i = 0; i < numDisplays; i++ )
 		{
@@ -193,16 +193,16 @@ static SDL_HitTestResult SDL_HitTestFunc( SDL_Window *win, const SDL_Point *area
 GLimp_SetMode
 ===============
 */
-static int GLW_SetMode( int mode, const char *modeFS, qboolean fullscreen, qboolean vulkan )
+static qint GLW_SetMode( qint mode, const qchar *modeFS, qbool fullscreen, qbool vulkan )
 {
 	glconfig_t *config = glw_state.config;
-	int perChannelColorBits;
-	int colorBits, depthBits, stencilBits;
-	int i;
+	qint perChannelColorBits;
+	qint colorBits, depthBits, stencilBits;
+	qint i;
 	SDL_DisplayMode desktopMode;
-	int display;
-	int x;
-	int y;
+	qint display;
+	qint x;
+	qint y;
 	Uint32 flags = SDL_WINDOW_SHOWN;
 
 #ifdef USE_VULKAN_API
@@ -318,8 +318,8 @@ static int GLW_SetMode( int mode, const char *modeFS, qboolean fullscreen, qbool
 
 	for ( i = 0; i < 16; i++ )
 	{
-		int testColorBits, testDepthBits, testStencilBits;
-		int realColorBits[3];
+		qint testColorBits, testDepthBits, testStencilBits;
+		qint realColorBits[3];
 
 		// 0 - default
 		// 1 - minus colorBits
@@ -543,7 +543,7 @@ static int GLW_SetMode( int mode, const char *modeFS, qboolean fullscreen, qbool
 GLimp_StartDriverAndSetMode
 ===============
 */
-static rserr_t GLimp_StartDriverAndSetMode( int mode, const char *modeFS, qboolean fullscreen, qboolean vulkan )
+static rserr_t GLimp_StartDriverAndSetMode( qint mode, const qchar *modeFS, qbool fullscreen, qbool vulkan )
 {
 	rserr_t err;
 
@@ -557,7 +557,7 @@ static rserr_t GLimp_StartDriverAndSetMode( int mode, const char *modeFS, qboole
 
 	if ( !SDL_WasInit( SDL_INIT_VIDEO ) )
 	{
-		const char *driverName;
+		const qchar *driverName;
 
 		if ( SDL_Init( SDL_INIT_VIDEO ) != 0 )
 		{
@@ -676,7 +676,7 @@ GL_GetProcAddress
 Used by opengl renderers to resolve all qgl* function pointers
 ===============
 */
-void *GL_GetProcAddress( const char *symbol )
+void *GL_GetProcAddress( const qchar *symbol )
 {
 	return SDL_GL_GetProcAddress( symbol );
 }
@@ -758,7 +758,7 @@ void VKimp_Init( glconfig_t *config )
 VK_GetInstanceProcAddr
 ===============
 */
-void *VK_GetInstanceProcAddr( VkInstance instance, const char *name )
+void *VK_GetInstanceProcAddr( VkInstance instance, const qchar *name )
 {
 	return qvkGetInstanceProcAddr( instance, name );
 }
@@ -769,7 +769,7 @@ void *VK_GetInstanceProcAddr( VkInstance instance, const char *name )
 VK_CreateSurface
 ===============
 */
-qboolean VK_CreateSurface( VkInstance instance, VkSurfaceKHR *surface )
+qbool VK_CreateSurface( VkInstance instance, VkSurfaceKHR *surface )
 {
 	if ( SDL_Vulkan_CreateSurface( SDL_window, instance, surface ) == SDL_TRUE )
 		return qtrue;
@@ -783,9 +783,9 @@ qboolean VK_CreateSurface( VkInstance instance, VkSurfaceKHR *surface )
 VKimp_Shutdown
 ===============
 */
-void VKimp_Shutdown( qboolean unloadDLL )
+void VKimp_Shutdown( qbool unloadDLL )
 {
-	const char* drv = SDL_GetCurrentVideoDriver();
+	const qchar* drv = SDL_GetCurrentVideoDriver();
 
 	IN_Shutdown();
 
@@ -825,13 +825,13 @@ void GLW_HideFullscreenWindow( void ) {
 Sys_GetClipboardData
 ===============
 */
-char *Sys_GetClipboardData( void )
+qchar *Sys_GetClipboardData( void )
 {
 #ifdef DEDICATED
 	return NULL;
 #else
-	char *data = NULL;
-	char *cliptext;
+	qchar *data = NULL;
+	qchar *cliptext;
 
 	if ( ( cliptext = SDL_GetClipboardText() ) != NULL ) {
 		if ( cliptext[0] != '\0' ) {
@@ -840,7 +840,7 @@ char *Sys_GetClipboardData( void )
 			data = Z_Malloc( bufsize );
 			Q_strncpyz( data, cliptext, bufsize );
 
-			// find first listed char and set to '\0'
+			// find first listed qchar and set to '\0'
 			strtok( data, "\n\r\b" );
 		}
 		SDL_free( cliptext );
@@ -855,7 +855,7 @@ char *Sys_GetClipboardData( void )
 Sys_SetClipboardBitmap
 ===============
 */
-void Sys_SetClipboardBitmap( const byte *bitmap, int length )
+void Sys_SetClipboardBitmap( const byte *bitmap, qint length )
 {
 #ifdef _WIN32
 	HGLOBAL hMem;

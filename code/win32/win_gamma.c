@@ -151,7 +151,7 @@ void GLimp_InitGamma( glconfig_t *config )
 		//
 		if ( ( HIBYTE( s_oldHardwareGamma[0][181] ) == 255 ) )
 		{
-			int g;
+			qint g;
 
 			Com_Printf( S_COLOR_YELLOW "WARNING: suspicious gamma tables, using linear ramp for restoration\n" );
 
@@ -170,7 +170,7 @@ void GLimp_InitGamma( glconfig_t *config )
 
 /*
 void mapGammaMax( void ) {
-	int		i, j;
+	qint		i, j;
 	unsigned short table[3][256];
 
 	// try to figure out what win2k will let us get away with setting
@@ -201,9 +201,9 @@ void mapGammaMax( void ) {
 **
 ** This routine should only be called if glConfig.deviceSupportsGamma is TRUE
 */
-void GLimp_SetGamma( unsigned char red[256], unsigned char green[256], unsigned char blue[256] ) {
+void GLimp_SetGamma( unsigned qchar red[256], unsigned qchar green[256], unsigned qchar blue[256] ) {
 	unsigned short table[3][256];
-	int		i, j;
+	qint		i, j;
 	BOOL	ret;
 	HDC		hDC;
 

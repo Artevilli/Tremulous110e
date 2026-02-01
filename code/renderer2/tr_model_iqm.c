@@ -33,8 +33,8 @@ static float identityMatrix[12] = {
 	0, 0, 1, 0
 };
 
-static qboolean IQM_CheckRange( iqmHeader_t *header, int offset,
-				int count, int size ) {
+static qbool IQM_CheckRange( iqmHeader_t *header, qint offset,
+				qint count, qint size ) {
 	// return true if the range specified by offset, count and size
 	// doesn't fit into the file
 	return ( count <= 0 ||
@@ -170,7 +170,7 @@ R_LoadIQM
 Load an IQM model and compute the joint matrices for every frame.
 =================
 */
-qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_name ) {
+qbool R_LoadIQM( model_t *mod, void *buffer, qint filesize, const qchar *mod_name ) {
 	iqmHeader_t		*header;
 	iqmVertexArray_t	*vertexarray;
 	iqmTriangle_t		*triangle;
@@ -179,17 +179,17 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 	iqmPose_t		*pose;
 	iqmBounds_t		*bounds;
 	unsigned short		*framedata;
-	char			*str;
-	int			i, j, k;
+	qchar			*str;
+	qint			i, j, k;
 	iqmTransform_t		*transform;
 	float			*mat, *matInv;
 	size_t			size, joint_names;
 	byte			*dataPtr;
 	iqmData_t		*iqmData;
 	srfIQModel_t		*surface;
-	char			meshName[MAX_QPATH];
-	int				vertexArrayFormat[IQM_COLOR+1];
-	int				allocateInfluences;
+	qchar			meshName[MAX_QPATH];
+	qint				vertexArrayFormat[IQM_COLOR+1];
+	qint				allocateInfluences;
 	byte *blendIndexes;
 	union {
 		byte *b;
@@ -269,7 +269,7 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 		}
 		vertexarray = (iqmVertexArray_t *)((byte *)header + header->ofs_vertexarrays);
 		for( i = 0; i < header->num_vertexarrays; i++, vertexarray++ ) {
-			int	n, *intPtr;
+			qint	n, *intPtr;
 
 			if( vertexarray->size <= 0 || vertexarray->size > 4 ) {
 				return qfalse;
@@ -295,7 +295,7 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 						    n, sizeof(float) ) ) {
 					return qfalse;
 				}
-				intPtr = (int *)((byte *)header + vertexarray->offset);
+				intPtr = (qint *)((byte *)header + vertexarray->offset);
 				for( j = 0; j < n; j++, intPtr++ ) {
 					LL( *intPtr );
 				}
@@ -415,7 +415,7 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 			LL( mesh->num_triangles );
 
 			if ( mesh->name < header->num_text ) {
-				Q_strncpyz( meshName, (char*)header + header->ofs_text + mesh->name, sizeof (meshName) );
+				Q_strncpyz( meshName, (qchar*)header + header->ofs_text + mesh->name, sizeof (meshName) );
 			} else {
 				meshName[0] = '\0';
 			}
@@ -446,12 +446,12 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 			// find number of unique blend influences per mesh
 			if( header->num_joints ) {
 				for( j = 0; j < mesh->num_vertexes; j++ ) {
-					int vtx = mesh->first_vertex + j;
+					qint vtx = mesh->first_vertex + j;
 
 					for( k = 0; k < j; k++ ) {
-						int influence = mesh->first_vertex + k;
+						qint influence = mesh->first_vertex + k;
 
-						if( *(int*)&blendIndexes[4*influence] != *(int*)&blendIndexes[4*vtx] ) {
+						if( *(qint*)&blendIndexes[4*influence] != *(qint*)&blendIndexes[4*vtx] ) {
 							continue;
 						}
 
@@ -463,7 +463,7 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 								break;
 							}
 						} else {
-							if ( *(int*)&blendWeights.b[4*influence] == *(int*)&blendWeights.b[4*vtx] ) {
+							if ( *(qint*)&blendWeights.b[4*influence] == *(qint*)&blendWeights.b[4*vtx] ) {
 								break;
 							}
 						}
@@ -508,11 +508,11 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 			LL( joint->scale[2] );
 
 			if( joint->parent < -1 ||
-				joint->parent >= (int)header->num_joints ||
-				joint->name >= (int)header->num_text ) {
+				joint->parent >= (qint)header->num_joints ||
+				joint->name >= (qint)header->num_text ) {
 				return qfalse;
 			}
-			joint_names += strlen( (char *)header + header->ofs_text +
+			joint_names += strlen( (qchar *)header + header->ofs_text +
 						   joint->name ) + 1;
 		}
 	}
@@ -577,7 +577,7 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 	size = sizeof(iqmData_t);
 	if( header->num_meshes ) {
 		size += header->num_meshes * sizeof( srfIQModel_t ); // surfaces
-		size += header->num_triangles * 3 * sizeof(int);	// triangles
+		size += header->num_triangles * 3 * sizeof(qint);	// triangles
 		size += header->num_vertexes * 3 * sizeof(float);	// positions
 		size += header->num_vertexes * 2 * sizeof(float);	// texcoords
 		size += header->num_vertexes * 3 * sizeof(float);	// normals
@@ -591,7 +591,7 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 		}
 
 		if ( allocateInfluences ) {
-			size += header->num_vertexes * sizeof(int);			// influences
+			size += header->num_vertexes * sizeof(qint);			// influences
 			size += allocateInfluences * 4 * sizeof(byte);		// influenceBlendIndexes
 
 			if( vertexArrayFormat[IQM_BLENDWEIGHTS] == IQM_UBYTE ) {
@@ -603,7 +603,7 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 	}
 	if( header->num_joints ) {
 		size += joint_names;								// joint names
-		size += header->num_joints * sizeof(int);			// joint parents
+		size += header->num_joints * sizeof(qint);			// joint parents
 		size += header->num_joints * 12 * sizeof(float);	// bind joint matricies
 		size += header->num_joints * 12 * sizeof(float);	// inverse bind joint matricies
 	}
@@ -634,8 +634,8 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 		iqmData->surfaces = (struct srfIQModel_s*)dataPtr;
 		dataPtr += header->num_meshes * sizeof( srfIQModel_t );
 
-		iqmData->triangles = (int*)dataPtr;
-		dataPtr += header->num_triangles * 3 * sizeof(int);		// triangles
+		iqmData->triangles = (qint*)dataPtr;
+		dataPtr += header->num_triangles * 3 * sizeof(qint);		// triangles
 
 		iqmData->positions = (float*)dataPtr;
 		dataPtr += header->num_vertexes * 3 * sizeof(float);	// positions
@@ -657,8 +657,8 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 		}
 
 		if ( allocateInfluences ) {
-			iqmData->influences = (int*)dataPtr;
-			dataPtr += header->num_vertexes * sizeof(int);			// influences
+			iqmData->influences = (qint*)dataPtr;
+			dataPtr += header->num_vertexes * sizeof(qint);			// influences
 
 			iqmData->influenceBlendIndexes = (byte*)dataPtr;
 			dataPtr += allocateInfluences * 4 * sizeof(byte);		// influenceBlendIndexes
@@ -673,11 +673,11 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 		}
 	}
 	if( header->num_joints ) {
-		iqmData->jointNames = (char*)dataPtr;
+		iqmData->jointNames = (qchar*)dataPtr;
 		dataPtr += joint_names;								// joint names
 
-		iqmData->jointParents = (int*)dataPtr;
-		dataPtr += header->num_joints * sizeof(int);		// joint parents
+		iqmData->jointParents = (qint*)dataPtr;
+		dataPtr += header->num_joints * sizeof(qint);		// joint parents
 
 		iqmData->bindJoints = (float*)dataPtr;
 		dataPtr += header->num_joints * 12 * sizeof(float);		// bind joint matricies
@@ -703,7 +703,7 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 		// overwrite the material offset with the shader index
 		mesh = (iqmMesh_t *)((byte *)header + header->ofs_meshes);
 		surface = iqmData->surfaces;
-		str = (char *)header + header->ofs_text;
+		str = (qchar *)header + header->ofs_text;
 		for( i = 0; i < header->num_meshes; i++, mesh++, surface++ ) {
 			surface->surfaceType = SF_IQM;
 			Q_strncpyz(surface->name, str + mesh->name, sizeof (surface->name));
@@ -729,7 +729,7 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 		// copy vertexarrays and indexes
 		vertexarray = (iqmVertexArray_t *)((byte *)header + header->ofs_vertexarrays);
 		for( i = 0; i < header->num_vertexarrays; i++, vertexarray++ ) {
-			int	n;
+			qint	n;
 
 			// skip disabled arrays
 			if( vertexarray->type < ARRAY_LEN( vertexArrayFormat )
@@ -773,7 +773,7 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 
 		// find unique blend influences per mesh
 		if( allocateInfluences ) {
-			int vtx, influence, totalInfluences = 0;
+			qint vtx, influence, totalInfluences = 0;
 
 			surface = iqmData->surfaces;
 			for( i = 0; i < header->num_meshes; i++, surface++ ) {
@@ -786,7 +786,7 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 					for( k = 0; k < surface->num_influences; k++ ) {
 						influence = surface->first_influence + k;
 
-						if( *(int*)&iqmData->influenceBlendIndexes[4*influence] != *(int*)&blendIndexes[4*vtx] ) {
+						if( *(qint*)&iqmData->influenceBlendIndexes[4*influence] != *(qint*)&blendIndexes[4*vtx] ) {
 							continue;
 						}
 
@@ -798,7 +798,7 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 								break;
 							}
 						} else {
-							if ( *(int*)&iqmData->influenceBlendWeights.b[4*influence] == *(int*)&blendWeights.b[4*vtx] ) {
+							if ( *(qint*)&iqmData->influenceBlendWeights.b[4*influence] == *(qint*)&blendWeights.b[4*vtx] ) {
 								break;
 							}
 						}
@@ -840,9 +840,9 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 		str = iqmData->jointNames;
 		joint = (iqmJoint_t *)((byte *)header + header->ofs_joints);
 		for( i = 0; i < header->num_joints; i++, joint++ ) {
-			char *name = (char *)header + header->ofs_text +
+			qchar *name = (qchar *)header + header->ofs_text +
 				joint->name;
-			int len = strlen( name ) + 1;
+			qint len = strlen( name ) + 1;
 			Com_Memcpy( str, name, len );
 			str += len;
 		}
@@ -981,7 +981,7 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 			uint8_t *data;
 			glIndex_t indexes[SHADER_MAX_INDEXES];
 			glIndex_t *ptr;
-			int *tri;
+			qint *tri;
 
 			offset_xyz     = 0;
 			offset_st      = offset_xyz + sizeof(float) * 3;
@@ -1011,7 +1011,7 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 
 			for ( j = 0; j < surf->num_vertexes; j++ )
 			{
-				int vtx = surf->first_vertex + j;
+				qint vtx = surf->first_vertex + j;
 
 				// xyz
 				memcpy(data + dataOfs, &iqmData->positions[vtx*3], sizeof(float) * 3);
@@ -1134,10 +1134,10 @@ qboolean R_LoadIQM( model_t *mod, void *buffer, int filesize, const char *mod_na
 R_CullIQM
 =============
 */
-static int R_CullIQM( const iqmData_t *data, const trRefEntity_t *ent ) {
+static qint R_CullIQM( const iqmData_t *data, const trRefEntity_t *ent ) {
 	vec3_t		bounds[2];
 	vec_t		*oldBounds, *newBounds;
-	int		i;
+	qint		i;
 
 	if (!data->bounds) {
 		tr.pc.c_box_cull_md3_clip++;
@@ -1175,8 +1175,8 @@ R_ComputeIQMFogNum
 
 =================
 */
-static int R_ComputeIQMFogNum( const iqmData_t *data, const trRefEntity_t *ent ) {
-	int			i, j;
+static qint R_ComputeIQMFogNum( const iqmData_t *data, const trRefEntity_t *ent ) {
+	qint			i, j;
 	const fog_t			*fog;
 	const vec_t		*bounds;
 	const vec_t		defaultBounds[6] = { -8, -8, -8, 8, 8, 8 };
@@ -1228,11 +1228,11 @@ void R_AddIQMSurfaces( trRefEntity_t *ent ) {
 	iqmData_t		*data;
 	srfIQModel_t		*surface;
 	void			*drawSurf;
-	int			i, j;
-	qboolean		personalModel;
-	int			cull;
-	int			fogNum;
-	int         cubemapIndex;
+	qint			i, j;
+	qbool		personalModel;
+	qint			cull;
+	qint			fogNum;
+	qint         cubemapIndex;
 	shader_t		*shader;
 	const skin_t			*skin;
 
@@ -1342,16 +1342,16 @@ void R_AddIQMSurfaces( trRefEntity_t *ent ) {
 }
 
 
-static void ComputePoseMats( iqmData_t *data, int frame, int oldframe,
+static void ComputePoseMats( iqmData_t *data, qint frame, qint oldframe,
 			      float backlerp, float *poseMats ) {
 	iqmTransform_t relativeJoints[IQM_MAX_JOINTS];
 	iqmTransform_t *relativeJoint;
 	const iqmTransform_t *pose;
 	const iqmTransform_t *oldpose;
-	const int *jointParent;
+	const qint *jointParent;
 	const float *invBindMat;
 	float *poseMat, lerp;
-	int i;
+	qint i;
 
 	relativeJoint = relativeJoints;
 
@@ -1400,10 +1400,10 @@ static void ComputePoseMats( iqmData_t *data, int frame, int oldframe,
 	}
 }
 
-static void ComputeJointMats( iqmData_t *data, int frame, int oldframe,
+static void ComputeJointMats( iqmData_t *data, qint frame, qint oldframe,
 			      float backlerp, float *mat ) {
 	float	*mat1;
-	int	i;
+	qint	i;
 
 	if ( data->num_poses == 0 ) {
 		Com_Memcpy( mat, data->bindJoints, data->num_joints * 12 * sizeof(float) );
@@ -1436,7 +1436,7 @@ void RB_IQMSurfaceAnim( const surfaceType_t *surface ) {
 	float		poseMats[IQM_MAX_JOINTS * 12];
 	float		influenceVtxMat[SHADER_MAX_VERTEXES * 12];
 	float		influenceNrmMat[SHADER_MAX_VERTEXES * 9];
-	int		i;
+	qint		i;
 
 	float		*xyz;
 	float		*normal;
@@ -1449,11 +1449,11 @@ void RB_IQMSurfaceAnim( const surfaceType_t *surface ) {
 	vec2_t		*outTexCoord;
 	uint16_t *outColor;
 
-	int	frame = data->num_frames ? backEnd.currentEntity->e.frame % data->num_frames : 0;
-	int	oldframe = data->num_frames ? backEnd.currentEntity->e.oldframe % data->num_frames : 0;
+	qint	frame = data->num_frames ? backEnd.currentEntity->e.frame % data->num_frames : 0;
+	qint	oldframe = data->num_frames ? backEnd.currentEntity->e.oldframe % data->num_frames : 0;
 	float	backlerp = backEnd.currentEntity->e.backlerp;
 
-	int		*tri;
+	qint		*tri;
 	glIndex_t	*ptr;
 	glIndex_t	base;
 
@@ -1482,10 +1482,10 @@ void RB_IQMSurfaceAnim( const surfaceType_t *surface ) {
 
 		// compute vertex blend influence matricies
 		for( i = 0; i < surf->num_influences; i++ ) {
-			int influence = surf->first_influence + i;
+			qint influence = surf->first_influence + i;
 			float *vtxMat = &influenceVtxMat[12*i];
 			float *nrmMat = &influenceNrmMat[9*i];
-			int	j;
+			qint	j;
 			float	blendWeights[4];
 
 			if ( data->blendWeightsType == IQM_FLOAT ) {
@@ -1567,7 +1567,7 @@ void RB_IQMSurfaceAnim( const surfaceType_t *surface ) {
 		for( i = 0; i < surf->num_vertexes;
 		     i++, xyz+=3, normal+=3, tangent+=4, texCoords+=2,
 		     outXYZ++, outNormal+=4, outTangent+=4, outTexCoord++ ) {
-			int influence = data->influences[surf->first_vertex + i] - surf->first_influence;
+			qint influence = data->influences[surf->first_vertex + i] - surf->first_influence;
 			float *vtxMat = &influenceVtxMat[12*influence];
 			float *nrmMat = &influenceNrmMat[9*influence];
 
@@ -1688,10 +1688,10 @@ void RB_IQMSurfaceAnimVao(const srfVaoIQModel_t * surface)
 
 	if ( glState.boneAnimation ) {
 		float		jointMats[IQM_MAX_JOINTS * 12];
-		int			frame = data->num_frames ? backEnd.currentEntity->e.frame % data->num_frames : 0;
-		int			oldframe = data->num_frames ? backEnd.currentEntity->e.oldframe % data->num_frames : 0;
+		qint			frame = data->num_frames ? backEnd.currentEntity->e.frame % data->num_frames : 0;
+		qint			oldframe = data->num_frames ? backEnd.currentEntity->e.oldframe % data->num_frames : 0;
 		float		backlerp = backEnd.currentEntity->e.backlerp;
-		int i;
+		qint i;
 
 		// compute interpolated joint matrices
 		ComputePoseMats( surface->iqmData, frame, oldframe, backlerp, jointMats );
@@ -1722,12 +1722,12 @@ void RB_IQMSurfaceAnimVao(const srfVaoIQModel_t * surface)
 	glState.boneAnimation = 0;
 }
 
-int R_IQMLerpTag( orientation_t *tag, iqmData_t *data,
-		  int startFrame, int endFrame, 
-		  float frac, const char *tagName ) {
+qint R_IQMLerpTag( orientation_t *tag, iqmData_t *data,
+		  qint startFrame, qint endFrame, 
+		  float frac, const qchar *tagName ) {
 	float	jointMats[IQM_MAX_JOINTS * 12];
-	int	joint;
-	char	*names = data->jointNames;
+	qint	joint;
+	qchar	*names = data->jointNames;
 
 	// get joint number by reading the joint names
 	for( joint = 0; joint < data->num_joints; joint++ ) {

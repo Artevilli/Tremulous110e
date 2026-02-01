@@ -42,10 +42,10 @@ R_MDRCullModel
 =============
 */
 
-static int R_MDRCullModel( mdrHeader_t *header, const trRefEntity_t *ent ) {
+static qint R_MDRCullModel( mdrHeader_t *header, const trRefEntity_t *ent ) {
 	vec3_t		bounds[2];
 	mdrFrame_t	*oldFrame, *newFrame;
-	int			i, frameSize;
+	qint			i, frameSize;
 
 	frameSize = (size_t)( &((mdrFrame_t *)0)->bones[ header->numBones ] );
 	
@@ -78,7 +78,7 @@ static int R_MDRCullModel( mdrHeader_t *header, const trRefEntity_t *ent ) {
 		}
 		else
 		{
-			int sphereCull, sphereCullB;
+			qint sphereCull, sphereCullB;
 
 			sphereCull  = R_CullLocalPointAndRadius( newFrame->localOrigin, newFrame->radius );
 			if ( newFrame == oldFrame ) {
@@ -135,12 +135,12 @@ R_MDRComputeFogNum
 =================
 */
 
-static int R_MDRComputeFogNum( mdrHeader_t *header, const trRefEntity_t *ent ) {
-	int				i, j;
+static qint R_MDRComputeFogNum( mdrHeader_t *header, const trRefEntity_t *ent ) {
+	qint				i, j;
 	const fog_t			*fog;
 	mdrFrame_t		*mdrFrame;
 	vec3_t			localOrigin;
-	int frameSize;
+	qint frameSize;
 
 	if ( tr.refdef.rdflags & RDF_NOWORLDMODEL ) {
 		return 0;
@@ -184,12 +184,12 @@ void R_MDRAddAnimSurfaces( trRefEntity_t *ent ) {
 	mdrLOD_t		*lod;
 	shader_t		*shader;
 	skin_t		*skin;
-	int				i, j;
-	int				lodnum = 0;
-	int				fogNum = 0;
-	int				cull;
-	int             cubemapIndex;
-	qboolean	personalModel;
+	qint				i, j;
+	qint				lodnum = 0;
+	qint				fogNum = 0;
+	qint				cull;
+	qint             cubemapIndex;
+	qbool	personalModel;
 
 	header = (mdrHeader_t *) tr.currentModel->modelData;
 	
@@ -314,19 +314,19 @@ RB_MDRSurfaceAnim
 */
 void RB_MDRSurfaceAnim( mdrSurface_t *surface )
 {
-	int				i, j, k;
+	qint				i, j, k;
 	float			frontlerp, backlerp;
-	int				*triangles;
-	int				indexes;
-	int				baseIndex, baseVertex;
-	int				numVerts;
+	qint				*triangles;
+	qint				indexes;
+	qint				baseIndex, baseVertex;
+	qint				numVerts;
 	mdrVertex_t		*v;
 	mdrHeader_t		*header;
 	mdrFrame_t		*frame;
 	mdrFrame_t		*oldFrame;
 	mdrBone_t		bones[MDR_MAX_BONES], *bonePtr, *bone;
 
-	int			frameSize;
+	qint			frameSize;
 
 	// don't lerp if lerping off, or this is the only frame, or the last frame...
 	//
@@ -352,7 +352,7 @@ void RB_MDRSurfaceAnim( mdrSurface_t *surface )
 
 	RB_CHECKOVERFLOW( surface->numVerts, surface->numTriangles * 3 );
 
-	triangles	= (int *) ((byte *)surface + surface->ofsTriangles);
+	triangles	= (qint *) ((byte *)surface + surface->ofsTriangles);
 	indexes		= surface->numTriangles * 3;
 	baseIndex	= tess.numIndexes;
 	baseVertex	= tess.numVertexes;
@@ -467,57 +467,57 @@ void RB_MDRSurfaceAnim( mdrSurface_t *surface )
 #define MC_POS_V33 ((((MC_BITS_X+MC_BITS_Y+MC_BITS_Z+MC_BITS_VECT*8))/8))
 #define MC_SHIFT_V33 ((((MC_BITS_X+MC_BITS_Y+MC_BITS_Z+MC_BITS_VECT*8)%8)))
 
-void MC_UnCompress(float mat[3][4],const unsigned char * comp)
+void MC_UnCompress(float mat[3][4],const unsigned qchar * comp)
 {
-	int val;
+	qint val;
 
-	val=(int)((unsigned short *)(comp))[0];
+	val=(qint)((unsigned short *)(comp))[0];
 	val-=1<<(MC_BITS_X-1);
 	mat[0][3]=((float)(val))*MC_SCALE_X;
 
-	val=(int)((unsigned short *)(comp))[1];
+	val=(qint)((unsigned short *)(comp))[1];
 	val-=1<<(MC_BITS_Y-1);
 	mat[1][3]=((float)(val))*MC_SCALE_Y;
 
-	val=(int)((unsigned short *)(comp))[2];
+	val=(qint)((unsigned short *)(comp))[2];
 	val-=1<<(MC_BITS_Z-1);
 	mat[2][3]=((float)(val))*MC_SCALE_Z;
 
-	val=(int)((unsigned short *)(comp))[3];
+	val=(qint)((unsigned short *)(comp))[3];
 	val-=1<<(MC_BITS_VECT-1);
 	mat[0][0]=((float)(val))*MC_SCALE_VECT;
 
-	val=(int)((unsigned short *)(comp))[4];
+	val=(qint)((unsigned short *)(comp))[4];
 	val-=1<<(MC_BITS_VECT-1);
 	mat[0][1]=((float)(val))*MC_SCALE_VECT;
 
-	val=(int)((unsigned short *)(comp))[5];
+	val=(qint)((unsigned short *)(comp))[5];
 	val-=1<<(MC_BITS_VECT-1);
 	mat[0][2]=((float)(val))*MC_SCALE_VECT;
 
 
-	val=(int)((unsigned short *)(comp))[6];
+	val=(qint)((unsigned short *)(comp))[6];
 	val-=1<<(MC_BITS_VECT-1);
 	mat[1][0]=((float)(val))*MC_SCALE_VECT;
 
-	val=(int)((unsigned short *)(comp))[7];
+	val=(qint)((unsigned short *)(comp))[7];
 	val-=1<<(MC_BITS_VECT-1);
 	mat[1][1]=((float)(val))*MC_SCALE_VECT;
 
-	val=(int)((unsigned short *)(comp))[8];
+	val=(qint)((unsigned short *)(comp))[8];
 	val-=1<<(MC_BITS_VECT-1);
 	mat[1][2]=((float)(val))*MC_SCALE_VECT;
 
 
-	val=(int)((unsigned short *)(comp))[9];
+	val=(qint)((unsigned short *)(comp))[9];
 	val-=1<<(MC_BITS_VECT-1);
 	mat[2][0]=((float)(val))*MC_SCALE_VECT;
 
-	val=(int)((unsigned short *)(comp))[10];
+	val=(qint)((unsigned short *)(comp))[10];
 	val-=1<<(MC_BITS_VECT-1);
 	mat[2][1]=((float)(val))*MC_SCALE_VECT;
 
-	val=(int)((unsigned short *)(comp))[11];
+	val=(qint)((unsigned short *)(comp))[11];
 	val-=1<<(MC_BITS_VECT-1);
 	mat[2][2]=((float)(val))*MC_SCALE_VECT;
 }

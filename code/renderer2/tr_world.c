@@ -31,7 +31,7 @@ Tries to cull surfaces before they are lighted or
 added to the sorting list.
 ================
 */
-static qboolean	R_CullSurface( msurface_t *surf ) {
+static qbool	R_CullSurface( msurface_t *surf ) {
 	if ( r_nocull->integer || surf->cullinfo.type == CULLINFO_NONE) {
 		return qfalse;
 	}
@@ -111,7 +111,7 @@ static qboolean	R_CullSurface( msurface_t *surf ) {
 
 	if (surf->cullinfo.type & CULLINFO_SPHERE)
 	{
-		int 	sphereCull;
+		qint 	sphereCull;
 
 		if ( tr.currentEntityNum != REFENTITYNUM_WORLD ) {
 			sphereCull = R_CullLocalPointAndRadius( surf->cullinfo.localOrigin, surf->cullinfo.radius );
@@ -127,7 +127,7 @@ static qboolean	R_CullSurface( msurface_t *surf ) {
 
 	if (surf->cullinfo.type & CULLINFO_BOX)
 	{
-		int boxCull;
+		qint boxCull;
 
 		if ( tr.currentEntityNum != REFENTITYNUM_WORLD ) {
 			boxCull = R_CullLocalBox( surf->cullinfo.bounds );
@@ -154,9 +154,9 @@ that is touched by one or more dlights, so try to throw out
 more dlights if possible.
 ====================
 */
-static int R_DlightSurface( msurface_t *surf, int dlightBits ) {
+static qint R_DlightSurface( msurface_t *surf, qint dlightBits ) {
 	float       d;
-	int         i;
+	qint         i;
 	dlight_t    *dl;
 	
 	if ( surf->cullinfo.type & CULLINFO_PLANE )
@@ -237,9 +237,9 @@ R_PshadowSurface
 Just like R_DlightSurface, cull any we can
 ====================
 */
-static int R_PshadowSurface( msurface_t *surf, int pshadowBits ) {
+static qint R_PshadowSurface( msurface_t *surf, qint pshadowBits ) {
 	float       d;
-	int         i;
+	qint         i;
 	pshadow_t    *ps;
 	
 	if ( surf->cullinfo.type & CULLINFO_PLANE )
@@ -319,7 +319,7 @@ static int R_PshadowSurface( msurface_t *surf, int pshadowBits ) {
 R_AddWorldSurface
 ======================
 */
-static void R_AddWorldSurface( msurface_t *surf, int dlightBits, int pshadowBits ) {
+static void R_AddWorldSurface( msurface_t *surf, qint dlightBits, qint pshadowBits ) {
 	// FIXME: bmodel fog?
 
 	// try to cull before dlighting or adding
@@ -357,9 +357,9 @@ R_AddBrushModelSurfaces
 */
 void R_AddBrushModelSurfaces ( trRefEntity_t *ent ) {
 	bmodel_t	*bmodel;
-	int			clip;
+	qint			clip;
 	const model_t		*pModel;
-	int			i;
+	qint			i;
 
 	pModel = R_GetModelByHandle( ent->e.hModel );
 
@@ -374,7 +374,7 @@ void R_AddBrushModelSurfaces ( trRefEntity_t *ent ) {
 	R_DlightBmodel( bmodel );
 
 	for ( i = 0 ; i < bmodel->numSurfaces ; i++ ) {
-		int surf = bmodel->firstSurface + i;
+		qint surf = bmodel->firstSurface + i;
 
 		if (tr.world->surfacesViewCount[surf] != tr.viewCount)
 		{
@@ -415,7 +415,7 @@ static void R_RecursiveWorldNode( mnode_t *node, uint32_t planeBits, uint32_t dl
 		// inside can be visible OPTIMIZE: don't do this all the way to leafs?
 
 		if ( !r_nocull->integer ) {
-			int		r;
+			qint		r;
 
 			if ( planeBits & 1 ) {
 				r = BoxOnPlaneSide(node->mins, node->maxs, &tr.viewParms.frustum[0]);
@@ -479,7 +479,7 @@ static void R_RecursiveWorldNode( mnode_t *node, uint32_t planeBits, uint32_t dl
 		newDlights[0] = 0;
 		newDlights[1] = 0;
 		if ( dlightBits ) {
-			int	i;
+			qint	i;
 
 			for ( i = 0 ; i < tr.refdef.num_dlights ; i++ ) {
 				const dlight_t	*dl;
@@ -502,7 +502,7 @@ static void R_RecursiveWorldNode( mnode_t *node, uint32_t planeBits, uint32_t dl
 		newPShadows[0] = 0;
 		newPShadows[1] = 0;
 		if ( pshadowBits ) {
-			int	i;
+			qint	i;
 
 			for ( i = 0 ; i < tr.refdef.num_pshadows ; i++ ) {
 				pshadow_t	*shadow;
@@ -533,8 +533,8 @@ static void R_RecursiveWorldNode( mnode_t *node, uint32_t planeBits, uint32_t dl
 
 	{
 		// leaf node, so add mark surfaces
-		int			c;
-		int surf, *view;
+		qint			c;
+		qint surf, *view;
 
 		tr.pc.c_leafs++;
 
@@ -620,7 +620,7 @@ static mnode_t *R_PointInLeaf( const vec3_t p ) {
 R_ClusterPVS
 ==============
 */
-static const byte *R_ClusterPVS (int cluster) {
+static const byte *R_ClusterPVS (qint cluster) {
 	if (!tr.world->vis || cluster < 0 || cluster >= tr.world->numClusters ) {
 		return NULL;
 	}
@@ -633,7 +633,7 @@ static const byte *R_ClusterPVS (int cluster) {
 R_inPVS
 =================
 */
-qboolean R_inPVS( const vec3_t p1, const vec3_t p2 ) {
+qbool R_inPVS( const vec3_t p1, const vec3_t p2 ) {
 	const mnode_t *leaf;
 	const byte	*vis;
 
@@ -658,8 +658,8 @@ cluster
 static void R_MarkLeaves (void) {
 	const byte	*vis;
 	mnode_t	*leaf, *parent;
-	int		i;
-	int		cluster;
+	qint		i;
+	qint		cluster;
 
 	// lockpvs lets designers walk around to determine the
 	// extent of the current pvs
@@ -791,7 +791,7 @@ void R_AddWorldSurfaces (void) {
 	// now add all the potentially visible surfaces
 	// also mask invisible dlights for next frame
 	{
-		int i;
+		qint i;
 
 		tr.refdef.dlightMask = 0;
 

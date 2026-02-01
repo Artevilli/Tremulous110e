@@ -25,10 +25,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 glconfig_t	glConfig;
 
-qboolean	textureFilterAnisotropic;
-int			maxAnisotropy;
-int			gl_version;
-int			gl_clamp_mode;	// GL_CLAMP or GL_CLAMP_TO_EGGE
+qbool	textureFilterAnisotropic;
+qint			maxAnisotropy;
+qint			gl_version;
+qint			gl_clamp_mode;	// GL_CLAMP or GL_CLAMP_TO_EGGE
 
 glstate_t	glState;
 
@@ -180,8 +180,8 @@ cvar_t	*r_screenshotJpegQuality;
 
 static cvar_t *r_maxpolys;
 static cvar_t* r_maxpolyverts;
-int		max_polys;
-int		max_polyverts;
+qint		max_polys;
+qint		max_polyverts;
 
 #ifdef USE_VULKAN
 
@@ -191,7 +191,7 @@ Vk_World	vk_world;
 
 #else
 
-static char gl_extensions[ 32768 ];
+static qchar gl_extensions[ 32768 ];
 
 #define GLE( ret, name, ... ) ret ( APIENTRY * q##name )( __VA_ARGS__ );
 	QGL_Core_PROCS;
@@ -200,7 +200,7 @@ static char gl_extensions[ 32768 ];
 
 typedef struct {
 	void **symbol;
-	const char *name;
+	const qchar *name;
 } sym_t;
 
 #define GLE( ret, name, ... ) { (void**)&q##name, XSTRING(name) },
@@ -216,9 +216,9 @@ R_ResolveSymbols
 returns NULL on success or last failed symbol name otherwise
 ==================
 */
-static const char *R_ResolveSymbols( sym_t *syms, int count )
+static const qchar *R_ResolveSymbols( sym_t *syms, qint count )
 {
-	int i;
+	qint i;
 	for ( i = 0; i < count; i++ )
 	{
 		*syms[ i ].symbol = ri.GL_GetProcAddress( syms[ i ].name );
@@ -231,9 +231,9 @@ static const char *R_ResolveSymbols( sym_t *syms, int count )
 }
 
 
-static void R_ClearSymbols( sym_t *syms, int count )
+static void R_ClearSymbols( sym_t *syms, qint count )
 {
-	int i;
+	qint i;
 	for ( i = 0; i < count; i++ )
 	{
 		*syms[ i ].symbol = NULL;
@@ -252,9 +252,9 @@ static void R_ClearSymTables( void )
 
 // for modular renderer
 #ifdef USE_RENDERER_DLOPEN
-void QDECL Com_Error( errorParm_t code, const char *fmt, ... )
+void QDECL Com_Error( errorParm_t code, const qchar *fmt, ... )
 {
-	char buf[ 4096 ];
+	qchar buf[ 4096 ];
 	va_list	argptr;
 	va_start( argptr, fmt );
 	Q_vsnprintf( buf, sizeof( buf ), fmt, argptr );
@@ -262,9 +262,9 @@ void QDECL Com_Error( errorParm_t code, const char *fmt, ... )
 	ri.Error( code, "%s", buf );
 }
 
-void QDECL Com_Printf( const char *fmt, ... )
+void QDECL Com_Printf( const qchar *fmt, ... )
 {
-	char buf[ MAXPRINTMSG ];
+	qchar buf[ MAXPRINTMSG ];
 	va_list	argptr;
 	va_start( argptr, fmt );
 	Q_vsnprintf( buf, sizeof( buf ), fmt, argptr );
@@ -279,9 +279,9 @@ void QDECL Com_Printf( const char *fmt, ... )
 /*
 ** R_HaveExtension
 */
-static qboolean R_HaveExtension( const char *ext )
+static qbool R_HaveExtension( const qchar *ext )
 {
-	const char *ptr = Q_stristr( gl_extensions, ext );
+	const qchar *ptr = Q_stristr( gl_extensions, ext );
 	if (ptr == NULL)
 		return qfalse;
 	ptr += strlen(ext);
@@ -304,18 +304,18 @@ static void R_InitExtensions( void )
 	}
 
 	// get our config strings
-	Q_strncpyz( glConfig.vendor_string, (char *)qglGetString (GL_VENDOR), sizeof( glConfig.vendor_string ) );
-	Q_strncpyz( glConfig.renderer_string, (char *)qglGetString (GL_RENDERER), sizeof( glConfig.renderer_string ) );
+	Q_strncpyz( glConfig.vendor_string, (qchar *)qglGetString (GL_VENDOR), sizeof( glConfig.vendor_string ) );
+	Q_strncpyz( glConfig.renderer_string, (qchar *)qglGetString (GL_RENDERER), sizeof( glConfig.renderer_string ) );
 	len = strlen( glConfig.renderer_string );
 	if ( len && glConfig.renderer_string[ len - 1 ] == '\n' )
 		glConfig.renderer_string[ len - 1 ] = '\0';
-	Q_strncpyz( glConfig.version_string, (char *)qglGetString( GL_VERSION ), sizeof( glConfig.version_string ) );
+	Q_strncpyz( glConfig.version_string, (qchar *)qglGetString( GL_VERSION ), sizeof( glConfig.version_string ) );
 
-	Q_strncpyz( gl_extensions, (char *)qglGetString( GL_EXTENSIONS ), sizeof( gl_extensions ) );
+	Q_strncpyz( gl_extensions, (qchar *)qglGetString( GL_EXTENSIONS ), sizeof( gl_extensions ) );
 	Q_strncpyz( glConfig.extensions_string, gl_extensions, sizeof( glConfig.extensions_string ) );
 
-	version = Q_atof( (const char *)qglGetString( GL_VERSION ) );
-	gl_version = (int)(version * 10.001);
+	version = Q_atof( (const qchar *)qglGetString( GL_VERSION ) );
+	gl_version = (qint)(version * 10.001);
 
 	glConfig.textureCompression = TC_NONE;
 
@@ -565,7 +565,7 @@ static void InitOpenGL( void )
 
 		vk_initialize();
 #else
-		const char *err;
+		const qchar *err;
 
 		ri.GLimp_Init( &glConfig );
 
@@ -621,9 +621,9 @@ GL_CheckErrors
 void GL_CheckErrors( void ) {
 #ifdef USE_VULKAN
 #else
-	int		err;
-    const char *s;
-    char buf[32];
+	qint		err;
+    const qchar *s;
+    qchar buf[32];
 
     err = qglGetError();
     if ( err == GL_NO_ERROR ) {
@@ -697,13 +697,13 @@ Stores the length of padding after a line of pixels to address padlen
 Return value must be freed with ri.Hunk_FreeTempMemory()
 ==================
 */
-static byte *RB_ReadPixels(int x, int y, int width, int height, size_t *offset, int *padlen, int lineAlign )
+static byte *RB_ReadPixels(qint x, qint y, qint width, qint height, size_t *offset, qint *padlen, qint lineAlign )
 {
 #ifdef USE_VULKAN
 	byte *buffer, *bufstart;
-	int linelen;
-	int	bufAlign;
-	int packAlign = 1;
+	qint linelen;
+	qint	bufAlign;
+	qint packAlign = 1;
 
 	linelen = width * 3;
 
@@ -722,8 +722,8 @@ static byte *RB_ReadPixels(int x, int y, int width, int height, size_t *offset, 
 	return buffer;
 #else
 	byte *buffer, *bufstart;
-	int padwidth, linelen;
-	int	bufAlign;
+	qint padwidth, linelen;
+	qint	bufAlign;
 	GLint packAlign;
 
 	qglGetIntegerv(GL_PACK_ALIGNMENT, &packAlign);
@@ -756,14 +756,14 @@ static byte *RB_ReadPixels(int x, int y, int width, int height, size_t *offset, 
 RB_TakeScreenshot
 ==================
 */
-void RB_TakeScreenshot( int x, int y, int width, int height, const char *fileName )
+void RB_TakeScreenshot( qint x, qint y, qint width, qint height, const qchar *fileName )
 {
-	const int header_size = 18;
+	const qint header_size = 18;
 	byte *allbuf, *buffer;
 	byte *srcptr, *destptr;
 	byte *endline, *endmem;
 	byte temp;
-	int linelen, padlen;
+	qint linelen, padlen;
 	size_t offset, memcount;
 
 	offset = header_size;
@@ -818,11 +818,11 @@ void RB_TakeScreenshot( int x, int y, int width, int height, const char *fileNam
 RB_TakeScreenshotJPEG
 ==================
 */
-void RB_TakeScreenshotJPEG( int x, int y, int width, int height, const char *fileName )
+void RB_TakeScreenshotJPEG( qint x, qint y, qint width, qint height, const qchar *fileName )
 {
 	byte *buffer;
 	size_t offset = 0, memcount;
-	int padlen;
+	qint padlen;
 
 	buffer = RB_ReadPixels(x, y, width, height, &offset, &padlen, 0);
 	memcount = (width * 3 + padlen) * height;
@@ -835,9 +835,9 @@ void RB_TakeScreenshotJPEG( int x, int y, int width, int height, const char *fil
 }
 
 
-static void FillBMPHeader( byte *buffer, int width, int height, int memcount, int header_size )
+static void FillBMPHeader( byte *buffer, qint width, qint height, qint memcount, qint header_size )
 {
-	int filesize;
+	qint filesize;
 	Com_Memset( buffer, 0, header_size );
 
 	// bitmap file header
@@ -880,7 +880,7 @@ static void FillBMPHeader( byte *buffer, int width, int height, int memcount, in
 RB_TakeScreenshotBMP
 ==================
 */
-void RB_TakeScreenshotBMP( int x, int y, int width, int height, const char *fileName, int clipboardOnly )
+void RB_TakeScreenshotBMP( qint x, qint y, qint width, qint height, const qchar *fileName, qint clipboardOnly )
 {
 	byte *allbuf;
 	byte *buffer; // destination buffer
@@ -889,9 +889,9 @@ void RB_TakeScreenshotBMP( int x, int y, int width, int height, const char *file
 	byte *endmem;
 	byte temp[4];
 	size_t memcount, offset;
-	const int header_size = 54; // bitmapfileheader(14) + bitmapinfoheader(40)
-	int scanlen, padlen;
-	int scanpad, len;
+	const qint header_size = 54; // bitmapfileheader(14) + bitmapinfoheader(40)
+	qint scanlen, padlen;
+	qint scanpad, len;
 
 	offset = header_size;
 
@@ -963,9 +963,9 @@ void RB_TakeScreenshotBMP( int x, int y, int width, int height, const char *file
 R_ScreenshotFilename
 ==================
 */
-static void R_ScreenshotFilename( char *fileName, const char *fileExt ) {
+static void R_ScreenshotFilename( qchar *fileName, const qchar *fileExt ) {
 	qtime_t t;
-	int count;
+	qint count;
 
 	count = 0;
 	ri.Com_RealTime( &t );
@@ -991,16 +991,16 @@ the menu system, sampled down from full screen distorted images
 ====================
 */
 static void R_LevelShot( void ) {
-	char		checkname[MAX_OSPATH];
+	qchar		checkname[MAX_OSPATH];
 	byte		*buffer;
 	byte		*source, *allsource;
 	byte		*src, *dst;
 	size_t		offset = 0;
-	int			padlen;
-	int			x, y;
-	int			r, g, b;
+	qint			padlen;
+	qint			x, y;
+	qint			r, g, b;
 	float		xScale, yScale;
-	int			xx, yy;
+	qint			xx, yy;
 
 	Com_sprintf(checkname, sizeof(checkname), "levelshots/%s.tga", tr.world->baseName);
 
@@ -1022,8 +1022,8 @@ static void R_LevelShot( void ) {
 			r = g = b = 0;
 			for ( yy = 0 ; yy < 3 ; yy++ ) {
 				for ( xx = 0 ; xx < 4 ; xx++ ) {
-					src = source + (3 * glConfig.vidWidth + padlen) * (int)((y*3 + yy) * yScale) +
-						3 * (int) ((x*4 + xx) * xScale);
+					src = source + (3 * glConfig.vidWidth + padlen) * (qint)((y*3 + yy) * yScale) +
+						3 * (qint) ((x*4 + xx) * xScale);
 					r += src[0];
 					g += src[1];
 					b += src[2];
@@ -1061,10 +1061,10 @@ Doesn't print the pacifier message if there is a second arg
 ==================
 */
 static void R_ScreenShot_f( void ) {
-	char		checkname[MAX_OSPATH];
-	qboolean	silent;
-	int			typeMask;
-	const char	*ext;
+	qchar		checkname[MAX_OSPATH];
+	qbool	silent;
+	qint			typeMask;
+	const qchar	*ext;
 
 	if ( ri.CL_IsMinimized() && !RE_CanMinimize() ) {
 		ri.Printf( PRINT_WARNING, "WARNING: unable to take screenshot when minimized because FBO is not available/enabled.\n" );
@@ -1140,8 +1140,8 @@ const void *RB_TakeVideoFrameCmd( const void *data )
 	const videoFrameCommand_t *cmd;
 	byte		*cBuf;
 	size_t		memcount, linelen;
-	int			padwidth, avipadwidth, padlen, avipadlen;
-	int			packAlign;
+	qint			padwidth, avipadwidth, padlen, avipadlen;
+	qint			packAlign;
 
 	cmd = (const videoFrameCommand_t *)data;
 
@@ -1226,7 +1226,7 @@ static void GL_SetDefaultState( void )
 
 	glState.glStateBits = GLS_DEPTHTEST_DISABLE | GLS_DEPTHMASK_TRUE;
 #else
-	int i;
+	qint i;
 
 	glState.currenttmu = 0;
 	glState.currentArray = 0;
@@ -1293,10 +1293,10 @@ R_PrintLongString
 Workaround for ri.Printf's 1024 characters buffer limit.
 ================
 */
-static void R_PrintLongString(const char *string) {
-	char buffer[1024];
-	const char *p;
-	int size = strlen(string);
+static void R_PrintLongString(const qchar *string) {
+	qchar buffer[1024];
+	const qchar *p;
+	qint size = strlen(string);
 
 	p = string;
 	while(size > 0)
@@ -1318,9 +1318,9 @@ Prints persistent rendering configuration
 */
 static void GfxInfo( void )
 {
-	const char *fsstrings[] = { "windowed", "fullscreen" };
-	const char *fs;
-	int mode;
+	const qchar *fsstrings[] = { "windowed", "fullscreen" };
+	const qchar *fs;
+	qint mode;
 #ifdef USE_VULKAN
 	ri.Printf( PRINT_ALL, "\nVK_VENDOR: %s\n", glConfig.vendor_string );
 	ri.Printf( PRINT_ALL, "VK_RENDERER: %s\n", glConfig.renderer_string );
@@ -1332,7 +1332,7 @@ static void GfxInfo( void )
 	ri.Printf( PRINT_ALL, "\nVK_MAX_TEXTURE_SIZE: %d\n", glConfig.maxTextureSize );
 	ri.Printf( PRINT_ALL, "VK_MAX_TEXTURE_UNITS: %d\n", glConfig.numTextureUnits );
 #else
-	const char *enablestrings[] = { "disabled", "enabled" };
+	const qchar *enablestrings[] = { "disabled", "enabled" };
 
 	ri.Printf( PRINT_ALL, "\nGL_VENDOR: %s\n", glConfig.vendor_string );
 	ri.Printf( PRINT_ALL, "GL_RENDERER: %s\n", glConfig.renderer_string );
@@ -1357,7 +1357,7 @@ static void GfxInfo( void )
 #endif
 	if ( glConfig.isFullscreen )
 	{
-		const char *modefs = ri.Cvar_VariableString( "r_modeFullscreen" );
+		const qchar *modefs = ri.Cvar_VariableString( "r_modeFullscreen" );
 		if ( *modefs )
 			mode = atoi( modefs );
 		else
@@ -1450,7 +1450,7 @@ static void GfxInfo_f( void )
 #ifdef USE_VULKAN
 static void VkInfo_f( void )
 {
-	ri.Printf(PRINT_ALL, "max_vertex_usage: %iKb\n", (int)((vk.stats.vertex_buffer_max + 1023) / 1024) );
+	ri.Printf(PRINT_ALL, "max_vertex_usage: %iKb\n", (qint)((vk.stats.vertex_buffer_max + 1023) / 1024) );
 	ri.Printf(PRINT_ALL, "max_push_size: %ib\n", vk.stats.push_size_max );
 
 	ri.Printf(PRINT_ALL, "pipeline handles: %i\n", vk.pipeline_create_count );
@@ -1831,9 +1831,9 @@ R_Init
 */
 void R_Init( void ) {
 #ifndef USE_VULKAN
-	int	err;
+	qint	err;
 #endif
-	int i;
+	qint i;
 	byte *ptr;
 
 	ri.Printf( PRINT_ALL, "----- R_Init -----\n" );
@@ -1845,7 +1845,7 @@ void R_Init( void ) {
 	Com_Memset( &glState, 0, sizeof( glState ) );
 
 	//if ( sizeof( glconfig_t ) != 11332 )
-		//ri.Error( ERR_FATAL, "Mod ABI incompatible: sizeof(glconfig_t) == %u != 11332", (unsigned int) sizeof( glconfig_t ) );
+		//ri.Error( ERR_FATAL, "Mod ABI incompatible: sizeof(glconfig_t) == %u != 11332", (unsigned qint) sizeof( glconfig_t ) );
 
 	if ( (intptr_t)tess.xyz & 15 ) {
 		ri.Printf( PRINT_WARNING, "tess.xyz not 16 byte aligned\n" );
@@ -1890,8 +1890,8 @@ void R_Init( void ) {
 
 	ptr = ri.Hunk_Alloc( sizeof( *backEndData ) + sizeof(srfPoly_t) * max_polys + sizeof(polyVert_t) * max_polyverts, h_low);
 	backEndData = (backEndData_t *) ptr;
-	backEndData->polys = (srfPoly_t *) ((char *) ptr + sizeof( *backEndData ));
-	backEndData->polyVerts = (polyVert_t *) ((char *) ptr + sizeof( *backEndData ) + sizeof(srfPoly_t) * max_polys);
+	backEndData->polys = (srfPoly_t *) ((qchar *) ptr + sizeof( *backEndData ));
+	backEndData->polyVerts = (polyVert_t *) ((qchar *) ptr + sizeof( *backEndData ) + sizeof(srfPoly_t) * max_polys);
 
 	R_InitNextFrame();
 
@@ -2024,9 +2024,9 @@ GetRefAPI
 @@@@@@@@@@@@@@@@@@@@@
 */
 #ifdef USE_RENDERER_DLOPEN
-Q_EXPORT refexport_t* QDECL GetRefAPI ( int apiVersion, refimport_t *rimp ) {
+Q_EXPORT refexport_t* QDECL GetRefAPI ( qint apiVersion, refimport_t *rimp ) {
 #else
-refexport_t *GetRefAPI ( int apiVersion, refimport_t *rimp ) {
+refexport_t *GetRefAPI ( qint apiVersion, refimport_t *rimp ) {
 #endif
 
 	static refexport_t	re;

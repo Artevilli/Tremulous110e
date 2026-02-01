@@ -203,16 +203,16 @@ struct PNG_ZlibHeader
 struct BufferedFile
 {
 	byte *Buffer;
-	int   Length;
+	qint   Length;
 	byte *Ptr;
-	int   BytesLeft;
+	qint   BytesLeft;
 };
 
 /*
  *  Read a file into a buffer.
  */
 
-static struct BufferedFile *ReadBufferedFile(const char *name)
+static struct BufferedFile *ReadBufferedFile(const qchar *name)
 {
 	struct BufferedFile *BF;
 	union {
@@ -252,7 +252,7 @@ static struct BufferedFile *ReadBufferedFile(const char *name)
 	 *  Read the file.
 	 */
 
-	BF->Length = ri.FS_ReadFile((char *) name, &buffer.v);
+	BF->Length = ri.FS_ReadFile((qchar *) name, &buffer.v);
 	BF->Buffer = buffer.b;
 
 	/*
@@ -339,7 +339,7 @@ static void *BufferedFileRead(struct BufferedFile *BF, unsigned Length)
  *  Rewind the buffer.
  */
 
-static qboolean BufferedFileRewind(struct BufferedFile *BF, unsigned Offset)
+static qbool BufferedFileRewind(struct BufferedFile *BF, unsigned Offset)
 {
 	unsigned BytesRead; 
 
@@ -393,7 +393,7 @@ static qboolean BufferedFileRewind(struct BufferedFile *BF, unsigned Offset)
  *  Skip some bytes.
  */
 
-static qboolean BufferedFileSkip(struct BufferedFile *BF, unsigned Offset)
+static qbool BufferedFileSkip(struct BufferedFile *BF, unsigned Offset)
 {
 	/*
 	 *  input verification
@@ -427,7 +427,7 @@ static qboolean BufferedFileSkip(struct BufferedFile *BF, unsigned Offset)
  *  Find a chunk
  */
 
-static qboolean FindChunk(struct BufferedFile *BF, uint32_t ChunkType)
+static qbool FindChunk(struct BufferedFile *BF, uint32_t ChunkType)
 {
 	struct PNG_ChunkHeader *CH;
 
@@ -518,7 +518,7 @@ static uint32_t DecompressIDATs(struct BufferedFile *BF, uint8_t **Buffer)
 	uint32_t Length;
 	uint32_t Type;
 
-	int BytesToRewind;
+	qint BytesToRewind;
 
 	int32_t   puffResult;
 	uint8_t  *puffDest;
@@ -788,13 +788,13 @@ static uint8_t PredictPaeth(uint8_t a, uint8_t b, uint8_t c)
 	 */
 
 	uint8_t Pr;
-	int p;
-	int pa, pb, pc;
+	qint p;
+	qint pa, pb, pc;
 
-	p  = ((int) a) + ((int) b) - ((int) c);
-	pa = abs(p - ((int) a));
-	pb = abs(p - ((int) b));
-	pc = abs(p - ((int) c));
+	p  = ((qint) a) + ((qint) b) - ((qint) c);
+	pa = abs(p - ((qint) a));
+	pb = abs(p - ((qint) b));
+	pc = abs(p - ((qint) c));
 
 	if((pa <= pb) && (pa <= pc))
 	{
@@ -817,7 +817,7 @@ static uint8_t PredictPaeth(uint8_t a, uint8_t b, uint8_t c)
  *  Reverse the filters.
  */
 
-static qboolean UnfilterImage(uint8_t  *DecompressedData, 
+static qbool UnfilterImage(uint8_t  *DecompressedData, 
 		uint32_t  ImageHeight,
 		uint32_t  BytesPerScanline, 
 		uint32_t  BytesPerPixel)
@@ -994,10 +994,10 @@ static qboolean UnfilterImage(uint8_t  *DecompressedData,
  *  Convert a raw input pixel to Quake 3 RGA format.
  */
 
-static qboolean ConvertPixel(struct PNG_Chunk_IHDR *IHDR,
+static qbool ConvertPixel(struct PNG_Chunk_IHDR *IHDR,
 		byte                  *OutPtr,
 		uint8_t               *DecompPtr,
-		qboolean               HasTransparentColour,
+		qbool               HasTransparentColour,
 		uint8_t               *TransparentColour,
 		uint8_t               *OutPal)
 {
@@ -1253,11 +1253,11 @@ static qboolean ConvertPixel(struct PNG_Chunk_IHDR *IHDR,
  *  Decode a non-interlaced image.
  */
 
-static qboolean DecodeImageNonInterlaced(struct PNG_Chunk_IHDR *IHDR,
+static qbool DecodeImageNonInterlaced(struct PNG_Chunk_IHDR *IHDR,
 		byte                  *OutBuffer, 
 		uint8_t               *DecompressedData,
 		uint32_t               DecompressedDataLength,
-		qboolean               HasTransparentColour,
+		qbool               HasTransparentColour,
 		uint8_t               *TransparentColour,
 		uint8_t               *OutPal)
 {
@@ -1530,11 +1530,11 @@ static qboolean DecodeImageNonInterlaced(struct PNG_Chunk_IHDR *IHDR,
  *  Decode an interlaced image.
  */
 
-static qboolean DecodeImageInterlaced(struct PNG_Chunk_IHDR *IHDR,
+static qbool DecodeImageInterlaced(struct PNG_Chunk_IHDR *IHDR,
 		byte                  *OutBuffer, 
 		uint8_t               *DecompressedData,
 		uint32_t               DecompressedDataLength,
-		qboolean               HasTransparentColour,
+		qbool               HasTransparentColour,
 		uint8_t               *TransparentColour,
 		uint8_t               *OutPal)
 {
@@ -1901,7 +1901,7 @@ static qboolean DecodeImageInterlaced(struct PNG_Chunk_IHDR *IHDR,
  *  The PNG loader
  */
 
-void R_LoadPNG(const char *name, byte **pic, int *width, int *height)
+void R_LoadPNG(const qchar *name, byte **pic, qint *width, qint *height)
 {
 	struct BufferedFile *ThePNG;
 	byte *OutBuffer;
@@ -1928,7 +1928,7 @@ void R_LoadPNG(const char *name, byte **pic, int *width, int *height)
 	 *  transparent colour from the tRNS chunk
 	 */
 
-	qboolean HasTransparentColour = qfalse;
+	qbool HasTransparentColour = qfalse;
 	uint8_t TransparentColour[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 	/*

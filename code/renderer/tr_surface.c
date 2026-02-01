@@ -45,7 +45,7 @@ use the shader system.
 RB_CheckOverflow
 ==============
 */
-void RB_CheckOverflow( int verts, int indexes ) {
+void RB_CheckOverflow( qint verts, qint indexes ) {
 	if (tess.numVertexes + verts < SHADER_MAX_VERTEXES
 		&& tess.numIndexes + indexes < SHADER_MAX_INDEXES) {
 		return;
@@ -72,7 +72,7 @@ RB_AddQuadStampExt
 */
 void RB_AddQuadStampExt( const vec3_t origin, const vec3_t left, const vec3_t up, color4ub_t color, float s1, float t1, float s2, float t2 ) {
 	vec3_t		normal;
-	int			ndx;
+	qint			ndx;
 
 #ifdef USE_VBO
 	VBO_Flush();
@@ -142,8 +142,8 @@ void RB_AddQuadStampExt( const vec3_t origin, const vec3_t left, const vec3_t up
 
 
 void RB_AddQuadStamp2( float x, float y, float w, float h, float s1, float t1, float s2, float t2, color4ub_t color ) {
-	int			numIndexes;
-	int			numVerts;
+	qint			numIndexes;
+	qint			numVerts;
 
 #ifdef USE_VBO
 	VBO_Flush();
@@ -251,8 +251,8 @@ RB_SurfacePolychain
 =============
 */
 static void RB_SurfacePolychain( const srfPoly_t *p ) {
-	int		i;
-	int		numv;
+	qint		i;
+	qint		numv;
 
 #ifdef USE_VBO
 	VBO_Flush();
@@ -291,14 +291,14 @@ RB_SurfaceTriangles
 =============
 */
 static void RB_SurfaceTriangles( const srfTriangles_t *srf ) {
-	int			i;
+	qint			i;
 	const drawVert_t	*dv;
 	float		*xyz, *normal;
 	float		*texCoords0;
 	float		*texCoords1;
 	uint32_t	*color;
 #ifdef USE_LEGACY_DLIGHTS
-	int			dlightBits;
+	qint			dlightBits;
 #endif
 
 #ifdef USE_VBO
@@ -394,7 +394,7 @@ static void RB_SurfaceBeam( void )
 {
 #define NUM_BEAM_SEGS 6
 	const refEntity_t *e;
-	int	i;
+	qint	i;
 	vec3_t perpvec;
 	vec3_t direction, normalized_direction;
 	vec3_t points[NUM_BEAM_SEGS+1][2]; // [startPoint,endPoint]
@@ -446,7 +446,7 @@ static void RB_SurfaceBeam( void )
 static void DoRailCore( const vec3_t start, const vec3_t end, const vec3_t up, float len, float spanWidth )
 {
 	float		spanWidth2;
-	int			vbase;
+	qint			vbase;
 	float		t = len / 256.0f;
 
 	RB_CHECKOVERFLOW( 4, 6 );
@@ -499,12 +499,12 @@ static void DoRailCore( const vec3_t start, const vec3_t end, const vec3_t up, f
 }
 
 
-static void DoRailDiscs( int numSegs, const vec3_t start, const vec3_t dir, const vec3_t right, const vec3_t up )
+static void DoRailDiscs( qint numSegs, const vec3_t start, const vec3_t dir, const vec3_t right, const vec3_t up )
 {
-	int i;
+	qint i;
 	vec3_t	pos[4];
 	vec3_t	v;
-	int		spanWidth = r_railWidth->integer;
+	qint		spanWidth = r_railWidth->integer;
 	float c, s;
 	float		scale;
 
@@ -533,7 +533,7 @@ static void DoRailDiscs( int numSegs, const vec3_t start, const vec3_t dir, cons
 
 	for ( i = 0; i < numSegs; i++ )
 	{
-		int j;
+		qint j;
 
 		RB_CHECKOVERFLOW( 4, 6 );
 
@@ -565,8 +565,8 @@ static void DoRailDiscs( int numSegs, const vec3_t start, const vec3_t dir, cons
 */
 static void RB_SurfaceRailRings( void ) {
 	const refEntity_t *e;
-	int			numSegs;
-	int			len;
+	qint			numSegs;
+	qint			len;
 	vec3_t		vec;
 	vec3_t		right, up;
 	vec3_t		start, end;
@@ -596,7 +596,7 @@ static void RB_SurfaceRailRings( void ) {
 */
 static void RB_SurfaceRailCore( void ) {
 	const refEntity_t *e;
-	int			len;
+	qint			len;
 	vec3_t		right;
 	vec3_t		vec;
 	vec3_t		start, end;
@@ -627,12 +627,12 @@ static void RB_SurfaceRailCore( void ) {
 */
 static void RB_SurfaceLightningBolt( void ) {
 	const refEntity_t *e;
-	int			len;
+	qint			len;
 	vec3_t		right;
 	vec3_t		vec;
 	vec3_t		start, end;
 	vec3_t		v1, v2;
-	int			i;
+	qint			i;
 
 	e = &backEnd.currentEntity->e;
 
@@ -667,7 +667,7 @@ static void RB_SurfaceLightningBolt( void ) {
 * The inputs to this routing seem to always be close to length = 1.0 (about 0.6 to 2.0)
 * This means that we don't have to worry about zero length or enormously long vectors.
 */
-static void VectorArrayNormalize(vec4_t *normals, unsigned int count)
+static void VectorArrayNormalize(vec4_t *normals, unsigned qint count)
 {
 //    assert(count);
 	// given the input, it's safe to call VectorNormalizeFast
@@ -687,9 +687,9 @@ static void LerpMeshVertexes_scalar(md3Surface_t *surf, float backlerp)
 	float	*outXyz, *outNormal;
 	float	oldXyzScale, newXyzScale;
 	float	oldNormalScale, newNormalScale;
-	int		vertNum;
+	qint		vertNum;
 	unsigned lat, lng;
-	int		numVerts;
+	qint		numVerts;
 
 	outXyz = tess.xyz[tess.numVertexes];
 	outNormal = tess.normal[tess.numVertexes];
@@ -792,13 +792,13 @@ RB_SurfaceMesh
 =============
 */
 static void RB_SurfaceMesh(md3Surface_t *surface) {
-	int				j;
+	qint				j;
 	float			backlerp;
-	int				*triangles;
+	qint				*triangles;
 	float			*texCoords;
-	int				indexes;
-	int				Bob, Doug;
-	int				numVerts;
+	qint				indexes;
+	qint				Bob, Doug;
+	qint				numVerts;
 
 #ifdef USE_VBO
 	VBO_Flush();
@@ -816,7 +816,7 @@ static void RB_SurfaceMesh(md3Surface_t *surface) {
 
 	LerpMeshVertexes (surface, backlerp);
 
-	triangles = (int *) ((byte *)surface + surface->ofsTriangles);
+	triangles = (qint *) ((byte *)surface + surface->ofsTriangles);
 	indexes = surface->numTriangles * 3;
 	Bob = tess.numIndexes;
 	Doug = tess.numVertexes;
@@ -845,16 +845,16 @@ RB_SurfaceFace
 ==============
 */
 static void RB_SurfaceFace( const srfSurfaceFace_t *surf ) {
-	int			i;
+	qint			i;
 	unsigned	*indices;
 	glIndex_t	*tessIndexes;
 	const float	*v;
 	const float	*normal;
-	int			ndx;
-	int			Bob;
-	int			numPoints;
+	qint			ndx;
+	qint			Bob;
+	qint			numPoints;
 #ifdef USE_LEGACY_DLIGHTS
-	int			dlightBits;
+	qint			dlightBits;
 #endif
 
 #ifdef USE_VBO
@@ -890,7 +890,7 @@ static void RB_SurfaceFace( const srfSurfaceFace_t *surf ) {
 	tess.dlightBits |= dlightBits;
 #endif
 
-	indices = ( unsigned * ) ( ( ( char  * ) surf ) + surf->ofsIndices );
+	indices = ( unsigned * ) ( ( ( qchar  * ) surf ) + surf->ofsIndices );
 
 	Bob = tess.numVertexes;
 	tessIndexes = tess.indexes + tess.numIndexes;
@@ -928,7 +928,7 @@ static void RB_SurfaceFace( const srfSurfaceFace_t *surf ) {
 			tess.texCoords[1][ndx][0] = v[5];
 			tess.texCoords[1][ndx][1] = v[6];
 		}
-		* ( unsigned int * ) &tess.vertexColors[ndx] = * ( unsigned int * ) &v[7];
+		* ( unsigned qint * ) &tess.vertexColors[ndx] = * ( unsigned qint * ) &v[7];
 #ifdef USE_LEGACY_DLIGHTS
 		tess.vertexDlightBits[ndx] = dlightBits;
 #endif
@@ -969,14 +969,14 @@ static float LodErrorForVolume( vec3_t local, float radius ) {
 }
 
 #ifdef USE_VBO_GRID
-void RB_SurfaceGridEstimate( srfGridMesh_t *cv, int *numVertexes, int *numIndexes )
+void RB_SurfaceGridEstimate( srfGridMesh_t *cv, qint *numVertexes, qint *numIndexes )
 {
-	int		lodWidth, lodHeight;
+	qint		lodWidth, lodHeight;
 	float	lodError;
-	int		i, used, rows;
-	int		nVertexes = 0;
-	int		nIndexes = 0;
-	int		irows, vrows;
+	qint		i, used, rows;
+	qint		nVertexes = 0;
+	qint		nIndexes = 0;
+	qint		irows, vrows;
 
 	lodError = r_lodCurveError->value; // fixed quality for VBO
 
@@ -1042,23 +1042,23 @@ Just copy the grid of points and triangulate
 =============
 */
 static void RB_SurfaceGrid( srfGridMesh_t *cv ) {
-	int		i, j;
+	qint		i, j;
 	float	*xyz;
 	float	*texCoords0;
 	float	*texCoords1;
 	float	*normal;
 	uint32_t *color;
 	drawVert_t *dv;
-	int		rows, irows, vrows;
-	int		used;
-	int		widthTable[MAX_GRID_SIZE];
-	int		heightTable[MAX_GRID_SIZE];
+	qint		rows, irows, vrows;
+	qint		used;
+	qint		widthTable[MAX_GRID_SIZE];
+	qint		heightTable[MAX_GRID_SIZE];
 	float	lodError;
-	int		lodWidth, lodHeight;
-	int		numVertexes;
+	qint		lodWidth, lodHeight;
+	qint		numVertexes;
 #ifdef USE_LEGACY_DLIGHTS
-	int		dlightBits;
-	int		*vDlightBits;
+	qint		dlightBits;
+	qint		*vDlightBits;
 #endif
 
 #ifdef USE_VBO_GRID
@@ -1218,15 +1218,15 @@ static void RB_SurfaceGrid( srfGridMesh_t *cv ) {
 
 		// add the indexes
 		{
-			int		numIndexes;
-			int		w, h;
+			qint		numIndexes;
+			qint		w, h;
 
 			h = rows - 1;
 			w = lodWidth - 1;
 			numIndexes = tess.numIndexes;
 			for (i = 0 ; i < h ; i++) {
 				for (j = 0 ; j < w ; j++) {
-					int		v1, v2, v3, v4;
+					qint		v1, v2, v3, v4;
 			
 					// vertex order to be reckognized as tristrips
 					v1 = numVertexes + i*lodWidth + j + 1;
@@ -1273,7 +1273,7 @@ Draws x/y/z lines from the origin for orientation debugging
 static void RB_SurfaceAxis( void ) {
 	vec3_t xyz[6];
 	color4ub_t colors[6];
-	int i;
+	qint i;
 
 	GL_ClientState( 0, CLS_COLOR_ARRAY );
 

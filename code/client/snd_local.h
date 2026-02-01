@@ -33,45 +33,45 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define SND_CHUNK_SIZE_BYTE		(SND_CHUNK_SIZE*2)		// floats
 
 typedef struct {
-	int			left;	// the final values will be clamped to +/- 0x00ffff00 and shifted down
-	int			right;
+	qint			left;	// the final values will be clamped to +/- 0x00ffff00 and shifted down
+	qint			right;
 } portable_samplepair_t;
 
 typedef struct adpcm_state {
 	short	sample;		/* Previous output value */
-	char	index;		/* Index into stepsize table */
+	qchar	index;		/* Index into stepsize table */
 } adpcm_state_t;
 
 typedef	struct sndBuffer_s {
 	short					sndChunk[SND_CHUNK_SIZE];
 	struct sndBuffer_s		*next;
-	int						size;
+	qint						size;
 	adpcm_state_t			adpcm;
 } sndBuffer;
 
 typedef struct sfx_s {
 	sndBuffer		*soundData;
-	qboolean		defaultSound;			// couldn't be loaded, so use buzz
-	qboolean		inMemory;				// not in Memory
-	qboolean		soundCompressed;		// not in Memory
-	int				soundCompressionMethod;
-	int 			soundLength;
-	int				soundChannels;
-	char 			soundName[MAX_QPATH];
-	int				lastTimeUsed;
+	qbool		defaultSound;			// couldn't be loaded, so use buzz
+	qbool		inMemory;				// not in Memory
+	qbool		soundCompressed;		// not in Memory
+	qint				soundCompressionMethod;
+	qint 			soundLength;
+	qint				soundChannels;
+	qchar 			soundName[MAX_QPATH];
+	qint				lastTimeUsed;
 	struct sfx_s	*next;
 } sfx_t;
 
 typedef struct {
-	unsigned int channels;
-	unsigned int samples;				// mono samples in buffer
-	int			fullsamples;			// samples with all channels in buffer (samples divided by channels)
-	int			submission_chunk;		// don't mix less than this #
-	int			samplebits;
-	int			isfloat;
-	int			speed;
+	unsigned qint channels;
+	unsigned qint samples;				// mono samples in buffer
+	qint			fullsamples;			// samples with all channels in buffer (samples divided by channels)
+	qint			submission_chunk;		// don't mix less than this #
+	qint			samplebits;
+	qint			isfloat;
+	qint			speed;
 	byte		*buffer;
-	const char	*driver;
+	const qchar	*driver;
 } dma_t;
 
 extern byte *dma_buffer2;
@@ -84,30 +84,30 @@ typedef struct loopSound_s {
 	vec3_t		origin;
 	vec3_t		velocity;
 	sfx_t		*sfx;
-	int			mergeFrame;
-	qboolean	active;
-	qboolean	kill;
-	qboolean	doppler;
+	qint			mergeFrame;
+	qbool	active;
+	qbool	kill;
+	qbool	doppler;
 	float		dopplerScale;
 	float		oldDopplerScale;
-	int			framenum;
+	qint			framenum;
 } loopSound_t;
 
 typedef struct
 {
-	int			allocTime;
-	int			startSample;	// START_SAMPLE_IMMEDIATE = set immediately on next mix
-	int			entnum;			// to allow overriding a specific sound
-	int			entchannel;		// to allow overriding a specific sound
-	int			leftvol;		// 0-255 volume after spatialization
-	int			rightvol;		// 0-255 volume after spatialization
-	int			master_vol;		// 0-255 volume before spatialization
+	qint			allocTime;
+	qint			startSample;	// START_SAMPLE_IMMEDIATE = set immediately on next mix
+	qint			entnum;			// to allow overriding a specific sound
+	qint			entchannel;		// to allow overriding a specific sound
+	qint			leftvol;		// 0-255 volume after spatialization
+	qint			rightvol;		// 0-255 volume after spatialization
+	qint			master_vol;		// 0-255 volume before spatialization
 	float		dopplerScale;
 	float		oldDopplerScale;
 	vec3_t		origin;			// only use if fixed_origin is set
-	qboolean	fixed_origin;	// use origin instead of fetching entnum's origin
+	qbool	fixed_origin;	// use origin instead of fetching entnum's origin
 	sfx_t		*thesfx;		// sfx structure
-	qboolean	doppler;
+	qbool	doppler;
 } channel_t;
 
 
@@ -115,34 +115,34 @@ typedef struct
 #define WAVE_FORMAT_IEEE_FLOAT	0x0003
 
 typedef struct {
-	int			format;
-	int			rate;
-	int			width;
-	int			channels;
-	int			samples;
-	int			dataofs;		// chunk starts this many bytes from file start
+	qint			format;
+	qint			rate;
+	qint			width;
+	qint			channels;
+	qint			samples;
+	qint			dataofs;		// chunk starts this many bytes from file start
 } wavinfo_t;
 
 // Interface between Q3 sound "api" and the sound backend
 typedef struct
 {
 	void (*Shutdown)(void);
-	void (*StartSound)( const vec3_t origin, int entnum, int entchannel, sfxHandle_t sfx );
-	void (*StartLocalSound)( sfxHandle_t sfx, int channelNum );
-	void (*StartBackgroundTrack)( const char *intro, const char *loop );
+	void (*StartSound)( const vec3_t origin, qint entnum, qint entchannel, sfxHandle_t sfx );
+	void (*StartLocalSound)( sfxHandle_t sfx, qint channelNum );
+	void (*StartBackgroundTrack)( const qchar *intro, const qchar *loop );
 	void (*StopBackgroundTrack)( void );
-	void (*RawSamples)(int samples, int rate, int width, int channels, const byte *data, float volume);
+	void (*RawSamples)(qint samples, qint rate, qint width, qint channels, const byte *data, float volume);
 	void (*StopAllSounds)( void );
-	void (*ClearLoopingSounds)( qboolean killall );
-	void (*AddLoopingSound)( int entityNum, const vec3_t origin, const vec3_t velocity, sfxHandle_t sfx );
-	void (*AddRealLoopingSound)( int entityNum, const vec3_t origin, const vec3_t velocity, sfxHandle_t sfx );
-	void (*StopLoopingSound)(int entityNum );
-	void (*Respatialize)( int entityNum, const vec3_t origin, vec3_t axis[3], int inwater );
-	void (*UpdateEntityPosition)( int entityNum, const vec3_t origin );
-	void (*Update)( int msec );
+	void (*ClearLoopingSounds)( qbool killall );
+	void (*AddLoopingSound)( qint entityNum, const vec3_t origin, const vec3_t velocity, sfxHandle_t sfx );
+	void (*AddRealLoopingSound)( qint entityNum, const vec3_t origin, const vec3_t velocity, sfxHandle_t sfx );
+	void (*StopLoopingSound)(qint entityNum );
+	void (*Respatialize)( qint entityNum, const vec3_t origin, vec3_t axis[3], qint inwater );
+	void (*UpdateEntityPosition)( qint entityNum, const vec3_t origin );
+	void (*Update)( qint msec );
 	void (*DisableSounds)( void );
 	void (*BeginRegistration)( void );
-	sfxHandle_t (*RegisterSound)( const char *sample, qboolean compressed );
+	sfxHandle_t (*RegisterSound)( const qchar *sample, qbool compressed );
 	void (*ClearSoundBuffer)( void );
 	void (*SoundInfo)( void );
 	void (*SoundList)( void );
@@ -158,10 +158,10 @@ typedef struct
 */
 
 // initializes cycling through a DMA buffer and returns information on it
-qboolean SNDDMA_Init(void);
+qbool SNDDMA_Init(void);
 
 // gets the current DMA position
-int		SNDDMA_GetDMAPos(void);
+qint		SNDDMA_GetDMAPos(void);
 
 // shutdown the DMA xfer.
 void	SNDDMA_Shutdown(void);
@@ -176,11 +176,11 @@ void	SNDDMA_Submit(void);
 
 extern	channel_t   s_channels[MAX_CHANNELS];
 extern	channel_t   loop_channels[MAX_CHANNELS];
-extern	int		numLoopChannels;
+extern	qint		numLoopChannels;
 
-extern	int		s_soundtime;
-extern	int		s_paintedtime;
-extern	int		s_rawend;
+extern	qint		s_soundtime;
+extern	qint		s_paintedtime;
+extern	qint		s_rawend;
 extern	vec3_t	listener_forward;
 extern	vec3_t	listener_right;
 extern	vec3_t	listener_up;
@@ -197,20 +197,20 @@ extern cvar_t *s_muteWhenMinimized;
 
 extern cvar_t *s_testsound;
 
-qboolean S_LoadSound( sfx_t *sfx );
+qbool S_LoadSound( sfx_t *sfx );
 
 void		SND_free(sndBuffer *v);
 sndBuffer*	SND_malloc( void );
 void		SND_setup( void );
 void		SND_shutdown( void );
 
-void S_PaintChannels(int endtime);
+void S_PaintChannels(qint endtime);
 
 // spatializes a channel
 void S_Spatialize(channel_t *ch);
 
 // adpcm functions
-int  S_AdpcmMemoryNeeded( const wavinfo_t *info );
+qint  S_AdpcmMemoryNeeded( const wavinfo_t *info );
 void S_AdpcmEncodeSound( sfx_t *sfx, short *samples );
 void S_AdpcmGetSamples(sndBuffer *chunk, short *to);
 
@@ -231,6 +231,6 @@ extern short mulawToShort[256];
 
 extern short *sfxScratchBuffer;
 extern sfx_t *sfxScratchPointer;
-extern int	   sfxScratchIndex;
+extern qint	   sfxScratchIndex;
 
-qboolean S_Base_Init( soundInterface_t *si );
+qbool S_Base_Init( soundInterface_t *si );

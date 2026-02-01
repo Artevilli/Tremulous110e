@@ -27,7 +27,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define C2 0.2241438680420134
 #define C3 -0.1294095225512604
 
-void daub4(float b[], unsigned long n, int isign)
+void daub4(float b[], unsigned long n, qint isign)
 {
 	float wksp[4097] = { 0.0f };
 #define a(x) b[(x)-1]					// numerical recipes so a[1] = b[0]
@@ -58,10 +58,10 @@ void daub4(float b[], unsigned long n, int isign)
 #undef a
 }
 
-void wt1(float a[], unsigned long n, int isign)
+void wt1(float a[], unsigned long n, qint isign)
 {
 	unsigned long nn;
-	int inverseStartLength = n/4;
+	qint inverseStartLength = n/4;
 	if (n < inverseStartLength) return;
 	if (isign >= 0) {
 		for (nn=n;nn>=inverseStartLength;nn>>=1) daub4(a,nn,isign);
@@ -71,7 +71,7 @@ void wt1(float a[], unsigned long n, int isign)
 }
 
 /* The number of bits required by each value */
-static unsigned char numBits[] = {
+static unsigned qchar numBits[] = {
    0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
    6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
    7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
@@ -110,18 +110,18 @@ short MuLawDecode(byte uLaw) {
 }
 
 short mulawToShort[256];
-static qboolean madeTable = qfalse;
+static qbool madeTable = qfalse;
 
-static	int	NXStreamCount;
+static	qint	NXStreamCount;
 
-void NXPutc(NXStream *stream, char out) {
+void NXPutc(NXStream *stream, qchar out) {
 	stream[NXStreamCount++] = out;
 }
 
 
 void encodeWavelet( sfx_t *sfx, short *packets) {
 	float	wksp[4097] = {0}, temp;
-	int		i, samples, size;
+	qint		i, samples, size;
 	sndBuffer		*newchunk, *chunk;
 	byte			*out;
 
@@ -171,10 +171,10 @@ void encodeWavelet( sfx_t *sfx, short *packets) {
 
 void decodeWavelet(sndBuffer *chunk, short *to) {
 	float			wksp[4097] = {0};
-	int				i;
+	qint				i;
 	byte			*out;
 
-	int size = chunk->size;
+	qint size = chunk->size;
 	
 	out = (byte *)chunk->sndChunk;
 	for(i=0;i<size;i++) {
@@ -192,7 +192,7 @@ void decodeWavelet(sndBuffer *chunk, short *to) {
 
 
 void encodeMuLaw( sfx_t *sfx, short *packets) {
-	int		i, samples, size, grade, poop;
+	qint		i, samples, size, grade, poop;
 	sndBuffer		*newchunk, *chunk;
 	byte			*out;
 
@@ -238,10 +238,10 @@ void encodeMuLaw( sfx_t *sfx, short *packets) {
 }
 
 void decodeMuLaw(sndBuffer *chunk, short *to) {
-	int				i;
+	qint				i;
 	byte			*out;
 
-	int size = chunk->size;
+	qint size = chunk->size;
 	
 	out = (byte *)chunk->sndChunk;
 	for(i=0;i<size;i++) {

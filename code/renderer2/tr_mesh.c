@@ -75,10 +75,10 @@ static float ProjectRadius( float r, vec3_t location )
 R_CullModel
 =============
 */
-static int R_CullModel( mdvModel_t *model, const trRefEntity_t *ent ) {
+static qint R_CullModel( mdvModel_t *model, const trRefEntity_t *ent ) {
 	vec3_t		bounds[2];
 	mdvFrame_t	*oldFrame, *newFrame;
-	int			i;
+	qint			i;
 
 	// compute frame pointers
 	newFrame = model->frames + ent->e.frame;
@@ -106,7 +106,7 @@ static int R_CullModel( mdvModel_t *model, const trRefEntity_t *ent ) {
 		}
 		else
 		{
-			int sphereCull, sphereCullB;
+			qint sphereCull, sphereCullB;
 
 			sphereCull  = R_CullLocalPointAndRadius( newFrame->localOrigin, newFrame->radius );
 			if ( newFrame == oldFrame ) {
@@ -163,14 +163,14 @@ R_ComputeLOD
 
 =================
 */
-int R_ComputeLOD( trRefEntity_t *ent ) {
+qint R_ComputeLOD( trRefEntity_t *ent ) {
 	float radius;
 	float flod, lodscale;
 	float projectedRadius;
 	mdvFrame_t *frame;
 	mdrHeader_t *mdr;
 	mdrFrame_t *mdrframe;
-	int lod;
+	qint lod;
 
 	if ( tr.currentModel->numLods < 2 )
 	{
@@ -184,7 +184,7 @@ int R_ComputeLOD( trRefEntity_t *ent ) {
 
 		if(tr.currentModel->type == MOD_MDR)
 		{
-			int frameSize;
+			qint frameSize;
 			mdr = (mdrHeader_t *) tr.currentModel->modelData;
 			frameSize = (size_t) (&((mdrFrame_t *)0)->bones[mdr->numBones]);
 			
@@ -194,7 +194,7 @@ int R_ComputeLOD( trRefEntity_t *ent ) {
 		}
 		else
 		{
-			//frame = ( md3Frame_t * ) ( ( ( unsigned char * ) tr.currentModel->md3[0] ) + tr.currentModel->md3[0]->ofsFrames );
+			//frame = ( md3Frame_t * ) ( ( ( unsigned qchar * ) tr.currentModel->md3[0] ) + tr.currentModel->md3[0]->ofsFrames );
 			frame = tr.currentModel->mdv[0]->frames;
 
 			frame += ent->e.frame;
@@ -243,8 +243,8 @@ R_ComputeFogNum
 
 =================
 */
-static int R_ComputeFogNum( mdvModel_t *model, const trRefEntity_t *ent ) {
-	int				i, j;
+static qint R_ComputeFogNum( mdvModel_t *model, const trRefEntity_t *ent ) {
+	qint				i, j;
 	const fog_t			*fog;
 	mdvFrame_t		*mdvFrame;
 	vec3_t			localOrigin;
@@ -281,15 +281,15 @@ R_AddMD3Surfaces
 =================
 */
 void R_AddMD3Surfaces( trRefEntity_t *ent ) {
-	int				i;
+	qint				i;
 	mdvModel_t		*model = NULL;
 	mdvSurface_t	*surface = NULL;
 	shader_t		*shader = NULL;
-	int				cull;
-	int				lod;
-	int				fogNum;
-	int             cubemapIndex;
-	qboolean		personalModel;
+	qint				cull;
+	qint				lod;
+	qint				fogNum;
+	qint             cubemapIndex;
+	qbool		personalModel;
 
 	// don't add third_person objects if not in a portal
 	personalModel = (ent->e.renderfx & RF_THIRD_PERSON) && !(tr.viewParms.isPortal 
@@ -357,7 +357,7 @@ void R_AddMD3Surfaces( trRefEntity_t *ent ) {
 			shader = R_GetShaderByHandle( ent->e.customShader );
 		} else if ( ent->e.customSkin > 0 && ent->e.customSkin < tr.numSkins ) {
 			const skin_t *skin;
-			int		j;
+			qint		j;
 
 			skin = R_GetSkinByHandle( ent->e.customSkin );
 

@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 typedef struct
 {
-	char id[2];
+	qchar id[2];
 	unsigned fileSize;
 	unsigned reserved0;
 	unsigned bitmapDataOffset;
@@ -40,22 +40,22 @@ typedef struct
 	unsigned vRes;
 	unsigned colors;
 	unsigned importantColors;
-	unsigned char palette[256][4];
+	unsigned qchar palette[256][4];
 } BMPHeader_t;
 
-void R_LoadBMP( const char *name, byte **pic, int *width, int *height )
+void R_LoadBMP( const qchar *name, byte **pic, qint *width, qint *height )
 {
-	int		columns, rows;
+	qint		columns, rows;
 	unsigned	numPixels;
 	byte	*pixbuf;
-	int		row, column;
+	qint		row, column;
 	byte	*buf_p;
 	byte	*end;
 	union {
 		byte *b;
 		void *v;
 	} buffer;
-	int		length;
+	qint		length;
 	BMPHeader_t bmpHeader;
 	byte		*bmpRGBA;
 
@@ -70,7 +70,7 @@ void R_LoadBMP( const char *name, byte **pic, int *width, int *height )
 	//
 	// load the file
 	//
-	length = ri.FS_ReadFile( ( char * ) name, &buffer.v);
+	length = ri.FS_ReadFile( ( qchar * ) name, &buffer.v);
 	if (!buffer.b || length < 0) {
 		return;
 	}
@@ -85,33 +85,33 @@ void R_LoadBMP( const char *name, byte **pic, int *width, int *height )
 
 	bmpHeader.id[0] = *buf_p++;
 	bmpHeader.id[1] = *buf_p++;
-	bmpHeader.fileSize = LittleLong( * ( int * ) buf_p );
+	bmpHeader.fileSize = LittleLong( * ( qint * ) buf_p );
 	buf_p += 4;
-	bmpHeader.reserved0 = LittleLong( * ( int * ) buf_p );
+	bmpHeader.reserved0 = LittleLong( * ( qint * ) buf_p );
 	buf_p += 4;
-	bmpHeader.bitmapDataOffset = LittleLong( * ( int * ) buf_p );
+	bmpHeader.bitmapDataOffset = LittleLong( * ( qint * ) buf_p );
 	buf_p += 4;
-	bmpHeader.bitmapHeaderSize = LittleLong( * ( int * ) buf_p );
+	bmpHeader.bitmapHeaderSize = LittleLong( * ( qint * ) buf_p );
 	buf_p += 4;
-	bmpHeader.width = LittleLong( * ( int * ) buf_p );
+	bmpHeader.width = LittleLong( * ( qint * ) buf_p );
 	buf_p += 4;
-	bmpHeader.height = LittleLong( * ( int * ) buf_p );
+	bmpHeader.height = LittleLong( * ( qint * ) buf_p );
 	buf_p += 4;
 	bmpHeader.planes = LittleShort( * ( short * ) buf_p );
 	buf_p += 2;
 	bmpHeader.bitsPerPixel = LittleShort( * ( short * ) buf_p );
 	buf_p += 2;
-	bmpHeader.compression = LittleLong( * ( int * ) buf_p );
+	bmpHeader.compression = LittleLong( * ( qint * ) buf_p );
 	buf_p += 4;
-	bmpHeader.bitmapDataSize = LittleLong( * ( int * ) buf_p );
+	bmpHeader.bitmapDataSize = LittleLong( * ( qint * ) buf_p );
 	buf_p += 4;
-	bmpHeader.hRes = LittleLong( * ( int * ) buf_p );
+	bmpHeader.hRes = LittleLong( * ( qint * ) buf_p );
 	buf_p += 4;
-	bmpHeader.vRes = LittleLong( * ( int * ) buf_p );
+	bmpHeader.vRes = LittleLong( * ( qint * ) buf_p );
 	buf_p += 4;
-	bmpHeader.colors = LittleLong( * ( int * ) buf_p );
+	bmpHeader.colors = LittleLong( * ( qint * ) buf_p );
 	buf_p += 4;
-	bmpHeader.importantColors = LittleLong( * ( int * ) buf_p );
+	bmpHeader.importantColors = LittleLong( * ( qint * ) buf_p );
 	buf_p += 4;
 
 	if ( bmpHeader.bitsPerPixel == 8 )
@@ -133,7 +133,7 @@ void R_LoadBMP( const char *name, byte **pic, int *width, int *height )
 	{
 		ri.Error( ERR_DROP, "LoadBMP: only Windows-style BMP files supported (%s)", name );
 	}
-	if ( bmpHeader.fileSize != (unsigned int)length )
+	if ( bmpHeader.fileSize != (unsigned qint)length )
 	{
 		ri.Error( ERR_DROP, "LoadBMP: header size does not match file size (%u vs. %u) (%s)", bmpHeader.fileSize, length, name );
 	}
@@ -165,7 +165,7 @@ void R_LoadBMP( const char *name, byte **pic, int *width, int *height )
 	numPixels = columns * rows;
 
 	if(columns <= 0 || !rows || numPixels > 0x1FFFFFFF // 4*1FFFFFFF == 0x7FFFFFFC < 0x7FFFFFFF
-	    || ((numPixels * 4) / columns) / 4 != (unsigned int)rows)
+	    || ((numPixels * 4) / columns) / 4 != (unsigned qint)rows)
 	{
 	  ri.Error (ERR_DROP, "LoadBMP: %s has an invalid image size", name);
 	}
@@ -189,8 +189,8 @@ void R_LoadBMP( const char *name, byte **pic, int *width, int *height )
 
 		for ( column = 0; column < columns; column++ )
 		{
-			unsigned char red, green, blue, alpha;
-			int palIndex;
+			unsigned qchar red, green, blue, alpha;
+			qint palIndex;
 			unsigned short shortPixel;
 
 			switch ( bmpHeader.bitsPerPixel )

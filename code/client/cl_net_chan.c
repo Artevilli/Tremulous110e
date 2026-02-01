@@ -36,10 +36,10 @@ CL_Netchan_Encode
 ==============
 */
 static void CL_Netchan_Encode( msg_t *msg ) {
-	int serverId, messageAcknowledge, reliableAcknowledge;
-	int i, index, srdc, sbit;
+	qint serverId, messageAcknowledge, reliableAcknowledge;
+	qint i, index, srdc, sbit;
 	byte key, *string;
-	qboolean soob;
+	qbool soob;
 
 	if ( msg->cursize <= CL_ENCODE_START ) {
 		return;
@@ -94,8 +94,8 @@ CL_Netchan_Decode
 static void CL_Netchan_Decode( msg_t *msg ) {
 	long reliableAcknowledge, i, index;
 	byte key, *string;
-	int	srdc, sbit;
-	qboolean soob;
+	qint	srdc, sbit;
+	qbool soob;
 
 	srdc = msg->readcount;
 	sbit = msg->bit;
@@ -135,7 +135,7 @@ static void CL_Netchan_Decode( msg_t *msg ) {
 CL_Netchan_TransmitNextFragment
 =================
 */
-static qboolean CL_Netchan_TransmitNextFragment( netchan_t *chan )
+static qbool CL_Netchan_TransmitNextFragment( netchan_t *chan )
 {
 	if ( chan->unsentFragments )
 	{
@@ -172,8 +172,8 @@ void CL_Netchan_Transmit( netchan_t *chan, msg_t* msg ) {
 CL_Netchan_Enqueue
 ================
 */
-void CL_Netchan_Enqueue( netchan_t *chan, msg_t* msg, int times ) {
-	int i;
+void CL_Netchan_Enqueue( netchan_t *chan, msg_t* msg, qint times ) {
+	qint i;
 
 	// make sure we send all pending fragments to get correct chan->outgoingSequence
 	while ( CL_Netchan_TransmitNextFragment( chan ) ) {
@@ -197,8 +197,8 @@ void CL_Netchan_Enqueue( netchan_t *chan, msg_t* msg, int times ) {
 CL_Netchan_Process
 =================
 */
-qboolean CL_Netchan_Process( netchan_t *chan, msg_t *msg ) {
-	qboolean ret;
+qbool CL_Netchan_Process( netchan_t *chan, msg_t *msg ) {
+	qbool ret;
 
 	ret = Netchan_Process( chan, msg );
 	if ( !ret )

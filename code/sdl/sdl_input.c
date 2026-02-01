@@ -37,8 +37,8 @@ static SDL_GameController *gamepad;
 static SDL_Joystick *stick = NULL;
 #endif
 
-static qboolean mouseAvailable = qfalse;
-static qboolean mouseActive = qfalse;
+static qbool mouseAvailable = qfalse;
+static qbool mouseActive = qfalse;
 
 static cvar_t *in_mouse;
 
@@ -64,8 +64,8 @@ static cvar_t *j_up_axis;
 
 static cvar_t *cl_consoleKeys;
 
-static int in_eventTime = 0;
-static qboolean mouse_focus;
+static qint in_eventTime = 0;
+static qbool mouse_focus;
 
 #define CTRL(a) ((a)-'a'+1)
 
@@ -74,7 +74,7 @@ static qboolean mouse_focus;
 IN_PrintKey
 ===============
 */
-static void IN_PrintKey( const SDL_Keysym *keysym, keyNum_t key, qboolean down )
+static void IN_PrintKey( const SDL_Keysym *keysym, keyNum_t key, qbool down )
 {
 	if( down )
 		Com_Printf( "+ " );
@@ -112,7 +112,7 @@ TODO: If the SDL_Scancode situation improves, use it instead of
       both of these methods
 ===============
 */
-static qboolean IN_IsConsoleKey( keyNum_t key, int character )
+static qbool IN_IsConsoleKey( keyNum_t key, qint character )
 {
 	typedef struct consoleKey_s
 	{
@@ -125,18 +125,18 @@ static qboolean IN_IsConsoleKey( keyNum_t key, int character )
 		union
 		{
 			keyNum_t key;
-			int character;
+			qint character;
 		} u;
 	} consoleKey_t;
 
 	static consoleKey_t consoleKeys[ MAX_CONSOLE_KEYS ];
-	static int numConsoleKeys = 0;
-	int i;
+	static qint numConsoleKeys = 0;
+	qint i;
 
 	// Only parse the variable when it changes
 	if ( cl_consoleKeys->modified )
 	{
-		const char *text_p, *token;
+		const qchar *text_p, *token;
 
 		cl_consoleKeys->modified = qfalse;
 		text_p = cl_consoleKeys->string;
@@ -145,7 +145,7 @@ static qboolean IN_IsConsoleKey( keyNum_t key, int character )
 		while( numConsoleKeys < MAX_CONSOLE_KEYS )
 		{
 			consoleKey_t *c = &consoleKeys[ numConsoleKeys ];
-			int charCode = 0;
+			qint charCode = 0;
 
 			token = COM_Parse( &text_p );
 			if( !token[ 0 ] )
@@ -203,7 +203,7 @@ static qboolean IN_IsConsoleKey( keyNum_t key, int character )
 IN_TranslateSDLToQ3Key
 ===============
 */
-static keyNum_t IN_TranslateSDLToQ3Key( SDL_Keysym *keysym, qboolean down )
+static keyNum_t IN_TranslateSDLToQ3Key( SDL_Keysym *keysym, qbool down )
 {
 	keyNum_t key = 0;
 
@@ -249,7 +249,7 @@ static keyNum_t IN_TranslateSDLToQ3Key( SDL_Keysym *keysym, qboolean down )
 	if( !key && keysym->sym >= SDLK_SPACE && keysym->sym < SDLK_DELETE )
 	{
 		// These happen to match the ASCII chars
-		key = (int)keysym->sym;
+		key = (qint)keysym->sym;
 	}
 	else if( !key )
 	{
@@ -344,7 +344,7 @@ static keyNum_t IN_TranslateSDLToQ3Key( SDL_Keysym *keysym, qboolean down )
 					// Maybe create a map of scancode to quake key at start up and on
 					// key map change; allocate world key numbers as needed similar
 					// to SDL 1.2.
-					key = K_WORLD_0 + (int)keysym->scancode;
+					key = K_WORLD_0 + (qint)keysym->scancode;
 				}
 #endif
 				break;
@@ -382,7 +382,7 @@ IN_GobbleMotionEvents
 static void IN_GobbleMouseEvents( void )
 {
 	SDL_Event dummy[ 1 ];
-	int val = 0;
+	qint val = 0;
 
 	// Gobble any mouse events
 	SDL_PumpEvents();
@@ -452,7 +452,7 @@ IN_DeactivateMouse
 */
 static void IN_DeactivateMouse( void )
 {
-	const char* drv = SDL_GetCurrentVideoDriver();
+	const qchar* drv = SDL_GetCurrentVideoDriver();
 
 	if ( !mouseAvailable )
 		return;
@@ -491,7 +491,7 @@ static void IN_DeactivateMouse( void )
 
 #ifdef USE_JOYSTICK
 // We translate axes movement into keypresses
-static const int joy_keys[16] = {
+static const qint joy_keys[16] = {
 	K_LEFTARROW, K_RIGHTARROW,
 	K_UPARROW, K_DOWNARROW,
 	K_JOY17, K_JOY18,
@@ -504,7 +504,7 @@ static const int joy_keys[16] = {
 
 // translate hat events into keypresses
 // the 4 highest buttons are used for the first hat ...
-static const int hat_keys[16] = {
+static const qint hat_keys[16] = {
 	K_JOY29, K_JOY30,
 	K_JOY31, K_JOY32,
 	K_JOY25, K_JOY26,
@@ -518,10 +518,10 @@ static const int hat_keys[16] = {
 
 struct
 {
-	qboolean buttons[SDL_CONTROLLER_BUTTON_MAX + 1]; // +1 because old max was 16, current SDL_CONTROLLER_BUTTON_MAX is 15
-	unsigned int oldaxes;
-	int oldaaxes[MAX_JOYSTICK_AXIS];
-	unsigned int oldhats;
+	qbool buttons[SDL_CONTROLLER_BUTTON_MAX + 1]; // +1 because old max was 16, current SDL_CONTROLLER_BUTTON_MAX is 15
+	unsigned qint oldaxes;
+	qint oldaaxes[MAX_JOYSTICK_AXIS];
+	unsigned qint oldhats;
 } stick_state;
 
 
@@ -533,9 +533,9 @@ IN_InitJoystick
 static void IN_InitJoystick( void )
 {
 	cvar_t *cv;
-	int i = 0;
-	int total = 0;
-	char buf[16384] = "";
+	qint i = 0;
+	qint total = 0;
+	qchar buf[16384] = "";
 
 	if (gamepad)
 		SDL_GameControllerClose(gamepad);
@@ -654,9 +654,9 @@ static void IN_ShutdownJoystick( void )
 }
 
 
-static qboolean KeyToAxisAndSign(int keynum, int *outAxis, int *outSign)
+static qbool KeyToAxisAndSign(qint keynum, qint *outAxis, qint *outSign)
 {
-	const char *bind;
+	const qchar *bind;
 
 	if (!keynum)
 		return qfalse;
@@ -730,16 +730,16 @@ IN_GamepadMove
 */
 static void IN_GamepadMove( void )
 {
-	int i;
-	int translatedAxes[MAX_JOYSTICK_AXIS];
-	qboolean translatedAxesSet[MAX_JOYSTICK_AXIS];
+	qint i;
+	qint translatedAxes[MAX_JOYSTICK_AXIS];
+	qbool translatedAxesSet[MAX_JOYSTICK_AXIS];
 
 	SDL_GameControllerUpdate();
 
 	// check buttons
 	for (i = 0; i < SDL_CONTROLLER_BUTTON_MAX; i++)
 	{
-		qboolean pressed = SDL_GameControllerGetButton(gamepad, SDL_CONTROLLER_BUTTON_A + i);
+		qbool pressed = SDL_GameControllerGetButton(gamepad, SDL_CONTROLLER_BUTTON_A + i);
 		if (pressed != stick_state.buttons[i])
 		{
 #if SDL_VERSION_ATLEAST( 2, 0, 14 )
@@ -768,8 +768,8 @@ static void IN_GamepadMove( void )
 	// check axes
 	for (i = 0; i < SDL_CONTROLLER_AXIS_MAX; i++)
 	{
-		int axis = SDL_GameControllerGetAxis(gamepad, SDL_CONTROLLER_AXIS_LEFTX + i);
-		int oldAxis = stick_state.oldaaxes[i];
+		qint axis = SDL_GameControllerGetAxis(gamepad, SDL_CONTROLLER_AXIS_LEFTX + i);
+		qint oldAxis = stick_state.oldaaxes[i];
 
 		// Smoothly ramp from dead zone to maximum value
 		float f = ((float)abs(axis) / 32767.0f - in_joystickThreshold->value) / (1.0f - in_joystickThreshold->value);
@@ -777,20 +777,20 @@ static void IN_GamepadMove( void )
 		if (f < 0.0f)
 			f = 0.0f;
 
-		axis = (int)(32767 * ((axis < 0) ? -f : f));
+		axis = (qint)(32767 * ((axis < 0) ? -f : f));
 
 		if (axis != oldAxis)
 		{
-			const int negMap[SDL_CONTROLLER_AXIS_MAX] = { K_PAD0_LEFTSTICK_LEFT,  K_PAD0_LEFTSTICK_UP,   K_PAD0_RIGHTSTICK_LEFT,  K_PAD0_RIGHTSTICK_UP, 0, 0 };
-			const int posMap[SDL_CONTROLLER_AXIS_MAX] = { K_PAD0_LEFTSTICK_RIGHT, K_PAD0_LEFTSTICK_DOWN, K_PAD0_RIGHTSTICK_RIGHT, K_PAD0_RIGHTSTICK_DOWN, K_PAD0_LEFTTRIGGER, K_PAD0_RIGHTTRIGGER };
+			const qint negMap[SDL_CONTROLLER_AXIS_MAX] = { K_PAD0_LEFTSTICK_LEFT,  K_PAD0_LEFTSTICK_UP,   K_PAD0_RIGHTSTICK_LEFT,  K_PAD0_RIGHTSTICK_UP, 0, 0 };
+			const qint posMap[SDL_CONTROLLER_AXIS_MAX] = { K_PAD0_LEFTSTICK_RIGHT, K_PAD0_LEFTSTICK_DOWN, K_PAD0_RIGHTSTICK_RIGHT, K_PAD0_RIGHTSTICK_DOWN, K_PAD0_LEFTTRIGGER, K_PAD0_RIGHTTRIGGER };
 
-			qboolean posAnalog = qfalse, negAnalog = qfalse;
-			int negKey = negMap[i];
-			int posKey = posMap[i];
+			qbool posAnalog = qfalse, negAnalog = qfalse;
+			qint negKey = negMap[i];
+			qint posKey = posMap[i];
 
 			if (in_joystickUseAnalog->integer)
 			{
-				int posAxis = 0, posSign = 0, negAxis = 0, negSign = 0;
+				qint posAxis = 0, posSign = 0, negAxis = 0, negSign = 0;
 
 				// get axes and axes signs for keys if available
 				posAnalog = KeyToAxisAndSign(posKey, &posAxis, &posSign);
@@ -866,10 +866,10 @@ IN_JoyMove
 */
 static void IN_JoyMove( void )
 {
-	unsigned int axes = 0;
-	unsigned int hats = 0;
-	int total = 0;
-	int i = 0;
+	unsigned qint axes = 0;
+	unsigned qint hats = 0;
+	qint total = 0;
+	qint i = 0;
 
 	in_eventTime = Sys_Milliseconds();
 
@@ -888,12 +888,12 @@ static void IN_JoyMove( void )
 	total = SDL_JoystickNumBalls(stick);
 	if (total > 0)
 	{
-		int balldx = 0;
-		int balldy = 0;
+		qint balldx = 0;
+		qint balldy = 0;
 		for (i = 0; i < total; i++)
 		{
-			int dx = 0;
-			int dy = 0;
+			qint dx = 0;
+			qint dy = 0;
 			SDL_JoystickGetBall(stick, i, &dx, &dy);
 			balldx += dx;
 			balldy += dy;
@@ -918,7 +918,7 @@ static void IN_JoyMove( void )
 			total = ARRAY_LEN(stick_state.buttons);
 		for (i = 0; i < total; i++)
 		{
-			qboolean pressed = (SDL_JoystickGetButton(stick, i) != 0);
+			qbool pressed = (SDL_JoystickGetButton(stick, i) != 0);
 			if (pressed != stick_state.buttons[i])
 			{
 				Com_QueueEvent( in_eventTime, SE_KEY, K_JOY1 + i, pressed, 0, NULL );
@@ -1075,9 +1075,9 @@ static void IN_JoyMove( void )
 
 
 #ifdef DEBUG_EVENTS
-static const char *eventName( SDL_WindowEventID event )
+static const qchar *eventName( SDL_WindowEventID event )
 {
-	static char buf[32];
+	static qchar buf[32];
 
 	switch ( event )
 	{
@@ -1182,12 +1182,12 @@ void HandleEvents( void )
 			case SDL_TEXTINPUT:
 				if( lastKeyDown != K_CONSOLE )
 				{
-					char *c = e.text.text;
+					qchar *c = e.text.text;
 
 					// Quick and dirty UTF-8 to UTF-32 conversion
 					while ( *c )
 					{
-						int utf32 = 0;
+						qint utf32 = 0;
 
 						if( ( *c & 0x80 ) == 0 )
 							utf32 = *c++;
@@ -1211,7 +1211,7 @@ void HandleEvents( void )
 						}
 						else
 						{
-							Com_DPrintf( "Unrecognised UTF-8 lead byte: 0x%x\n", (unsigned int)*c );
+							Com_DPrintf( "Unrecognised UTF-8 lead byte: 0x%x\n", (unsigned qint)*c );
 							c++;
 						}
 
@@ -1241,7 +1241,7 @@ void HandleEvents( void )
 			case SDL_MOUSEBUTTONDOWN:
 			case SDL_MOUSEBUTTONUP:
 				{
-					int b;
+					qint b;
 					switch( e.button.button )
 					{
 						case SDL_BUTTON_LEFT:   b = K_MOUSE1;     break;

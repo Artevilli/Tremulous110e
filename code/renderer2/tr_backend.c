@@ -40,7 +40,7 @@ static float	s_flipMatrix[16] = {
 /*
 ** GL_BindToTMU
 */
-void GL_BindToTMU( image_t *image, int tmu )
+void GL_BindToTMU( image_t *image, qint tmu )
 {
 	GLuint texture = (tmu == TB_COLORMAP) ? tr.defaultImage->texnum : 0;
 	GLenum target = GL_TEXTURE_2D;
@@ -65,7 +65,7 @@ void GL_BindToTMU( image_t *image, int tmu )
 /*
 ** GL_Cull
 */
-void GL_Cull( int cullType ) {
+void GL_Cull( qint cullType ) {
 	if ( glState.faceCulling == cullType ) {
 		return;
 	}
@@ -76,7 +76,7 @@ void GL_Cull( int cullType ) {
 	} 
 	else 
 	{
-		qboolean cullFront = (cullType == CT_FRONT_SIDED);
+		qbool cullFront = (cullType == CT_FRONT_SIDED);
 
 		if ( glState.faceCulling == CT_TWO_SIDED )
 			qglEnable( GL_CULL_FACE );
@@ -327,7 +327,7 @@ to actually render the visible surfaces for this view
 =================
 */
 static void RB_BeginDrawingView (void) {
-	int clearBits = 0;
+	qint clearBits = 0;
 
 	// sync with gl if needed
 	if ( r_finish->integer == 1 && !glState.finishCalled ) {
@@ -426,17 +426,17 @@ static void RB_BeginDrawingView (void) {
 RB_RenderDrawSurfList
 ==================
 */
-static void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
+static void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, qint numDrawSurfs ) {
 	shader_t		*shader, *oldShader;
-	int				fogNum, oldFogNum;
-	int				entityNum, oldEntityNum;
-	int				dlighted, oldDlighted;
-	int				pshadowed, oldPshadowed;
-	int             cubemapIndex, oldCubemapIndex;
-	qboolean		depthRange, oldDepthRange, isCrosshair, wasCrosshair;
-	int				i;
+	qint				fogNum, oldFogNum;
+	qint				entityNum, oldEntityNum;
+	qint				dlighted, oldDlighted;
+	qint				pshadowed, oldPshadowed;
+	qint             cubemapIndex, oldCubemapIndex;
+	qbool		depthRange, oldDepthRange, isCrosshair, wasCrosshair;
+	qint				i;
 	drawSurf_t		*drawSurf;
-	unsigned int	oldSort;
+	unsigned qint	oldSort;
 	double			originalTime;
 	FBO_t*			fbo = NULL;
 
@@ -626,7 +626,7 @@ RB_SetGL2D
 */
 static void	RB_SetGL2D (void) {
 	mat4_t matrix;
-	int width, height;
+	qint width, height;
 
 	if (backEnd.projection2D && backEnd.last2DFBO == glState.currentFBO)
 		return;
@@ -675,9 +675,9 @@ Stretches a raw 32 bit power of 2 bitmap image over the given screen rectangle.
 Used for cinematics.
 =============
 */
-void RE_StretchRaw( int x, int y, int w, int h, int cols, int rows, const byte *data, int client, qboolean dirty ) {
-	int			i, j;
-	int			start, end;
+void RE_StretchRaw( qint x, qint y, qint w, qint h, qint cols, qint rows, const byte *data, qint client, qbool dirty ) {
+	qint			i, j;
+	qint			start, end;
 	vec4_t quadVerts[4];
 	vec2_t texCoords[4];
 
@@ -741,7 +741,7 @@ void RE_StretchRaw( int x, int y, int w, int h, int cols, int rows, const byte *
 	RB_InstantQuad2(quadVerts, texCoords);
 }
 
-void RE_UploadCinematic (int w, int h, int cols, int rows, const byte *data, int client, qboolean dirty) {
+void RE_UploadCinematic (qint w, qint h, qint cols, qint rows, const byte *data, qint client, qbool dirty) {
 	GLuint texture;
 
 	if (!tr.scratchImage[client])
@@ -798,7 +798,7 @@ RB_StretchPic
 static const void *RB_StretchPic ( const void *data ) {
 	const stretchPicCommand_t	*cmd;
 	shader_t *shader;
-	int		numVerts, numIndexes;
+	qint		numVerts, numIndexes;
 
 	cmd = (const stretchPicCommand_t *)data;
 
@@ -882,7 +882,7 @@ RB_DrawSurfs
 */
 static const void	*RB_DrawSurfs( const void *data ) {
 	const drawSurfsCommand_t	*cmd;
-	qboolean isShadowView;
+	qbool isShadowView;
 
 	// finish any 2D drawing if needed
 	if ( tess.numIndexes ) {
@@ -1224,10 +1224,10 @@ Also called by RE_EndRegistration
 ===============
 */
 void RB_ShowImages( void ) {
-	int		i;
+	qint		i;
 	image_t	*image;
 	float	x, y, w, h;
-	int		start, end;
+	qint		start, end;
 
 	RB_SetGL2D();
 
@@ -1368,9 +1368,9 @@ static const void	*RB_SwapBuffers( const void *data ) {
 	// we measure overdraw by reading back the stencil buffer and
 	// counting up the number of increments that have happened
 	if ( r_measureOverdraw->integer ) {
-		int i;
+		qint i;
 		long sum = 0;
-		unsigned char *stencilReadback;
+		unsigned qchar *stencilReadback;
 
 		stencilReadback = ri.Hunk_AllocateTempMemory( glConfig.vidWidth * glConfig.vidHeight );
 		qglReadPixels( 0, 0, glConfig.vidWidth, glConfig.vidHeight, GL_STENCIL_INDEX, GL_UNSIGNED_BYTE, stencilReadback );
@@ -1461,7 +1461,7 @@ static const void *RB_PostProcess(const void *data)
 	const postProcessCommand_t *cmd = data;
 	FBO_t *srcFbo;
 	ivec4_t srcBox, dstBox;
-	qboolean autoExposure;
+	qbool autoExposure;
 
 	// finish any 2D drawing if needed
 	if(tess.numIndexes)
@@ -1651,7 +1651,7 @@ static const void *RB_PostProcess(const void *data)
 	if (r_cubeMapping->integer && tr.numCubemaps)
 	{
 		ivec4_t dstBox;
-		int cubemapIndex = R_CubemapForPoint( backEnd.viewParms.or.origin );
+		qint cubemapIndex = R_CubemapForPoint( backEnd.viewParms.or.origin );
 
 		if (cubemapIndex)
 		{
@@ -1668,7 +1668,7 @@ static const void *RB_PostProcess(const void *data)
 }
 
 // FIXME: put this function declaration elsewhere
-void R_SaveDDS(const char *filename, byte *pic, int width, int height, int depth);
+void R_SaveDDS(const qchar *filename, byte *pic, qint width, qint height, qint depth);
 
 /*
 =============
@@ -1694,15 +1694,15 @@ static const void *RB_ExportCubemaps(const void *data)
 	if (cmd)
 	{
 		FBO_t *oldFbo = glState.currentFBO;
-		int sideSize = r_cubemapSize->integer * r_cubemapSize->integer * 4;
+		qint sideSize = r_cubemapSize->integer * r_cubemapSize->integer * 4;
 		byte *cubemapPixels = ri.Malloc(sideSize * 6);
-		int i, j;
+		qint i, j;
 
 		FBO_Bind(tr.renderCubeFbo);
 
 		for (i = 0; i < tr.numCubemaps; i++)
 		{
-			char filename[MAX_QPATH];
+			qchar filename[MAX_QPATH];
 			cubemap_t *cubemap = &tr.cubemaps[i];
 			byte *p = cubemapPixels;
 
@@ -1742,14 +1742,14 @@ RB_ExecuteRenderCommands
 ====================
 */
 void RB_ExecuteRenderCommands( const void *data ) {
-	int		t1, t2;
+	qint		t1, t2;
 
 	t1 = ri.Milliseconds ();
 
 	while ( 1 ) {
 		data = PADP(data, sizeof(void *));
 
-		switch ( *(const int *)data ) {
+		switch ( *(const qint *)data ) {
 		case RC_SET_COLOR:
 			data = RB_SetColor( data );
 			break;

@@ -24,39 +24,39 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "tr_dsa.h"
 
-extern const char *fallbackShader_bokeh_vp;
-extern const char *fallbackShader_bokeh_fp;
-extern const char *fallbackShader_calclevels4x_vp;
-extern const char *fallbackShader_calclevels4x_fp;
-extern const char *fallbackShader_depthblur_vp;
-extern const char *fallbackShader_depthblur_fp;
-extern const char *fallbackShader_dlight_vp;
-extern const char *fallbackShader_dlight_fp;
-extern const char *fallbackShader_down4x_vp;
-extern const char *fallbackShader_down4x_fp;
-extern const char *fallbackShader_fogpass_vp;
-extern const char *fallbackShader_fogpass_fp;
-extern const char *fallbackShader_generic_vp;
-extern const char *fallbackShader_generic_fp;
-extern const char *fallbackShader_lightall_vp;
-extern const char *fallbackShader_lightall_fp;
-extern const char *fallbackShader_pshadow_vp;
-extern const char *fallbackShader_pshadow_fp;
-extern const char *fallbackShader_shadowfill_vp;
-extern const char *fallbackShader_shadowfill_fp;
-extern const char *fallbackShader_shadowmask_vp;
-extern const char *fallbackShader_shadowmask_fp;
-extern const char *fallbackShader_ssao_vp;
-extern const char *fallbackShader_ssao_fp;
-extern const char *fallbackShader_texturecolor_vp;
-extern const char *fallbackShader_texturecolor_fp;
-extern const char *fallbackShader_tonemap_vp;
-extern const char *fallbackShader_tonemap_fp;
+extern const qchar *fallbackShader_bokeh_vp;
+extern const qchar *fallbackShader_bokeh_fp;
+extern const qchar *fallbackShader_calclevels4x_vp;
+extern const qchar *fallbackShader_calclevels4x_fp;
+extern const qchar *fallbackShader_depthblur_vp;
+extern const qchar *fallbackShader_depthblur_fp;
+extern const qchar *fallbackShader_dlight_vp;
+extern const qchar *fallbackShader_dlight_fp;
+extern const qchar *fallbackShader_down4x_vp;
+extern const qchar *fallbackShader_down4x_fp;
+extern const qchar *fallbackShader_fogpass_vp;
+extern const qchar *fallbackShader_fogpass_fp;
+extern const qchar *fallbackShader_generic_vp;
+extern const qchar *fallbackShader_generic_fp;
+extern const qchar *fallbackShader_lightall_vp;
+extern const qchar *fallbackShader_lightall_fp;
+extern const qchar *fallbackShader_pshadow_vp;
+extern const qchar *fallbackShader_pshadow_fp;
+extern const qchar *fallbackShader_shadowfill_vp;
+extern const qchar *fallbackShader_shadowfill_fp;
+extern const qchar *fallbackShader_shadowmask_vp;
+extern const qchar *fallbackShader_shadowmask_fp;
+extern const qchar *fallbackShader_ssao_vp;
+extern const qchar *fallbackShader_ssao_fp;
+extern const qchar *fallbackShader_texturecolor_vp;
+extern const qchar *fallbackShader_texturecolor_fp;
+extern const qchar *fallbackShader_tonemap_vp;
+extern const qchar *fallbackShader_tonemap_fp;
 
 typedef struct uniformInfo_s
 {
-	char *name;
-	int type;
+	qchar *name;
+	qint type;
 }
 uniformInfo_t;
 
@@ -160,13 +160,13 @@ typedef enum
 }
 glslPrintLog_t;
 
-static void GLSL_PrintLog(GLuint programOrShader, glslPrintLog_t type, qboolean developerOnly)
+static void GLSL_PrintLog(GLuint programOrShader, glslPrintLog_t type, qbool developerOnly)
 {
-	char           *msg;
-	static char     msgPart[1024];
-	int             maxLength = 0;
-	int             i;
-	int             printLevel = developerOnly ? PRINT_DEVELOPER : PRINT_ALL;
+	qchar           *msg;
+	static qchar     msgPart[1024];
+	qint             maxLength = 0;
+	qint             i;
+	qint             printLevel = developerOnly ? PRINT_DEVELOPER : PRINT_ALL;
 
 	switch (type)
 	{
@@ -234,7 +234,7 @@ static void GLSL_PrintLog(GLuint programOrShader, glslPrintLog_t type, qboolean 
 
 }
 
-static void GLSL_GetShaderHeader( GLenum shaderType, const GLchar *extra, char *dest, int size )
+static void GLSL_GetShaderHeader( GLenum shaderType, const GLchar *extra, qchar *dest, qint size )
 {
 	float fbufWidthScale, fbufHeightScale;
 
@@ -343,8 +343,8 @@ static void GLSL_GetShaderHeader( GLenum shaderType, const GLchar *extra, char *
 
 	if (r_cubeMapping->integer)
 	{
-		int cubeMipSize = r_cubemapSize->integer;
-		int numRoughnessMips = 0;
+		qint cubeMipSize = r_cubemapSize->integer;
+		qint numRoughnessMips = 0;
 
 		while (cubeMipSize)
 		{
@@ -365,7 +365,7 @@ static void GLSL_GetShaderHeader( GLenum shaderType, const GLchar *extra, char *
 	Q_strcat(dest, size, "#line 0\n");
 }
 
-static int GLSL_CompileGPUShader(GLuint program, GLuint *prevShader, const GLchar *buffer, int size, GLenum shaderType)
+static qint GLSL_CompileGPUShader(GLuint program, GLuint *prevShader, const GLchar *buffer, qint size, GLenum shaderType)
 {
 	GLint           compiled;
 	GLuint          shader;
@@ -401,14 +401,14 @@ static int GLSL_CompileGPUShader(GLuint program, GLuint *prevShader, const GLcha
 	return 1;
 }
 
-static int GLSL_LoadGPUShaderText(const char *name, const char *fallback,
-	GLenum shaderType, char *dest, int destSize)
+static qint GLSL_LoadGPUShaderText(const qchar *name, const qchar *fallback,
+	GLenum shaderType, qchar *dest, qint destSize)
 {
-	char            filename[MAX_QPATH];
+	qchar            filename[MAX_QPATH];
 	GLchar      *buffer = NULL;
 	const GLchar *shaderText = NULL;
-	int             size;
-	int             result;
+	qint             size;
+	qint             result;
 
 	if(shaderType == GL_VERTEX_SHADER)
 	{
@@ -480,9 +480,9 @@ static void GLSL_LinkProgram(GLuint program)
 
 static void GLSL_ShowProgramUniforms(GLuint program)
 {
-	int             i, count, size;
+	qint             i, count, size;
 	GLenum			type;
-	char            uniformName[1000];
+	qchar            uniformName[1000];
 
 	// query the number of active uniforms
 	qglGetProgramiv(program, GL_ACTIVE_UNIFORMS, &count);
@@ -496,7 +496,7 @@ static void GLSL_ShowProgramUniforms(GLuint program)
 	}
 }
 
-static int GLSL_InitGPUShader2(shaderProgram_t * program, const char *name, int attribs, const char *vpCode, const char *fpCode)
+static qint GLSL_InitGPUShader2(shaderProgram_t * program, const qchar *name, qint attribs, const qchar *vpCode, const qchar *fpCode)
 {
 	ri.Printf(PRINT_DEVELOPER, "------- GPU shader -------\n");
 
@@ -577,15 +577,15 @@ static int GLSL_InitGPUShader2(shaderProgram_t * program, const char *name, int 
 	return 1;
 }
 
-static int GLSL_InitGPUShader(shaderProgram_t * program, const char *name,
-	int attribs, qboolean fragmentShader, const GLchar *extra, qboolean addHeader,
-	const char *fallback_vp, const char *fallback_fp)
+static qint GLSL_InitGPUShader(shaderProgram_t * program, const qchar *name,
+	qint attribs, qbool fragmentShader, const GLchar *extra, qbool addHeader,
+	const qchar *fallback_vp, const qchar *fallback_fp)
 {
-	char vpCode[32000];
-	char fpCode[32000];
-	char *postHeader;
-	int size;
-	int result;
+	qchar vpCode[32000];
+	qchar fpCode[32000];
+	qchar *postHeader;
+	qint size;
+	qint result;
 
 	size = sizeof(vpCode);
 	if (addHeader)
@@ -631,7 +631,7 @@ static int GLSL_InitGPUShader(shaderProgram_t * program, const char *name,
 
 static void GLSL_InitUniforms(shaderProgram_t *program)
 {
-	int i, size;
+	qint i, size;
 
 	GLint *uniforms = program->uniforms;
 
@@ -685,7 +685,7 @@ static void GLSL_FinishGPUShader(shaderProgram_t *program)
 	GL_CheckErrors();
 }
 
-void GLSL_SetUniformInt(shaderProgram_t *program, int uniformNum, GLint value)
+void GLSL_SetUniformInt(shaderProgram_t *program, qint uniformNum, GLint value)
 {
 	GLint *uniforms = program->uniforms;
 	GLint *compare = (GLint *)(program->uniformBuffer + program->uniformBufferOffsets[uniformNum]);
@@ -709,7 +709,7 @@ void GLSL_SetUniformInt(shaderProgram_t *program, int uniformNum, GLint value)
 	qglProgramUniform1iEXT(program->program, uniforms[uniformNum], value);
 }
 
-void GLSL_SetUniformFloat(shaderProgram_t *program, int uniformNum, GLfloat value)
+void GLSL_SetUniformFloat(shaderProgram_t *program, qint uniformNum, GLfloat value)
 {
 	GLint *uniforms = program->uniforms;
 	GLfloat *compare = (GLfloat *)(program->uniformBuffer + program->uniformBufferOffsets[uniformNum]);
@@ -733,7 +733,7 @@ void GLSL_SetUniformFloat(shaderProgram_t *program, int uniformNum, GLfloat valu
 	qglProgramUniform1fEXT(program->program, uniforms[uniformNum], value);
 }
 
-void GLSL_SetUniformVec2(shaderProgram_t *program, int uniformNum, const vec2_t v)
+void GLSL_SetUniformVec2(shaderProgram_t *program, qint uniformNum, const vec2_t v)
 {
 	GLint *uniforms = program->uniforms;
 	vec_t *compare = (float *)(program->uniformBuffer + program->uniformBufferOffsets[uniformNum]);
@@ -758,7 +758,7 @@ void GLSL_SetUniformVec2(shaderProgram_t *program, int uniformNum, const vec2_t 
 	qglProgramUniform2fEXT(program->program, uniforms[uniformNum], v[0], v[1]);
 }
 
-void GLSL_SetUniformVec3(shaderProgram_t *program, int uniformNum, const vec3_t v)
+void GLSL_SetUniformVec3(shaderProgram_t *program, qint uniformNum, const vec3_t v)
 {
 	GLint *uniforms = program->uniforms;
 	vec_t *compare = (float *)(program->uniformBuffer + program->uniformBufferOffsets[uniformNum]);
@@ -782,7 +782,7 @@ void GLSL_SetUniformVec3(shaderProgram_t *program, int uniformNum, const vec3_t 
 	qglProgramUniform3fEXT(program->program, uniforms[uniformNum], v[0], v[1], v[2]);
 }
 
-void GLSL_SetUniformVec4(shaderProgram_t *program, int uniformNum, const vec4_t v)
+void GLSL_SetUniformVec4(shaderProgram_t *program, qint uniformNum, const vec4_t v)
 {
 	GLint *uniforms = program->uniforms;
 	vec_t *compare = (float *)(program->uniformBuffer + program->uniformBufferOffsets[uniformNum]);
@@ -806,7 +806,7 @@ void GLSL_SetUniformVec4(shaderProgram_t *program, int uniformNum, const vec4_t 
 	qglProgramUniform4fEXT(program->program, uniforms[uniformNum], v[0], v[1], v[2], v[3]);
 }
 
-void GLSL_SetUniformFloat5(shaderProgram_t *program, int uniformNum, const vec5_t v)
+void GLSL_SetUniformFloat5(shaderProgram_t *program, qint uniformNum, const vec5_t v)
 {
 	GLint *uniforms = program->uniforms;
 	vec_t *compare = (float *)(program->uniformBuffer + program->uniformBufferOffsets[uniformNum]);
@@ -830,7 +830,7 @@ void GLSL_SetUniformFloat5(shaderProgram_t *program, int uniformNum, const vec5_
 	qglProgramUniform1fvEXT(program->program, uniforms[uniformNum], 5, v);
 }
 
-void GLSL_SetUniformMat4(shaderProgram_t *program, int uniformNum, const mat4_t matrix)
+void GLSL_SetUniformMat4(shaderProgram_t *program, qint uniformNum, const mat4_t matrix)
 {
 	GLint *uniforms = program->uniforms;
 	vec_t *compare = (float *)(program->uniformBuffer + program->uniformBufferOffsets[uniformNum]);
@@ -854,7 +854,7 @@ void GLSL_SetUniformMat4(shaderProgram_t *program, int uniformNum, const mat4_t 
 	qglProgramUniformMatrix4fvEXT(program->program, uniforms[uniformNum], 1, GL_FALSE, matrix);
 }
 
-void GLSL_SetUniformMat4BoneMatrix(shaderProgram_t *program, int uniformNum, /*const*/ mat4_t *matrix, int numMatricies)
+void GLSL_SetUniformMat4BoneMatrix(shaderProgram_t *program, qint uniformNum, /*const*/ mat4_t *matrix, qint numMatricies)
 {
 	GLint *uniforms = program->uniforms;
 	vec_t *compare = (float *)(program->uniformBuffer + program->uniformBufferOffsets[uniformNum]);
@@ -915,11 +915,11 @@ static void GLSL_DeleteGPUShader(shaderProgram_t *program)
 
 void GLSL_InitGPUShaders(void)
 {
-	int             startTime, endTime;
-	int i;
-	char extradefines[1024];
-	int attribs;
-	int numGenShaders = 0, numLightShaders = 0, numEtcShaders = 0;
+	qint             startTime, endTime;
+	qint i;
+	qchar extradefines[1024];
+	qint attribs;
+	qint numGenShaders = 0, numLightShaders = 0, numEtcShaders = 0;
 
 	ri.Printf(PRINT_ALL, "------- GLSL_InitGPUShaders -------\n");
 
@@ -1059,8 +1059,8 @@ void GLSL_InitGPUShaders(void)
 
 	for (i = 0; i < LIGHTDEF_COUNT; i++)
 	{
-		int lightType = i & LIGHTDEF_LIGHTTYPE_MASK;
-		qboolean fastLight = !(r_normalMapping->integer || r_specularMapping->integer);
+		qint lightType = i & LIGHTDEF_LIGHTTYPE_MASK;
+		qbool fastLight = !(r_normalMapping->integer || r_specularMapping->integer);
 
 		// skip impossible combos
 		if ((i & LIGHTDEF_USE_PARALLAXMAP) && !r_parallaxMapping->integer)
@@ -1452,7 +1452,7 @@ void GLSL_InitGPUShaders(void)
 
 void GLSL_ShutdownGPUShaders(void)
 {
-	int i;
+	qint i;
 
 	ri.Printf(PRINT_ALL, "------- GLSL_ShutdownGPUShaders -------\n");
 
@@ -1497,17 +1497,17 @@ void GLSL_ShutdownGPUShaders(void)
 void GLSL_BindProgram(shaderProgram_t * program)
 {
 	GLuint programObject = program ? program->program : 0;
-	//char *name = program ? program->name : "NULL";
+	//qchar *name = program ? program->name : "NULL";
 
 	if (GL_UseProgram(programObject))
 		backEnd.pc.c_glslShaderBinds++;
 }
 
 
-shaderProgram_t *GLSL_GetGenericShaderProgram(int stage)
+shaderProgram_t *GLSL_GetGenericShaderProgram(qint stage)
 {
 	const shaderStage_t *pStage = tess.xstages[stage];
-	int shaderAttribs = 0;
+	qint shaderAttribs = 0;
 
 	if (tess.fogNum && pStage->adjustColorsForFog)
 	{

@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../qcommon/q_shared.h"
 #include "../renderercommon/tr_public.h"
 
-void R_LoadJPG( const char *filename, unsigned char **pic, int *width, int *height )
+void R_LoadJPG( const qchar *filename, unsigned qchar **pic, qint *width, qint *height )
 {
 	ri.CL_LoadJPG( filename, pic, width, height );
 }

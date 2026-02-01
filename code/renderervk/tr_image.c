@@ -23,10 +23,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "tr_local.h"
 
 static byte			 s_intensitytable[256];
-static unsigned char s_gammatable[256];
+static unsigned qchar s_gammatable[256];
 
 #ifdef USE_VULKAN
-static unsigned char s_gammatable_linear[256];
+static unsigned qchar s_gammatable_linear[256];
 #endif
 
 GLint	gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
@@ -46,8 +46,8 @@ return a hash value for the filename
 /*
 ** R_GammaCorrect
 */
-void R_GammaCorrect( byte *buffer, int bufSize ) {
-	int i;
+void R_GammaCorrect( byte *buffer, qint bufSize ) {
+	qint i;
 #ifdef USE_VULKAN
 	if ( vk.capture.image != VK_NULL_HANDLE )
 		return;
@@ -60,7 +60,7 @@ void R_GammaCorrect( byte *buffer, int bufSize ) {
 }
 
 typedef struct {
-	const char *name;
+	const qchar *name;
 	GLint minimize, maximize;
 } textureMode_t;
 
@@ -78,10 +78,10 @@ static const textureMode_t modes[] = {
 GL_TextureMode
 ===============
 */
-void GL_TextureMode( const char *string ) {
+void GL_TextureMode( const qchar *string ) {
 	const textureMode_t *mode;
 	image_t	*img;
-	int		i;
+	qint		i;
 
 	mode = NULL;
 	for ( i = 0 ; i < ARRAY_LEN( modes ) ; i++ ) {
@@ -142,9 +142,9 @@ void GL_TextureMode( const char *string ) {
 R_SumOfUsedImages
 ===============
 */
-int R_SumOfUsedImages( void ) {
+qint R_SumOfUsedImages( void ) {
 	const image_t *img;
-	int i, total = 0;
+	qint i, total = 0;
 
 	for ( i = 0; i < tr.numImages; i++ ) {
 		img = tr.images[ i ];
@@ -164,17 +164,17 @@ R_ImageList_f
 */
 void R_ImageList_f( void ) {
 	const image_t *image;
-	int i, estTotalSize = 0;
-	char *name, buf[MAX_QPATH*2 + 5];
+	qint i, estTotalSize = 0;
+	qchar *name, buf[MAX_QPATH*2 + 5];
 
 	ri.Printf( PRINT_ALL, "\n -n- --w-- --h-- type  -size- --name-------\n" );
 
 	for ( i = 0; i < tr.numImages; i++ )
 	{
-		const char *format = "???? ";
-		const char *sizeSuffix;
-		int estSize;
-		int displaySize;
+		const qchar *format = "???? ";
+		const qchar *sizeSuffix;
+		qint estSize;
+		qint displaySize;
 
 		image = tr.images[ i ];
 		estSize = image->uploadHeight * image->uploadWidth;
@@ -288,9 +288,9 @@ If a larger shrinking is needed, use the mipmap function
 before or after.
 ================
 */
-static void ResampleTexture( unsigned *in, int inwidth, int inheight, unsigned *out,  
-							int outwidth, int outheight ) {
-	int		i, j;
+static void ResampleTexture( unsigned *in, qint inwidth, qint inheight, unsigned *out,  
+							qint outwidth, qint outheight ) {
+	qint		i, j;
 	unsigned	*inrow, *inrow2;
 	unsigned	frac, fracstep;
 	unsigned	p1[MAX_TEXTURE_SIZE];
@@ -314,8 +314,8 @@ static void ResampleTexture( unsigned *in, int inwidth, int inheight, unsigned *
 	}
 
 	for (i=0 ; i<outheight ; i++, out += outwidth) {
-		inrow = in + inwidth*(int)((i+0.25)*inheight/outheight);
-		inrow2 = in + inwidth*(int)((i+0.75)*inheight/outheight);
+		inrow = in + inwidth*(qint)((i+0.25)*inheight/outheight);
+		inrow2 = in + inwidth*(qint)((i+0.75)*inheight/outheight);
 		for (j=0 ; j<outwidth ; j++) {
 			pix1 = (byte *)inrow + p1[j];
 			pix2 = (byte *)inrow + p2[j];
@@ -338,7 +338,7 @@ Scale up the pixel values in a texture to increase the
 lighting range
 ================
 */
-static void R_LightScaleTexture( byte *in, int inwidth, int inheight, qboolean only_gamma )
+static void R_LightScaleTexture( byte *in, qint inwidth, qint inheight, qbool only_gamma )
 {
 	if ( in == NULL )
 		return;
@@ -351,7 +351,7 @@ static void R_LightScaleTexture( byte *in, int inwidth, int inheight, qboolean o
 		if ( !glConfig.deviceSupportsGamma )
 #endif
 		{
-			int		i, c;
+			qint		i, c;
 			byte	*p;
 
 			p = (byte *)in;
@@ -367,7 +367,7 @@ static void R_LightScaleTexture( byte *in, int inwidth, int inheight, qboolean o
 	}
 	else
 	{
-		int		i, c;
+		qint		i, c;
 		byte	*p;
 
 		p = (byte *)in;
@@ -408,12 +408,12 @@ Operates in place, quartering the size of the texture
 Proper linear filter
 ================
 */
-static void R_MipMap2( unsigned * const out, unsigned * const in, int inWidth, int inHeight ) {
-	int			i, j, k;
+static void R_MipMap2( unsigned * const out, unsigned * const in, qint inWidth, qint inHeight ) {
+	qint			i, j, k;
 	byte		*outpix;
-	int			inWidthMask, inHeightMask;
-	int			total;
-	int			outWidth, outHeight;
+	qint			inWidthMask, inHeightMask;
+	qint			total;
+	qint			outWidth, outHeight;
 	unsigned	*temp;
 
 	outWidth = inWidth >> 1;
@@ -470,9 +470,9 @@ R_MipMap
 Operates in place, quartering the size of the texture
 ================
 */
-static void R_MipMap( byte *out, byte *in, int width, int height ) {
-	int		i, j;
-	int		row;
+static void R_MipMap( byte *out, byte *in, qint width, qint height ) {
+	qint		i, j;
+	qint		row;
 
 	if ( in == NULL )
 		return;
@@ -519,7 +519,7 @@ R_BlendOverTexture
 Apply a color blend over a set of pixels
 ==================
 */
-static void R_BlendOverTexture( byte *data, int pixelCount, int mipLevel ) {
+static void R_BlendOverTexture( byte *data, qint pixelCount, qint mipLevel ) {
 
 	static const byte blendColors[][4] = {
 		{255,0,0,128},
@@ -531,9 +531,9 @@ static void R_BlendOverTexture( byte *data, int pixelCount, int mipLevel ) {
 	};
 
 	const byte *blend;
-	int		i;
-	int		inverseAlpha;
-	int		premult[3];
+	qint		i;
+	qint		inverseAlpha;
+	qint		premult[3];
 
 	if ( data == NULL )
 		return;
@@ -556,9 +556,9 @@ static void R_BlendOverTexture( byte *data, int pixelCount, int mipLevel ) {
 }
 
 
-static qboolean RawImage_HasAlpha( const byte *scan, const int numPixels )
+static qbool RawImage_HasAlpha( const byte *scan, const qint numPixels )
 {
-	int i;
+	qint i;
 
 	if ( !scan )
 		return qtrue;
@@ -578,23 +578,23 @@ static qboolean RawImage_HasAlpha( const byte *scan, const int numPixels )
 
 typedef struct {
 	byte *buffer;
-	int buffer_size;
-	int mip_levels;
-	int base_level_width;
-	int base_level_height;
+	qint buffer_size;
+	qint mip_levels;
+	qint base_level_width;
+	qint base_level_height;
 } Image_Upload_Data;
 
 static void generate_image_upload_data( image_t *image, byte *data, Image_Upload_Data *upload_data ) {
 	
-	qboolean mipmap = (image->flags & IMGFLAG_MIPMAP) ? qtrue : qfalse;
-	qboolean picmip = (image->flags & IMGFLAG_PICMIP) ? qtrue : qfalse;
+	qbool mipmap = (image->flags & IMGFLAG_MIPMAP) ? qtrue : qfalse;
+	qbool picmip = (image->flags & IMGFLAG_PICMIP) ? qtrue : qfalse;
 	byte* resampled_buffer = NULL;
-	int scaled_width, scaled_height;
-	int width = image->width;
-	int height = image->height;
+	qint scaled_width, scaled_height;
+	qint width = image->width;
+	qint height = image->height;
 	unsigned* scaled_buffer;
-	int mip_level_size;
-	int miplevel;
+	qint mip_level_size;
+	qint miplevel;
 
 	Com_Memset( upload_data, 0, sizeof( *upload_data ) );
 
@@ -649,7 +649,7 @@ static void generate_image_upload_data( image_t *image, byte *data, Image_Upload
 	} else {
 		if ( image->flags & IMGFLAG_COLORSHIFT ) {
 			byte *p = data;
-			int i, n = width * height;
+			qint i, n = width * height;
 			for ( i = 0; i < n; i++, p+=4 ) {
 				R_ColorShiftLightingBytes( p, p, qfalse );
 			}
@@ -707,7 +707,7 @@ static void generate_image_upload_data( image_t *image, byte *data, Image_Upload
 
 	// At this point width == scaled_width and height == scaled_height.
 
-	scaled_buffer = (unsigned int*) ri.Hunk_AllocateTempMemory( sizeof( unsigned ) * scaled_width * scaled_height );
+	scaled_buffer = (unsigned qint*) ri.Hunk_AllocateTempMemory( sizeof( unsigned ) * scaled_width * scaled_height );
 	Com_Memcpy(scaled_buffer, data, scaled_width * scaled_height * 4);
 
 	if ( !(image->flags & IMGFLAG_NOLIGHTSCALE ) ) {
@@ -754,7 +754,7 @@ static void generate_image_upload_data( image_t *image, byte *data, Image_Upload
 static void upload_vk_image( image_t *image, byte *pic ) {
 
 	Image_Upload_Data upload_data;
-	int w, h;
+	qint w, h;
 
 	generate_image_upload_data( image, pic, &upload_data );
 
@@ -765,7 +765,7 @@ static void upload_vk_image( image_t *image, byte *pic ) {
 		image->internalFormat = VK_FORMAT_R8G8B8A8_UNORM;
 		//image->internalFormat = VK_FORMAT_B8G8R8A8_UNORM;
 	} else {
-		qboolean has_alpha = RawImage_HasAlpha( upload_data.buffer, w * h );
+		qbool has_alpha = RawImage_HasAlpha( upload_data.buffer, w * h );
 		image->internalFormat = has_alpha ? VK_FORMAT_B4G4R4A4_UNORM_PACK16 : VK_FORMAT_A1R5G5B5_UNORM_PACK16;
 	}
 
@@ -780,7 +780,7 @@ static void upload_vk_image( image_t *image, byte *pic ) {
 
 #else // !USE_VULKAN
 
-static GLint RawImage_GetInternalFormat( const byte *scan, int numPixels, qboolean lightMap, qboolean allowCompression )
+static GLint RawImage_GetInternalFormat( const byte *scan, qint numPixels, qbool lightMap, qbool allowCompression )
 {
 	GLint internalFormat;
 
@@ -830,7 +830,7 @@ static GLint RawImage_GetInternalFormat( const byte *scan, int numPixels, qboole
 }
 
 
-static void LoadTexture( int miplevel, int x, int y, int width, int height, const byte *data, qboolean subImage, image_t *image )
+static void LoadTexture( qint miplevel, qint x, qint y, qint width, qint height, const byte *data, qbool subImage, image_t *image )
 {
 	if ( subImage )
 		qglTexSubImage2D( GL_TEXTURE_2D, miplevel, x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data );
@@ -844,14 +844,14 @@ static void LoadTexture( int miplevel, int x, int y, int width, int height, cons
 Upload32
 ===============
 */
-static void Upload32( byte *data, int x, int y, int width, int height, image_t *image, qboolean subImage )
+static void Upload32( byte *data, qint x, qint y, qint width, qint height, image_t *image, qbool subImage )
 {
-	qboolean allowCompression = !(image->flags & IMGFLAG_NO_COMPRESSION);
-	qboolean lightMap = image->flags & IMGFLAG_LIGHTMAP;
-	qboolean mipmap = image->flags & IMGFLAG_MIPMAP;
-	qboolean picmip = image->flags & IMGFLAG_PICMIP;
+	qbool allowCompression = !(image->flags & IMGFLAG_NO_COMPRESSION);
+	qbool lightMap = image->flags & IMGFLAG_LIGHTMAP;
+	qbool mipmap = image->flags & IMGFLAG_MIPMAP;
+	qbool picmip = image->flags & IMGFLAG_PICMIP;
 	byte		*resampledBuffer = NULL;
-	int			scaled_width, scaled_height;
+	qint			scaled_width, scaled_height;
 
 	if ( image->flags & IMGFLAG_NOSCALE ) {
 		//
@@ -899,7 +899,7 @@ static void Upload32( byte *data, int x, int y, int width, int height, image_t *
 
 	if ( image->flags & IMGFLAG_COLORSHIFT ) {
 		byte *p = data;
-		int i, n = width * height;
+		qint i, n = width * height;
 		for ( i = 0; i < n; i++, p+=4 ) {
 			R_ColorShiftLightingBytes( p, p, qfalse );
 		}
@@ -960,7 +960,7 @@ static void Upload32( byte *data, int x, int y, int width, int height, image_t *
 
 	if ( mipmap )
 	{
-		int	miplevel = 0;
+		qint	miplevel = 0;
 		while (scaled_width > 1 || scaled_height > 1)
 		{
 			R_MipMap( data, data, scaled_width, scaled_height );
@@ -990,7 +990,7 @@ done:
 R_UploadSubImage
 ================
 */
-void R_UploadSubImage( byte *data, int x, int y, int width, int height, image_t *image )
+void R_UploadSubImage( byte *data, qint x, qint y, qint width, qint height, image_t *image )
 {
 	if ( image )
 	{
@@ -1009,18 +1009,18 @@ This is the only way any image_t are created
 Picture data may be modified in-place during mipmap processing
 ================
 */
-image_t *R_CreateImage( const char *name, const char *name2, byte *pic, int width, int height, imgFlags_t flags ) {
+image_t *R_CreateImage( const qchar *name, const qchar *name2, byte *pic, qint width, qint height, imgFlags_t flags ) {
 	image_t		*image;
 	long		hash;
 #ifndef USE_VULKAN
 	GLint		glWrapClampMode;
 	GLuint		currTexture;
-	int			currTMU;
+	qint			currTMU;
 #endif
-	int			namelen, namelen2;
-	const char	*slash;
+	qint			namelen, namelen2;
+	const qchar	*slash;
 
-	namelen = (int)strlen( name ) + 1;
+	namelen = (qint)strlen( name ) + 1;
 	if ( namelen > MAX_QPATH ) {
 		ri.Error( ERR_DROP, "R_CreateImage: \"%s\" is too long", name );
 	}
@@ -1028,7 +1028,7 @@ image_t *R_CreateImage( const char *name, const char *name2, byte *pic, int widt
 	if ( name2 && Q_stricmp( name, name2 ) != 0 ) {
 		// leave only file name
 		name2 = ( slash = strrchr( name2, '/' ) ) != NULL ? slash + 1 : name2;
-		namelen2 = (int)strlen( name2 ) + 1;
+		namelen2 = (qint)strlen( name2 ) + 1;
 	} else {
 		namelen2 = 0;
 	}
@@ -1038,7 +1038,7 @@ image_t *R_CreateImage( const char *name, const char *name2, byte *pic, int widt
 	}
 
 	image = ri.Hunk_Alloc( sizeof( *image ) + namelen + namelen2, h_low );
-	image->imgName = (char *)( image + 1 );
+	image->imgName = (qchar *)( image + 1 );
 	strcpy( image->imgName, name );
 	if ( namelen2 ) {
 		image->imgName2 = image->imgName + namelen;
@@ -1143,8 +1143,8 @@ image_t *R_CreateImage( const char *name, const char *name2, byte *pic, int widt
 
 typedef struct
 {
-	const char *ext;
-	void (*ImageLoader)( const char *, unsigned char **, int *, int * );
+	const qchar *ext;
+	void (*ImageLoader)( const qchar *, unsigned qchar **, qint *, qint * );
 } imageExtToLoaderMap_t;
 
 // Note that the ordering indicates the order of preference used
@@ -1159,7 +1159,7 @@ static const imageExtToLoaderMap_t imageLoaders[] =
 	{ "bmp",  R_LoadBMP }
 };
 
-static const int numImageLoaders = ARRAY_LEN( imageLoaders );
+static const qint numImageLoaders = ARRAY_LEN( imageLoaders );
 
 /*
 =================
@@ -1169,13 +1169,13 @@ Loads any of the supported image types into a canonical
 32 bit format.
 =================
 */
-static const char *R_LoadImage( const char *name, byte **pic, int *width, int *height )
+static const qchar *R_LoadImage( const qchar *name, byte **pic, qint *width, qint *height )
 {
-	static char localName[ MAX_QPATH ];
-	const char *altName, *ext;
-	//qboolean orgNameFailed = qfalse;
-	int orgLoader = -1;
-	int i;
+	static qchar localName[ MAX_QPATH ];
+	const qchar *altName, *ext;
+	//qbool orgNameFailed = qfalse;
+	qint orgLoader = -1;
+	qint i;
 
 	*pic = NULL;
 	*width = 0;
@@ -1254,14 +1254,14 @@ Finds or loads the given image.
 Returns NULL if it fails, not a default image.
 ==============
 */
-image_t	*R_FindImageFile( const char *name, imgFlags_t flags )
+image_t	*R_FindImageFile( const qchar *name, imgFlags_t flags )
 {
 	image_t	*image;
-	const char *localName;
-	char	strippedName[ MAX_QPATH ];
-	int		width, height;
+	const qchar *localName;
+	qchar	strippedName[ MAX_QPATH ];
+	qint		width, height;
 	byte	*pic;
-	int		hash;
+	qint		hash;
 
 	if ( !name ) {
 		return NULL;
@@ -1309,7 +1309,7 @@ image_t	*R_FindImageFile( const char *name, imgFlags_t flags )
 
 	if ( tr.mapLoading && r_mapGreyScale->value > 0 ) {
 		byte *img;
-		int i;
+		qint i;
 		for ( i = 0, img = pic; i < width * height; i++, img += 4 ) {
 			if ( r_mapGreyScale->integer ) {
 				byte luma = LUMA( img[0], img[1], img[2] );
@@ -1338,9 +1338,9 @@ R_CreateDlightImage
 */
 #define	DLIGHT_SIZE	16
 static void R_CreateDlightImage( void ) {
-	int		x,y;
+	qint		x,y;
 	byte	data[DLIGHT_SIZE][DLIGHT_SIZE][4];
-	int		b;
+	qint		b;
 
 	// make a centered inverse-square falloff blob for dynamic lighting
 	for (x=0 ; x<DLIGHT_SIZE ; x++) {
@@ -1371,7 +1371,7 @@ R_InitFogTable
 =================
 */
 void R_InitFogTable( void ) {
-	int		i;
+	qint		i;
 	float	d;
 	float	exp;
 
@@ -1429,7 +1429,7 @@ R_CreateFogImage
 #define	FOG_S	256
 #define	FOG_T	32
 static void R_CreateFogImage( void ) {
-	int		x,y;
+	qint		x,y;
 	byte	*data;
 	float	d;
 
@@ -1451,7 +1451,7 @@ static void R_CreateFogImage( void ) {
 }
 
 
-static int Hex( char c )
+static qint Hex( qchar c )
 {
 	if ( c >= '0' && c <= '9' ) {
 		return c - '0';
@@ -1477,17 +1477,17 @@ Create solid color texture from following input formats (hex):
 ==================
 */
 #define	DEFAULT_SIZE 16
-static qboolean R_BuildDefaultImage( const char *format ) {
+static qbool R_BuildDefaultImage( const qchar *format ) {
 	byte data[DEFAULT_SIZE][DEFAULT_SIZE][4];
 	byte color[4];
-	int i, len, hex[6];
-	int x, y;
+	qint i, len, hex[6];
+	qint x, y;
 
 	if ( *format++ != '#' ) {
 		return qfalse;
 	}
 
-	len = (int)strlen( format );
+	len = (qint)strlen( format );
 	if ( len <= 0 || len > 6 ) {
 		return qfalse;
 	}
@@ -1537,7 +1537,7 @@ R_CreateDefaultImage
 ==================
 */
 static void R_CreateDefaultImage( void ) {
-	int		x;
+	qint		x;
 	byte	data[DEFAULT_SIZE][DEFAULT_SIZE][4];
 
 	if ( r_defaultImage->string[0] )
@@ -1585,7 +1585,7 @@ R_CreateBuiltinImages
 ==================
 */
 static void R_CreateBuiltinImages( void ) {
-	int		x,y;
+	qint		x,y;
 	byte	data[DEFAULT_SIZE][DEFAULT_SIZE][4];
 
 	R_CreateDefaultImage();
@@ -1627,11 +1627,11 @@ R_SetColorMappings
 ===============
 */
 void R_SetColorMappings( void ) {
-	int		i, j;
+	qint		i, j;
 	float	g;
-	int		inf;
-	int		shift;
-	qboolean applyGamma;
+	qint		inf;
+	qint		shift;
+	qbool applyGamma;
 
 	if ( !tr.inited ) {
 		// it may be called from window handling functions where gamma flags is now yet known/set
@@ -1737,10 +1737,10 @@ void R_InitImages( void ) {
 
 #ifdef USE_VULKAN
 	// initialize linear gamma table before setting color mappings for the first time
-	int i;
+	qint i;
 
 	for ( i = 0; i < 256; i++ )
-		s_gammatable_linear[i] = (unsigned char)i;
+		s_gammatable_linear[i] = (unsigned qchar)i;
 #endif
 
 	Com_Memset( hashTable, 0, sizeof( hashTable ) );
@@ -1763,7 +1763,7 @@ R_DeleteTextures
 ===============
 */
 void R_DeleteTextures( void ) {
-	int i;
+	qint i;
 
 	if ( tr.numImages == 0 ) {
 		return;
@@ -1818,10 +1818,10 @@ This is unfortunate, but the skin files aren't
 compatible with our normal parsing rules.
 ==================
 */
-static char *CommaParse( const char **data_p ) {
-	int c, len;
-	const char *data;
-	static char com_token[ MAX_TOKEN_CHARS ];
+static qchar *CommaParse( const qchar **data_p ) {
+	qint c, len;
+	const qchar *data;
+	static qchar com_token[ MAX_TOKEN_CHARS ];
 
 	data = *data_p;
 	com_token[0] = '\0';
@@ -1924,19 +1924,19 @@ static char *CommaParse( const char **data_p ) {
 RE_RegisterSkin
 ===============
 */
-qhandle_t RE_RegisterSkin( const char *name ) {
+qhandle_t RE_RegisterSkin( const qchar *name ) {
 	skinSurface_t parseSurfaces[MAX_SKIN_SURFACES];
 	qhandle_t	hSkin;
 	skin_t		*skin;
 	skinSurface_t	*surf;
 	union {
-		char *c;
+		qchar *c;
 		void *v;
 	} text;
-	const char	*text_p;
-	const char	*token;
-	char		surfName[MAX_QPATH];
-	int			totalSurfaces;
+	const qchar	*text_p;
+	const qchar	*token;
+	qchar		surfName[MAX_QPATH];
+	qint			totalSurfaces;
 
 	if ( !name || !name[0] ) {
 		ri.Printf( PRINT_DEVELOPER, "Empty name passed to RE_RegisterSkin\n" );
@@ -2077,7 +2077,7 @@ R_SkinList_f
 ===============
 */
 void	R_SkinList_f( void ) {
-	int			i, j;
+	qint			i, j;
 	skin_t		*skin;
 
 	ri.Printf (PRINT_ALL, "------------------\n");

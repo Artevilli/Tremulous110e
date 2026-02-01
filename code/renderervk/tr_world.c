@@ -31,8 +31,8 @@ Returns true if the grid is completely culled away.
 Also sets the clipped hint bit in tess
 =================
 */
-static qboolean	R_CullTriSurf( srfTriangles_t *cv ) {
-	int 	boxCull;
+static qbool	R_CullTriSurf( srfTriangles_t *cv ) {
+	qint 	boxCull;
 
 	boxCull = R_CullLocalBox( cv->bounds );
 
@@ -50,9 +50,9 @@ Returns true if the grid is completely culled away.
 Also sets the clipped hint bit in tess
 =================
 */
-static qboolean	R_CullGrid( srfGridMesh_t *cv ) {
-	int 	boxCull;
-	int 	sphereCull;
+static qbool	R_CullGrid( srfGridMesh_t *cv ) {
+	qint 	boxCull;
+	qint 	sphereCull;
 
 	if ( r_nocurves->integer ) {
 		return qtrue;
@@ -110,7 +110,7 @@ added to the sorting list.
 This will also allow mirrors on both sides of a model without recursion.
 ================
 */
-static qboolean	R_CullSurface( const surfaceType_t *surface, shader_t *shader ) {
+static qbool	R_CullSurface( const surfaceType_t *surface, shader_t *shader ) {
 	srfSurfaceFace_t *sface;
 	float			d;
 
@@ -160,7 +160,7 @@ static qboolean	R_CullSurface( const surfaceType_t *surface, shader_t *shader ) 
 
 
 #ifdef USE_PMLIGHT
-qboolean R_LightCullBounds( const dlight_t* dl, const vec3_t mins, const vec3_t maxs )
+qbool R_LightCullBounds( const dlight_t* dl, const vec3_t mins, const vec3_t maxs )
 {
 	if ( dl->linear ) {
 		if (dl->transformed[0] - dl->radius > maxs[0] && dl->transformed2[0] - dl->radius > maxs[0] )
@@ -200,7 +200,7 @@ qboolean R_LightCullBounds( const dlight_t* dl, const vec3_t mins, const vec3_t 
 }
 
 
-static qboolean R_LightCullFace( const srfSurfaceFace_t* face, const dlight_t* dl )
+static qbool R_LightCullFace( const srfSurfaceFace_t* face, const dlight_t* dl )
 {
 	float d = DotProduct( dl->transformed, face->plane.normal ) - face->plane.dist;
 	if ( dl->linear )
@@ -221,7 +221,7 @@ static qboolean R_LightCullFace( const srfSurfaceFace_t* face, const dlight_t* d
 }
 
 
-static qboolean R_LightCullSurface( const surfaceType_t* surface, const dlight_t* dl )
+static qbool R_LightCullSurface( const surfaceType_t* surface, const dlight_t* dl )
 {
 	switch (*surface) {
 	case SF_FACE:
@@ -242,9 +242,9 @@ static qboolean R_LightCullSurface( const surfaceType_t* surface, const dlight_t
 
 
 #ifdef USE_LEGACY_DLIGHTS
-static int R_DlightFace( srfSurfaceFace_t *face, int dlightBits ) {
+static qint R_DlightFace( srfSurfaceFace_t *face, qint dlightBits ) {
 	float		d;
-	int			i;
+	qint			i;
 	const dlight_t	*dl;
 
 	for ( i = 0; i < tr.refdef.num_dlights; i++ ) {
@@ -268,8 +268,8 @@ static int R_DlightFace( srfSurfaceFace_t *face, int dlightBits ) {
 }
 
 
-static int R_DlightGrid( srfGridMesh_t *grid, int dlightBits ) {
-	int			i;
+static qint R_DlightGrid( srfGridMesh_t *grid, qint dlightBits ) {
+	qint			i;
 	const dlight_t	*dl;
 
 	for ( i = 0 ; i < tr.refdef.num_dlights ; i++ ) {
@@ -297,12 +297,12 @@ static int R_DlightGrid( srfGridMesh_t *grid, int dlightBits ) {
 }
 
 
-static int R_DlightTrisurf( srfTriangles_t *surf, int dlightBits ) {
+static qint R_DlightTrisurf( srfTriangles_t *surf, qint dlightBits ) {
 	// FIXME: more dlight culling to trisurfs...
 	surf->dlightBits = dlightBits;
 	return dlightBits;
 #if 0
-	int			i;
+	qint			i;
 	const dlight_t	*dl;
 
 	for ( i = 0 ; i < tr.refdef.num_dlights ; i++ ) {
@@ -340,7 +340,7 @@ that is touched by one or more dlights, so try to throw out
 more dlights if possible.
 ====================
 */
-static int R_DlightSurface( msurface_t *surf, int dlightBits ) {
+static qint R_DlightSurface( msurface_t *surf, qint dlightBits ) {
 	if ( *surf->data == SF_FACE ) {
 		dlightBits = R_DlightFace( (srfSurfaceFace_t *)surf->data, dlightBits );
 	} else if ( *surf->data == SF_GRID ) {
@@ -365,7 +365,7 @@ static int R_DlightSurface( msurface_t *surf, int dlightBits ) {
 R_AddWorldSurface
 ======================
 */
-static void R_AddWorldSurface( msurface_t *surf, int dlightBits ) {
+static void R_AddWorldSurface( msurface_t *surf, qint dlightBits ) {
 	if ( surf->viewCount == tr.viewCount ) {
 		return;		// already in this view
 	}
@@ -442,11 +442,11 @@ static void R_AddLitSurface( msurface_t *surf, const dlight_t *light )
 
 static void R_RecursiveLightNode( const mnode_t* node )
 {
-	qboolean children[2];
+	qbool children[2];
 	msurface_t** mark;
 	msurface_t* surf;
 	float d;
-	int c;
+	qint c;
 	do {
 		// if the node wasn't marked as potentially visible, exit
 		if ( node->visframe != tr.visCount )
@@ -521,9 +521,9 @@ R_AddBrushModelSurfaces
 */
 void R_AddBrushModelSurfaces ( trRefEntity_t *ent ) {
 	bmodel_t	*bmodel;
-	int			clip;
+	qint			clip;
 	const model_t		*pModel;
-	int			i;
+	qint			i;
 
 	pModel = R_GetModelByHandle( ent->e.hModel );
 
@@ -540,7 +540,7 @@ void R_AddBrushModelSurfaces ( trRefEntity_t *ent ) {
 #endif
 	{
 		dlight_t *dl;
-		int s;
+		qint s;
 
 		for ( s = 0; s < bmodel->numSurfaces; s++ ) {
 			R_AddWorldSurface( bmodel->firstSurface + s, 0 );
@@ -589,10 +589,10 @@ void R_AddBrushModelSurfaces ( trRefEntity_t *ent ) {
 R_RecursiveWorldNode
 ================
 */
-static void R_RecursiveWorldNode( mnode_t *node, unsigned int planeBits, unsigned int dlightBits ) {
+static void R_RecursiveWorldNode( mnode_t *node, unsigned qint planeBits, unsigned qint dlightBits ) {
 
 	do {
-		unsigned int newDlights[2];
+		unsigned qint newDlights[2];
 
 		// if the node wasn't marked as potentially visible, exit
 		if (node->visframe != tr.visCount) {
@@ -603,7 +603,7 @@ static void R_RecursiveWorldNode( mnode_t *node, unsigned int planeBits, unsigne
 		// inside can be visible OPTIMIZE: don't do this all the way to leafs?
 
 		if ( !r_nocull->integer ) {
-			int		r;
+			qint		r;
 
 			if ( planeBits & 1 ) {
 				r = BoxOnPlaneSide(node->mins, node->maxs, &tr.viewParms.frustum[0]);
@@ -662,7 +662,7 @@ static void R_RecursiveWorldNode( mnode_t *node, unsigned int planeBits, unsigne
 		if ( !r_dlightMode->integer )
 #endif
 		if ( dlightBits ) {
-			int	i;
+			qint	i;
 
 			for ( i = 0 ; i < tr.refdef.num_dlights ; i++ ) {
 				const dlight_t	*dl;
@@ -695,7 +695,7 @@ static void R_RecursiveWorldNode( mnode_t *node, unsigned int planeBits, unsigne
 
 	{
 		// leaf node, so add mark surfaces
-		int			c;
+		qint			c;
 		msurface_t	*surf, **mark;
 
 		tr.pc.c_leafs++;
@@ -771,7 +771,7 @@ static mnode_t *R_PointInLeaf( const vec3_t p ) {
 R_ClusterPVS
 ==============
 */
-static const byte *R_ClusterPVS (int cluster) {
+static const byte *R_ClusterPVS (qint cluster) {
 	if ( !tr.world->vis || cluster < 0 || cluster >= tr.world->numClusters ) {
 		return tr.world->novis;
 	}
@@ -784,7 +784,7 @@ static const byte *R_ClusterPVS (int cluster) {
 R_inPVS
 =================
 */
-qboolean R_inPVS( const vec3_t p1, const vec3_t p2 ) {
+qbool R_inPVS( const vec3_t p1, const vec3_t p2 ) {
 	const mnode_t *leaf;
 	const byte	*vis;
 
@@ -809,8 +809,8 @@ cluster
 static void R_MarkLeaves (void) {
 	const byte	*vis;
 	mnode_t	*leaf, *parent;
-	int		i;
-	int		cluster;
+	qint		i;
+	qint		cluster;
 
 	// lockpvs lets designers walk around to determine the
 	// extent of the current pvs
@@ -887,7 +887,7 @@ R_AddWorldSurfaces
 void R_AddWorldSurfaces( void ) {
 #ifdef USE_PMLIGHT
 	dlight_t* dl;
-	int i;
+	qint i;
 #endif
 
 	if ( !r_drawworld->integer ) {

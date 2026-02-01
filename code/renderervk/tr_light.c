@@ -39,8 +39,8 @@ Used by both the front end (for DlightBmodel) and
 the back end (before doing the lighting calculation)
 ===============
 */
-void R_TransformDlights( int count, dlight_t *dl, orientationr_t *or) {
-	int		i;
+void R_TransformDlights( qint count, dlight_t *dl, orientationr_t *or) {
+	qint		i;
 	vec3_t	temp, temp2;
 
 	for ( i = 0 ; i < count ; i++, dl++ ) {
@@ -67,9 +67,9 @@ Determine which dynamic lights may effect this bmodel
 =============
 */
 void R_DlightBmodel( bmodel_t *bmodel ) {
-	int			i, j;
+	qint			i, j;
 	const dlight_t	*dl;
-	int			mask;
+	qint			mask;
 	msurface_t	*surf;
 
 	// transform all the lights
@@ -134,11 +134,11 @@ R_SetupEntityLightingGrid
 */
 static void R_SetupEntityLightingGrid( trRefEntity_t *ent ) {
 	vec3_t	lightOrigin;
-	int		pos[3];
-	int		i, j;
+	qint		pos[3];
+	qint		i, j;
 	byte	*gridData;
 	float	frac[3];
-	int		gridStep[3];
+	qint		gridStep[3];
 	vec3_t	direction;
 	float	totalFactor;
 
@@ -182,7 +182,7 @@ static void R_SetupEntityLightingGrid( trRefEntity_t *ent ) {
 	for ( i = 0 ; i < 8 ; i++ ) {
 		float	factor;
 		byte	*data;
-		int		lat, lng;
+		qint		lat, lng;
 		vec3_t	normal;
 		factor = 1.0;
 		data = gridData;
@@ -250,7 +250,7 @@ LogLight
 ===============
 */
 static void LogLight( const trRefEntity_t *ent ) {
-	int	max1, max2;
+	qint	max1, max2;
 
 	if ( !(ent->e.renderfx & RF_FIRST_PERSON ) ) {
 		return;
@@ -283,7 +283,7 @@ by the Calc_* functions
 =================
 */
 void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent ) {
-	int				i;
+	qint				i;
 	const dlight_t		*dl;
 	float			power;
 	vec3_t			dir;
@@ -414,7 +414,7 @@ void R_SetupEntityLighting( const trRefdef_t *refdef, trRefEntity_t *ent ) {
 R_LightForPoint
 =================
 */
-int R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir )
+qint R_LightForPoint( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir )
 {
 	trRefEntity_t ent;
 

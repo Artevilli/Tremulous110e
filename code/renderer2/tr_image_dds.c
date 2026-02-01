@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "tr_common.h"
 
-typedef unsigned int   ui32_t;
+typedef unsigned qint   ui32_t;
 
 typedef struct ddsHeader_s
 {
@@ -213,13 +213,13 @@ typedef enum DXGI_FORMAT {
                          (((ui32_t)((x)[3])) << 24) )
 
 
-void R_LoadDDS ( const char *filename, byte **pic, int *width, int *height, GLenum *picFormat, int *numMips )
+void R_LoadDDS ( const qchar *filename, byte **pic, qint *width, qint *height, GLenum *picFormat, qint *numMips )
 {
 	union {
 		byte *b;
 		void *v;
 	} buffer;
-	int len;
+	qint len;
 	ddsHeader_t *ddsHeader = NULL;
 	ddsHeaderDxt10_t *ddsHeaderDxt10 = NULL;
 	byte *data;
@@ -244,7 +244,7 @@ void R_LoadDDS ( const char *filename, byte **pic, int *width, int *height, GLen
 	//
 	// load the file
 	//
-	len = ri.FS_ReadFile( ( char * ) filename, &buffer.v);
+	len = ri.FS_ReadFile( ( qchar * ) filename, &buffer.v);
 	if (!buffer.b || len < 0) {
 		return;
 	}
@@ -452,11 +452,11 @@ void R_LoadDDS ( const char *filename, byte **pic, int *width, int *height, GLen
 	ri.FS_FreeFile(buffer.v);
 }
 
-void R_SaveDDS(const char *filename, byte *pic, int width, int height, int depth)
+void R_SaveDDS(const qchar *filename, byte *pic, qint width, qint height, qint depth)
 {
 	byte *data;
 	ddsHeader_t *ddsHeader;
-	int picSize, size;
+	qint picSize, size;
 
 	if (!depth)
 		depth = 1;

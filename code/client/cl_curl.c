@@ -30,7 +30,7 @@ cvar_t *cl_cURLLib;
 
 #ifdef USE_CURL_DLOPEN
 
-char* (*qcurl_version)(void);
+qchar* (*qcurl_version)(void);
 
 CURL* (*qcurl_easy_init)(void);
 CURLcode (*qcurl_easy_setopt)(CURL *curl, CURLoption option, ...);
@@ -39,7 +39,7 @@ void (*qcurl_easy_cleanup)(CURL *curl);
 CURLcode (*qcurl_easy_getinfo)(CURL *curl, CURLINFO info, ...);
 CURL* (*qcurl_easy_duphandle)(CURL *curl);
 void (*qcurl_easy_reset)(CURL *curl);
-const char *(*qcurl_easy_strerror)(CURLcode);
+const qchar *(*qcurl_easy_strerror)(CURLcode);
 
 CURLM* (*qcurl_multi_init)(void);
 CURLMcode (*qcurl_multi_add_handle)(CURLM *multi_handle,
@@ -50,13 +50,13 @@ CURLMcode (*qcurl_multi_fdset)(CURLM *multi_handle,
                                                 fd_set *read_fd_set,
                                                 fd_set *write_fd_set,
                                                 fd_set *exc_fd_set,
-                                                int *max_fd);
+                                                qint *max_fd);
 CURLMcode (*qcurl_multi_perform)(CURLM *multi_handle,
-                                                int *running_handles);
+                                                qint *running_handles);
 CURLMcode (*qcurl_multi_cleanup)(CURLM *multi_handle);
 CURLMsg *(*qcurl_multi_info_read)(CURLM *multi_handle,
-                                                int *msgs_in_queue);
-const char *(*qcurl_multi_strerror)(CURLMcode);
+                                                qint *msgs_in_queue);
+const qchar *(*qcurl_multi_strerror)(CURLMcode);
 
 static void *cURLLib = NULL;
 
@@ -65,7 +65,7 @@ static void *cURLLib = NULL;
 GPA
 =================
 */
-static void *GPA(const char *str)
+static void *GPA(const qchar *str)
 {
 	void *rv;
 
@@ -89,7 +89,7 @@ static void *GPA(const char *str)
 CL_cURL_Init
 =================
 */
-qboolean CL_cURL_Init( void )
+qbool CL_cURL_Init( void )
 {
 #ifdef USE_CURL_DLOPEN
 	if(cURLLib)
@@ -102,7 +102,7 @@ qboolean CL_cURL_Init( void )
 #ifdef _WIN32
 		return qfalse;
 #else
-		char fn[1024];
+		qchar fn[1024];
 
 		Q_strncpyz( fn, Sys_Pwd(), sizeof( fn ) );
 		strncat( fn, "/", sizeof( fn ) - strlen( fn ) - 1 );
@@ -222,16 +222,16 @@ void CL_cURL_Cleanup(void)
 }
 
 #if CURL_AT_LEAST_VERSION(7, 32, 0)
-static int CL_cURL_CallbackProgress( void *dummy, curl_off_t dltotal, curl_off_t dlnow,
+static qint CL_cURL_CallbackProgress( void *dummy, curl_off_t dltotal, curl_off_t dlnow,
 	curl_off_t ultotal, curl_off_t ulnow )
 #else
-static int CL_cURL_CallbackProgress( void *dummy, double dltotal, double dlnow,
+static qint CL_cURL_CallbackProgress( void *dummy, double dltotal, double dlnow,
 	double ultotal, double ulnow )
 #endif
 {
-	clc.downloadSize = (int)dltotal;
+	clc.downloadSize = (qint)dltotal;
 	Cvar_SetIntegerValue( "cl_downloadSize", clc.downloadSize );
-	clc.downloadCount = (int)dlnow;
+	clc.downloadCount = (qint)dlnow;
 	Cvar_SetIntegerValue( "cl_downloadCount", clc.downloadCount );
 	return 0;
 }
@@ -291,7 +291,7 @@ static void CL_cURL_CloseDownload( void )
 	clc.download = FS_INVALID_HANDLE;
 }
 
-void CL_cURL_BeginDownload( const char *localName, const char *remoteURL )
+void CL_cURL_BeginDownload( const qchar *localName, const qchar *remoteURL )
 {
 	CURLMcode result;
 
@@ -390,8 +390,8 @@ void CL_cURL_PerformDownload( void )
 {
 	CURLMcode res;
 	CURLMsg *msg;
-	int c;
-	int i = 0;
+	qint c;
+	qint i = 0;
 
 	res = qcurl_multi_perform(clc.downloadCURLM, &c);
 	while(res == CURLM_CALL_MULTI_PERFORM && i < 100) {
@@ -439,10 +439,10 @@ stristr
 case-insensitive sub-string search
 ==================================
 */
-const char* stristr( const char *source, const char *target )
+const qchar* stristr( const qchar *source, const qchar *target )
 {
-	const char *p0, *p1, *p2, *pn;
-	char c1, c2;
+	const qchar *p0, *p1, *p2, *pn;
+	qchar c1, c2;
 
 	if ( *target == '\0' )
 	{
@@ -499,9 +499,9 @@ const char* stristr( const char *source, const char *target )
 replace1
 ==================================
 */
-int replace1( const char src, const char dst, char *str )
+qint replace1( const qchar src, const qchar dst, qchar *str )
 {
-	int count;
+	qint count;
 
 	if ( !str ) 
 		return 0;
@@ -541,7 +541,7 @@ void Com_DL_Done( download_t *dl )
 Com_DL_Init
 =================
 */
-qboolean Com_DL_Init( download_t *dl )
+qbool Com_DL_Init( download_t *dl )
 {
 #ifdef USE_CURL_DLOPEN
 	Com_Printf( "Loading \"%s\"...", cl_cURLLib->string );
@@ -550,7 +550,7 @@ qboolean Com_DL_Init( download_t *dl )
 #ifdef _WIN32
 		return qfalse;
 #else
-		char fn[1024];
+		qchar fn[1024];
 
 		Q_strncpyz( fn, Sys_Pwd(), sizeof( fn ) );
 		strncat( fn, "/", sizeof( fn ) - strlen( fn ) - 1 );
@@ -608,7 +608,7 @@ qboolean Com_DL_Init( download_t *dl )
 
 	dl->func.version = curl_version;
 	dl->func.easy_escape = curl_easy_escape;
-	dl->func.free = (void (*)(char *))curl_free; // cast to silence warning
+	dl->func.free = (void (*)(qchar *))curl_free; // cast to silence warning
 
 	dl->func.easy_init = curl_easy_init;
 	dl->func.easy_setopt = curl_easy_setopt;
@@ -635,7 +635,7 @@ qboolean Com_DL_Init( download_t *dl )
 Com_DL_Cleanup
 =================
 */
-qboolean Com_DL_InProgress( const download_t *dl )
+qbool Com_DL_InProgress( const download_t *dl )
 {
 	if ( dl->cURL && dl->URL[0] )
 		return qtrue;
@@ -699,9 +699,9 @@ void Com_DL_Cleanup( download_t *dl )
 }
 
 
-static const char *sizeToString( int size )
+static const qchar *sizeToString( qint size )
 {
-	static char buf[ 32 ];
+	static qchar buf[ 32 ];
 	if ( size < 1024 ) {
 		sprintf( buf, "%iB", size );
 	} else if ( size < 1024*1024 ) {
@@ -719,9 +719,9 @@ Com_DL_CallbackProgress
 =================
 */
 #if CURL_AT_LEAST_VERSION(7, 32, 0)
-static int Com_DL_CallbackProgress( void *data, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow )
+static qint Com_DL_CallbackProgress( void *data, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow )
 #else
-static int Com_DL_CallbackProgress( void *data, double dltotal, double dlnow, double ultotal, double ulnow )
+static qint Com_DL_CallbackProgress( void *data, double dltotal, double dlnow, double ultotal, double ulnow )
 #endif
 {
 #if CURL_AT_LEAST_VERSION(7, 55, 0)
@@ -738,8 +738,8 @@ static int Com_DL_CallbackProgress( void *data, double dltotal, double dlnow, do
 
 	download_t *dl = (download_t *)data;
 
-	dl->Size = (int)dltotal;
-	dl->Count = (int)dlnow;
+	dl->Size = (qint)dltotal;
+	dl->Count = (qint)dlnow;
 
 	if ( dl->mapAutoDownload && cls.state == CA_CONNECTED )
 	{
@@ -758,7 +758,7 @@ static int Com_DL_CallbackProgress( void *data, double dltotal, double dlnow, do
 #else
 		percentage = ( dlnow / dltotal ) * 100.0;
 #endif
-		sprintf( dl->progress, " downloading %s: %s (%i%%)", dl->Name, sizeToString( dl->Count ), (int)percentage );
+		sprintf( dl->progress, " downloading %s: %s (%i%%)", dl->Name, sizeToString( dl->Count ), (qint)percentage );
 	} else {
 		sprintf( dl->progress, " downloading %s: %s", dl->Name, sizeToString( dl->Count ) );
 	}
@@ -769,7 +769,7 @@ static int Com_DL_CallbackProgress( void *data, double dltotal, double dlnow, do
 	if ( dl->func.easy_getinfo( dl->cURL, CURLINFO_SPEED_DOWNLOAD, &speed ) == CURLE_OK )
 #endif
 	{
-		Q_strcat( dl->progress, sizeof( dl->progress ), va( " %s/s", sizeToString( (int)speed ) ) );
+		Q_strcat( dl->progress, sizeof( dl->progress ), va( " %s/s", sizeToString( (qint)speed ) ) );
 	}
 
 	return 0;
@@ -814,9 +814,9 @@ static size_t Com_DL_CallbackWrite( void *ptr, size_t size, size_t nmemb, void *
 Com_DL_ValidFileName
 =================
 */
-qboolean Com_DL_ValidFileName( const char *fileName )
+qbool Com_DL_ValidFileName( const qchar *fileName )
 {
-	int c;
+	qint c;
 	while ( (c = *fileName++) != '\0' )
 	{
 		if ( c == '/' || c == '\\' || c == ':' )
@@ -835,10 +835,10 @@ Com_DL_HeaderCallback
 */
 static size_t Com_DL_HeaderCallback( void *ptr, size_t size, size_t nmemb, void *userdata )
 {
-	char name[MAX_OSPATH];
-	char header[1024], *s, quote, *d;
+	qchar name[MAX_OSPATH];
+	qchar header[1024], *s, quote, *d;
 	download_t *dl;
-	int len;
+	qint len;
 
 	if ( size*nmemb >= sizeof( header ) )
 	{
@@ -853,11 +853,11 @@ static size_t Com_DL_HeaderCallback( void *ptr, size_t size, size_t nmemb, void 
 
 	//Com_Printf( "h: %s\n--------------------------\n", header );
 
-	s = (char*)stristr( header, "content-disposition:" );
+	s = (qchar*)stristr( header, "content-disposition:" );
 	if ( s ) 
 	{
 		s += 20; // strlen( "content-disposition:" )
-		s = (char*)stristr( s, "filename=" );
+		s = (qchar*)stristr( s, "filename=" );
 		if ( s ) 
 		{
 			s += 9; // strlen( "filename=" )
@@ -907,9 +907,9 @@ Com_DL_Begin()
 Start downloading file from remoteURL and save it under fs_game/localName
 ==============================================================
 */
-qboolean Com_DL_Begin( download_t *dl, const char *localName, const char *remoteURL, qboolean autoDownload )
+qbool Com_DL_Begin( download_t *dl, const qchar *localName, const qchar *remoteURL, qbool autoDownload )
 {
-	char *s;
+	qchar *s;
 
 	if ( Com_DL_InProgress( dl ) )
 	{
@@ -934,7 +934,7 @@ qboolean Com_DL_Begin( download_t *dl, const char *localName, const char *remote
 	}
 
 	{
-		char *escapedName = dl->func.easy_escape( dl->cURL, localName, 0 );
+		qchar *escapedName = dl->func.easy_escape( dl->cURL, localName, 0 );
 		if ( !escapedName ) 
 		{
 			Com_Printf( S_COLOR_RED "Com_DL_Begin: easy_escape() failed\n" );
@@ -1050,14 +1050,14 @@ qboolean Com_DL_Begin( download_t *dl, const char *localName, const char *remote
 }
 
 
-qboolean Com_DL_Perform( download_t *dl )
+qbool Com_DL_Perform( download_t *dl )
 {
-	char name[ sizeof( dl->TempName ) ];
+	qchar name[ sizeof( dl->TempName ) ];
 	CURLMcode res;
 	CURLMsg *msg;
 	long code;
-	int c, n;
-	int i;
+	qint c, n;
+	qint i;
 
 	res = dl->func.multi_perform( dl->cURLM, &c );
 
@@ -1088,7 +1088,7 @@ qboolean Com_DL_Perform( download_t *dl )
 
 	if ( msg->msg == CURLMSG_DONE && msg->data.result == CURLE_OK )
 	{
-		qboolean autoDownload = dl->mapAutoDownload;
+		qbool autoDownload = dl->mapAutoDownload;
 
 		Com_sprintf( name, sizeof( name ), "%s%c%s.pk3", dl->gameDir, PATH_SEP, dl->Name );
 
@@ -1127,7 +1127,7 @@ qboolean Com_DL_Perform( download_t *dl )
 	}
 	else
 	{
-		qboolean autoDownload = dl->mapAutoDownload;
+		qbool autoDownload = dl->mapAutoDownload;
 		dl->func.easy_getinfo( msg->easy_handle, CURLINFO_RESPONSE_CODE, &code );
 		Com_Printf( S_COLOR_RED "Download Error: %s Code: %ld\n",
 			dl->func.easy_strerror( msg->data.result ), code );

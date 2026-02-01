@@ -135,7 +135,7 @@ typedef ptrdiff_t GLintptrARB;
 
 #ifndef GL_VERSION_2_0
 #define GL_VERSION_2_0 1
-typedef char GLchar;
+typedef qchar GLchar;
 #define GL_MAX_TEXTURE_IMAGE_UNITS          0x8872
 #define GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS 0x8B4D
 #endif
@@ -266,16 +266,16 @@ typedef char GLchar;
 
 #ifdef _WIN32
 #define QGL_Swp_PROCS \
-	GLE( BOOL,	wglSwapIntervalEXT, int interval )
+	GLE( BOOL,	wglSwapIntervalEXT, qint interval )
 #else
 #define QGL_Swp_PROCS \
-	GLE( void,	glXSwapIntervalEXT, Display *dpy, GLXDrawable drawable, int interval ) \
-	GLE( int,	glXSwapIntervalMESA, unsigned interval ) \
-	GLE( int,	glXSwapIntervalSGI, int interval )
+	GLE( void,	glXSwapIntervalEXT, Display *dpy, GLXDrawable drawable, qint interval ) \
+	GLE( qint,	glXSwapIntervalMESA, unsigned interval ) \
+	GLE( qint,	glXSwapIntervalSGI, qint interval )
 #endif
 
 #define QGL_LinX11_PROCS \
-	GLE( XVisualInfo*, glXChooseVisual, Display *dpy, int screen, int *attribList ) \
+	GLE( XVisualInfo*, glXChooseVisual, Display *dpy, qint screen, qint *attribList ) \
 	GLE( GLXContext, glXCreateContext, Display *dpy, XVisualInfo *vis, GLXContext shareList, Bool direct ) \
 	GLE( void, glXDestroyContext, Display *dpy, GLXContext ctx ) \
 	GLE( Bool, glXMakeCurrent, Display *dpy, GLXDrawable drawable, GLXContext ctx) \

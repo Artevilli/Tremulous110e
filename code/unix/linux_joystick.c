@@ -43,7 +43,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "linux_local.h"
 
 /* We translate axes movement into keypresses. */
-int joy_keys[16] = {
+qint joy_keys[16] = {
      K_LEFTARROW, K_RIGHTARROW,
      K_UPARROW, K_DOWNARROW,
      K_JOY16, K_JOY17,
@@ -56,7 +56,7 @@ int joy_keys[16] = {
 };
 
 /* Our file descriptor for the joystick device. */
-static int             joy_fd = -1;
+static qint             joy_fd = -1;
 
 
 // bk001130 - from linux_glimp.c
@@ -71,7 +71,7 @@ extern cvar_t *  joy_threshold;
 // bk001130 - from cvs1.17 (mkv), removed from linux_glimp.c
 void IN_StartupJoystick( void )
 {
-  int i = 0;
+  qint i = 0;
 
   joy_fd = -1;
 
@@ -81,7 +81,7 @@ void IN_StartupJoystick( void )
   }
 
   for( i = 0; i < 4; i++ ) {
-    char filename[PATH_MAX];
+    qchar filename[PATH_MAX];
 
     snprintf( filename, PATH_MAX, "/dev/js%d", i );
 
@@ -89,10 +89,10 @@ void IN_StartupJoystick( void )
 
     if( joy_fd != -1 ) {
       struct js_event event;
-      char axes = 0;
-      char buttons = 0;
-      char name[128];
-      int n = -1;
+      qchar axes = 0;
+      qchar buttons = 0;
+      qchar name[128];
+      qint n = -1;
 
       Com_DPrintf( "Joystick %s found\n", filename );
 
@@ -137,12 +137,12 @@ void IN_JoyMove( void )
   /* Store instantaneous joystick state. Hack to get around
    * event model used in Linux joystick driver.
 	 */
-  static int axes_state[16];
+  static qint axes_state[16];
   /* Old bits for Quake-style input compares. */
-  static unsigned int old_axes = 0;
+  static unsigned qint old_axes = 0;
   /* Our current goodies. */
-  unsigned int axes = 0;
-  int i = 0;
+  unsigned qint axes = 0;
+  qint i = 0;
 
   if( joy_fd == -1 ) {
     return;
@@ -152,7 +152,7 @@ void IN_JoyMove( void )
 	 * and updating the instantaneous state for the axes.
 	 */
   do {
-    int n = -1;
+    qint n = -1;
     struct js_event event;
 
     n = read( joy_fd, &event, sizeof( event ) );

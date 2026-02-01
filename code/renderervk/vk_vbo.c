@@ -54,37 +54,37 @@ host-visible index buffer which is finally rendered via single draw call.
 //[vbo]: [index0][vertex0...][index1][vertex1...][index2][vertex2...]
 
 typedef struct vbo_item_s {
-	int			index_offset;  // device-local, relative to current shader
-	int			soft_offset;   // host-visible, absolute
-	int			num_indexes;
-	int			num_vertexes;
+	qint			index_offset;  // device-local, relative to current shader
+	qint			soft_offset;   // host-visible, absolute
+	qint			num_indexes;
+	qint			num_vertexes;
 } vbo_item_t;
 
 typedef struct ibo_item_s {
-	int offset;
-	int length;
+	qint offset;
+	qint length;
 } ibo_item_t;
 
 typedef struct vbo_s {
 	byte *vbo_buffer;
-	int vbo_offset;
-	int vbo_size;
+	qint vbo_offset;
+	qint vbo_size;
 
 	byte *ibo_buffer;
-	int ibo_offset;
-	int ibo_size;
+	qint ibo_offset;
+	qint ibo_size;
 
 	uint32_t soft_buffer_indexes;
 	uint32_t soft_buffer_offset;
 
 	ibo_item_t *ibo_items;
-	int ibo_items_count;
+	qint ibo_items_count;
 
 	vbo_item_t *items;
-	int items_count;
+	qint items_count;
 
-	int *items_queue;
-	int items_queue_count;
+	qint *items_queue;
+	qint items_queue_count;
 
 } vbo_t;
 
@@ -92,7 +92,7 @@ static vbo_t world_vbo;
 
 void VBO_Cleanup( void );
 
-static qboolean isStaticRGBgen( colorGen_t cgen )
+static qbool isStaticRGBgen( colorGen_t cgen )
 {
 	switch ( cgen )
 	{
@@ -115,7 +115,7 @@ static qboolean isStaticRGBgen( colorGen_t cgen )
 }
 
 
-static qboolean isStaticTCgen( const shaderStage_t *stage, int bundle )
+static qbool isStaticTCgen( const shaderStage_t *stage, qint bundle )
 {
 	switch ( stage->bundle[bundle].tcGen )
 	{
@@ -139,9 +139,9 @@ static qboolean isStaticTCgen( const shaderStage_t *stage, int bundle )
 }
 
 
-static qboolean isStaticTCmod( const textureBundle_t *bundle )
+static qbool isStaticTCmod( const textureBundle_t *bundle )
 {
-	int i;
+	qint i;
 
 	for ( i = 0; i < bundle->numTexMods; i++ ) {
 		switch ( bundle->texMods[i].type ) {
@@ -161,7 +161,7 @@ static qboolean isStaticTCmod( const textureBundle_t *bundle )
 }
 
 
-static qboolean isStaticAgen( alphaGen_t agen )
+static qbool isStaticAgen( alphaGen_t agen )
 {
 	switch ( agen )
 	{
@@ -189,10 +189,10 @@ isStaticShader
 Decide if we can put surface in static vbo
 =============
 */
-static qboolean isStaticShader( shader_t *shader )
+static qbool isStaticShader( shader_t *shader )
 {
 	const shaderStage_t* stage;
-	int i, b, svarsSize;
+	qint i, b, svarsSize;
 
 	if ( shader->isStaticShader )
 		return qtrue;
@@ -261,7 +261,7 @@ static void VBO_AddGeometry( vbo_t *vbo, vbo_item_t *vi, shaderCommands_t *input
 	uint32_t size, offs;
 	uint32_t offs_st[NUM_TEXTURE_BUNDLES];
 	uint32_t offs_cl[NUM_TEXTURE_BUNDLES];
-	int i;
+	qint i;
 
 	offs_st[0] = offs_st[1] = offs_st[2] = 0;
 	offs_cl[0] = offs_cl[1] = offs_cl[2] = 0;
@@ -382,30 +382,30 @@ static void VBO_AddGeometry( vbo_t *vbo, vbo_item_t *vi, shaderCommands_t *input
 }
 
 
-static void VBO_AddStageColors( vbo_t *vbo, const int stage, const shaderCommands_t *input, const int bundle )
+static void VBO_AddStageColors( vbo_t *vbo, const qint stage, const shaderCommands_t *input, const qint bundle )
 {
-	const int offs = input->xstages[ stage ]->rgb_offset[ bundle ] + input->shader->curVertexes * sizeof( color4ub_t );
-	const int size = input->numVertexes * sizeof( color4ub_t );
+	const qint offs = input->xstages[ stage ]->rgb_offset[ bundle ] + input->shader->curVertexes * sizeof( color4ub_t );
+	const qint size = input->numVertexes * sizeof( color4ub_t );
 
 	memcpy( vbo->vbo_buffer + offs, input->svars.colors[bundle], size );
 }
 
 
-static void VBO_AddStageTxCoords( vbo_t *vbo, const int stage, const shaderCommands_t *input, const int bundle )
+static void VBO_AddStageTxCoords( vbo_t *vbo, const qint stage, const shaderCommands_t *input, const qint bundle )
 {
-	const int offs = input->xstages[ stage ]->tex_offset[ bundle ] + input->shader->curVertexes * sizeof( vec2_t );
-	const int size = input->numVertexes * sizeof( vec2_t );
+	const qint offs = input->xstages[ stage ]->tex_offset[ bundle ] + input->shader->curVertexes * sizeof( vec2_t );
+	const qint size = input->numVertexes * sizeof( vec2_t );
 
 	memcpy( vbo->vbo_buffer + offs, input->svars.texcoordPtr[ bundle ], size );
 }
 
 
-void VBO_PushData( int itemIndex, shaderCommands_t *input )
+void VBO_PushData( qint itemIndex, shaderCommands_t *input )
 {
 	const shaderStage_t *pStage;
 	vbo_t *vbo = &world_vbo;
 	vbo_item_t *vi = vbo->items + itemIndex;
-	int i;
+	qint i;
 
 	VBO_AddGeometry( vbo, vi, input );
 
@@ -463,7 +463,7 @@ void VBO_UnBind( void )
 }
 
 
-static int surfSortFunc( const void *a, const void *b )
+static qint surfSortFunc( const void *a, const void *b )
 {
 	const msurface_t **sa = (const msurface_t **)a;
 	const msurface_t **sb = (const msurface_t **)b;
@@ -481,7 +481,7 @@ static void initItem( vbo_item_t *item )
 }
 
 
-void R_BuildWorldVBO( msurface_t *surf, int surfCount )
+void R_BuildWorldVBO( msurface_t *surf, qint surfCount )
 {
 	vbo_t *vbo = &world_vbo;
 	msurface_t **surfList;
@@ -491,13 +491,13 @@ void R_BuildWorldVBO( msurface_t *surf, int surfCount )
 	srfGridMesh_t *grid;
 #endif
 	msurface_t *sf;
-	int ibo_size;
-	int vbo_size;
-	int i, n;
+	qint ibo_size;
+	qint vbo_size;
+	qint i, n;
 
-	int numStaticSurfaces = 0;
-	int numStaticIndexes = 0;
-	int numStaticVertexes = 0;
+	qint numStaticSurfaces = 0;
+	qint numStaticIndexes = 0;
+	qint numStaticVertexes = 0;
 
 	if ( !r_vbo->integer )
 		return;
@@ -565,7 +565,7 @@ void R_BuildWorldVBO( msurface_t *surf, int surfCount )
 	vbo->items_count = numStaticSurfaces;
 
 	// last item will be used for run length termination
-	vbo->items_queue = ri.Hunk_Alloc( ( numStaticSurfaces + 1 ) * sizeof( int ), h_low );
+	vbo->items_queue = ri.Hunk_Alloc( ( numStaticSurfaces + 1 ) * sizeof( qint ), h_low );
 	vbo->items_queue_count = 0;
 
 	ri.Printf( PRINT_ALL, "...found %i VBO surfaces (%i vertexes, %i indexes)\n",
@@ -709,7 +709,7 @@ void R_BuildWorldVBO( msurface_t *surf, int surfCount )
 
 void VBO_Cleanup( void )
 {
-	int i;
+	qint i;
 
 	memset( &world_vbo, 0, sizeof( world_vbo ) );
 
@@ -727,9 +727,9 @@ void VBO_Cleanup( void )
 qsort_int
 =============
 */
-static void qsort_int( int *a, const int n ) {
-	int temp, m;
-	int i, j;
+static void qsort_int( qint *a, const qint n ) {
+	qint temp, m;
+	qint i, j;
 
 	if ( n < 32 ) { // CUTOFF
 		for ( i = 1 ; i < n + 1 ; i++ ) {
@@ -765,10 +765,10 @@ static void qsort_int( int *a, const int n ) {
 }
 
 
-static int run_length( const int *a, int from, int to, int *count )
+static qint run_length( const qint *a, qint from, qint to, qint *count )
 {
 	vbo_t *vbo = &world_vbo;
-	int i, n, cnt;
+	qint i, n, cnt;
 	for ( cnt = 0, n = 1, i = from; i < to; i++, n++ )
 	{
 		cnt += vbo->items[a[i]].num_indexes;
@@ -780,7 +780,7 @@ static int run_length( const int *a, int from, int to, int *count )
 }
 
 
-void VBO_QueueItem( int itemIndex )
+void VBO_QueueItem( qint itemIndex )
 {
 	vbo_t *vbo = &world_vbo;
 
@@ -813,7 +813,7 @@ void VBO_Flush( void )
 }
 
 
-static void VBO_AddItemDataToSoftBuffer( int itemIndex )
+static void VBO_AddItemDataToSoftBuffer( qint itemIndex )
 {
 	vbo_t *vbo = &world_vbo;
 	const vbo_item_t *vi = vbo->items + itemIndex;
@@ -830,7 +830,7 @@ static void VBO_AddItemDataToSoftBuffer( int itemIndex )
 }
 
 
-static void VBO_AddItemRangeToIBOBuffer( int offset, int length )
+static void VBO_AddItemRangeToIBOBuffer( qint offset, qint length )
 {
 	vbo_t *vbo = &world_vbo;
 	ibo_item_t *it;
@@ -845,7 +845,7 @@ static void VBO_AddItemRangeToIBOBuffer( int offset, int length )
 void VBO_RenderIBOItems( void )
 {
 	const vbo_t *vbo = &world_vbo;
-	int i;
+	qint i;
 
 	// from device-local memory
 	if ( vbo->ibo_items_count )
@@ -871,8 +871,8 @@ void VBO_RenderIBOItems( void )
 void VBO_PrepareQueues( void )
 {
 	vbo_t *vbo = &world_vbo;
-	int i, item_run, index_run, n;
-	const int *a;
+	qint i, item_run, index_run, n;
+	const qint *a;
 
 	vbo->items_queue[ vbo->items_queue_count ] = 0; // terminate run
 

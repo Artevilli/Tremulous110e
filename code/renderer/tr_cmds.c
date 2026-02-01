@@ -81,7 +81,7 @@ static void R_IssueRenderCommands( void ) {
 	cmdList = &backEndData->commands;
 
 	// add an end-of-list command
-	*(int *)(cmdList->cmds + cmdList->used) = RC_END_OF_LIST;
+	*(qint *)(cmdList->cmds + cmdList->used) = RC_END_OF_LIST;
 
 	// clear it out, in case this is a sync and not a buffer flip
 	cmdList->used = 0;
@@ -123,15 +123,15 @@ R_GetCommandBufferReserved
 make sure there is enough command space
 ============
 */
-static void *R_GetCommandBufferReserved( int bytes, int reservedBytes ) {
+static void *R_GetCommandBufferReserved( qint bytes, qint reservedBytes ) {
 	renderCommandList_t	*cmdList;
 
 	cmdList = &backEndData->commands;
 	bytes = PAD(bytes, sizeof(void *));
 
 	// always leave room for the end of list command
-	if ( cmdList->used + bytes + sizeof( int ) + reservedBytes > MAX_RENDER_COMMANDS ) {
-		if ( bytes > MAX_RENDER_COMMANDS - sizeof( int ) ) {
+	if ( cmdList->used + bytes + sizeof( qint ) + reservedBytes > MAX_RENDER_COMMANDS ) {
+		if ( bytes > MAX_RENDER_COMMANDS - sizeof( qint ) ) {
 			ri.Error( ERR_FATAL, "R_GetCommandBuffer: bad size %i", bytes );
 		}
 		// if we run out of room, just start dropping commands
@@ -150,7 +150,7 @@ R_GetCommandBuffer
 returns NULL if there is not enough space for important commands
 =============
 */
-static void *R_GetCommandBuffer( int bytes ) {
+static void *R_GetCommandBuffer( qint bytes ) {
 	return R_GetCommandBufferReserved( bytes, PAD( sizeof( swapBuffersCommand_t ), sizeof(void *) ) );
 }
 
@@ -160,7 +160,7 @@ static void *R_GetCommandBuffer( int bytes ) {
 R_AddDrawSurfCmd
 =============
 */
-void R_AddDrawSurfCmd( drawSurf_t *drawSurfs, int numDrawSurfs ) {
+void R_AddDrawSurfCmd( drawSurf_t *drawSurfs, qint numDrawSurfs ) {
 	drawSurfsCommand_t	*cmd;
 
 	cmd = R_GetCommandBuffer( sizeof( *cmd ) );
@@ -240,7 +240,7 @@ void RE_StretchPic( float x, float y, float w, float h,
 #define MODE_GREEN_MAGENTA 4
 #define MODE_MAX	MODE_GREEN_MAGENTA
 
-static void R_SetColorMode(GLboolean *rgba, stereoFrame_t stereoFrame, int colormode)
+static void R_SetColorMode(GLboolean *rgba, stereoFrame_t stereoFrame, qint colormode)
 {
 	rgba[0] = rgba[1] = rgba[2] = rgba[3] = GL_TRUE;
 
@@ -313,9 +313,9 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 
 	if ( glConfig.stereoEnabled ) {
 		if ( stereoFrame == STEREO_LEFT ) {
-			cmd->buffer = (int)GL_BACK_LEFT;
+			cmd->buffer = (qint)GL_BACK_LEFT;
 		} else if ( stereoFrame == STEREO_RIGHT ) {
-			cmd->buffer = (int)GL_BACK_RIGHT;
+			cmd->buffer = (qint)GL_BACK_RIGHT;
 		} else {
 			ri.Error( ERR_FATAL, "RE_BeginFrame: Stereo is enabled, but stereoFrame was %i", stereoFrame );
 		}
@@ -323,9 +323,9 @@ void RE_BeginFrame( stereoFrame_t stereoFrame ) {
 	else
 	{
 		if ( !Q_stricmp( r_drawBuffer->string, "GL_FRONT" ) )
-			cmd->buffer = (int)GL_FRONT;
+			cmd->buffer = (qint)GL_FRONT;
 		else
-			cmd->buffer = (int)GL_BACK;
+			cmd->buffer = (qint)GL_BACK;
 
 		if ( r_anaglyphMode->integer )
 		{
@@ -415,7 +415,7 @@ RE_EndFrame
 Returns the number of msec spent in the back end
 =============
 */
-void RE_EndFrame( int *frontEndMsec, int *backEndMsec ) {
+void RE_EndFrame( qint *frontEndMsec, qint *backEndMsec ) {
 
 	swapBuffersCommand_t *cmd;
 
@@ -471,8 +471,8 @@ void RE_EndFrame( int *frontEndMsec, int *backEndMsec ) {
 RE_TakeVideoFrame
 =============
 */
-void RE_TakeVideoFrame( int width, int height,
-		byte *captureBuffer, byte *encodeBuffer, qboolean motionJpeg )
+void RE_TakeVideoFrame( qint width, qint height,
+		byte *captureBuffer, byte *encodeBuffer, qbool motionJpeg )
 {
 	videoFrameCommand_t	*cmd;
 
@@ -519,7 +519,7 @@ void RE_FinishBloom( void )
 }
 
 
-qboolean RE_CanMinimize( void )
+qbool RE_CanMinimize( void )
 {
 #ifdef USE_FBO
 	return fboEnabled;
@@ -535,7 +535,7 @@ const glconfig_t *RE_GetConfig( void )
 }
 
 
-void RE_VertexLighting( qboolean allowed )
+void RE_VertexLighting( qbool allowed )
 {
 	tr.vertexLightingAllowed = allowed;
 }

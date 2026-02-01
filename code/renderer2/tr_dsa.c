@@ -37,7 +37,7 @@ glDsaState;
 
 void GL_BindNullTextures(void)
 {
-	int i;
+	qint i;
 
 	if (glRefConfig.directStateAccess)
 	{
@@ -61,7 +61,7 @@ void GL_BindNullTextures(void)
 	}
 }
 
-int GL_BindMultiTexture(GLenum texunit, GLenum target, GLuint texture)
+qint GL_BindMultiTexture(GLenum texunit, GLenum target, GLuint texture)
 {
 	GLuint tmu = texunit - GL_TEXTURE0;
 
@@ -147,7 +147,7 @@ void GL_BindNullProgram(void)
 	glDsaState.program = 0;
 }
 
-int GL_UseProgram(GLuint program)
+qint GL_UseProgram(GLuint program)
 {
 	if (glDsaState.program == program)
 		return 0;

@@ -23,7 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "client.h"
 
-static const char *svc_strings[] = {
+static const qchar *svc_strings[] = {
 	"svc_bad",
 	"svc_nop",
 	"svc_gamestate",
@@ -37,7 +37,7 @@ static const char *svc_strings[] = {
 	"svc_voipOpus",  // ioq3 extension
 };
 
-static void SHOWNET( msg_t *msg, const char *s ) {
+static void SHOWNET( msg_t *msg, const qchar *s ) {
 	if ( cl_shownet->integer >= 2) {
 		Com_Printf ("%3i:%s\n", msg->readcount-1, s);
 	}
@@ -60,7 +60,7 @@ Parses deltas from the given base and adds the resulting entity
 to the current frame
 ==================
 */
-static void CL_DeltaEntity( msg_t *msg, clSnapshot_t *frame, int newnum, const entityState_t *old, qboolean unchanged) {
+static void CL_DeltaEntity( msg_t *msg, clSnapshot_t *frame, qint newnum, const entityState_t *old, qbool unchanged) {
 	entityState_t	*state;
 
 	// save the parsed entity state into the big circular buffer so
@@ -88,8 +88,8 @@ CL_ParsePacketEntities
 */
 static void CL_ParsePacketEntities( msg_t *msg, const clSnapshot_t *oldframe, clSnapshot_t *newframe ) {
 	const entityState_t	*oldstate;
-	int	newnum;
-	int	oldindex, oldnum;
+	qint	newnum;
+	qint	oldindex, oldnum;
 
 	newframe->parseEntitiesNum = cl.parseEntitiesNum;
 	newframe->numEntities = 0;
@@ -201,9 +201,9 @@ for any reason, no changes to the state will be made at all.
 static void CL_ParseSnapshot( msg_t *msg ) {
 	const clSnapshot_t *old;
 	clSnapshot_t	newSnap;
-	int			deltaNum;
-	int			oldMessageNum;
-	int			i, n, packetNum;
+	qint			deltaNum;
+	qint			oldMessageNum;
+	qint			i, n, packetNum;
 
 	// get the reliable sequence acknowledge number
 	// NOTE: now sent with all server to client messages
@@ -327,8 +327,8 @@ static void CL_ParseSnapshot( msg_t *msg ) {
 
 //=====================================================================
 
-int cl_connectedToPureServer;
-int cl_connectedToCheatServer;
+qint cl_connectedToPureServer;
+qint cl_connectedToCheatServer;
 
 /*
 ==================
@@ -339,11 +339,11 @@ new information out of it.  This will happen at every
 gamestate, and possibly during gameplay.
 ==================
 */
-void CL_SystemInfoChanged( qboolean onlyGame ) {
-	const char		*systemInfo;
-	const char		*s, *t;
-	char			key[BIG_INFO_KEY];
-	char			value[BIG_INFO_VALUE];
+void CL_SystemInfoChanged( qbool onlyGame ) {
+	const qchar		*systemInfo;
+	const qchar		*s, *t;
+	qchar			key[BIG_INFO_KEY];
+	qchar			value[BIG_INFO_VALUE];
 
 	systemInfo = cl.gameState.stringData + cl.gameState.stringOffsets[ CS_SYSTEMINFO ];
 	// NOTE TTimo:
@@ -410,7 +410,7 @@ void CL_SystemInfoChanged( qboolean onlyGame ) {
 	// scan through all the variables in the systeminfo and locally set cvars to match
 	s = systemInfo;
 	do {
-		int cvar_flags;
+		qint cvar_flags;
 
 		s = Info_NextPair( s, key, value );
 		if ( key[0] == '\0' ) {
@@ -460,7 +460,7 @@ void CL_SystemInfoChanged( qboolean onlyGame ) {
 CL_GameSwitch
 ==================
 */
-qboolean CL_GameSwitch( void )
+qbool CL_GameSwitch( void )
 {
 	return (cls.gameSwitch && !com_errorEntered);
 }
@@ -473,7 +473,7 @@ CL_ParseServerInfo
 */
 static void CL_ParseServerInfo( void )
 {
-	const char *serverInfo;
+	const qchar *serverInfo;
 	size_t	len;
 
 	serverInfo = cl.gameState.stringData
@@ -498,15 +498,15 @@ CL_ParseGamestate
 ==================
 */
 static void CL_ParseGamestate( msg_t *msg ) {
-	int				i;
+	qint				i;
 	entityState_t	*es;
-	int				newnum;
+	qint				newnum;
 	entityState_t	nullstate;
-	int				cmd;
-	const char		*s;
-	char			oldGame[ MAX_QPATH ];
-	char			reconnectArgs[ MAX_CVAR_VALUE_STRING ];
-	qboolean		gamedirModified;
+	qint				cmd;
+	const qchar		*s;
+	qchar			oldGame[ MAX_QPATH ];
+	qchar			reconnectArgs[ MAX_CVAR_VALUE_STRING ];
+	qbool		gamedirModified;
 
 	Con_Close();
 
@@ -541,7 +541,7 @@ static void CL_ParseGamestate( msg_t *msg ) {
 		}
 
 		if ( cmd == svc_configstring ) {
-			int		len;
+			qint		len;
 
 			i = MSG_ReadShort( msg );
 			if ( i < 0 || i >= MAX_CONFIGSTRINGS ) {
@@ -643,7 +643,7 @@ checks for valid ZIP signature
 returns qtrue for normal and empty archives
 =====================
 */
-qboolean CL_ValidPakSignature( const byte *data, int len )
+qbool CL_ValidPakSignature( const byte *data, qint len )
 {
 	// maybe it is not 100% correct to check for file size here
 	// because we may receive more data in future packets
@@ -674,8 +674,8 @@ A download message has been received from the server
 =====================
 */
 static void CL_ParseDownload( msg_t *msg ) {
-	int		size;
-	unsigned char data[ MAX_MSGLEN ];
+	qint		size;
+	unsigned qchar data[ MAX_MSGLEN ];
 	uint16_t block;
 
 	if (!*clc.downloadTempName) {
@@ -784,9 +784,9 @@ when it transitions a snapshot
 =====================
 */
 static void CL_ParseCommandString( msg_t *msg ) {
-	const char *s;
-	int		seq;
-	int		index;
+	const qchar *s;
+	qint		seq;
+	qint		index;
 
 	seq = MSG_ReadLong( msg );
 	s = MSG_ReadString( msg );
@@ -810,7 +810,7 @@ static void CL_ParseCommandString( msg_t *msg ) {
 	// -EC- : we may stuck on downloading because of non-working cgvm
 	// or in "awaiting snapshot..." state so handle "disconnect" here
 	if ( ( !cgvm && cls.state == CA_CONNECTED && clc.download != FS_INVALID_HANDLE ) || ( cgvm && cls.state == CA_PRIMED ) ) {
-		const char *text;
+		const qchar *text;
 		Cmd_TokenizeString( s );
 		if ( !Q_stricmp( Cmd_Argv(0), "disconnect" ) ) {
 			text = ( Cmd_Argc() > 1 ) ? va( "Server disconnected: %s", Cmd_Argv( 1 ) ) : "Server disconnected.";
@@ -833,7 +833,7 @@ CL_ParseServerMessage
 =====================
 */
 void CL_ParseServerMessage( msg_t *msg ) {
-	int cmd;
+	qint cmd;
 
 	if ( cl_shownet->integer == 1 ) {
 		Com_Printf( "%i ",msg->cursize );

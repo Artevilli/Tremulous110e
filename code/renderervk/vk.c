@@ -8,8 +8,8 @@
 #endif
 #endif
 
-static int vkSamples = VK_SAMPLE_COUNT_1_BIT;
-static int vkMaxSamples = VK_SAMPLE_COUNT_1_BIT;
+static qint vkSamples = VK_SAMPLE_COUNT_1_BIT;
+static qint vkMaxSamples = VK_SAMPLE_COUNT_1_BIT;
 
 static VkInstance vk_instance = VK_NULL_HANDLE;
 static VkSurfaceKHR vk_surface = VK_NULL_HANDLE;
@@ -171,9 +171,9 @@ static uint32_t find_memory_type2( uint32_t memory_type_bits, VkMemoryPropertyFl
 }
 
 
-static const char *pmode_to_str( VkPresentModeKHR mode )
+static const qchar *pmode_to_str( VkPresentModeKHR mode )
 {
-	static char buf[32];
+	static qchar buf[32];
 
 	switch ( mode ) {
 		case VK_PRESENT_MODE_IMMEDIATE_KHR: return "IMMEDIATE";
@@ -188,9 +188,9 @@ static const char *pmode_to_str( VkPresentModeKHR mode )
 
 #define CASE_STR(x) case (x): return #x
 
-const char *vk_format_string( VkFormat format )
+const qchar *vk_format_string( VkFormat format )
 {
-	static char buf[16];
+	static qchar buf[16];
 
 	switch ( format ) {
 		// color formats
@@ -224,8 +224,8 @@ const char *vk_format_string( VkFormat format )
 }
 
 
-static const char *vk_result_string( VkResult code ) {
-	static char buffer[32];
+static const qchar *vk_result_string( VkResult code ) {
+	static qchar buffer[32];
 
 	switch ( code ) {
 		CASE_STR( VK_SUCCESS );
@@ -290,7 +290,7 @@ static VkFlags get_composite_alpha( VkCompositeAlphaFlagsKHR flags )
 		VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
 		VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR
 	};
-	int i;
+	qint i;
 
 	for ( i = 1; i < ARRAY_LEN( compositeFlags ); i++ ) {
 		if ( flags & compositeFlags[i] ) {
@@ -327,7 +327,7 @@ static VkCommandBuffer begin_command_buffer( void )
 }
 
 
-static void end_command_buffer( VkCommandBuffer command_buffer, const char *location )
+static void end_command_buffer( VkCommandBuffer command_buffer, const qchar *location )
 {
 #ifdef USE_UPLOAD_QUEUE
 	const VkPipelineStageFlags wait_dst_stage_mask = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
@@ -461,7 +461,7 @@ static void record_image_layout_transition( VkCommandBuffer command_buffer, VkIm
 // debug markers
 #define SET_OBJECT_NAME(obj,objName,objType) vk_set_object_name( (uint64_t)(obj), (objName), (objType) )
 
-static void vk_set_object_name( uint64_t obj, const char *objName, VkDebugReportObjectTypeEXT objType )
+static void vk_set_object_name( uint64_t obj, const qchar *objName, VkDebugReportObjectTypeEXT objType )
 {
 	if ( qvkDebugMarkerSetObjectNameEXT && obj )
 	{
@@ -476,7 +476,7 @@ static void vk_set_object_name( uint64_t obj, const char *objName, VkDebugReport
 }
 
 
-static void vk_create_swapchain( VkPhysicalDevice physical_device, VkDevice device, VkSurfaceKHR surface, VkSurfaceFormatKHR surface_format, VkSwapchainKHR *swapchain, qboolean verbose ) {
+static void vk_create_swapchain( VkPhysicalDevice physical_device, VkDevice device, VkSurfaceKHR surface, VkSurfaceFormatKHR surface_format, VkSwapchainKHR *swapchain, qbool verbose ) {
 	VkImageViewCreateInfo view;
 	VkSurfaceCapabilitiesKHR surface_caps;
 	VkExtent2D image_extent;
@@ -485,10 +485,10 @@ static void vk_create_swapchain( VkPhysicalDevice physical_device, VkDevice devi
 	VkPresentModeKHR *present_modes;
 	uint32_t image_count;
 	VkSwapchainCreateInfoKHR desc;
-	qboolean mailbox_supported = qfalse;
-	qboolean immediate_supported = qfalse;
-	qboolean fifo_relaxed_supported = qfalse;
-	int v;
+	qbool mailbox_supported = qfalse;
+	qbool immediate_supported = qfalse;
+	qbool fifo_relaxed_supported = qfalse;
+	qint v;
 
 	VK_CHECK( qvkGetPhysicalDeviceSurfaceCapabilitiesKHR( physical_device, surface, &surface_caps ) );
 
@@ -1025,13 +1025,13 @@ static void allocate_and_bind_image_memory(VkImage image) {
 	VkMemoryRequirements memory_requirements;
 	VkDeviceSize alignment;
 	ImageChunk *chunk;
-	int i;
+	qint i;
 
 	qvkGetImageMemoryRequirements(vk.device, image, &memory_requirements);
 
 	if ( memory_requirements.size > vk.image_chunk_size ) {
 		ri.Error( ERR_FATAL, "Vulkan: could not allocate memory, image is too large (%ikbytes).",
-			(int)(memory_requirements.size/1024) );
+			(qint)(memory_requirements.size/1024) );
 	}
 
 	chunk = NULL;
@@ -1104,7 +1104,7 @@ static void vk_clean_staging_buffer( void )
 
 
 #ifdef USE_UPLOAD_QUEUE
-static qboolean vk_wait_staging_buffer( void )
+static qbool vk_wait_staging_buffer( void )
 {
 	if ( vk.aux_fence_wait ) {
 		VkResult res = qvkWaitForFences( vk.device, 1, &vk.aux_fence, VK_TRUE, 5 * 1000000000ULL );
@@ -1122,7 +1122,7 @@ static qboolean vk_wait_staging_buffer( void )
 }
 
 
-static void vk_flush_staging_buffer( qboolean final )
+static void vk_flush_staging_buffer( qbool final )
 {
 	const VkPipelineStageFlags wait_dst_stage_mask = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 	VkSemaphore waits;
@@ -1133,7 +1133,7 @@ static void vk_flush_staging_buffer( qboolean final )
 		return;
 	}
 
-	//ri.Printf( PRINT_WARNING, S_COLOR_CYAN ">>> flush %i bytes (final=%i)<<<\n", (int)vk_world.staging_buffer_offset, final );
+	//ri.Printf( PRINT_WARNING, S_COLOR_CYAN ">>> flush %i bytes (final=%i)<<<\n", (qint)vk_world.staging_buffer_offset, final );
 
 	vk.staging_buffer.offset = 0;
 
@@ -1231,7 +1231,7 @@ static void vk_alloc_staging_buffer( VkDeviceSize size )
 
 #ifdef USE_VK_VALIDATION
 static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT object_type, uint64_t object, size_t location,
-	int32_t message_code, const char* layer_prefix, const char* message, void* user_data) {
+	int32_t message_code, const qchar* layer_prefix, const qchar* message, void* user_data) {
 #ifdef _WIN32
 	MessageBoxA( 0, message, layer_prefix, MB_ICONWARNING );
 	OutputDebugString(message);
@@ -1243,9 +1243,9 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
 #endif
 
 
-static qboolean used_instance_extension( const char *ext )
+static qbool used_instance_extension( const qchar *ext )
 {
-	const char *u;
+	const qchar *u;
 
 	// allow all VK_*_surface extensions
 	u = strrchr( ext, '_' );
@@ -1279,14 +1279,14 @@ static qboolean used_instance_extension( const char *ext )
 static void create_instance( void )
 {
 #ifdef USE_VK_VALIDATION
-	const char* validation_layer_name = "VK_LAYER_LUNARG_standard_validation";
-	const char* validation_layer_name2 = "VK_LAYER_KHRONOS_validation";
+	const qchar* validation_layer_name = "VK_LAYER_LUNARG_standard_validation";
+	const qchar* validation_layer_name2 = "VK_LAYER_KHRONOS_validation";
 #endif
 	VkInstanceCreateInfo desc;
 	VkInstanceCreateFlags flags;
 	VkExtensionProperties *extension_properties;
 	VkResult res;
-	const char **extension_names;
+	const qchar **extension_names;
 	uint32_t i, n, count, extension_count;
 	VkApplicationInfo appInfo;
 
@@ -1296,11 +1296,11 @@ static void create_instance( void )
 	VK_CHECK(qvkEnumerateInstanceExtensionProperties(NULL, &count, NULL));
 
 	extension_properties = (VkExtensionProperties *)ri.Malloc(sizeof(VkExtensionProperties) * count);
-	extension_names = (const char**)ri.Malloc(sizeof(char *) * count);
+	extension_names = (const qchar**)ri.Malloc(sizeof(qchar *) * count);
 
 	VK_CHECK( qvkEnumerateInstanceExtensionProperties( NULL, &count, extension_properties ) );
 	for ( i = 0; i < count; i++ ) {
-		const char *ext = extension_properties[i].extensionName;
+		const qchar *ext = extension_properties[i].extensionName;
 
 		if ( !used_instance_extension( ext ) ) {
 			continue;
@@ -1388,7 +1388,7 @@ static void create_instance( void )
 static VkFormat get_depth_format( VkPhysicalDevice physical_device ) {
 	VkFormatProperties props;
 	VkFormat formats[2];
-	int i;
+	qint i;
 
 	if ( glConfig.stencilBits > 0 ) {
 		formats[0] = glConfig.depthBits == 16 ? VK_FORMAT_D16_UNORM_S8_UINT : VK_FORMAT_D24_UNORM_S8_UINT;
@@ -1411,7 +1411,7 @@ static VkFormat get_depth_format( VkPhysicalDevice physical_device ) {
 
 
 // Check if we can use vkCmdBlitImage for the given source and destination image formats.
-static qboolean vk_blit_enabled( VkPhysicalDevice physical_device, const VkFormat srcFormat, const VkFormat dstFormat )
+static qbool vk_blit_enabled( VkPhysicalDevice physical_device, const VkFormat srcFormat, const VkFormat dstFormat )
 {
 	VkFormatProperties formatProps;
 
@@ -1443,7 +1443,7 @@ static VkFormat get_hdr_format( VkFormat base_format )
 }
 
 typedef struct {
-	int bits;
+	qint bits;
 	VkFormat rgb;
 	VkFormat bgr;
 } present_format_t;
@@ -1457,9 +1457,9 @@ static const present_format_t present_formats[] = {
 	//{32, VK_FORMAT_B10G11R11_UFLOAT_PACK32, VK_FORMAT_B10G11R11_UFLOAT_PACK32}
 };
 
-static void get_present_format( int present_bits, VkFormat *bgr, VkFormat *rgb ) {
+static void get_present_format( qint present_bits, VkFormat *bgr, VkFormat *rgb ) {
 	const present_format_t *pf, *sel;
-	int i;
+	qint i;
 
 	sel = NULL;
 	pf = present_formats;
@@ -1478,7 +1478,7 @@ static void get_present_format( int present_bits, VkFormat *bgr, VkFormat *rgb )
 }
 
 
-static qboolean vk_select_surface_format( VkPhysicalDevice physical_device, VkSurfaceKHR surface )
+static qbool vk_select_surface_format( VkPhysicalDevice physical_device, VkSurfaceKHR surface )
 {
 	VkFormat base_bgr, base_rgb;
 	VkFormat ext_bgr, ext_rgb;
@@ -1568,9 +1568,9 @@ static void setup_surface_formats( VkPhysicalDevice physical_device )
 }
 
 
-static const char *renderer_name( const VkPhysicalDeviceProperties *props ) {
-	static char buf[sizeof( props->deviceName ) + 64];
-	const char *device_type;
+static const qchar *renderer_name( const VkPhysicalDeviceProperties *props ) {
+	static qchar buf[sizeof( props->deviceName ) + 64];
+	const qchar *device_type;
 
 	switch ( props->deviceType ) {
 		case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU: device_type = "Integrated"; break;
@@ -1587,7 +1587,7 @@ static const char *renderer_name( const VkPhysicalDeviceProperties *props ) {
 }
 
 
-static qboolean vk_create_device( VkPhysicalDevice physical_device, int device_index ) {
+static qbool vk_create_device( VkPhysicalDevice physical_device, qint device_index ) {
 
 #ifdef _DEBUG
 	VkPhysicalDeviceTimelineSemaphoreFeatures timeline_semaphore;
@@ -1638,10 +1638,10 @@ static qboolean vk_create_device( VkPhysicalDevice physical_device, int device_i
 
 	// create VkDevice
 	{
-		const char *device_extension_list[8];
+		const qchar *device_extension_list[8];
 		uint32_t device_extension_count;
-		const char *ext, *end;
-		char *str;
+		const qchar *ext, *end;
+		qchar *str;
 		const float priority = 1.0;
 		VkExtensionProperties *extension_properties;
 		VkDeviceQueueCreateInfo queue_desc;
@@ -1649,15 +1649,15 @@ static qboolean vk_create_device( VkPhysicalDevice physical_device, int device_i
 		VkPhysicalDeviceFeatures features;
 		VkDeviceCreateInfo device_desc;
 		VkResult res;
-		qboolean swapchainSupported = qfalse;
-		qboolean dedicatedAllocation = qfalse;
-		qboolean memoryRequirements2 = qfalse;
-		qboolean debugMarker = qfalse;
+		qbool swapchainSupported = qfalse;
+		qbool dedicatedAllocation = qfalse;
+		qbool memoryRequirements2 = qfalse;
+		qbool debugMarker = qfalse;
 #ifdef _DEBUG
-		qboolean timelineSemaphore = qfalse;
-		qboolean memoryModel = qfalse;
-		qboolean devAddrFeat = qfalse;
-		qboolean storage8bit = qfalse;
+		qbool timelineSemaphore = qfalse;
+		qbool memoryModel = qfalse;
+		qbool devAddrFeat = qfalse;
+		qbool storage8bit = qfalse;
 		const void** pNextPtr;
 #endif
 		uint32_t i, len, count = 0;
@@ -1901,7 +1901,7 @@ static void init_vulkan_library( void )
 	VkPhysicalDeviceProperties props;
 	VkPhysicalDevice *physical_devices;
 	uint32_t device_count;
-	int device_index, i;
+	qint device_index, i;
 	VkResult res;
 
 	Com_Memset( &vk, 0, sizeof( vk ) );
@@ -2228,7 +2228,7 @@ static void deinit_device_functions( void )
 }
 
 
-static VkShaderModule SHADER_MODULE(const uint8_t *bytes, const int count) {
+static VkShaderModule SHADER_MODULE(const uint8_t *bytes, const qint count) {
 	VkShaderModuleCreateInfo desc;
 	VkShaderModule module;
 
@@ -2248,7 +2248,7 @@ static VkShaderModule SHADER_MODULE(const uint8_t *bytes, const int count) {
 }
 
 
-static void vk_create_layout_binding( int binding, VkDescriptorType type, VkShaderStageFlags flags, VkDescriptorSetLayout *layout )
+static void vk_create_layout_binding( qint binding, VkDescriptorType type, VkShaderStageFlags flags, VkDescriptorSetLayout *layout )
 {
 	VkDescriptorSetLayoutBinding bind;
 	VkDescriptorSetLayoutCreateInfo desc;
@@ -2301,7 +2301,7 @@ static VkSampler vk_find_sampler( const Vk_Sampler_Def *def ) {
 	VkFilter min_filter;
 	VkSamplerMipmapMode mipmap_mode;
 	float maxLod;
-	int i;
+	qint i;
 
 	// Look for sampler among existing samplers.
 	for ( i = 0; i < vk.samplers.count; i++ ) {
@@ -2401,7 +2401,7 @@ static VkSampler vk_find_sampler( const Vk_Sampler_Def *def ) {
 
 void vk_destroy_samplers( void )
 {
-	int i;
+	qint i;
 
 	for ( i = 0; i < vk.samplers.count; i++ ) {
 		qvkDestroySampler( vk.device, vk.samplers.handle[i], NULL );
@@ -2547,7 +2547,7 @@ void vk_init_descriptors( void )
 
 static void vk_release_geometry_buffers( void )
 {
-	int i;
+	qint i;
 
 	for ( i = 0; i < NUM_COMMAND_BUFFERS; i++ ) {
 		qvkDestroyBuffer( vk.device, vk.tess[i].vertex_buffer, NULL );
@@ -2568,7 +2568,7 @@ static void vk_create_geometry_buffers( VkDeviceSize size )
 	uint32_t memory_type_bits;
 	uint32_t memory_type;
 	void *data;
-	int i;
+	qint i;
 
 	desc.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	desc.pNext = NULL;
@@ -2674,7 +2674,7 @@ void vk_release_vbo( void )
 }
 
 
-qboolean vk_alloc_vbo( const byte *vbo_data, int vbo_size )
+qbool vk_alloc_vbo( const byte *vbo_data, qint vbo_size )
 {
 	VkMemoryRequirements vb_mem_reqs;
 	VkMemoryAllocateInfo alloc_info;
@@ -2747,7 +2747,7 @@ qboolean vk_alloc_vbo( const byte *vbo_data, int vbo_size )
 
 static void vk_create_shader_modules( void )
 {
-	int i, j, k, l;
+	qint i, j, k, l;
 
 	vk.modules.vert.gen[0][0][0][0] = SHADER_MODULE( vert_tx0 );
 	vk.modules.vert.gen[0][0][0][1] = SHADER_MODULE( vert_tx0_fog );
@@ -2775,14 +2775,14 @@ static void vk_create_shader_modules( void )
 	vk.modules.vert.gen[2][1][1][1] = SHADER_MODULE( vert_tx2_cl_env_fog );
 
 	for ( i = 0; i < 3; i++ ) {
-		const char *tx[] = { "single", "double", "triple" };
-		const char *cl[] = { "", "+cl" };
-		const char *env[] = { "", "+env" };
-		const char *fog[] = { "", "+fog" };
+		const qchar *tx[] = { "single", "double", "triple" };
+		const qchar *cl[] = { "", "+cl" };
+		const qchar *env[] = { "", "+env" };
+		const qchar *fog[] = { "", "+fog" };
 		for ( j = 0; j < 2; j++ ) {
 			for ( k = 0; k < 2; k++ ) {
 				for ( l = 0; l < 2; l++ ) {
-					const char *s = va( "%s-texture%s%s%s vertex module", tx[i], cl[j], env[k], fog[l] );
+					const qchar *s = va( "%s-texture%s%s%s vertex module", tx[i], cl[j], env[k], fog[l] );
 					SET_OBJECT_NAME( vk.modules.vert.gen[i][j][k][l], s, VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT );
 				}
 			}
@@ -2803,12 +2803,12 @@ static void vk_create_shader_modules( void )
 	vk.modules.vert.ident1[1][1][0] = SHADER_MODULE( vert_tx1_ident1_env );
 	vk.modules.vert.ident1[1][1][1] = SHADER_MODULE( vert_tx1_ident1_env_fog );
 	for ( i = 0; i < 2; i++ ) {
-		const char *tx[] = { "single", "double" };
-		const char *env[] = { "", "+env" };
-		const char *fog[] = { "", "+fog" };
+		const qchar *tx[] = { "single", "double" };
+		const qchar *env[] = { "", "+env" };
+		const qchar *fog[] = { "", "+fog" };
 		for ( j = 0; j < 2; j++ ) {
 			for ( k = 0; k < 2; k++ ) {
-				const char *s = va( "%s-texture identity%s%s vertex module", tx[i], env[j], fog[k] );
+				const qchar *s = va( "%s-texture identity%s%s vertex module", tx[i], env[j], fog[k] );
 				SET_OBJECT_NAME( vk.modules.vert.ident1[i][j][k], s, VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT );
 			}
 		}
@@ -2819,10 +2819,10 @@ static void vk_create_shader_modules( void )
 	vk.modules.frag.ident1[1][0] = SHADER_MODULE( frag_tx1_ident1 );
 	vk.modules.frag.ident1[1][1] = SHADER_MODULE( frag_tx1_ident1_fog );
 	for ( i = 0; i < 2; i++ ) {
-		const char *tx[] = { "single", "double" };
-		const char *fog[] = { "", "+fog" };
+		const qchar *tx[] = { "single", "double" };
+		const qchar *fog[] = { "", "+fog" };
 		for ( j = 0; j < 2; j++ ) {
-			const char *s = va( "%s-texture identity%s fragment module", tx[i], fog[j] );
+			const qchar *s = va( "%s-texture identity%s fragment module", tx[i], fog[j] );
 			SET_OBJECT_NAME( vk.modules.frag.ident1[i][j], s, VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT );
 		}
 	}
@@ -2836,12 +2836,12 @@ static void vk_create_shader_modules( void )
 	vk.modules.vert.fixed[1][1][0] = SHADER_MODULE( vert_tx1_fixed_env );
 	vk.modules.vert.fixed[1][1][1] = SHADER_MODULE( vert_tx1_fixed_env_fog );
 	for ( i = 0; i < 2; i++ ) {
-		const char *tx[] = { "single", "double" };
-		const char *env[] = { "", "+env" };
-		const char *fog[] = { "", "+fog" };
+		const qchar *tx[] = { "single", "double" };
+		const qchar *env[] = { "", "+env" };
+		const qchar *fog[] = { "", "+fog" };
 		for ( j = 0; j < 2; j++ ) {
 			for ( k = 0; k < 2; k++ ) {
-				const char *s = va( "%s-texture fixed-color%s%s vertex module", tx[i], env[j], fog[k] );
+				const qchar *s = va( "%s-texture fixed-color%s%s vertex module", tx[i], env[j], fog[k] );
 				SET_OBJECT_NAME( vk.modules.vert.fixed[i][j][k], s, VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT );
 			}
 		}
@@ -2852,10 +2852,10 @@ static void vk_create_shader_modules( void )
 	vk.modules.frag.fixed[1][0] = SHADER_MODULE( frag_tx1_fixed );
 	vk.modules.frag.fixed[1][1] = SHADER_MODULE( frag_tx1_fixed_fog );
 	for ( i = 0; i < 2; i++ ) {
-		const char *tx[] = { "single", "double" };
-		const char *fog[] = { "", "+fog" };
+		const qchar *tx[] = { "single", "double" };
+		const qchar *fog[] = { "", "+fog" };
 		for ( j = 0; j < 2; j++ ) {
-			const char *s = va( "%s-texture fixed-color%s fragment module", tx[i], fog[j] );
+			const qchar *s = va( "%s-texture fixed-color%s fragment module", tx[i], fog[j] );
 			SET_OBJECT_NAME( vk.modules.frag.fixed[i][j], s, VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT );
 		}
 	}
@@ -2865,10 +2865,10 @@ static void vk_create_shader_modules( void )
 	//vk.modules.frag.ent[1][0] = SHADER_MODULE( frag_tx1_ent );
 	//vk.modules.frag.ent[1][1] = SHADER_MODULE( frag_tx1_ent_fog );
 	for ( i = 0; i < 1; i++ ) {
-		const char *tx[] = { "single" /*, "double" */};
-		const char *fog[] = { "", "+fog" };
+		const qchar *tx[] = { "single" /*, "double" */};
+		const qchar *fog[] = { "", "+fog" };
 		for ( j = 0; j < 2; j++ ) {
-			const char *s = va( "%s-texture entity-color%s fragment module", tx[i], fog[j] );
+			const qchar *s = va( "%s-texture entity-color%s fragment module", tx[i], fog[j] );
 			SET_OBJECT_NAME( vk.modules.frag.ent[i][j], s, VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT );
 		}
 	}
@@ -2889,12 +2889,12 @@ static void vk_create_shader_modules( void )
 	vk.modules.frag.gen[2][1][1] = SHADER_MODULE( frag_tx2_cl_fog );
 
 	for ( i = 0; i < 3; i++ ) {
-		const char *tx[] = { "single", "double", "triple" };
-		const char *cl[] = { "", "+cl" };
-		const char *fog[] = { "", "+fog" };
+		const qchar *tx[] = { "single", "double", "triple" };
+		const qchar *cl[] = { "", "+cl" };
+		const qchar *fog[] = { "", "+fog" };
 		for ( j = 0; j < 2; j++ ) {
 			for ( k = 0; k < 2; k++ ) {
-				const char *s = va( "%s-texture%s%s fragment module", tx[i], cl[j], fog[k] );
+				const qchar *s = va( "%s-texture%s%s fragment module", tx[i], cl[j], fog[k] );
 				SET_OBJECT_NAME( vk.modules.frag.gen[i][j][k], s, VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT );
 			}
 		}
@@ -2951,7 +2951,7 @@ static void vk_create_shader_modules( void )
 
 static void vk_alloc_persistent_pipelines( void )
 {
-	unsigned int state_bits;
+	unsigned qint state_bits;
 	Vk_Pipeline_Def def;
 
 	// skybox
@@ -2969,8 +2969,8 @@ static void vk_alloc_persistent_pipelines( void )
 	// stencil shadows
 	{
 		cullType_t cull_types[2] = { CT_FRONT_SIDED, CT_BACK_SIDED };
-		qboolean mirror_flags[2] = { qfalse, qtrue };
-		int i, j;
+		qbool mirror_flags[2] = { qfalse, qtrue };
+		qint i, j;
 
 		Com_Memset(&def, 0, sizeof(def));
 		def.polygon_offset = qfalse;
@@ -3000,18 +3000,18 @@ static void vk_alloc_persistent_pipelines( void )
 
 	// fog and dlights
 	{
-		unsigned int fog_state_bits[2] = {
+		unsigned qint fog_state_bits[2] = {
 			GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA | GLS_DEPTHFUNC_EQUAL, // fogPass == FP_EQUAL
 			GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA // fogPass == FP_LE
 		};
-		unsigned int dlight_state_bits[2] = {
+		unsigned qint dlight_state_bits[2] = {
 			GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL,	// modulated
 			GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL			// additive
 		};
-		qboolean polygon_offset[2] = { qfalse, qtrue };
-		int i, j, k;
+		qbool polygon_offset[2] = { qfalse, qtrue };
+		qint i, j, k;
 #ifdef USE_PMLIGHT
-		int l;
+		qint l;
 #endif
 
 		Com_Memset(&def, 0, sizeof(def));
@@ -3186,7 +3186,7 @@ static void vk_alloc_persistent_pipelines( void )
 	}
 }
 
-void vk_create_blur_pipeline( uint32_t index, uint32_t width, uint32_t height, qboolean horizontal_pass );
+void vk_create_blur_pipeline( uint32_t index, uint32_t width, uint32_t height, qbool horizontal_pass );
 
 void vk_update_post_process_pipelines( void )
 {
@@ -3258,7 +3258,7 @@ static void vk_alloc_attachments( void )
 	}
 
 	if ( vk.image_memory_count >= ARRAY_LEN( vk.image_memory ) ) {
-		ri.Error( ERR_DROP, "vk.image_memory_count == %i", (int)ARRAY_LEN( vk.image_memory ) );
+		ri.Error( ERR_DROP, "vk.image_memory_count == %i", (qint)ARRAY_LEN( vk.image_memory ) );
 	}
 
 	memoryTypeBits = ~0U;
@@ -3277,8 +3277,8 @@ static void vk_alloc_attachments( void )
 #ifdef _DEBUG
 		ri.Printf( PRINT_ALL, S_COLOR_CYAN "[%i] type %i, size %i, align %i\n", i,
 			attachments[ i ].reqs.memoryTypeBits,
-			(int)attachments[ i ].reqs.size,
-			(int)attachments[ i ].reqs.alignment );
+			(qint)attachments[ i ].reqs.size,
+			(qint)attachments[ i ].reqs.alignment );
 #endif
 	}
 
@@ -3295,7 +3295,7 @@ static void vk_alloc_attachments( void )
 #ifdef _DEBUG
 	ri.Printf( PRINT_ALL, "memory type bits: %04x\n", memoryTypeBits );
 	ri.Printf( PRINT_ALL, "memory type index: %04x\n", memoryTypeIndex );
-	ri.Printf( PRINT_ALL, "total size: %i\n", (int)offset );
+	ri.Printf( PRINT_ALL, "total size: %i\n", (qint)offset );
 #endif
 
 	alloc_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -3403,7 +3403,7 @@ static void vk_get_image_memory_erquirements( VkImage image, VkMemoryRequirement
 
 
 static void create_color_attachment( uint32_t width, uint32_t height, VkSampleCountFlagBits samples, VkFormat format,
-	VkImageUsageFlags usage, VkImage *image, VkImageView *image_view, VkImageLayout image_layout, qboolean multisample )
+	VkImageUsageFlags usage, VkImage *image, VkImageView *image_view, VkImageLayout image_layout, qbool multisample )
 {
 	VkImageCreateInfo create_desc;
 	VkMemoryRequirements memory_requirements;
@@ -3437,7 +3437,7 @@ static void create_color_attachment( uint32_t width, uint32_t height, VkSampleCo
 }
 
 
-static void create_depth_attachment( uint32_t width, uint32_t height, VkSampleCountFlagBits samples, VkImage *image, VkImageView *image_view, qboolean allowTransient )
+static void create_depth_attachment( uint32_t width, uint32_t height, VkSampleCountFlagBits samples, VkImage *image, VkImageView *image_view, qbool allowTransient )
 {
 	VkImageCreateInfo create_desc;
 	VkMemoryRequirements memory_requirements;
@@ -3846,9 +3846,9 @@ static void vk_destroy_swapchain( void ) {
 
 static void vk_destroy_attachments( void );
 static void vk_destroy_render_passes( void );
-static void vk_destroy_pipelines( qboolean resetCount );
+static void vk_destroy_pipelines( qbool resetCount );
 
-static void vk_restart_swapchain( const char *funcname, VkResult res )
+static void vk_restart_swapchain( const qchar *funcname, VkResult res )
 {
 	uint32_t i;
 
@@ -3896,7 +3896,7 @@ static void vk_set_render_scale( void )
 	{
 		if ( r_renderScale->integer > 0 )
 		{
-			int scaleMode = r_renderScale->integer - 1;
+			qint scaleMode = r_renderScale->integer - 1;
 			if ( scaleMode & 1 )
 			{
 				// preserve aspect ratio (black bars on sides)
@@ -3905,13 +3905,13 @@ static void vk_set_render_scale( void )
 				if ( windowAspect >= renderAspect )
 				{
 					float scale = (float)gls.windowHeight / ( float ) glConfig.vidHeight;
-					int bias = ( gls.windowWidth - scale * (float) glConfig.vidWidth ) / 2;
+					qint bias = ( gls.windowWidth - scale * (float) glConfig.vidWidth ) / 2;
 					vk.blitX0 += bias;
 				}
 				else
 				{
 					float scale = (float)gls.windowWidth / ( float ) glConfig.vidWidth;
-					int bias = ( gls.windowHeight - scale * (float) glConfig.vidHeight ) / 2;
+					qint bias = ( gls.windowHeight - scale * (float) glConfig.vidHeight ) / 2;
 					vk.blitY0 += bias;
 				}
 			}
@@ -3934,8 +3934,8 @@ static void vk_set_render_scale( void )
 
 void vk_initialize( void )
 {
-	char buf[64], driver_version[64];
-	const char *vendor_name;
+	qchar buf[64], driver_version[64];
+	const qchar *vendor_name;
 	VkPhysicalDeviceProperties props;
 	uint32_t major;
 	uint32_t minor;
@@ -4026,7 +4026,7 @@ void vk_initialize( void )
 		}
 
 		if ( maxDedicatedSize != 0 ) {
-			ri.Printf( PRINT_ALL, "...device memory size: %iMB\n", (int)((maxDedicatedSize + (1024 * 1024) - 1) / (1024 * 1024)) );
+			ri.Printf( PRINT_ALL, "...device memory size: %iMB\n", (qint)((maxDedicatedSize + (1024 * 1024) - 1) / (1024 * 1024)) );
 		}
 		if ( maxBARSize != 0 ) {
 			if ( maxBARSize >= 128 * 1024 * 1024 ) {
@@ -4035,7 +4035,7 @@ void vk_initialize( void )
 				vk.defaults.staging_size = STAGING_BUFFER_SIZE_HI;
 			}
 #ifdef _DEBUG
-			ri.Printf( PRINT_ALL, "...BAR memory size: %iMB\n", (int)((maxBARSize + (1024 * 1024) - 1) / (1024 * 1024)) );
+			ri.Printf( PRINT_ALL, "...BAR memory size: %iMB\n", (qint)((maxBARSize + (1024 * 1024) - 1) / (1024 * 1024)) );
 #endif
 		}
 	}
@@ -4456,7 +4456,7 @@ static void vk_destroy_render_passes( void )
 }
 
 
-static void vk_destroy_pipelines( qboolean resetCounter )
+static void vk_destroy_pipelines( qbool resetCounter )
 {
 	uint32_t i, j;
 
@@ -4506,7 +4506,7 @@ static void vk_destroy_pipelines( qboolean resetCounter )
 
 void vk_shutdown( refShutdownCode_t code )
 {
-	int i, j, k, l;
+	qint i, j, k, l;
 
 	if ( qvkQueuePresentKHR == NULL ) { // not fully initialized
 		goto __cleanup;
@@ -4667,7 +4667,7 @@ void vk_queue_wait_idle( void )
 
 
 void vk_release_resources( void ) {
-	int i, j;
+	qint i, j;
 
 	vk_wait_idle();
 
@@ -4739,7 +4739,7 @@ static void record_buffer_memory_barrier(VkCommandBuffer cb, VkBuffer buffer, Vk
 }
 #endif
 
-void vk_create_image( image_t *image, int width, int height, int mip_levels ) {
+void vk_create_image( image_t *image, qint width, qint height, qint mip_levels ) {
 
 	VkFormat format = image->internalFormat;
 
@@ -4824,11 +4824,11 @@ void vk_create_image( image_t *image, int width, int height, int mip_levels ) {
 }
 
 
-static byte *resample_image_data( const int target_format, byte *data, const int data_size, int *bytes_per_pixel )
+static byte *resample_image_data( const qint target_format, byte *data, const qint data_size, qint *bytes_per_pixel )
 {
 	byte* buffer;
 	uint16_t* p;
-	int i, n;
+	qint i, n;
 
 	switch ( target_format ) {
 	case VK_FORMAT_B4G4R4A4_UNORM_PACK16:
@@ -4891,16 +4891,16 @@ static byte *resample_image_data( const int target_format, byte *data, const int
 }
 
 
-void vk_upload_image_data( image_t *image, int x, int y, int width, int height, int mipmaps, byte *pixels, int size, qboolean update ) {
+void vk_upload_image_data( image_t *image, qint x, qint y, qint width, qint height, qint mipmaps, byte *pixels, qint size, qbool update ) {
 
 	VkCommandBuffer   command_buffer;
 	VkBufferImageCopy regions[16];
 	VkBufferImageCopy region;
 	byte *buf;
-	int n;
+	qint n;
 
-	int num_regions = 0;
-	int buffer_size = 0;
+	qint num_regions = 0;
+	qint buffer_size = 0;
 
 	buf = resample_image_data( image->internalFormat, pixels, size, &n /*bpp*/ );
 
@@ -4968,7 +4968,7 @@ void vk_upload_image_data( image_t *image, int x, int y, int width, int height, 
 		VK_CHECK( qvkBeginCommandBuffer( vk.staging_command_buffer, &begin_info ) );
 	}
 
-	//ri.Printf( PRINT_WARNING, "batch @%6i + %i %s \n", (int)vk_world.staging_buffer_offset, (int)buffer_size, image->imgName );
+	//ri.Printf( PRINT_WARNING, "batch @%6i + %i %s \n", (qint)vk_world.staging_buffer_offset, (qint)buffer_size, image->imgName );
 	vk.staging_buffer.offset += buffer_size;
 
 	command_buffer = vk.staging_command_buffer;
@@ -5008,7 +5008,7 @@ void vk_upload_image_data( image_t *image, int x, int y, int width, int height, 
 }
 
 
-void vk_update_descriptor_set( image_t *image, qboolean mipmap ) {
+void vk_update_descriptor_set( image_t *image, qbool mipmap ) {
 	Vk_Sampler_Def sampler_def;
 	VkDescriptorImageInfo image_info;
 	VkWriteDescriptorSet descriptor_write;
@@ -5063,7 +5063,7 @@ void vk_destroy_image_resources( VkImage *image, VkImageView *imageView )
 }
 
 
-static void set_shader_stage_desc(VkPipelineShaderStageCreateInfo *desc, VkShaderStageFlagBits stage, VkShaderModule shader_module, const char *entry) {
+static void set_shader_stage_desc(VkPipelineShaderStageCreateInfo *desc, VkShaderStageFlagBits stage, VkShaderModule shader_module, const qchar *entry) {
 	desc->sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	desc->pNext = NULL;
 	desc->flags = 0;
@@ -5075,7 +5075,7 @@ static void set_shader_stage_desc(VkPipelineShaderStageCreateInfo *desc, VkShade
 
 
 #define FORMAT_DEPTH(format, r_bits, g_bits, b_bits) case(VK_FORMAT_##format): *r = r_bits; *b = b_bits; *g = g_bits; return qtrue;
-static qboolean vk_surface_format_color_depth( VkFormat format, int *r, int *g, int *b ) {
+static qbool vk_surface_format_color_depth( VkFormat format, qint *r, qint *g, qint *b ) {
 	switch (format) {
 		// Common formats from https://vulkan.gpuinfo.org/listsurfaceformats.php
 		FORMAT_DEPTH(B8G8R8A8_UNORM, 255, 255, 255)
@@ -5104,7 +5104,7 @@ static qboolean vk_surface_format_color_depth( VkFormat format, int *r, int *g, 
 }
 
 
-void vk_create_post_process_pipeline( int program_index, uint32_t width, uint32_t height )
+void vk_create_post_process_pipeline( qint program_index, uint32_t width, uint32_t height )
 {
 	VkPipelineShaderStageCreateInfo shader_stages[2];
 	VkPipelineVertexInputStateCreateInfo vertex_input_state;
@@ -5125,8 +5125,8 @@ void vk_create_post_process_pipeline( int program_index, uint32_t width, uint32_
 	VkRenderPass renderpass;
 	VkPipelineLayout layout;
 	VkSampleCountFlagBits samples;
-	const char *pipeline_name;
-	qboolean blend;
+	const qchar *pipeline_name;
+	qbool blend;
 
 	struct FragSpecData {
 		float gamma;
@@ -5134,12 +5134,12 @@ void vk_create_post_process_pipeline( int program_index, uint32_t width, uint32_
 		float greyscale;
 		float bloom_threshold;
 		float bloom_intensity;
-		int bloom_threshold_mode;
-		int bloom_modulate;
-		int dither;
-		int depth_r;
-		int depth_g;
-		int depth_b;
+		qint bloom_threshold_mode;
+		qint bloom_modulate;
+		qint dither;
+		qint depth_r;
+		qint depth_g;
+		qint depth_b;
 	} frag_spec_data;
 
 	switch ( program_index ) {
@@ -5394,7 +5394,7 @@ void vk_create_post_process_pipeline( int program_index, uint32_t width, uint32_
 }
 
 
-void vk_create_blur_pipeline( uint32_t index, uint32_t width, uint32_t height, qboolean horizontal_pass )
+void vk_create_blur_pipeline( uint32_t index, uint32_t width, uint32_t height, qbool horizontal_pass )
 {
 	VkPipelineShaderStageCreateInfo shader_stages[2];
 	VkPipelineVertexInputStateCreateInfo vertex_input_state;
@@ -5608,8 +5608,8 @@ VkPipeline create_pipeline( const Vk_Pipeline_Def *def, renderPass_t renderPassI
 	VkPipeline pipeline;
 	VkPipelineShaderStageCreateInfo shader_stages[2];
 	VkBool32 alphaToCoverage = VK_FALSE;
-	unsigned int atest_bits;
-	unsigned int state_bits = def->state_bits;
+	unsigned qint atest_bits;
+	unsigned qint state_bits = def->state_bits;
 
 	switch ( def->shader_type ) {
 
@@ -6555,7 +6555,7 @@ static uint32_t vk_alloc_pipeline( const Vk_Pipeline_Def *def ) {
 		ri.Error( ERR_DROP, "alloc_pipeline: MAX_VK_PIPELINES reached" );
 		return 0;
 	} else {
-		int j;
+		qint j;
 		pipeline = &vk.pipelines[ vk.pipelines_count ];
 		pipeline->def = *def;
 		for ( j = 0; j < RENDER_PASS_COUNT; j++ ) {
@@ -6581,7 +6581,7 @@ VkPipeline vk_gen_pipeline( uint32_t index ) {
 }
 
 
-uint32_t vk_find_pipeline_ext( uint32_t base, const Vk_Pipeline_Def *def, qboolean use ) {
+uint32_t vk_find_pipeline_ext( uint32_t base, const Vk_Pipeline_Def *def, qbool use ) {
 	const Vk_Pipeline_Def *cur_def;
 	uint32_t index;
 
@@ -6760,7 +6760,7 @@ void vk_clear_color( const vec4_t color ) {
 }
 
 
-void vk_clear_depth( qboolean clear_stencil ) {
+void vk_clear_depth( qbool clear_stencil ) {
 
 	VkClearAttachment attachment;
 	VkClearRect clear_rect[1];
@@ -6810,10 +6810,10 @@ void vk_update_mvp( const float *m ) {
 
 
 static VkBuffer shade_bufs[8];
-static int bind_base;
-static int bind_count;
+static qint bind_base;
+static qint bind_count;
 
-static void vk_bind_index_attr( int index )
+static void vk_bind_index_attr( qint index )
 {
 	if ( bind_base == -1 ) {
 		bind_base = index;
@@ -6824,7 +6824,7 @@ static void vk_bind_index_attr( int index )
 }
 
 
-static void vk_bind_attr( int index, unsigned int item_size, const void *src ) {
+static void vk_bind_attr( qint index, unsigned qint item_size, const void *src ) {
 	const uint32_t offset = PAD( vk.cmd->vertex_buffer_offset, 32 );
 	const uint32_t size = tess.numVertexes * item_size;
 
@@ -6889,7 +6889,7 @@ void vk_bind_index( void )
 }
 
 
-void vk_bind_index_ext( const int numIndexes, const uint32_t *indexes )
+void vk_bind_index_ext( const qint numIndexes, const uint32_t *indexes )
 {
 	uint32_t offset	= vk_tess_index( numIndexes, indexes );
 	if ( offset != ~0U ) {
@@ -6904,7 +6904,7 @@ void vk_bind_index_ext( const int numIndexes, const uint32_t *indexes )
 
 void vk_bind_geometry( uint32_t flags )
 {
-	//unsigned int size;
+	//unsigned qint size;
 	bind_base = -1;
 	bind_count = 0;
 
@@ -7000,7 +7000,7 @@ void vk_bind_geometry( uint32_t flags )
 }
 
 
-void vk_bind_lighting( int stage, int bundle )
+void vk_bind_lighting( qint stage, qint bundle )
 {
 	bind_base = -1;
 	bind_count = 0;
@@ -7031,13 +7031,13 @@ void vk_bind_lighting( int stage, int bundle )
 }
 
 
-void vk_reset_descriptor( int index )
+void vk_reset_descriptor( qint index )
 {
 	vk.cmd->descriptor_set.current[ index ] = VK_NULL_HANDLE;
 }
 
 
-void vk_update_descriptor( int index, VkDescriptorSet descriptor )
+void vk_update_descriptor( qint index, VkDescriptorSet descriptor )
 {
 	if ( vk.cmd->descriptor_set.current[ index ] != descriptor ) {
 		vk.cmd->descriptor_set.start = ( index < vk.cmd->descriptor_set.start ) ? index : vk.cmd->descriptor_set.start;
@@ -7047,7 +7047,7 @@ void vk_update_descriptor( int index, VkDescriptorSet descriptor )
 }
 
 
-void vk_update_descriptor_offset( int index, uint32_t offset )
+void vk_update_descriptor_offset( qint index, uint32_t offset )
 {
 	vk.cmd->descriptor_set.offset[ index ] = offset;
 }
@@ -7119,7 +7119,7 @@ static void vk_update_depth_range( Vk_Depth_Range depth_range )
 }
 
 
-void vk_draw_geometry( Vk_Depth_Range depth_range, qboolean indexed ) {
+void vk_draw_geometry( Vk_Depth_Range depth_range, qbool indexed ) {
 
 	if ( vk.geometry_buffer_size_new ) {
 		// geometry buffer overflow happened this frame
@@ -7161,7 +7161,7 @@ void vk_draw_dot( uint32_t storage_offset )
 }
 
 
-static void vk_begin_render_pass( VkRenderPass renderPass, VkFramebuffer frameBuffer, qboolean clearValues, uint32_t width, uint32_t height )
+static void vk_begin_render_pass( VkRenderPass renderPass, VkFramebuffer frameBuffer, qbool clearValues, uint32_t width, uint32_t height )
 {
 	VkRenderPassBeginInfo render_pass_begin_info;
 	VkClearValue clear_values[3];
@@ -7294,7 +7294,7 @@ void vk_end_render_pass( void )
 }
 
 
-static qboolean vk_find_screenmap_drawsurfs( void )
+static qbool vk_find_screenmap_drawsurfs( void )
 {
 	const void *curCmd = &backEndData->commands.cmds;
 	const drawBufferCommand_t *db_cmd;
@@ -7302,7 +7302,7 @@ static qboolean vk_find_screenmap_drawsurfs( void )
 
 	for ( ;; ) {
 		curCmd = PADP( curCmd, sizeof(void *) );
-		switch ( *(const int *)curCmd ) {
+		switch ( *(const qint *)curCmd ) {
 			case RC_DRAW_BUFFER:
 				db_cmd = (const drawBufferCommand_t *)curCmd;
 				curCmd = (const void *)(db_cmd + 1);
@@ -7351,7 +7351,7 @@ void vk_begin_frame( void )
 	}
 
 	if ( !ri.CL_IsMinimized() && !vk.cmd->swapchain_image_acquired ) {
-		qboolean retry = qfalse;
+		qbool retry = qfalse;
 _retry:
 		res = qvkAcquireNextImageKHR( vk.device, vk.swapchain, 1 * 1000000000ULL, vk.cmd->image_acquired, VK_NULL_HANDLE, &vk.cmd->swapchain_image_index );
 		// when running via RDP: "Application has already acquired the maximum number of images (0x2)"
@@ -7430,7 +7430,7 @@ _retry:
 
 static void vk_resize_geometry_buffer( void )
 {
-	int i;
+	qint i;
 
 	vk_end_render_pass();
 
@@ -7448,7 +7448,7 @@ static void vk_resize_geometry_buffer( void )
 	for ( i = 0; i < NUM_COMMAND_BUFFERS; i++ )
 		vk_update_uniform_descriptor( vk.tess[ i ].uniform_descriptor, vk.tess[ i ].vertex_buffer );
 
-	ri.Printf( PRINT_DEVELOPER, "...geometry buffer resized to %iK\n", (int)( vk.geometry_buffer_size / 1024 ) );
+	ri.Printf( PRINT_DEVELOPER, "...geometry buffer resized to %iK\n", (qint)( vk.geometry_buffer_size / 1024 ) );
 }
 
 
@@ -7631,7 +7631,7 @@ void vk_present_frame( void )
 }
 
 
-static qboolean is_bgr( VkFormat format ) {
+static qbool is_bgr( VkFormat format ) {
 	switch ( format ) {
 		case VK_FORMAT_B8G8R8A8_UNORM:
 		case VK_FORMAT_B8G8R8A8_SNORM:
@@ -7664,7 +7664,7 @@ void vk_read_pixels( byte *buffer, uint32_t width, uint32_t height )
 	byte *data;
 	uint32_t pixel_width;
 	uint32_t i, n;
-	qboolean invalidate_ptr;
+	qbool invalidate_ptr;
 
 	VK_CHECK( qvkWaitForFences( vk.device, 1, &vk.cmd->rendering_finished_fence, VK_FALSE, 1e12 ) );
 
@@ -7886,7 +7886,7 @@ void vk_read_pixels( byte *buffer, uint32_t width, uint32_t height )
 }
 
 
-qboolean vk_bloom( void )
+qbool vk_bloom( void )
 {
 	uint32_t i;
 

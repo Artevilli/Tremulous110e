@@ -28,10 +28,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 
 typedef struct {
-	int			oldButtonState;
+	qint			oldButtonState;
 
-	qboolean	mouseActive;
-	qboolean	mouseInitialized;
+	qbool	mouseActive;
+	qbool	mouseInitialized;
 } WinMouseVars_t;
 
 static WinMouseVars_t s_wmv;
@@ -49,7 +49,7 @@ static void IN_ShutdownMIDI( void );
 #define MAX_MIDIIN_DEVICES	8
 
 typedef struct {
-	int			numDevices;
+	qint			numDevices;
 	MIDIINCAPS	caps[MAX_MIDIIN_DEVICES];
 
 	HMIDIIN		hMidiIn;
@@ -65,12 +65,12 @@ static MidiInfo_t s_midiInfo;
 #define	JOY_MAX_AXES		6				// X, Y, Z, R, U, V
 
 typedef struct {
-	qboolean	avail;
-	int			id;			// joystick number
+	qbool	avail;
+	qint			id;			// joystick number
 	JOYCAPS		jc;
 
-	int			oldbuttonstate;
-	int			oldpovstate;
+	qint			oldbuttonstate;
+	qint			oldpovstate;
 
 	JOYINFOEX	ji;
 } joystickInfo_t;
@@ -124,7 +124,7 @@ WIN32 MOUSE CONTROL
 IN_MouseActive
 ================
 */
-qboolean IN_MouseActive( void )
+qbool IN_MouseActive( void )
 {
 	return ( s_wmv.mouseActive && in_nograb->integer == 0 );
 }
@@ -138,7 +138,7 @@ Called when window gets resized/moved
 Updates window center and clip region
 ================
 */
-void IN_UpdateWindow( RECT *window_rect, qboolean updateClipRegion )
+void IN_UpdateWindow( RECT *window_rect, qbool updateClipRegion )
 {
 	RECT rect;
 
@@ -147,7 +147,7 @@ void IN_UpdateWindow( RECT *window_rect, qboolean updateClipRegion )
 
 	if ( GetClientRect( g_wv.hWnd, window_rect ) ) {
 		POINT pos;
-		int sx = 0, sy = 0;
+		qint sx = 0, sy = 0;
 
 		pos.x = window_rect->left;
 		pos.y = window_rect->top;
@@ -266,7 +266,7 @@ static void IN_DeactivateWin32Mouse( void )
 IN_Win32Mouse
 ================
 */
-static void IN_Win32Mouse( int *mx, int *my ) 
+static void IN_Win32Mouse( qint *mx, qint *my ) 
 {
 	POINT		current_pos;
 
@@ -354,7 +354,7 @@ static void IN_ActivateRawMouse( void )
 	RECT		window_rect;
 	RAWINPUTDEVICE Rid;
 	UINT num;
-	int cnt;
+	qint cnt;
 
 	if ( raw_activated )
 	{
@@ -400,7 +400,7 @@ static void IN_ActivateRawMouse( void )
 IN_RawMouse
 ================
 */
-static void IN_RawMouse( int *mx, int *my ) {
+static void IN_RawMouse( qint *mx, qint *my ) {
 
 	*mx = g_wv.raw_mx;
 	*my = g_wv.raw_my;
@@ -496,16 +496,16 @@ static DIDATAFORMAT	df = {
 static LPDIRECTINPUT		g_pdi;
 static LPDIRECTINPUTDEVICE	g_pMouse;
 
-static void IN_DIMouse( int *mx, int *my );
+static void IN_DIMouse( qint *mx, qint *my );
 
 /*
 ========================
 IN_InitDIMouse
 ========================
 */
-static qboolean IN_InitDIMouse( void ) {
+static qbool IN_InitDIMouse( void ) {
     HRESULT		hr;
-	int			x, y;
+	qint			x, y;
 	DIPROPDWORD	dipdw = {
 		{
 			sizeof(DIPROPDWORD),        // diph.dwSize
@@ -654,12 +654,12 @@ static void IN_DeactivateDIMouse( void ) {
 IN_DIMouse
 ===================
 */
-static void IN_DIMouse( int *mx, int *my ) {
+static void IN_DIMouse( qint *mx, qint *my ) {
 	DIDEVICEOBJECTDATA	od;
 	DIMOUSESTATE		state;
 	DWORD				dwElements;
 	HRESULT				hr;
-	int value;
+	qint value;
 
 	if ( !g_pMouse ) {
 		return;
@@ -851,9 +851,9 @@ static void IN_StartupMouse( void )
 IN_Win32MouseEvent
 ===========
 */
-void IN_Win32MouseEvent( int x, int y, int mstate )
+void IN_Win32MouseEvent( qint x, qint y, qint mstate )
 {
-	int dx, dy;
+	qint dx, dy;
 
 	if ( in_lagged->integer ) {
 		
@@ -969,7 +969,7 @@ IN_MouseMove
 ===========
 */
 static void IN_MouseMove( void ) {
-	int		mx = 0, my = 0;
+	qint		mx = 0, my = 0;
 
 	if ( g_pMouse ) {
 		IN_DIMouse( &mx, &my );
@@ -1004,22 +1004,22 @@ static void IN_MouseMove( void ) {
 	in_minimize processing
 */
 
-extern int HotKey;
+extern qint HotKey;
 extern void Win_RemoveHotkey( void );
 extern void Win_AddHotkey( void );
 
-extern int Win32_GetKey( const char **s, char *buf, int buflen );
+extern qint Win32_GetKey( const qchar **s, qchar *buf, qint buflen );
 
 /*
 =========================================================================
 
 =========================================================================
 */
-static void IN_GetHotkey( cvar_t *var, int *pHotKey ) {
+static void IN_GetHotkey( cvar_t *var, qint *pHotKey ) {
 
-	char	kset[256], buf[64];
-	const char *s;
-	int		i, code;
+	qchar	kset[256], buf[64];
+	const qchar *s;
+	qint		i, code;
 
 	if ( !pHotKey )
 		return;
@@ -1219,7 +1219,7 @@ The window may have been destroyed and recreated
 between a deactivate and an activate.
 ===========
 */
-void IN_Activate( qboolean active ) {
+void IN_Activate( qbool active ) {
 
 	if ( !active ) {
 		IN_DeactivateMouse();
@@ -1298,7 +1298,7 @@ IN_StartupJoystick
 =============== 
 */  
 void IN_StartupJoystick (void) { 
-	int			numdevs;
+	qint			numdevs;
 	MMRESULT	mmr;
 
 	// assume no joystick
@@ -1371,7 +1371,7 @@ void IN_StartupJoystick (void) {
 JoyToF
 ===========
 */
-float JoyToF( int value ) {
+float JoyToF( qint value ) {
 	float	fValue;
 
 	// move centerpoint to zero
@@ -1389,14 +1389,14 @@ float JoyToF( int value ) {
 	return fValue;
 }
 
-int JoyToI( int value ) {
+qint JoyToI( qint value ) {
 	// move centerpoint to zero
 	value -= 32768;
 
 	return value;
 }
 
-int	joyDirectionKeys[16] = {
+qint	joyDirectionKeys[16] = {
 	K_LEFTARROW, K_RIGHTARROW,
 	K_UPARROW, K_DOWNARROW,
 	K_JOY16, K_JOY17,
@@ -1415,9 +1415,9 @@ IN_JoyMove
 */
 void IN_JoyMove( void ) {
 	float	fAxisValue;
-	int		i;
+	qint		i;
 	DWORD	buttonstate, povstate;
-	int		x, y;
+	qint		x, y;
 
 	// verify joystick is available and that the user wants to use it
 	if ( !joy.avail ) {
@@ -1520,9 +1520,9 @@ MIDI
 */
 
 #ifdef USE_MIDI
-static void MIDI_NoteOff( int note )
+static void MIDI_NoteOff( qint note )
 {
-	int qkey;
+	qint qkey;
 
 	qkey = note - 60 + K_AUX1;
 
@@ -1532,9 +1532,9 @@ static void MIDI_NoteOff( int note )
 	Sys_QueEvent( g_wv.sysMsgTime, SE_KEY, qkey, qfalse, 0, NULL );
 }
 
-static void MIDI_NoteOn( int note, int velocity )
+static void MIDI_NoteOn( qint note, qint velocity )
 {
-	int qkey;
+	qint qkey;
 
 	if ( velocity == 0 )
 		MIDI_NoteOff( note );
@@ -1550,7 +1550,7 @@ static void MIDI_NoteOn( int note, int velocity )
 static void CALLBACK MidiInProc( HMIDIIN hMidiIn, UINT uMsg, DWORD dwInstance, 
 								 DWORD dwParam1, DWORD dwParam2 )
 {
-	int message;
+	qint message;
 
 	switch ( uMsg )
 	{
@@ -1586,9 +1586,9 @@ static void CALLBACK MidiInProc( HMIDIIN hMidiIn, UINT uMsg, DWORD dwInstance,
 
 static void MidiInfo_f( void )
 {
-	int i;
+	qint i;
 
-	const char *enableStrings[] = { "disabled", "enabled" };
+	const qchar *enableStrings[] = { "disabled", "enabled" };
 
 	Com_Printf( "\nMIDI control:       %s\n", enableStrings[in_midi->integer != 0] );
 	Com_Printf( "port:               %d\n", in_midiport->integer );
@@ -1611,7 +1611,7 @@ static void MidiInfo_f( void )
 
 static void IN_StartupMIDI( void )
 {
-	int i;
+	qint i;
 
 	if ( !Cvar_VariableIntegerValue( "in_midi" ) )
 		return;
@@ -1636,7 +1636,7 @@ static void IN_StartupMIDI( void )
 					 CALLBACK_FUNCTION ) != MMSYSERR_NOERROR )
 	{
 		Com_DPrintf( "WARNING: could not open MIDI device %d: '%s'\n",
-								in_mididevice->integer , s_midiInfo.caps[( int ) in_mididevice->value].szPname );
+								in_mididevice->integer , s_midiInfo.caps[( qint ) in_mididevice->value].szPname );
 		return;
 	}
 

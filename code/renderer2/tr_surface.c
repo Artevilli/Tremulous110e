@@ -45,7 +45,7 @@ use the shader system.
 RB_CheckOverflow
 ==============
 */
-void RB_CheckOverflow( int verts, int indexes ) {
+void RB_CheckOverflow( qint verts, qint indexes ) {
 	if (tess.numVertexes + verts < SHADER_MAX_VERTEXES
 		&& tess.numIndexes + indexes < SHADER_MAX_INDEXES) {
 		return;
@@ -87,7 +87,7 @@ void RB_AddQuadStampExt( const vec3_t origin, const vec3_t left, const vec3_t up
 	vec3_t		normal;
 	int16_t     iNormal[4];
 	uint16_t    iColor[4];
-	int			ndx;
+	qint			ndx;
 
 	RB_CheckVao(tess.vao);
 
@@ -280,8 +280,8 @@ RB_SurfacePolychain
 =============
 */
 static void RB_SurfacePolychain( const srfPoly_t *p ) {
-	int		i;
-	int		numv;
+	qint		i;
+	qint		numv;
 
 	RB_CheckVao(tess.vao);
 
@@ -293,10 +293,10 @@ static void RB_SurfacePolychain( const srfPoly_t *p ) {
 		VectorCopy( p->verts[i].xyz, tess.xyz[numv] );
 		tess.texCoords[numv][0] = p->verts[i].st[0];
 		tess.texCoords[numv][1] = p->verts[i].st[1];
-		tess.color[numv][0] = (int)p->verts[i].modulate.rgba[0] * 257;
-		tess.color[numv][1] = (int)p->verts[i].modulate.rgba[1] * 257;
-		tess.color[numv][2] = (int)p->verts[i].modulate.rgba[2] * 257;
-		tess.color[numv][3] = (int)p->verts[i].modulate.rgba[3] * 257;
+		tess.color[numv][0] = (qint)p->verts[i].modulate.rgba[0] * 257;
+		tess.color[numv][1] = (qint)p->verts[i].modulate.rgba[1] * 257;
+		tess.color[numv][2] = (qint)p->verts[i].modulate.rgba[2] * 257;
+		tess.color[numv][3] = (qint)p->verts[i].modulate.rgba[3] * 257;
 
 		numv++;
 	}
@@ -312,9 +312,9 @@ static void RB_SurfacePolychain( const srfPoly_t *p ) {
 	tess.numVertexes = numv;
 }
 
-static void RB_SurfaceVertsAndIndexes( int numVerts, srfVert_t *verts, int numIndexes, glIndex_t *indexes, int dlightBits, int pshadowBits)
+static void RB_SurfaceVertsAndIndexes( qint numVerts, srfVert_t *verts, qint numIndexes, glIndex_t *indexes, qint dlightBits, qint pshadowBits)
 {
-	int             i;
+	qint             i;
 	glIndex_t      *inIndex;
 	srfVert_t      *dv;
 	float          *xyz, *texCoords, *lightCoords;
@@ -403,11 +403,11 @@ static void RB_SurfaceVertsAndIndexes( int numVerts, srfVert_t *verts, int numIn
 	tess.numVertexes += numVerts;
 }
 
-static qboolean RB_SurfaceVaoCached(int numVerts, srfVert_t *verts, int numIndexes, glIndex_t *indexes, int dlightBits, int pshadowBits)
+static qbool RB_SurfaceVaoCached(qint numVerts, srfVert_t *verts, qint numIndexes, glIndex_t *indexes, qint dlightBits, qint pshadowBits)
 {
-	qboolean recycleVertexBuffer = qfalse;
-	qboolean recycleIndexBuffer = qfalse;
-	qboolean endSurface = qfalse;
+	qbool recycleVertexBuffer = qfalse;
+	qbool recycleIndexBuffer = qfalse;
+	qbool endSurface = qfalse;
 
 	if (!(!ShaderRequiresCPUDeforms(tess.shader) && !tess.shader->isSky && !tess.shader->isPortal))
 		return qfalse;
@@ -475,7 +475,7 @@ static void RB_SurfaceBeam( void )
 #define NUM_BEAM_SEGS 6
 	const refEntity_t *e;
 	shaderProgram_t *sp = &tr.textureColorShader;
-	int	i;
+	qint	i;
 	vec3_t perpvec;
 	vec3_t direction, normalized_direction;
 	vec3_t	start_points[NUM_BEAM_SEGS], end_points[NUM_BEAM_SEGS];
@@ -556,7 +556,7 @@ static void RB_SurfaceBeam( void )
 static void DoRailCore( const vec3_t start, const vec3_t end, const vec3_t up, float len, float spanWidth )
 {
 	float		spanWidth2;
-	int			vbase;
+	qint			vbase;
 	float		t = len / 256.0f;
 
 	RB_CheckVao(tess.vao);
@@ -610,12 +610,12 @@ static void DoRailCore( const vec3_t start, const vec3_t end, const vec3_t up, f
 	tess.indexes[tess.numIndexes++] = vbase + 3;
 }
 
-static void DoRailDiscs( int numSegs, const vec3_t start, const vec3_t dir, const vec3_t right, const vec3_t up )
+static void DoRailDiscs( qint numSegs, const vec3_t start, const vec3_t dir, const vec3_t right, const vec3_t up )
 {
-	int i;
+	qint i;
 	vec3_t	pos[4];
 	vec3_t	v;
-	int		spanWidth = r_railWidth->integer;
+	qint		spanWidth = r_railWidth->integer;
 	float c, s;
 	float		scale;
 
@@ -646,7 +646,7 @@ static void DoRailDiscs( int numSegs, const vec3_t start, const vec3_t dir, cons
 
 	for ( i = 0; i < numSegs; i++ )
 	{
-		int j;
+		qint j;
 
 		RB_CHECKOVERFLOW( 4, 6 );
 
@@ -677,8 +677,8 @@ static void DoRailDiscs( int numSegs, const vec3_t start, const vec3_t dir, cons
 */
 static void RB_SurfaceRailRings( void ) {
 	const refEntity_t *e;
-	int			numSegs;
-	int			len;
+	qint			numSegs;
+	qint			len;
 	vec3_t		vec;
 	vec3_t		right, up;
 	vec3_t		start, end;
@@ -707,7 +707,7 @@ static void RB_SurfaceRailRings( void ) {
 */
 static void RB_SurfaceRailCore( void ) {
 	const refEntity_t *e;
-	int			len;
+	qint			len;
 	vec3_t		right;
 	vec3_t		vec;
 	vec3_t		start, end;
@@ -737,12 +737,12 @@ static void RB_SurfaceRailCore( void ) {
 */
 static void RB_SurfaceLightningBolt( void ) {
 	const refEntity_t *e;
-	int			len;
+	qint			len;
 	vec3_t		right;
 	vec3_t		vec;
 	vec3_t		start, end;
 	vec3_t		v1, v2;
-	int			i;
+	qint			i;
 
 	e = &backEnd.currentEntity->e;
 
@@ -776,7 +776,7 @@ static void LerpMeshVertexes(const mdvSurface_t *surf, float backlerp)
 	float *outXyz;
 	int16_t *outNormal, *outTangent;
 	mdvVertex_t *newVerts;
-	int		vertNum;
+	qint		vertNum;
 
 	newVerts = surf->verts + backEnd.currentEntity->e.frame * surf->numVerts;
 
@@ -843,11 +843,11 @@ RB_SurfaceMesh
 =============
 */
 static void RB_SurfaceMesh(const mdvSurface_t *surface) {
-	int				j;
+	qint				j;
 	float			backlerp;
 	mdvSt_t			*texCoords;
-	int				Bob, Doug;
-	int				numVerts;
+	qint				Bob, Doug;
+	qint				numVerts;
 
 	if (  backEnd.currentEntity->e.oldframe == backEnd.currentEntity->e.frame ) {
 		backlerp = 0;
@@ -937,7 +937,7 @@ Just copy the grid of points and triangulate
 =============
 */
 static void RB_SurfaceGrid( srfBspSurface_t *srf ) {
-	int		i, j;
+	qint		i, j;
 	float	*xyz;
 	float	*texCoords, *lightCoords;
 	int16_t *normal;
@@ -945,16 +945,16 @@ static void RB_SurfaceGrid( srfBspSurface_t *srf ) {
 	uint16_t *color;
 	int16_t *lightdir;
 	const srfVert_t	*dv;
-	int		rows, irows, vrows;
-	int		used;
-	int		widthTable[MAX_GRID_SIZE];
-	int		heightTable[MAX_GRID_SIZE];
+	qint		rows, irows, vrows;
+	qint		used;
+	qint		widthTable[MAX_GRID_SIZE];
+	qint		heightTable[MAX_GRID_SIZE];
 	float	lodError;
-	int		lodWidth, lodHeight;
-	int		numVertexes;
-	int		dlightBits;
-	int     pshadowBits;
-	//int		*vDlightBits;
+	qint		lodWidth, lodHeight;
+	qint		numVertexes;
+	qint		dlightBits;
+	qint     pshadowBits;
+	//qint		*vDlightBits;
 
 	if (RB_SurfaceVaoCached(srf->numVerts, srf->verts, srf->numIndexes,
 		srf->indexes, srf->dlightBits, srf->pshadowBits))
@@ -1090,15 +1090,15 @@ static void RB_SurfaceGrid( srfBspSurface_t *srf ) {
 
 		// add the indexes
 		{
-			int		numIndexes;
-			int		w, h;
+			qint		numIndexes;
+			qint		w, h;
 
 			h = rows - 1;
 			w = lodWidth - 1;
 			numIndexes = tess.numIndexes;
 			for (i = 0 ; i < h ; i++) {
 				for (j = 0 ; j < w ; j++) {
-					int		v1, v2, v3, v4;
+					qint		v1, v2, v3, v4;
 			
 					// vertex order to be reckognized as tristrips
 					v1 = numVertexes + i*lodWidth + j + 1;
@@ -1242,7 +1242,7 @@ static void RB_SurfaceVaoMdvMesh(const srfVaoMdvMesh_t * surface)
 
 	if (surface->mdvModel->numFrames > 1)
 	{
-		int frameOffset, attribIndex;
+		qint frameOffset, attribIndex;
 		vaoAttrib_t *vAtb;
 
 		glState.vertexAnimation = qtrue;

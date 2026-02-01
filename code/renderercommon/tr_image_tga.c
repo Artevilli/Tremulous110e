@@ -32,18 +32,18 @@ TGA files are used for 24/32 bit images
 */
 
 typedef struct _TargaHeader {
-	unsigned char 	id_length, colormap_type, image_type;
+	unsigned qchar 	id_length, colormap_type, image_type;
 	unsigned short	colormap_index, colormap_length;
-	unsigned char	colormap_size;
+	unsigned qchar	colormap_size;
 	unsigned short	x_origin, y_origin, width, height;
-	unsigned char	pixel_size, attributes;
+	unsigned qchar	pixel_size, attributes;
 } TargaHeader;
 
-void R_LoadTGA ( const char *name, byte **pic, int *width, int *height)
+void R_LoadTGA ( const qchar *name, byte **pic, qint *width, qint *height)
 {
 	unsigned	columns, rows, numPixels;
 	byte	*pixbuf;
-	int		row, column;
+	qint		row, column;
 	byte	*buf_p;
 	byte	*end;
 	union {
@@ -52,7 +52,7 @@ void R_LoadTGA ( const char *name, byte **pic, int *width, int *height)
 	} buffer;
 	TargaHeader	targa_header;
 	byte		*targa_rgba;
-	int length;
+	qint length;
 
 	*pic = NULL;
 
@@ -64,7 +64,7 @@ void R_LoadTGA ( const char *name, byte **pic, int *width, int *height)
 	//
 	// load the file
 	//
-	length = ri.FS_ReadFile ( ( char * ) name, &buffer.v);
+	length = ri.FS_ReadFile ( ( qchar * ) name, &buffer.v);
 	if (!buffer.b || length < 0) {
 		return;
 	}
@@ -195,7 +195,7 @@ void R_LoadTGA ( const char *name, byte **pic, int *width, int *height)
 		}
 	}
 	else if (targa_header.image_type==10) {   // Runlength encoded RGB images
-		unsigned char red,green,blue,alphabyte,packetHeader,packetSize,j;
+		unsigned qchar red,green,blue,alphabyte,packetHeader,packetSize,j;
 
 		for(row=rows-1; row>=0; row--) {
 			pixbuf = targa_rgba + row*columns*4;
@@ -232,7 +232,7 @@ void R_LoadTGA ( const char *name, byte **pic, int *width, int *height)
 						*pixbuf++=blue;
 						*pixbuf++=alphabyte;
 						column++;
-						if ((unsigned int)column==columns) { // run spans across rows
+						if ((unsigned qint)column==columns) { // run spans across rows
 							column=0;
 							if (row>0)
 								row--;
@@ -272,7 +272,7 @@ void R_LoadTGA ( const char *name, byte **pic, int *width, int *height)
 								break;
 						}
 						column++;
-						if ((unsigned int)column==columns) { // pixel packet run spans across rows
+						if ((unsigned qint)column==columns) { // pixel packet run spans across rows
 							column=0;
 							if (row>0)
 								row--;
@@ -291,8 +291,8 @@ void R_LoadTGA ( const char *name, byte **pic, int *width, int *height)
   // TTimo: this is the chunk of code to ensure a behavior that meets TGA specs
   // bit 5 set => top-down
   if (targa_header.attributes & 0x20) {
-    unsigned char *flip = (unsigned char*)malloc (columns*4);
-    unsigned char *src, *dst;
+    unsigned qchar *flip = (unsigned qchar*)malloc (columns*4);
+    unsigned qchar *src, *dst;
 
     for (row = 0; row < rows/2; row++) {
       src = targa_rgba + row * 4 * columns;

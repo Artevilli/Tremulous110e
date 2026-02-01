@@ -25,18 +25,18 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "snd_local.h"
 
 static portable_samplepair_t paintbuffer[PAINTBUFFER_SIZE];
-static int snd_vol;
+static qint snd_vol;
 
 // bk001119 - these not static, required by unix/snd_mixa.s
-int		*snd_p;
-int		snd_linear_count;
+qint		*snd_p;
+qint		snd_linear_count;
 short	*snd_out;
 
 void S_WriteLinearBlastStereo16( void )
 {
-	int		i;
-	int		val;
-	int		*src = snd_p;
+	qint		i;
+	qint		val;
+	qint		*src = snd_p;
 	short	*dst = snd_out;
 	for ( i = 0; i < snd_linear_count; i++, src++, dst++ )
 	{
@@ -266,15 +266,15 @@ LExit:
 #endif // id386
 
 #if idx64 && (!defined (_MSC_VER) || defined(USE_WIN32_ASM))
-void S_WriteLinearBlastStereo16_SSE_x64( int*, short*, int );
+void S_WriteLinearBlastStereo16_SSE_x64( qint*, short*, qint );
 #endif
 
-void S_TransferStereo16( unsigned long *pbuf, int endtime )
+void S_TransferStereo16( unsigned long *pbuf, qint endtime )
 {
-	int		lpos;
-	int		ls_paintedtime;
+	qint		lpos;
+	qint		ls_paintedtime;
 
-	snd_p = (int *) paintbuffer;
+	snd_p = (qint *) paintbuffer;
 	ls_paintedtime = s_paintedtime;
 
 	while (ls_paintedtime < endtime)
@@ -316,14 +316,14 @@ S_TransferPaintBuffer
 
 ===================
 */
-static void S_TransferPaintBuffer( int endtime, byte *buffer )
+static void S_TransferPaintBuffer( qint endtime, byte *buffer )
 {
-	int 	out_idx;
-	int 	i, count;
-	int 	out_mask;
-	int 	*p;
-	int 	step;
-	int		val;
+	qint 	out_idx;
+	qint 	i, count;
+	qint 	out_mask;
+	qint 	*p;
+	qint 	step;
+	qint		val;
 	unsigned long *pbuf;
 
 	pbuf = (unsigned long *)buffer;
@@ -341,7 +341,7 @@ static void S_TransferPaintBuffer( int endtime, byte *buffer )
 	}
 	else
 	{	// general case
-		p = (int *) paintbuffer;
+		p = (qint *) paintbuffer;
 		count = (endtime - s_paintedtime) * dma.channels;
 		out_mask = dma.samples - 1; 
 		out_idx = ( s_paintedtime * dma.channels ) & out_mask;
@@ -381,7 +381,7 @@ static void S_TransferPaintBuffer( int endtime, byte *buffer )
 		}
 		else if (dma.samplebits == 8)
 		{
-			unsigned char *out = (unsigned char *) pbuf;
+			unsigned qchar *out = (unsigned qchar *) pbuf;
 			while ( count-- > 0 )
 			{
 				val = *p >> 8;
@@ -401,7 +401,7 @@ static void S_TransferPaintBuffer( int endtime, byte *buffer )
 		count = (clc.aviFrameEndTime - s_paintedtime) * dma.channels;
 		out_idx = ( s_paintedtime * dma.channels ) % dma.samples;
 		while ( count > 0 ) {
-			int n = count;
+			qint n = count;
 			if ( n + out_idx > dma.samples )
 				n = dma.samples - out_idx;
 			CL_WriteAVIAudioFrame( buffer + out_idx * dma.samplebits / 8, n * dma.samplebits / 8 );
@@ -419,10 +419,10 @@ CHANNEL MIXING
 
 ===============================================================================
 */
-static void S_PaintChannelFrom16_scalar( channel_t *ch, const sfx_t *sc, int count, int sampleOffset, int bufferOffset ) {
-	int						data, aoff, boff;
-	int						leftvol, rightvol;
-	int						i, j;
+static void S_PaintChannelFrom16_scalar( channel_t *ch, const sfx_t *sc, qint count, qint sampleOffset, qint bufferOffset ) {
+	qint						data, aoff, boff;
+	qint						leftvol, rightvol;
+	qint						i, j;
 	portable_samplepair_t	*samp;
 	sndBuffer				*chunk;
 	short					*samples;
@@ -515,16 +515,16 @@ static void S_PaintChannelFrom16_scalar( channel_t *ch, const sfx_t *sc, int cou
 }
 
 
-static void S_PaintChannelFrom16( channel_t *ch, const sfx_t *sc, int count, int sampleOffset, int bufferOffset ) 
+static void S_PaintChannelFrom16( channel_t *ch, const sfx_t *sc, qint count, qint sampleOffset, qint bufferOffset ) 
 {
 	S_PaintChannelFrom16_scalar( ch, sc, count, sampleOffset, bufferOffset );
 }
 
 
-static void S_PaintChannelFromWavelet( channel_t *ch, sfx_t *sc, int count, int sampleOffset, int bufferOffset ) {
-	int						data;
-	int						leftvol, rightvol;
-	int						i;
+static void S_PaintChannelFromWavelet( channel_t *ch, sfx_t *sc, qint count, qint sampleOffset, qint bufferOffset ) {
+	qint						data;
+	qint						leftvol, rightvol;
+	qint						i;
 	portable_samplepair_t	*samp;
 	sndBuffer				*chunk;
 	short					*samples;
@@ -564,10 +564,10 @@ static void S_PaintChannelFromWavelet( channel_t *ch, sfx_t *sc, int count, int 
 }
 
 
-static void S_PaintChannelFromADPCM( channel_t *ch, sfx_t *sc, int count, int sampleOffset, int bufferOffset ) {
-	int						data;
-	int						leftvol, rightvol;
-	int						i;
+static void S_PaintChannelFromADPCM( channel_t *ch, sfx_t *sc, qint count, qint sampleOffset, qint bufferOffset ) {
+	qint						data;
+	qint						leftvol, rightvol;
+	qint						i;
 	portable_samplepair_t	*samp;
 	sndBuffer				*chunk;
 	short					*samples;
@@ -612,10 +612,10 @@ static void S_PaintChannelFromADPCM( channel_t *ch, sfx_t *sc, int count, int sa
 }
 
 
-static void S_PaintChannelFromMuLaw( channel_t *ch, sfx_t *sc, int count, int sampleOffset, int bufferOffset ) {
-	int						data;
-	int						leftvol, rightvol;
-	int						i;
+static void S_PaintChannelFromMuLaw( channel_t *ch, sfx_t *sc, qint count, qint sampleOffset, qint bufferOffset ) {
+	qint						data;
+	qint						leftvol, rightvol;
+	qint						i;
 	portable_samplepair_t	*samp;
 	sndBuffer				*chunk;
 	byte					*samples;
@@ -650,7 +650,7 @@ static void S_PaintChannelFromMuLaw( channel_t *ch, sfx_t *sc, int count, int sa
 		ooff = sampleOffset;
 		samples = (byte *)chunk->sndChunk;
 		for ( i=0 ; i<count ; i++ ) {
-			data  = mulawToShort[samples[(int)(ooff)]];
+			data  = mulawToShort[samples[(qint)(ooff)]];
 			ooff = ooff + ch->dopplerScale;
 			samp[i].left += (data * leftvol)>>8;
 			samp[i].right += (data * rightvol)>>8;
@@ -672,14 +672,14 @@ static void S_PaintChannelFromMuLaw( channel_t *ch, sfx_t *sc, int count, int sa
 S_PaintChannels
 ===================
 */
-void S_PaintChannels( int endtime ) {
-	static qboolean muted = qfalse;
-	int 	i;
-	int 	end;
+void S_PaintChannels( qint endtime ) {
+	static qbool muted = qfalse;
+	qint 	i;
+	qint 	end;
 	channel_t *ch;
 	sfx_t	*sc;
-	int		ltime, count;
-	int		sampleOffset;
+	qint		ltime, count;
+	qint		sampleOffset;
 	byte	*buffer;
 
 	snd_vol = s_volume->value * 255;
@@ -714,9 +714,9 @@ void S_PaintChannels( int endtime ) {
 		Com_Memset( paintbuffer, 0, sizeof( paintbuffer ) );
 		if ( s_rawend - s_paintedtime >= 0 ) {
 			// copy from the streaming sound source
-			const int stop = (end < s_rawend) ? end : s_rawend;
+			const qint stop = (end < s_rawend) ? end : s_rawend;
 			for ( i = s_paintedtime; i < stop; i++ ) {
-				const int s = i&(MAX_RAW_SAMPLES-1);
+				const qint s = i&(MAX_RAW_SAMPLES-1);
 				paintbuffer[i-s_paintedtime].left += s_rawsamples[s].left;
 				paintbuffer[i-s_paintedtime].right += s_rawsamples[s].right;
 			}

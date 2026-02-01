@@ -50,14 +50,14 @@ R_CullLocalBox
 Returns CULL_IN, CULL_CLIP, or CULL_OUT
 =================
 */
-int R_CullLocalBox( const vec3_t bounds[2] ) {
-	int		i, j;
+qint R_CullLocalBox( const vec3_t bounds[2] ) {
+	qint		i, j;
 	vec3_t	transformed[8];
 	float	dists[8];
 	vec3_t	v;
 	cplane_t	*frust;
-	int			anyBack;
-	int			front, back;
+	qint			anyBack;
+	qint			front, back;
 
 	if ( r_nocull->integer ) {
 		return CULL_CLIP;
@@ -110,7 +110,7 @@ int R_CullLocalBox( const vec3_t bounds[2] ) {
 /*
 ** R_CullLocalPointAndRadius
 */
-int R_CullLocalPointAndRadius( const vec3_t pt, float radius )
+qint R_CullLocalPointAndRadius( const vec3_t pt, float radius )
 {
 	vec3_t transformed;
 
@@ -123,12 +123,12 @@ int R_CullLocalPointAndRadius( const vec3_t pt, float radius )
 /*
 ** R_CullPointAndRadius
 */
-int R_CullPointAndRadius( const vec3_t pt, float radius )
+qint R_CullPointAndRadius( const vec3_t pt, float radius )
 {
-	int		i;
+	qint		i;
 	float	dist;
 	const cplane_t	*frust;
-	qboolean mightBeClipped = qfalse;
+	qbool mightBeClipped = qfalse;
 
 	if ( r_nocull->integer ) {
 		return CULL_CLIP;
@@ -162,12 +162,12 @@ int R_CullPointAndRadius( const vec3_t pt, float radius )
 /*
 ** R_CullDlight
 */
-int R_CullDlight( const dlight_t* dl )
+qint R_CullDlight( const dlight_t* dl )
 {
-	int		i;
+	qint		i;
 	float	dist, dist2;
 	cplane_t	*frust;
-	qboolean mightBeClipped = qfalse;
+	qbool mightBeClipped = qfalse;
 
 	if ( r_nocull->integer )
 		return CULL_CLIP;
@@ -244,7 +244,7 @@ R_TransformModelToClip
 */
 void R_TransformModelToClip( const vec3_t src, const float *modelMatrix, const float *projectionMatrix,
 							vec4_t eye, vec4_t dst ) {
-	int i;
+	qint i;
 
 	for ( i = 0 ; i < 4 ; i++ ) {
 		eye[i] = 
@@ -270,7 +270,7 @@ R_TransformModelToClipMVP
 ==========================
 */
 static void R_TransformModelToClipMVP( const vec3_t src, const float *mvp, vec4_t clip ) {
-	int i;
+	qint i;
 
 	for ( i = 0 ; i < 4 ; i++ ) {
 		clip[i] = 
@@ -296,8 +296,8 @@ void R_TransformClipToWindow( const vec4_t clip, const viewParms_t *view, vec4_t
 	window[1] = 0.5f * ( 1.0f + normalized[1] ) * view->viewportHeight;
 	window[2] = normalized[2];
 
-	window[0] = (int) ( window[0] + 0.5 );
-	window[1] = (int) ( window[1] + 0.5 );
+	window[0] = (qint) ( window[0] + 0.5 );
+	window[1] = (qint) ( window[1] + 0.5 );
 }
 
 
@@ -307,7 +307,7 @@ myGlMultMatrix
 ==========================
 */
 static void myGlMultMatrix( const float *a, const float *b, float *out ) {
-	int		i, j;
+	qint		i, j;
 
 	for ( i = 0 ; i < 4 ; i++ ) {
 		for ( j = 0 ; j < 4 ; j++ ) {
@@ -446,7 +446,7 @@ static void R_RotateForViewer( void )
 static void R_SetFarClip( void )
 {
 	float	farthestCornerDistance;
-	int		i;
+	qint		i;
 
 	// if not rendering the world (icons, menus, etc)
 	// set a 2k far clip plane
@@ -495,7 +495,7 @@ static void R_SetupFrustum( viewParms_t *dest, float xmin, float xmax, float yma
 {
 	vec3_t ofsorigin;
 	float oppleg, adjleg, length;
-	int i;
+	qint i;
 	
 	if(stereoSep == 0 && xmin == -xmax)
 	{
@@ -558,7 +558,7 @@ static void R_SetupFrustum( viewParms_t *dest, float xmin, float xmax, float yma
 R_SetupProjection
 ===============
 */
-void R_SetupProjection( viewParms_t *dest, float zProj, qboolean computeFrustum )
+void R_SetupProjection( viewParms_t *dest, float zProj, qbool computeFrustum )
 {
 	float	xmin, xmax, ymin, ymax;
 	float	width, height, stereoSep = r_stereoSeparation->value;
@@ -666,7 +666,7 @@ R_MirrorPoint
 =================
 */
 static void R_MirrorPoint( const vec3_t in, const orientation_t *surface, const orientation_t *camera, vec3_t out ) {
-	int		i;
+	qint		i;
 	vec3_t	local;
 	vec3_t	transformed;
 	float	d;
@@ -684,7 +684,7 @@ static void R_MirrorPoint( const vec3_t in, const orientation_t *surface, const 
 
 
 static void R_MirrorVector( const vec3_t in, const orientation_t *surface, const orientation_t *camera, vec3_t out ) {
-	int		i;
+	qint		i;
 	float	d;
 
 	VectorClear( out );
@@ -748,10 +748,10 @@ be moving and rotating.
 Returns qtrue if it should be mirrored
 =================
 */
-static qboolean R_GetPortalOrientations( const drawSurf_t *drawSurf, int entityNum,
+static qbool R_GetPortalOrientations( const drawSurf_t *drawSurf, qint entityNum,
 							 orientation_t *surface, orientation_t *camera,
 							 vec3_t pvsOrigin, portalView_t *portalView ) {
-	int			i;
+	qint			i;
 	cplane_t	originalPlane, plane;
 	trRefEntity_t	*e;
 	float		d;
@@ -869,9 +869,9 @@ static qboolean R_GetPortalOrientations( const drawSurf_t *drawSurf, int entityN
 }
 
 
-static qboolean IsMirror( const drawSurf_t *drawSurf, int entityNum )
+static qbool IsMirror( const drawSurf_t *drawSurf, qint entityNum )
 {
-	int			i;
+	qint			i;
 	cplane_t	originalPlane, plane;
 	trRefEntity_t	*e;
 	float		d;
@@ -935,16 +935,16 @@ static qboolean IsMirror( const drawSurf_t *drawSurf, int entityNum )
 **
 ** Determines if a surface is completely offscreen.
 */
-static qboolean SurfIsOffscreen( const drawSurf_t *drawSurf, qboolean *isMirror ) {
+static qbool SurfIsOffscreen( const drawSurf_t *drawSurf, qbool *isMirror ) {
 	float shortest = 100000000;
-	int entityNum;
-	int numTriangles;
+	qint entityNum;
+	qint numTriangles;
 	shader_t *shader;
-	int		fogNum;
-	int dlighted;
+	qint		fogNum;
+	qint dlighted;
 	vec4_t clip, eye;
-	int i;
-	unsigned int pointAnd = (unsigned int)~0;
+	qint i;
+	unsigned qint pointAnd = (unsigned qint)~0;
 
 	*isMirror = qfalse;
 
@@ -960,8 +960,8 @@ static qboolean SurfIsOffscreen( const drawSurf_t *drawSurf, qboolean *isMirror 
 
 	for ( i = 0; i < tess.numVertexes; i++ )
 	{
-		int j;
-		unsigned int pointFlags = 0;
+		qint j;
+		unsigned qint pointFlags = 0;
 
 		R_TransformModelToClip( tess.xyz[i], tr.or.modelMatrix, tr.viewParms.projectionMatrix, eye, clip );
 
@@ -1039,7 +1039,7 @@ static qboolean SurfIsOffscreen( const drawSurf_t *drawSurf, qboolean *isMirror 
 R_GetModelViewBounds
 ================
 */
-static void R_GetModelViewBounds( int *mins, int *maxs )
+static void R_GetModelViewBounds( qint *mins, qint *maxs )
 {
 	float			minn[2];
 	float			maxn[2];
@@ -1047,7 +1047,7 @@ static void R_GetModelViewBounds( int *mins, int *maxs )
 	float			mvp[16];
 	float			dist[4];
 	vec4_t			clip;
-	int				i,j;
+	qint				i,j;
 
 	minn[0] = minn[1] =  1.0;
 	maxn[0] = maxn[1] = -1.0;
@@ -1095,10 +1095,10 @@ static void R_GetModelViewBounds( int *mins, int *maxs )
 		}
 	}
 
-	mins[0] = (int)(-0.5 + 0.5 * ( 1.0 + minn[0] ) * tr.viewParms.viewportWidth);
-	mins[1] = (int)(-0.5 + 0.5 * ( 1.0 + minn[1] ) * tr.viewParms.viewportHeight);
-	maxs[0] = (int)(0.5 + 0.5 * ( 1.0 + maxn[0] ) * tr.viewParms.viewportWidth);
-	maxs[1] = (int)(0.5 + 0.5 * ( 1.0 + maxn[1] ) * tr.viewParms.viewportHeight);
+	mins[0] = (qint)(-0.5 + 0.5 * ( 1.0 + minn[0] ) * tr.viewParms.viewportWidth);
+	mins[1] = (qint)(-0.5 + 0.5 * ( 1.0 + minn[1] ) * tr.viewParms.viewportHeight);
+	maxs[0] = (qint)(0.5 + 0.5 * ( 1.0 + maxn[0] ) * tr.viewParms.viewportWidth);
+	maxs[1] = (qint)(0.5 + 0.5 * ( 1.0 + maxn[1] ) * tr.viewParms.viewportHeight);
 }
 
 
@@ -1109,12 +1109,12 @@ R_MirrorViewBySurface
 Returns qtrue if another view has been rendered
 ========================
 */
-extern int r_numdlights;
-static qboolean R_MirrorViewBySurface( const drawSurf_t *drawSurf, int entityNum ) {
+extern qint r_numdlights;
+static qbool R_MirrorViewBySurface( const drawSurf_t *drawSurf, qint entityNum ) {
 	viewParms_t		newParms;
 	viewParms_t		oldParms;
 	orientation_t	surface, camera;
-	qboolean		isMirror;
+	qbool		isMirror;
 
 	// don't recursively mirror
 	if ( tr.viewParms.portalView != PV_NONE ) {
@@ -1149,7 +1149,7 @@ static qboolean R_MirrorViewBySurface( const drawSurf_t *drawSurf, int entityNum
 #ifdef USE_PMLIGHT
 	// create dedicated set for each view
 	if ( r_numdlights + oldParms.num_dlights <= ARRAY_LEN( backEndData->dlights ) ) {
-		int i;
+		qint i;
 		newParms.dlights = oldParms.dlights + oldParms.num_dlights;
 		newParms.num_dlights = oldParms.num_dlights;
 		r_numdlights += oldParms.num_dlights;
@@ -1159,7 +1159,7 @@ static qboolean R_MirrorViewBySurface( const drawSurf_t *drawSurf, int entityNum
 #endif
 
 	if ( tess.numVertexes > 2 && r_fastsky->integer ) {
-		int mins[2], maxs[2];
+		qint mins[2], maxs[2];
 		R_GetModelViewBounds( mins, maxs );
 		newParms.scissorX = newParms.viewportX + mins[0];
 		newParms.scissorY = newParms.viewportY + mins[1];
@@ -1194,8 +1194,8 @@ R_SpriteFogNum
 See if a sprite is inside a fog volume
 =================
 */
-static int R_SpriteFogNum( const trRefEntity_t *ent ) {
-	int				i, j;
+static qint R_SpriteFogNum( const trRefEntity_t *ent ) {
+	qint				i, j;
 	const fog_t		*fog;
 
 	if ( tr.refdef.rdflags & RDF_NOWORLDMODEL ) {
@@ -1237,15 +1237,15 @@ DRAWSURF SORTING
 R_Radix
 ===============
 */
-static ID_INLINE void R_Radix( int byte, int size, const drawSurf_t *source, drawSurf_t *dest )
+static ID_INLINE void R_Radix( qint byte, qint size, const drawSurf_t *source, drawSurf_t *dest )
 {
-  int           count[ 256 ] = { 0 };
-  int           index[ 256 ];
-  int           i;
-  unsigned char *sortKey;
-  unsigned char *end;
+  qint           count[ 256 ] = { 0 };
+  qint           index[ 256 ];
+  qint           i;
+  unsigned qchar *sortKey;
+  unsigned qchar *end;
 
-  sortKey = ( (unsigned char *)&source[ 0 ].sort ) + byte;
+  sortKey = ( (unsigned qchar *)&source[ 0 ].sort ) + byte;
   end = sortKey + ( size * sizeof( drawSurf_t ) );
   for( ; sortKey < end; sortKey += sizeof( drawSurf_t ) )
     ++count[ *sortKey ];
@@ -1255,7 +1255,7 @@ static ID_INLINE void R_Radix( int byte, int size, const drawSurf_t *source, dra
   for( i = 1; i < 256; ++i )
     index[ i ] = index[ i - 1 ] + count[ i - 1 ];
 
-  sortKey = ( (unsigned char *)&source[ 0 ].sort ) + byte;
+  sortKey = ( (unsigned qchar *)&source[ 0 ].sort ) + byte;
   for( i = 0; i < size; ++i, sortKey += sizeof( drawSurf_t ) )
     dest[ index[ *sortKey ]++ ] = source[ i ];
 }
@@ -1268,7 +1268,7 @@ R_RadixSort
 Radix sort with 4 byte size buckets
 ===============
 */
-static void R_RadixSort( drawSurf_t *source, int size )
+static void R_RadixSort( drawSurf_t *source, qint size )
 {
   static drawSurf_t scratch[ MAX_DRAWSURFS ];
 #ifdef Q3_LITTLE_ENDIAN
@@ -1298,13 +1298,13 @@ typedef struct litSurf_tape_s {
 static void R_SortLitsurfs( dlight_t* dl )
 {
 	litSurf_tape_t tape[ 4 ];
-	int				base;
+	qint				base;
 	litSurf_t		*p;
 	litSurf_t		*next;
 	unsigned		block_size;
 	litSurf_tape_t	*tape0;
 	litSurf_tape_t	*tape1;
-	int				dest;
+	qint				dest;
 	litSurf_tape_t	*output_tape;
 	litSurf_tape_t	*chosen_tape;
 	unsigned		n0, n1;
@@ -1391,7 +1391,7 @@ static void R_SortLitsurfs( dlight_t* dl )
 R_AddLitSurf
 =================
 */
-void R_AddLitSurf( surfaceType_t *surface, shader_t *shader, int fogIndex )
+void R_AddLitSurf( surfaceType_t *surface, shader_t *shader, qint fogIndex )
 {
 	struct litSurf_s *litsurf;
 
@@ -1421,7 +1421,7 @@ void R_AddLitSurf( surfaceType_t *surface, shader_t *shader, int fogIndex )
 R_DecomposeLitSort
 =================
 */
-void R_DecomposeLitSort( unsigned sort, int *entityNum, shader_t **shader, int *fogNum ) {
+void R_DecomposeLitSort( unsigned sort, qint *entityNum, shader_t **shader, qint *fogNum ) {
 	*fogNum = ( sort >> QSORT_FOGNUM_SHIFT ) & FOGNUM_MASK;
 	*shader = tr.sortedShaders[ ( sort >> QSORT_SHADERNUM_SHIFT ) & SHADERNUM_MASK ];
 	*entityNum = ( sort >> QSORT_REFENTITYNUM_SHIFT ) & REFENTITYNUM_MASK;
@@ -1438,8 +1438,8 @@ R_AddDrawSurf
 =================
 */
 void R_AddDrawSurf( surfaceType_t *surface, shader_t *shader, 
-				   int fogIndex, int dlightMap ) {
-	int			index;
+				   qint fogIndex, qint dlightMap ) {
+	qint			index;
 
 	// instead of checking for overflow, we just mask the index
 	// so it wraps around
@@ -1447,7 +1447,7 @@ void R_AddDrawSurf( surfaceType_t *surface, shader_t *shader,
 	// the sort data is packed into a single 32 bit value so it can be
 	// compared quickly during the qsorting process
 	tr.refdef.drawSurfs[index].sort = (shader->sortedIndex << QSORT_SHADERNUM_SHIFT) 
-		| tr.shiftedEntityNum | ( fogIndex << QSORT_FOGNUM_SHIFT ) | (int)dlightMap;
+		| tr.shiftedEntityNum | ( fogIndex << QSORT_FOGNUM_SHIFT ) | (qint)dlightMap;
 	tr.refdef.drawSurfs[index].surface = surface;
 	tr.refdef.numDrawSurfs++;
 }
@@ -1458,8 +1458,8 @@ void R_AddDrawSurf( surfaceType_t *surface, shader_t *shader,
 R_DecomposeSort
 =================
 */
-void R_DecomposeSort( unsigned sort, int *entityNum, shader_t **shader, 
-					 int *fogNum, int *dlightMap ) {
+void R_DecomposeSort( unsigned sort, qint *entityNum, shader_t **shader, 
+					 qint *fogNum, qint *dlightMap ) {
 	*fogNum = ( sort >> QSORT_FOGNUM_SHIFT ) & FOGNUM_MASK;
 	*shader = tr.sortedShaders[ ( sort >> QSORT_SHADERNUM_SHIFT ) & SHADERNUM_MASK ];
 	*entityNum = ( sort >> QSORT_REFENTITYNUM_SHIFT ) & REFENTITYNUM_MASK;
@@ -1472,12 +1472,12 @@ void R_DecomposeSort( unsigned sort, int *entityNum, shader_t **shader,
 R_SortDrawSurfs
 =================
 */
-static void R_SortDrawSurfs( drawSurf_t *drawSurfs, int numDrawSurfs ) {
+static void R_SortDrawSurfs( drawSurf_t *drawSurfs, qint numDrawSurfs ) {
 	shader_t		*shader;
-	int				fogNum;
-	int				entityNum;
-	int				dlighted;
-	int				i;
+	qint				fogNum;
+	qint				entityNum;
+	qint				dlighted;
+	qint				i;
 
 	// it is possible for some views to not have any surfaces
 	if ( numDrawSurfs < 1 ) {
@@ -1663,8 +1663,8 @@ or a mirror / remote location
 ================
 */
 void R_RenderView( const viewParms_t *parms ) {
-	int		firstDrawSurf;
-	int		numDrawSurfs;
+	qint		firstDrawSurf;
+	qint		numDrawSurfs;
 
 	if ( parms->viewportWidth <= 0 || parms->viewportHeight <= 0 ) {
 		return;

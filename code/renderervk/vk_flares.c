@@ -60,20 +60,20 @@ up to five or more times in a frame with 3D status bar icons).
 typedef struct flare_s {
 	struct		flare_s	*next;		// for active chain
 
-	int			addedFrame;
+	qint			addedFrame;
 	uint32_t	testCount;
 
 	portalView_t portalView;
-	int			frameSceneNum;
+	qint			frameSceneNum;
 	void		*surface;
-	int			fogNum;
+	qint			fogNum;
 
-	int			fadeTime;
+	qint			fadeTime;
 
-	qboolean	visible;			// state of last test
+	qbool	visible;			// state of last test
 	float		drawIntensity;		// may be non 0 even if !visible due to fading
 
-	int			windowX, windowY;
+	qint			windowX, windowY;
 	float		eyeZ;
 	float		drawZ;
 
@@ -91,7 +91,7 @@ R_ClearFlares
 ==================
 */
 void R_ClearFlares( void ) {
-	int		i;
+	qint		i;
 
 	if ( !vk.fragmentStores )
 		return;
@@ -129,8 +129,8 @@ RB_AddFlare
 This is called at surface tesselation time
 ==================
 */
-void RB_AddFlare( void *surface, int fogNum, vec3_t point, vec3_t color, vec3_t normal ) {
-	int				i;
+void RB_AddFlare( void *surface, qint fogNum, vec3_t point, vec3_t color, vec3_t normal ) {
+	qint				i;
 	flare_t			*f;
 	vec3_t			local;
 	float			d = 1;
@@ -220,7 +220,7 @@ RB_AddDlightFlares
 */
 void RB_AddDlightFlares( void ) {
 	dlight_t		*l;
-	int				i, j, k;
+	qint				i, j, k;
 	fog_t			*fog = NULL;
 
 	if ( !r_flares->integer ) {
@@ -292,11 +292,11 @@ RB_TestFlare
 ==================
 */
 static void RB_TestFlare( flare_t *f ) {
-	qboolean		visible;
+	qbool		visible;
 	float			fade;
 	float			*m;
 	uint32_t		offset;
-	int				i;
+	qint				i;
 
 	backEnd.pc.c_flareTests++;
 
@@ -479,7 +479,7 @@ extend past the portal edge will be overwritten.
 void RB_RenderFlares( void ) {
 	flare_t		*f;
 	flare_t		**prev;
-	qboolean	draw;
+	qbool	draw;
 	float		*m;
 
 	if ( !r_flares->integer ) {

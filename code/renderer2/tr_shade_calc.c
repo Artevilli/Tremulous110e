@@ -109,7 +109,7 @@ RB_CalcDeformVertexes
 */
 static void RB_CalcDeformVertexes( deformStage_t *ds )
 {
-	int i;
+	qint i;
 	vec3_t	offset;
 	float	scale;
 	float	*xyz = ( float * ) tess.xyz;
@@ -159,7 +159,7 @@ Wiggle the normals for wavy environment mapping
 =========================
 */
 static void RB_CalcDeformNormals( deformStage_t *ds ) {
-	int i;
+	qint i;
 	float	scale;
 	float	*xyz = ( float * ) tess.xyz;
 	int16_t *normal = tess.normal[0];
@@ -197,7 +197,7 @@ RB_CalcBulgeVertexes
 ========================
 */
 static void RB_CalcBulgeVertexes( deformStage_t *ds ) {
-	int i;
+	qint i;
 	const float *st = ( const float * ) tess.texCoords[0];
 	float		*xyz = ( float * ) tess.xyz;
 	int16_t	*normal = tess.normal[0];
@@ -231,7 +231,7 @@ A deformation that can move an entire surface along a wave path
 ======================
 */
 static void RB_CalcMoveVertexes( deformStage_t *ds ) {
-	int			i;
+	qint			i;
 	float		*xyz;
 	float		*table;
 	float		scale;
@@ -260,11 +260,11 @@ DeformText
 Change a polygon into a bunch of text polygons
 =============
 */
-static void DeformText( const char *text ) {
-	int		i;
+static void DeformText( const qchar *text ) {
+	qint		i;
 	vec3_t	origin, width, height;
-	int		len;
-	int		ch;
+	qint		len;
+	qint		ch;
 	float	color[4];
 	float	bottom, top;
 	vec3_t	mid;
@@ -316,7 +316,7 @@ static void DeformText( const char *text ) {
 		ch &= 255;
 
 		if ( ch != ' ' ) {
-			int		row, col;
+			qint		row, col;
 			float	frow, fcol, size;
 
 			row = ch>>4;
@@ -352,8 +352,8 @@ quads, rebuild them as forward facing sprites
 =====================
 */
 static void AutospriteDeform( void ) {
-	int		i;
-	int		oldVerts;
+	qint		i;
+	qint		oldVerts;
 	float	*xyz;
 	vec3_t	mid, delta;
 	float	radius;
@@ -425,7 +425,7 @@ Autosprite2Deform
 Autosprite2 will pivot a rectangular quad along the center of its long axis
 =====================
 */
-static const unsigned int edgeVerts[6][2] = {
+static const unsigned qint edgeVerts[6][2] = {
 	{ 0, 1 },
 	{ 0, 2 },
 	{ 0, 3 },
@@ -435,8 +435,8 @@ static const unsigned int edgeVerts[6][2] = {
 };
 
 static void Autosprite2Deform( void ) {
-	int		i, j, k;
-	int		indexes;
+	qint		i, j, k;
+	qint		indexes;
 	float	*xyz;
 	vec3_t	forward;
 
@@ -458,7 +458,7 @@ static void Autosprite2Deform( void ) {
 	// the shader abstraction
 	for ( i = 0, indexes = 0 ; i < tess.numVertexes ; i+=4, indexes+=6 ) {
 		float	lengths[2];
-		int		nums[2];
+		qint		nums[2];
 		vec3_t	mid[2];
 		vec3_t	major, minor;
 		float	*v1, *v2;
@@ -544,7 +544,7 @@ RB_DeformTessGeometry
 =====================
 */
 void RB_DeformTessGeometry( void ) {
-	int		i;
+	qint		i;
 	deformStage_t	*ds;
 
 	if(!ShaderRequiresCPUDeforms(tess.shader))
@@ -637,8 +637,8 @@ float RB_CalcWaveAlphaSingle( const waveForm_t *wf )
 /*
 ** RB_CalcModulateColorsByFog
 */
-void RB_CalcModulateColorsByFog( unsigned char *colors ) {
-	int		i;
+void RB_CalcModulateColorsByFog( unsigned qchar *colors ) {
+	qint		i;
 	float	texCoords[SHADER_MAX_VERTEXES][2] = {{0.0f}};
 
 	// calculate texcoords so we can derive density
@@ -673,11 +673,11 @@ doesn't fit our shader data.
 ========================
 */
 void RB_CalcFogTexCoords( float *st ) {
-	int			i;
+	qint			i;
 	float		*v;
 	float		s, t;
 	float		eyeT;
-	qboolean	eyeOutside;
+	qbool	eyeOutside;
 	const fog_t		*fog;
 	vec3_t		local;
 	vec4_t		fogDistanceVector, fogDepthVector = {0, 0, 0, 0};

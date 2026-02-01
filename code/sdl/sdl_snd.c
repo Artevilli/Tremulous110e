@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../client/snd_local.h"
 #include "../client/client.h"
 
-qboolean snd_inited = qfalse;
+qbool snd_inited = qfalse;
 
 extern cvar_t *s_khz;
 cvar_t *s_sdlBits;
@@ -39,8 +39,8 @@ cvar_t *s_sdlDevSamps;
 cvar_t *s_sdlMixSamps;
 
 /* The audio callback. All the magic happens here. */
-static int dmapos = 0;
-static int dmasize = 0;
+static qint dmapos = 0;
+static qint dmasize = 0;
 
 static SDL_AudioDeviceID sdlPlaybackDevice;
 
@@ -58,9 +58,9 @@ static float sdlMasterGain = 1.0f;
 SNDDMA_AudioCallback
 ===============
 */
-static void SNDDMA_AudioCallback(void *userdata, Uint8 *stream, int len)
+static void SNDDMA_AudioCallback(void *userdata, Uint8 *stream, qint len)
 {
-	int pos = (dmapos * (dma.samplebits/8));
+	qint pos = (dmapos * (dma.samplebits/8));
 	if (pos >= dmasize)
 		dmapos = pos = 0;
 
@@ -71,9 +71,9 @@ static void SNDDMA_AudioCallback(void *userdata, Uint8 *stream, int len)
 	}
 	else
 	{
-		int tobufend = dmasize - pos;  /* bytes to buffer's end. */
-		int len1 = len;
-		int len2 = 0;
+		qint tobufend = dmasize - pos;  /* bytes to buffer's end. */
+		qint len1 = len;
+		qint len2 = 0;
 
 		if (len1 > tobufend)
 		{
@@ -96,7 +96,7 @@ static void SNDDMA_AudioCallback(void *userdata, Uint8 *stream, int len)
 #ifdef USE_SDL_AUDIO_CAPTURE
 	if (sdlMasterGain != 1.0f)
 	{
-		int i;
+		qint i;
 		if (dma.isfloat && (dma.samplebits == 32))
 		{
 			float *ptr = (float *) stream;
@@ -131,7 +131,7 @@ static void SNDDMA_AudioCallback(void *userdata, Uint8 *stream, int len)
 static const struct
 {
 	uint16_t	enumFormat;
-	const char	*stringFormat;
+	const qchar	*stringFormat;
 } formatToStringTable[ ] =
 {
 	{ AUDIO_U8,     "AUDIO_U8" },
@@ -144,17 +144,17 @@ static const struct
 	{ AUDIO_F32MSB, "AUDIO_F32MSB" }
 };
 
-static int formatToStringTableSize = ARRAY_LEN( formatToStringTable );
+static qint formatToStringTableSize = ARRAY_LEN( formatToStringTable );
 
 /*
 ===============
 SNDDMA_PrintAudiospec
 ===============
 */
-static void SNDDMA_PrintAudiospec(const char *str, const SDL_AudioSpec *spec)
+static void SNDDMA_PrintAudiospec(const qchar *str, const SDL_AudioSpec *spec)
 {
-	const char *fmt = NULL;
-	int i;
+	const qchar *fmt = NULL;
+	qint i;
 
 	Com_Printf( "%s:\n", str );
 
@@ -170,13 +170,13 @@ static void SNDDMA_PrintAudiospec(const char *str, const SDL_AudioSpec *spec)
 		Com_Printf( "  Format:   " S_COLOR_RED "UNKNOWN\n");
 	}
 
-	Com_Printf( "  Freq:     %d\n", (int) spec->freq );
-	Com_Printf( "  Samples:  %d\n", (int) spec->samples );
-	Com_Printf( "  Channels: %d\n", (int) spec->channels );
+	Com_Printf( "  Freq:     %d\n", (qint) spec->freq );
+	Com_Printf( "  Samples:  %d\n", (qint) spec->samples );
+	Com_Printf( "  Channels: %d\n", (qint) spec->channels );
 }
 
 
-static int SNDDMA_KHzToHz( int khz )
+static qint SNDDMA_KHzToHz( qint khz )
 {
 	switch ( khz )
 	{
@@ -195,11 +195,11 @@ static int SNDDMA_KHzToHz( int khz )
 SNDDMA_Init
 ===============
 */
-qboolean SNDDMA_Init( void )
+qbool SNDDMA_Init( void )
 {
 	SDL_AudioSpec desired;
 	SDL_AudioSpec obtained;
-	int tmp;
+	qint tmp;
 
 	if ( snd_inited )
 		return qtrue;
@@ -353,7 +353,7 @@ qboolean SNDDMA_Init( void )
 SNDDMA_GetDMAPos
 ===============
 */
-int SNDDMA_GetDMAPos( void )
+qint SNDDMA_GetDMAPos( void )
 {
 	return dmapos;
 }
@@ -430,7 +430,7 @@ void SNDDMA_StartCapture(void)
 }
 
 
-int SNDDMA_AvailableCaptureSamples(void)
+qint SNDDMA_AvailableCaptureSamples(void)
 {
 #ifdef USE_SDL_AUDIO_CAPTURE
 	// divided by 2 to convert from bytes to (mono16) samples.
@@ -441,7 +441,7 @@ int SNDDMA_AvailableCaptureSamples(void)
 }
 
 
-void SNDDMA_Capture(int samples, byte *data)
+void SNDDMA_Capture(qint samples, byte *data)
 {
 #ifdef USE_SDL_AUDIO_CAPTURE
 	// multiplied by 2 to convert from (mono16) samples to bytes.

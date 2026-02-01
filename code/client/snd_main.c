@@ -39,7 +39,7 @@ static soundInterface_t si;
 S_ValidateInterface
 =================
 */
-static qboolean S_ValidSoundInterface( const soundInterface_t *s )
+static qbool S_ValidSoundInterface( const soundInterface_t *s )
 {
 	if( !s->Shutdown ) return qfalse;
 	if( !s->StartSound ) return qfalse;
@@ -71,7 +71,7 @@ static qboolean S_ValidSoundInterface( const soundInterface_t *s )
 S_StartSound
 =================
 */
-void S_StartSound( vec3_t origin, int entnum, int entchannel, sfxHandle_t sfx )
+void S_StartSound( vec3_t origin, qint entnum, qint entchannel, sfxHandle_t sfx )
 {
 	if( si.StartSound ) {
 		si.StartSound( origin, entnum, entchannel, sfx );
@@ -84,7 +84,7 @@ void S_StartSound( vec3_t origin, int entnum, int entchannel, sfxHandle_t sfx )
 S_StartLocalSound
 =================
 */
-void S_StartLocalSound( sfxHandle_t sfx, int channelNum )
+void S_StartLocalSound( sfxHandle_t sfx, qint channelNum )
 {
 	if( si.StartLocalSound ) {
 		si.StartLocalSound( sfx, channelNum );
@@ -97,7 +97,7 @@ void S_StartLocalSound( sfxHandle_t sfx, int channelNum )
 S_StartBackgroundTrack
 =================
 */
-void S_StartBackgroundTrack( const char *intro, const char *loop )
+void S_StartBackgroundTrack( const qchar *intro, const qchar *loop )
 {
 	if( si.StartBackgroundTrack ) {
 		si.StartBackgroundTrack( intro, loop );
@@ -123,7 +123,7 @@ void S_StopBackgroundTrack( void )
 S_RawSamples
 =================
 */
-void S_RawSamples (int samples, int rate, int width, int channels,
+void S_RawSamples (qint samples, qint rate, qint width, qint channels,
 		   const byte *data, float volume)
 {
 	if( si.RawSamples ) {
@@ -150,7 +150,7 @@ void S_StopAllSounds( void )
 S_ClearLoopingSounds
 =================
 */
-void S_ClearLoopingSounds( qboolean killall )
+void S_ClearLoopingSounds( qbool killall )
 {
 	if( si.ClearLoopingSounds ) {
 		si.ClearLoopingSounds( killall );
@@ -163,7 +163,7 @@ void S_ClearLoopingSounds( qboolean killall )
 S_AddLoopingSound
 =================
 */
-void S_AddLoopingSound( int entityNum, const vec3_t origin,
+void S_AddLoopingSound( qint entityNum, const vec3_t origin,
 		const vec3_t velocity, sfxHandle_t sfx )
 {
 	if( si.AddLoopingSound ) {
@@ -177,7 +177,7 @@ void S_AddLoopingSound( int entityNum, const vec3_t origin,
 S_AddRealLoopingSound
 =================
 */
-void S_AddRealLoopingSound( int entityNum, const vec3_t origin,
+void S_AddRealLoopingSound( qint entityNum, const vec3_t origin,
 		const vec3_t velocity, sfxHandle_t sfx )
 {
 	if( si.AddRealLoopingSound ) {
@@ -191,7 +191,7 @@ void S_AddRealLoopingSound( int entityNum, const vec3_t origin,
 S_StopLoopingSound
 =================
 */
-void S_StopLoopingSound( int entityNum )
+void S_StopLoopingSound( qint entityNum )
 {
 	if( si.StopLoopingSound ) {
 		si.StopLoopingSound( entityNum );
@@ -204,8 +204,8 @@ void S_StopLoopingSound( int entityNum )
 S_Respatialize
 =================
 */
-void S_Respatialize( int entityNum, const vec3_t origin,
-		vec3_t axis[3], int inwater )
+void S_Respatialize( qint entityNum, const vec3_t origin,
+		vec3_t axis[3], qint inwater )
 {
 	if( si.Respatialize ) {
 		si.Respatialize( entityNum, origin, axis, inwater );
@@ -218,7 +218,7 @@ void S_Respatialize( int entityNum, const vec3_t origin,
 S_UpdateEntityPosition
 =================
 */
-void S_UpdateEntityPosition( int entityNum, const vec3_t origin )
+void S_UpdateEntityPosition( qint entityNum, const vec3_t origin )
 {
 	if( si.UpdateEntityPosition ) {
 		si.UpdateEntityPosition( entityNum, origin );
@@ -231,7 +231,7 @@ void S_UpdateEntityPosition( int entityNum, const vec3_t origin )
 S_Update
 =================
 */
-void S_Update( int msec )
+void S_Update( qint msec )
 {
 	if ( si.Update ) {
 		si.Update( msec );
@@ -270,7 +270,7 @@ void S_BeginRegistration( void )
 S_RegisterSound
 =================
 */
-sfxHandle_t	S_RegisterSound( const char *sample, qboolean compressed )
+sfxHandle_t	S_RegisterSound( const qchar *sample, qbool compressed )
 {
 	if ( !sample || !*sample ) {
 		Com_Printf( "NULL sound\n" );
@@ -331,8 +331,8 @@ S_Play_f
 =================
 */
 static void S_Play_f( void ) {
-	int 		i;
-	int			c;
+	qint 		i;
+	qint			c;
 	sfxHandle_t	h;
 
 	if( !si.RegisterSound || !si.StartLocalSound ) {
@@ -362,7 +362,7 @@ S_Music_f
 =================
 */
 static void S_Music_f( void ) {
-	int		c;
+	qint		c;
 
 	if( !si.StartBackgroundTrack ) {
 		return;
@@ -406,7 +406,7 @@ S_Init
 void S_Init( void )
 {
 	cvar_t		*cv;
-	qboolean	started = qfalse;
+	qbool	started = qfalse;
 
 	Com_Printf( "------ Initializing Sound ------\n" );
 

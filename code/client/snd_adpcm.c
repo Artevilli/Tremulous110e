@@ -35,12 +35,12 @@ OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
 /* Intel ADPCM step variation table */
-static int indexTable[16] = {
+static qint indexTable[16] = {
     -1, -1, -1, -1, 2, 4, 6, 8,
     -1, -1, -1, -1, 2, 4, 6, 8,
 };
 
-static int stepsizeTable[89] = {
+static qint stepsizeTable[89] = {
     7, 8, 9, 10, 11, 12, 13, 14, 16, 17,
     19, 21, 23, 25, 28, 31, 34, 37, 41, 45,
     50, 55, 60, 66, 73, 80, 88, 97, 107, 118,
@@ -53,21 +53,21 @@ static int stepsizeTable[89] = {
 };
 
    
-void S_AdpcmEncode( short indata[], char outdata[], int len, struct adpcm_state *state ) {
+void S_AdpcmEncode( short indata[], qchar outdata[], qint len, struct adpcm_state *state ) {
     short *inp;			/* Input buffer pointer */
-    signed char *outp;		/* output buffer pointer */
-    int val;			/* Current input sample value */
-    int sign;			/* Current adpcm sign bit */
-    int delta;			/* Current adpcm output value */
-    int diff;			/* Difference between val and sample */
-    int step;			/* Stepsize */
-    int valpred;		/* Predicted output value */
-    int vpdiff;			/* Current change to valpred */
-    int index;			/* Current step change index */
-    int outputbuffer;		/* place to keep previous 4-bit value */
-    int bufferstep;		/* toggle between outputbuffer/output */
+    signed qchar *outp;		/* output buffer pointer */
+    qint val;			/* Current input sample value */
+    qint sign;			/* Current adpcm sign bit */
+    qint delta;			/* Current adpcm output value */
+    qint diff;			/* Difference between val and sample */
+    qint step;			/* Stepsize */
+    qint valpred;		/* Predicted output value */
+    qint vpdiff;			/* Current change to valpred */
+    qint index;			/* Current step change index */
+    qint outputbuffer;		/* place to keep previous 4-bit value */
+    qint bufferstep;		/* toggle between outputbuffer/output */
 
-    outp = (signed char *)outdata;
+    outp = (signed qchar *)outdata;
     inp = indata;
 
     valpred = state->sample;
@@ -152,20 +152,20 @@ void S_AdpcmEncode( short indata[], char outdata[], int len, struct adpcm_state 
 }
 
 
-/* static */ void S_AdpcmDecode( const char indata[], short *outdata, int len, struct adpcm_state *state ) {
-    signed char *inp;		/* Input buffer pointer */
-    int outp;			/* output buffer pointer */
-    int sign;			/* Current adpcm sign bit */
-    int delta;			/* Current adpcm output value */
-    int step;			/* Stepsize */
-    int valpred;		/* Predicted value */
-    int vpdiff;			/* Current change to valpred */
-    int index;			/* Current step change index */
-    int inputbuffer;		/* place to keep next 4-bit value */
-    int bufferstep;		/* toggle between inputbuffer/input */
+/* static */ void S_AdpcmDecode( const qchar indata[], short *outdata, qint len, struct adpcm_state *state ) {
+    signed qchar *inp;		/* Input buffer pointer */
+    qint outp;			/* output buffer pointer */
+    qint sign;			/* Current adpcm sign bit */
+    qint delta;			/* Current adpcm output value */
+    qint step;			/* Stepsize */
+    qint valpred;		/* Predicted value */
+    qint vpdiff;			/* Current change to valpred */
+    qint index;			/* Current step change index */
+    qint inputbuffer;		/* place to keep next 4-bit value */
+    qint bufferstep;		/* toggle between inputbuffer/input */
 
     outp = 0;
-    inp = (signed char *)indata;
+    inp = (signed qchar *)indata;
 
     valpred = state->sample;
     index = state->index;
@@ -234,12 +234,12 @@ S_AdpcmMemoryNeeded
 Returns the amount of memory (in bytes) needed to store the samples in out internal adpcm format
 ====================
 */
-int S_AdpcmMemoryNeeded( const wavinfo_t *info ) {
+qint S_AdpcmMemoryNeeded( const wavinfo_t *info ) {
 	float	scale;
-	int		scaledSampleCount;
-	int		sampleMemory;
-	int		blockCount;
-	int		headerMemory;
+	qint		scaledSampleCount;
+	qint		sampleMemory;
+	qint		blockCount;
+	qint		headerMemory;
 
 	// determine scale to convert from input sampling rate to desired sampling rate
 	scale = (float)info->rate / dma.speed;
@@ -278,7 +278,7 @@ void S_AdpcmGetSamples(sndBuffer *chunk, short *to) {
 
 	out = (byte *)chunk->sndChunk;
 	// get samples
-	S_AdpcmDecode((char *) out, to, SND_CHUNK_SIZE_BYTE*2, &state );
+	S_AdpcmDecode((qchar *) out, to, SND_CHUNK_SIZE_BYTE*2, &state );
 }
 
 
@@ -289,9 +289,9 @@ S_AdpcmEncodeSound
 */
 void S_AdpcmEncodeSound( sfx_t *sfx, short *samples ) {
 	adpcm_state_t	state;
-	int				inOffset;
-	int				count;
-	int				n;
+	qint				inOffset;
+	qint				count;
+	qint				n;
 	sndBuffer		*newchunk, *chunk;
 	byte			*out;
 
@@ -322,7 +322,7 @@ void S_AdpcmEncodeSound( sfx_t *sfx, short *samples ) {
 		out = (byte *)chunk->sndChunk;
 
 		// encode the samples
-		S_AdpcmEncode( samples + inOffset, (char *) out, n, &state );
+		S_AdpcmEncode( samples + inOffset, (qchar *) out, n, &state );
 
 		inOffset += n;
 		count -= n;

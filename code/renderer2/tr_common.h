@@ -51,18 +51,18 @@ typedef enum
 } imgFlags_t;
 
 typedef struct image_s {
-	char		*imgName;			// image path, including extension
+	qchar		*imgName;			// image path, including extension
 	struct image_s *next;			// for hash search
 	struct image_s *list;			// for listing
-	int			width, height;		// source image
-	int			uploadWidth;		// after power of two and picmip but not including clamp to MAX_TEXTURE_SIZE
-	int			uploadHeight;
+	qint			width, height;		// source image
+	qint			uploadWidth;		// after power of two and picmip but not including clamp to MAX_TEXTURE_SIZE
+	qint			uploadHeight;
 	GLuint		texnum;				// gl texture binding
 
-	int			frameUsed;			// for texture usage in frame statistics
+	qint			frameUsed;			// for texture usage in frame statistics
 
 	GLint		internalFormat;
-	int			TMU;				// only needed for voodoo2
+	qint			TMU;				// only needed for voodoo2
 
     uint32_t    index;
 
@@ -84,9 +84,9 @@ extern glconfig_t	glConfig;		// outside of TR since it shouldn't be cleared duri
 // compatibility issues to the original ID vms.  If you release a stand-alone
 // game and your mod uses tr_types.h from this build you can safely move them
 // to the glconfig_t struct.
-extern qboolean  textureFilterAnisotropic;
-extern int       maxAnisotropy;
-extern int       gl_version;
+extern qbool  textureFilterAnisotropic;
+extern qint       maxAnisotropy;
+extern qint       gl_version;
 //
 // cvars
 //
@@ -114,20 +114,20 @@ extern	cvar_t	*r_saveFontData;
 float R_NoiseGet4f( float x, float y, float z, double t );
 void  R_NoiseInit( void );
 
-image_t *R_FindImageFile( const char *name, imgType_t type, imgFlags_t flags );
-image_t *R_CreateImage( const char *name, byte *pic, int width, int height, imgType_t type, imgFlags_t flags, GLint internalFormat );
-void R_UploadSubImage( unsigned *data, int x, int y, int width, int height, image_t *image );
+image_t *R_FindImageFile( const qchar *name, imgType_t type, imgFlags_t flags );
+image_t *R_CreateImage( const qchar *name, byte *pic, qint width, qint height, imgType_t type, imgFlags_t flags, GLint internalFormat );
+void R_UploadSubImage( unsigned *data, qint x, qint y, qint width, qint height, image_t *image );
 
 void R_IssuePendingRenderCommands( void );
-qhandle_t RE_RegisterShaderLightMap( const char *name, int lightmapIndex );
-qhandle_t RE_RegisterShader( const char *name );
-qhandle_t RE_RegisterShaderNoMip( const char *name );
-qhandle_t RE_RegisterShaderFromImage(const char *name, int lightmapIndex, image_t *image, qboolean mipRawImage);
+qhandle_t RE_RegisterShaderLightMap( const qchar *name, qint lightmapIndex );
+qhandle_t RE_RegisterShader( const qchar *name );
+qhandle_t RE_RegisterShaderNoMip( const qchar *name );
+qhandle_t RE_RegisterShaderFromImage(const qchar *name, qint lightmapIndex, image_t *image, qbool mipRawImage);
 
 // font stuff
 void R_InitFreeType( void );
 void R_DoneFreeType( void );
-void RE_RegisterFont(const char *fontName, int pointSize, fontInfo_t *font);
+void RE_RegisterFont(const qchar *fontName, qint pointSize, fontInfo_t *font);
 
 /*
 =============================================================
@@ -137,11 +137,11 @@ IMAGE LOADERS
 =============================================================
 */
 
-void R_LoadBMP( const char *name, byte **pic, int *width, int *height );
-void R_LoadJPG( const char *name, byte **pic, int *width, int *height );
-void R_LoadPCX( const char *name, byte **pic, int *width, int *height );
-void R_LoadPNG( const char *name, byte **pic, int *width, int *height );
-void R_LoadTGA( const char *name, byte **pic, int *width, int *height );
+void R_LoadBMP( const qchar *name, byte **pic, qint *width, qint *height );
+void R_LoadJPG( const qchar *name, byte **pic, qint *width, qint *height );
+void R_LoadPCX( const qchar *name, byte **pic, qint *width, qint *height );
+void R_LoadPNG( const qchar *name, byte **pic, qint *width, qint *height );
+void R_LoadTGA( const qchar *name, byte **pic, qint *width, qint *height );
 
 /*
 ====================================================================

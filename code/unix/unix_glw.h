@@ -32,7 +32,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 typedef struct sym_s
 {
 	void **symbol;
-	const char *name;
+	const qchar *name;
 } sym_t;
 
 typedef struct
@@ -41,59 +41,59 @@ typedef struct
 	void *VulkanLib; // instance of Vulkan library
 	FILE *log_fp;
 
-	int	monitorCount;
+	qint	monitorCount;
 
-	qboolean gammaSet;
+	qbool gammaSet;
 
-	qboolean cdsFullscreen;
+	qbool cdsFullscreen;
 
 	glconfig_t *config; // feedback to renderer module
 
-	qboolean dga_ext;
+	qbool dga_ext;
 
-	qboolean vidmode_ext;
-	qboolean vidmode_active;
-	qboolean vidmode_gamma;
+	qbool vidmode_ext;
+	qbool vidmode_active;
+	qbool vidmode_gamma;
 
-	qboolean randr_ext;
-	qboolean randr_active;
-	qboolean randr_gamma;
+	qbool randr_ext;
+	qbool randr_active;
+	qbool randr_gamma;
 
-	qboolean desktop_ok;
-	int desktop_width;
-	int desktop_height;
-	int desktop_x;
-	int desktop_y;
+	qbool desktop_ok;
+	qint desktop_width;
+	qint desktop_height;
+	qint desktop_x;
+	qint desktop_y;
 
 } glwstate_t;
 
 extern glwstate_t glw_state;
 extern Display *dpy;
 extern Window win;
-extern int scrnum;
+extern qint scrnum;
 
-qboolean BuildGammaRampTable( unsigned char *red, unsigned char *green, unsigned char *blue, int gammaRampSize, unsigned short table[3][4096] );
+qbool BuildGammaRampTable( unsigned qchar *red, unsigned qchar *green, unsigned qchar *blue, qint gammaRampSize, unsigned short table[3][4096] );
 
 // DGA extension
-qboolean DGA_Init( Display *_dpy );
-void DGA_Mouse( qboolean enable );
+qbool DGA_Init( Display *_dpy );
+void DGA_Mouse( qbool enable );
 void DGA_Done( void );
 
 // VidMode extension
-qboolean VidMode_Init( void );
+qbool VidMode_Init( void );
 void VidMode_Done( void );
-qboolean VidMode_SetMode( int *width, int *height, int *rate );
+qbool VidMode_SetMode( qint *width, qint *height, qint *rate );
 void VidMode_RestoreMode( void );
-void VidMode_SetGamma( unsigned char red[256], unsigned char green[256], unsigned char blue[256] );
+void VidMode_SetGamma( unsigned qchar red[256], unsigned qchar green[256], unsigned qchar blue[256] );
 void VidMode_RestoreGamma( void );
 
 // XRandR extension
-qboolean RandR_Init( int x, int y, int w, int h );
+qbool RandR_Init( qint x, qint y, qint w, qint h );
 void RandR_Done( void );
-void RandR_UpdateMonitor( int x, int y, int w, int h );
-qboolean RandR_SetMode( int *width, int *height, int *rate );
+void RandR_UpdateMonitor( qint x, qint y, qint w, qint h );
+qbool RandR_SetMode( qint *width, qint *height, qint *rate );
 void RandR_RestoreMode( void );
-void RandR_SetGamma( unsigned char red[256], unsigned char green[256], unsigned char blue[256] );
+void RandR_SetGamma( unsigned qchar red[256], unsigned qchar green[256], unsigned qchar blue[256] );
 void RandR_RestoreGamma( void );
 
 #endif

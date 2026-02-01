@@ -50,7 +50,7 @@ QGL_Swp_PROCS;
 ** Unloads the specified DLL then nulls out all the proc pointers.  This
 ** is only called during a hard shutdown of the OGL subsystem (e.g. vid_restart).
 */
-void QGL_Shutdown( qboolean unloadDLL )
+void QGL_Shutdown( qbool unloadDLL )
 {
 	Com_Printf( "...shutting down QGL\n" );
 
@@ -68,7 +68,7 @@ void QGL_Shutdown( qboolean unloadDLL )
 }
 
 
-void *GL_GetProcAddress( const char *name )
+void *GL_GetProcAddress( const qchar *name )
 {
 	void *ptr;
 
@@ -91,15 +91,15 @@ void *GL_GetProcAddress( const char *name )
 ** operating systems we need to do the right thing, whatever that
 ** might be.
 */
-qboolean QGL_Init( const char *dllname )
+qbool QGL_Init( const qchar *dllname )
 {
-	char libName[1024];
+	qchar libName[1024];
 #ifdef UNICODE
 	TCHAR buffer[1024];
 #endif
 
 #if 0
-	char systemDir[1024];
+	qchar systemDir[1024];
 
 #ifdef UNICODE
 	TCHAR buffer[1024];
