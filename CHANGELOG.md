@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--01/31/2026--**
 
+* readme:<br />updated readme
+
 * qcommon/sys:<br />include commented out renderer header in `unix_main.c`
 
 * qcommon/server:<br />time for a brand new, alternate method of multiprotocol
