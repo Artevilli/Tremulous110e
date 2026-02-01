@@ -53,11 +53,11 @@ typedef struct {
 	// and height, which can be used by the client to intelligently
 	// size display elements
 	void	(*BeginRegistration)( glconfig_t *config );
-	qhandle_t (*RegisterModel)( const char *name );
-	qhandle_t (*RegisterSkin)( const char *name );
-	qhandle_t (*RegisterShader)( const char *name );
-	qhandle_t (*RegisterShaderNoMip)( const char *name );
-	void	(*LoadWorld)( const char *name );
+	qhandle_t (*RegisterModel)( const qchar *name );
+	qhandle_t (*RegisterSkin)( const qchar *name );
+	qhandle_t (*RegisterShader)( const qchar *name );
+	qhandle_t (*RegisterShaderNoMip)( const qchar *name );
+	void	(*LoadWorld)( const qchar *name );
 
 	// the vis data is a large enough block of data that we go to the trouble
 	// of sharing it with the clipmodel subsystem
@@ -70,9 +70,9 @@ typedef struct {
 	// a scene is built up by calls to R_ClearScene and the various R_Add functions.
 	// Nothing is drawn until R_RenderScene is called.
 	void	(*ClearScene)( void );
-	void	(*AddRefEntityToScene)( const refEntity_t *re, qboolean intShaderTime );
-	void	(*AddPolyToScene)( qhandle_t hShader , int numVerts, const polyVert_t *verts, int num );
-	int		(*LightForPoint)( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir );
+	void	(*AddRefEntityToScene)( const refEntity_t *re, qbool intShaderTime );
+	void	(*AddPolyToScene)( qhandle_t hShader , qint numVerts, const polyVert_t *verts, qint num );
+	qint		(*LightForPoint)( vec3_t point, vec3_t ambientLight, vec3_t directedLight, vec3_t lightDir );
 	void	(*AddLightToScene)( const vec3_t org, float intensity, float r, float g, float b );
 	void	(*AddAdditiveLightToScene)( const vec3_t org, float intensity, float r, float g, float b );
 	void	(*AddLinearLightToScene)( const vec3_t start, const vec3_t end, float intensity, float r, float g, float b );
@@ -83,42 +83,42 @@ typedef struct {
 		float s1, float t1, float s2, float t2, qhandle_t hShader );	// 0 = white
 
 	// Draw images for cinematic rendering, pass as 32 bit rgba
-	void	(*DrawStretchRaw)( int x, int y, int w, int h, int cols, int rows, byte *data, int client, qboolean dirty );
-	void	(*UploadCinematic)( int w, int h, int cols, int rows, byte *data, int client, qboolean dirty );
+	void	(*DrawStretchRaw)( qint x, qint y, qint w, qint h, qint cols, qint rows, byte *data, qint client, qbool dirty );
+	void	(*UploadCinematic)( qint w, qint h, qint cols, qint rows, byte *data, qint client, qbool dirty );
 
 	void	(*BeginFrame)( stereoFrame_t stereoFrame );
 
 	// if the pointers are not NULL, timing info will be returned
-	void	(*EndFrame)( int *frontEndMsec, int *backEndMsec );
+	void	(*EndFrame)( qint *frontEndMsec, qint *backEndMsec );
 
 
-	int		(*MarkFragments)( int numPoints, const vec3_t *points, const vec3_t projection,
-				   int maxPoints, vec3_t pointBuffer, int maxFragments, markFragment_t *fragmentBuffer );
+	qint		(*MarkFragments)( qint numPoints, const vec3_t *points, const vec3_t projection,
+				   qint maxPoints, vec3_t pointBuffer, qint maxFragments, markFragment_t *fragmentBuffer );
 
-	int		(*LerpTag)( orientation_t *tag,  qhandle_t model, int startFrame, int endFrame,
-					 float frac, const char *tagName );
+	qint		(*LerpTag)( orientation_t *tag,  qhandle_t model, qint startFrame, qint endFrame,
+					 float frac, const qchar *tagName );
 	void	(*ModelBounds)( qhandle_t model, vec3_t mins, vec3_t maxs );
 
 #ifdef __USEA3D
 	void    (*A3D_RenderGeometry) (void *pVoidA3D, void *pVoidGeom, void *pVoidMat, void *pVoidGeomStatus);
 #endif
-	void	(*RegisterFont)(const char *fontName, int pointSize, fontInfo_t *font);
-	void	(*RemapShader)(const char *oldShader, const char *newShader, const char *offsetTime);
-	qboolean (*GetEntityToken)( char *buffer, int size );
-	qboolean (*inPVS)( const vec3_t p1, const vec3_t p2 );
+	void	(*RegisterFont)(const qchar *fontName, qint pointSize, fontInfo_t *font);
+	void	(*RemapShader)(const qchar *oldShader, const qchar *newShader, const qchar *offsetTime);
+	qbool (*GetEntityToken)( qchar *buffer, qint size );
+	qbool (*inPVS)( const vec3_t p1, const vec3_t p2 );
 
-	void	(*TakeVideoFrame)( int h, int w, byte* captureBuffer, byte *encodeBuffer, qboolean motionJpeg );
+	void	(*TakeVideoFrame)( qint h, qint w, byte* captureBuffer, byte *encodeBuffer, qbool motionJpeg );
 
 	void	(*ThrottleBackend)( void );
 	void	(*FinishBloom)( void );
 
 	void	(*SetColorMappings)( void );
 
-	qboolean (*CanMinimize)( void ); // == fbo enabled
+	qbool (*CanMinimize)( void ); // == fbo enabled
 
 	const glconfig_t *(*GetConfig)( void );
 
-	void	(*VertexLighting)( qboolean allowed );
+	void	(*VertexLighting)( qbool allowed );
 	void	(*SyncRender)( void );
 
 
@@ -129,103 +129,103 @@ typedef struct {
 //
 typedef struct {
 	// print message on the local console
-	void	FORMAT_PRINTF(2, 3) (QDECL *Printf)( printParm_t printLevel, const char *fmt, ... );
+	void	FORMAT_PRINTF(2, 3) (QDECL *Printf)( printParm_t printLevel, const qchar *fmt, ... );
 
 	// abort the game
-	void	NORETURN_PTR FORMAT_PRINTF(2, 3)(QDECL *Error)( errorParm_t errorLevel, const char *fmt, ... );
+	void	NORETURN_PTR FORMAT_PRINTF(2, 3)(QDECL *Error)( errorParm_t errorLevel, const qchar *fmt, ... );
 
 	// milliseconds should only be used for profiling, never
 	// for anything game related.  Get time from the refdef
-	int		(*Milliseconds)( void );
+	qint		(*Milliseconds)( void );
 
 	int64_t	(*Microseconds)( void );
 
 	// stack based memory allocation for per-level things that
 	// won't be freed
 #ifdef HUNK_DEBUG
-	void	*(*Hunk_AllocDebug)( int size, ha_pref pref, char *label, char *file, int line );
+	void	*(*Hunk_AllocDebug)( qint size, ha_pref pref, qchar *label, qchar *file, qint line );
 #else
-	void	*(*Hunk_Alloc)( int size, ha_pref pref );
+	void	*(*Hunk_Alloc)( qint size, ha_pref pref );
 #endif
-	void	*(*Hunk_AllocateTempMemory)( int size );
+	void	*(*Hunk_AllocateTempMemory)( qint size );
 	void	(*Hunk_FreeTempMemory)( void *block );
 
 	// dynamic memory allocator for things that need to be freed
-	void	*(*Malloc)( int bytes );
+	void	*(*Malloc)( qint bytes );
 	void	(*Free)( void *buf );
 	void	(*FreeAll)( void );
 
-	cvar_t	*(*Cvar_Get)( const char *name, const char *value, int flags );
-	void	(*Cvar_Set)( const char *name, const char *value );
-	void	(*Cvar_SetValue) (const char *name, float value);
-	void	(*Cvar_CheckRange)( cvar_t *cv, const char *minVal, const char *maxVal, cvarValidator_t type );
-	void	(*Cvar_SetDescription)( cvar_t *cv, const char *description );
+	cvar_t	*(*Cvar_Get)( const qchar *name, const qchar *value, qint flags );
+	void	(*Cvar_Set)( const qchar *name, const qchar *value );
+	void	(*Cvar_SetValue) (const qchar *name, float value);
+	void	(*Cvar_CheckRange)( cvar_t *cv, const qchar *minVal, const qchar *maxVal, cvarValidator_t type );
+	void	(*Cvar_SetDescription)( cvar_t *cv, const qchar *description );
 
 	void	(*Cvar_SetGroup)( cvar_t *var, cvarGroup_t group );
-	int		(*Cvar_CheckGroup)( cvarGroup_t group );
-	void	(*Cvar_ResetGroup)( cvarGroup_t group, qboolean resetModifiedFlags );
+	qint		(*Cvar_CheckGroup)( cvarGroup_t group );
+	void	(*Cvar_ResetGroup)( cvarGroup_t group, qbool resetModifiedFlags );
 
-	void	(*Cvar_VariableStringBuffer)( const char *var_name, char *buffer, int bufsize );
-	const char *(*Cvar_VariableString)( const char *var_name );
-	int		(*Cvar_VariableIntegerValue)( const char *var_name );
+	void	(*Cvar_VariableStringBuffer)( const qchar *var_name, qchar *buffer, qint bufsize );
+	const qchar *(*Cvar_VariableString)( const qchar *var_name );
+	qint		(*Cvar_VariableIntegerValue)( const qchar *var_name );
 
-	void	(*Cmd_AddCommand)( const char *name, void(*cmd)(void) );
-	void	(*Cmd_RemoveCommand)( const char *name );
+	void	(*Cmd_AddCommand)( const qchar *name, void(*cmd)(void) );
+	void	(*Cmd_RemoveCommand)( const qchar *name );
 
-	int		(*Cmd_Argc) (void);
-	const char	*(*Cmd_Argv) (int i);
+	qint		(*Cmd_Argc) (void);
+	const qchar	*(*Cmd_Argv) (qint i);
 
-	void	(*Cmd_ExecuteText)( cbufExec_t exec_when, const char *text );
+	void	(*Cmd_ExecuteText)( cbufExec_t exec_when, const qchar *text );
 
-	byte	*(*CM_ClusterPVS)(int cluster);
+	byte	*(*CM_ClusterPVS)(qint cluster);
 
 	// visualization for debugging collision detection
-	void	(*CM_DrawDebugSurface)( void (*drawPoly)(int color, int numPoints, float *points) );
+	void	(*CM_DrawDebugSurface)( void (*drawPoly)(qint color, qint numPoints, float *points) );
 
 	// a qfalse return means the file does not exist
 	// NULL can be passed for buf to just determine existence
-	//int		(*FS_FileIsInPAK)( const char *name, int *pCheckSum );
-	int		(*FS_ReadFile)( const char *name, void **buf );
+	//qint		(*FS_FileIsInPAK)( const qchar *name, qint *pCheckSum );
+	qint		(*FS_ReadFile)( const qchar *name, void **buf );
 	void	(*FS_FreeFile)( void *buf );
-	char **	(*FS_ListFiles)( const char *name, const char *extension, int *numfilesfound );
-	void	(*FS_FreeFileList)( char **filelist );
-	void	(*FS_WriteFile)( const char *qpath, const void *buffer, int size );
-	qboolean (*FS_FileExists)( const char *file );
+	qchar **	(*FS_ListFiles)( const qchar *name, const qchar *extension, qint *numfilesfound );
+	void	(*FS_FreeFileList)( qchar **filelist );
+	void	(*FS_WriteFile)( const qchar *qpath, const void *buffer, qint size );
+	qbool (*FS_FileExists)( const qchar *file );
 
 	// cinematic stuff
-	void	(*CIN_UploadCinematic)( int handle );
-	int		(*CIN_PlayCinematic)( const char *arg0, int xpos, int ypos, int width, int height, int bits );
-	e_status (*CIN_RunCinematic)( int handle );
+	void	(*CIN_UploadCinematic)( qint handle );
+	qint		(*CIN_PlayCinematic)( const qchar *arg0, qint xpos, qint ypos, qint width, qint height, qint bits );
+	e_status (*CIN_RunCinematic)( qint handle );
 
-	void	(*CL_WriteAVIVideoFrame)( const byte *buffer, int size );
+	void	(*CL_WriteAVIVideoFrame)( const byte *buffer, qint size );
 
-	size_t	(*CL_SaveJPGToBuffer)( byte *buffer, size_t bufSize, int quality, int image_width, int image_height, byte *image_buffer, int padding );
-	void	(*CL_SaveJPG)( const char *filename, int quality, int image_width, int image_height, byte *image_buffer, int padding );
-	void	(*CL_LoadJPG)( const char *filename, unsigned char **pic, int *width, int *height );
+	size_t	(*CL_SaveJPGToBuffer)( byte *buffer, size_t bufSize, qint quality, qint image_width, qint image_height, byte *image_buffer, qint padding );
+	void	(*CL_SaveJPG)( const qchar *filename, qint quality, qint image_width, qint image_height, byte *image_buffer, qint padding );
+	void	(*CL_LoadJPG)( const qchar *filename, unsigned qchar **pic, qint *width, qint *height );
 
-	qboolean (*CL_IsMinimized)( void );
-	void	(*CL_SetScaling)( float factor, int captureWidth, int captureHeight );
+	qbool (*CL_IsMinimized)( void );
+	void	(*CL_SetScaling)( float factor, qint captureWidth, qint captureHeight );
 
-	void	(*Sys_SetClipboardBitmap)( const byte *bitmap, int size );
-	qboolean(*Sys_LowPhysicalMemory)( void );
+	void	(*Sys_SetClipboardBitmap)( const byte *bitmap, qint size );
+	qbool(*Sys_LowPhysicalMemory)( void );
 
-	int		(*Com_RealTime)( qtime_t *qtime );
+	qint		(*Com_RealTime)( qtime_t *qtime );
 
 	// platform-dependent functions
 	void(*GLimp_InitGamma)(glconfig_t *config);
-	void(*GLimp_SetGamma)(unsigned char red[256], unsigned char green[256], unsigned char blue[256]);
+	void(*GLimp_SetGamma)(unsigned qchar red[256], unsigned qchar green[256], unsigned qchar blue[256]);
 
 	// OpenGL
 	void	(*GLimp_Init)( glconfig_t *config );
-	void	(*GLimp_Shutdown)( qboolean unloadDLL );
+	void	(*GLimp_Shutdown)( qbool unloadDLL );
 	void	(*GLimp_EndFrame)( void );
-	void*	(*GL_GetProcAddress)( const char *name );
+	void*	(*GL_GetProcAddress)( const qchar *name );
 
 	// Vulkan
 	void	(*VKimp_Init)( glconfig_t *config );
-	void	(*VKimp_Shutdown)( qboolean unloadDLL );
-	void*	(*VK_GetInstanceProcAddr)( VkInstance instance, const char *name );
-	qboolean (*VK_CreateSurface)( VkInstance instance, VkSurfaceKHR *pSurface );
+	void	(*VKimp_Shutdown)( qbool unloadDLL );
+	void*	(*VK_GetInstanceProcAddr)( VkInstance instance, const qchar *name );
+	qbool (*VK_CreateSurface)( VkInstance instance, VkSurfaceKHR *pSurface );
 
 } refimport_t;
 
@@ -235,9 +235,9 @@ extern	refimport_t	ri;
 // If the module can't init to a valid rendering state, NULL will be
 // returned.
 #ifdef USE_RENDERER_DLOPEN
-typedef	refexport_t* (QDECL *GetRefAPI_t) (int apiVersion, refimport_t * rimp);
+typedef	refexport_t* (QDECL *GetRefAPI_t) (qint apiVersion, refimport_t * rimp);
 #else
-refexport_t*GetRefAPI( int apiVersion, refimport_t *rimp );
+refexport_t*GetRefAPI( qint apiVersion, refimport_t *rimp );
 #endif
 
 #endif	// __TR_PUBLIC_H

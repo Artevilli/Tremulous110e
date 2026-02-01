@@ -540,13 +540,15 @@ typedef struct {
 	qint			visibleSide;	// the brush side that ray tests need to clip against (-1 == none)
 } dfog_t;
 
-typedef struct {
-	vec3_t		xyz;
-	float		st[2];
-	float		lightmap[2];
-	vec3_t		normal;
-	byte		color[4];
-} drawVert_t;
+typedef struct
+{
+  vec3_t xyz;
+  float st[2];
+  float lightmap[2];
+  vec3_t normal;
+  color4ub_t color;
+}
+drawVert_t;
 
 #define drawVert_t_cleared(x) drawVert_t (x) = {{0, 0, 0}, {0, 0}, {0, 0}, {0, 0, 0}, {0, 0, 0, 0}}
 

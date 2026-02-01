@@ -240,6 +240,13 @@ floatint_u
 }
 floatint_t;
 
+typedef union
+{
+  byte rgba[4];
+  uint32_t u32;
+}
+color4ub_t;
+
 typedef qint		qhandle_t;
 typedef qint		sfxHandle_t;
 typedef qint		fileHandle_t;

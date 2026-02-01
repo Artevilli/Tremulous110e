@@ -61,7 +61,7 @@ typedef struct {
 
 typedef struct poly_s {
 	qhandle_t			hShader;
-	int					numVerts;
+	qint					numVerts;
 	polyVert_t			*verts;
 } poly_t;
 
@@ -80,7 +80,7 @@ typedef enum {
 
 typedef struct {
 	refEntityType_t	reType;
-	int			renderfx;
+	qint			renderfx;
 
 	qhandle_t	hModel;				// opaque type outside refresh
 
@@ -89,17 +89,17 @@ typedef struct {
 	float		shadowPlane;		// projection shadows go here, stencils go slightly lower
 
 	vec3_t		axis[3];			// rotation vectors
-	qboolean	nonNormalizedAxes;	// axis are not normalized, i.e. they have scale
+	qbool	nonNormalizedAxes;	// axis are not normalized, i.e. they have scale
 	float		origin[3];			// also used as MODEL_BEAM's "from"
-	int			frame;				// also used as MODEL_BEAM's diameter
+	qint			frame;				// also used as MODEL_BEAM's diameter
 
 	// previous data for frame interpolation
 	float		oldorigin[3];		// also used as MODEL_BEAM's "to"
-	int			oldframe;
+	qint			oldframe;
 	float		backlerp;			// 0.0 = current, 1.0 = old
 
 	// texturing
-	int			skinNum;			// inline skin index
+	qint			skinNum;			// inline skin index
 	qhandle_t	customSkin;			// NULL for default skin
 	qhandle_t	customShader;		// use one image for the entire thing
 
@@ -120,21 +120,21 @@ typedef struct {
 #define	MAX_RENDER_STRING_LENGTH	32
 
 typedef struct {
-	int			x, y, width, height;
+	qint			x, y, width, height;
 	float		fov_x, fov_y;
 	vec3_t		vieworg;
 	vec3_t		viewaxis[3];		// transformation matrix
 
 	// time in milliseconds for shader effects and other time dependent rendering issues
-	int			time;
+	qint			time;
 
-	int			rdflags;			// RDF_NOWORLDMODEL, etc
+	qint			rdflags;			// RDF_NOWORLDMODEL, etc
 
 	// 1 bits will prevent the associated area from rendering at all
 	byte		areamask[MAX_MAP_AREA_BYTES];
 
 	// text messages for deform text shaders
-	char		text[MAX_RENDER_STRINGS][MAX_RENDER_STRING_LENGTH];
+	qchar		text[MAX_RENDER_STRINGS][MAX_RENDER_STRING_LENGTH];
 } refdef_t;
 
 
@@ -179,40 +179,40 @@ typedef enum {
 } glHardwareType_t;
 
 typedef struct {
-	char					renderer_string[MAX_STRING_CHARS];
-	char					vendor_string[MAX_STRING_CHARS];
-	char					version_string[MAX_STRING_CHARS];
-	char					extensions_string[BIG_INFO_STRING];
+	qchar					renderer_string[MAX_STRING_CHARS];
+	qchar					vendor_string[MAX_STRING_CHARS];
+	qchar					version_string[MAX_STRING_CHARS];
+	qchar					extensions_string[BIG_INFO_STRING];
 
-	int						maxTextureSize;			// queried from GL
-	int						numTextureUnits;		// multitexture ability
+	qint						maxTextureSize;			// queried from GL
+	qint						numTextureUnits;		// multitexture ability
 
-	int						colorBits, depthBits, stencilBits;
+	qint						colorBits, depthBits, stencilBits;
 
 	glDriverType_t			driverType;
 	glHardwareType_t		hardwareType;
 
-	qboolean				deviceSupportsGamma;
+	qbool				deviceSupportsGamma;
 	textureCompression_t	textureCompression;
-	qboolean				textureEnvAddAvailable;
+	qbool				textureEnvAddAvailable;
 
-	int						vidWidth, vidHeight;
+	qint						vidWidth, vidHeight;
 	// aspect is the screen's physical width / height, which may be different
 	// than scrWidth / scrHeight if the pixels are non-square
 	// normal screens should be 4/3, but wide aspect monitors may be 16/9
 	float					windowAspect;
 
-	int						displayFrequency;
+	qint						displayFrequency;
 
 	// synonymous with "does rendering consume the entire screen?", therefore
 	// a Voodoo or Voodoo2 will have this set to TRUE, as will a Win32 ICD that
 	// used CDS.
-	qboolean				isFullscreen;
-	qboolean				stereoEnabled;
-	qboolean				smpActive;		// UNUSED, present for compatibility
+	qbool				isFullscreen;
+	qbool				stereoEnabled;
+	qbool				smpActive;		// UNUSED, present for compatibility
 } glconfig_t;
 
-#define	myftol(x) ((int)(x))
+#define	myftol(x) ((qint)(x))
 
 #if defined(_WIN32)
 #define OPENGL_DRIVER_NAME	"opengl32"
