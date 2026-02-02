@@ -4678,7 +4678,7 @@ FS_NewDir_f
 void
 FS_NewDir_f(void)
 {
-  qchar *filter;
+  const qchar *filter;
   qchar **dirnames;
   qchar dirname[MAX_STRING_CHARS];
   qint ndirs;

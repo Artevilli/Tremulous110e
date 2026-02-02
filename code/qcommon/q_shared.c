@@ -442,6 +442,84 @@ Com_GenerateHashValue(const qchar *fname, const unsigned size)
 }
 
 /*
+============
+Com_Split
+============
+*/
+qint
+Com_Split(qchar *in, qchar **out, qint outsz, qint delim)
+{
+  qint c;
+  qchar **o = out;
+  qchar **end = out + outsz;
+
+  //skip leading spaces
+  if (delim >= ' ')
+  {
+    while((c = *in) != '\0' && c <= ' ')
+    {
+      in++;
+    }
+  }
+
+  *out = in;
+  out++;
+
+  while(out < end)
+  {
+    while((c = *in) != '\0' && c != delim)
+    {
+      in++;
+    }
+
+    *in = '\0';
+
+    if (!c)
+    {
+      //don't count last null value
+      if (out[-1][0] == '\0')
+      {
+        out--;
+      }
+
+      break;
+    }
+
+    in++;
+
+    //skip leading spaces
+    if (delim >= ' ')
+    {
+      while((c = *in) != '\0' && c <= ' ')
+      {
+        in++;
+      }
+    }
+
+    *out = in;
+    out++;
+  }
+
+  //sanitize last value
+  while((c = *in) != '\0' && c != delim)
+  {
+    in++;
+  }
+
+  *in = '\0';
+  c = out - o;
+
+  //set remaining out pointers
+  while(out < end)
+  {
+    *out = in;
+    out++;
+  }
+
+  return c;
+}
+
+/*
 ============================================================================
 
 					BYTE ORDER FUNCTIONS

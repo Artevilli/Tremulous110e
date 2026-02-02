@@ -564,6 +564,7 @@ void CIN_CloseAllVideos(void);
 void CL_InitCGame( void );
 void CL_ShutdownCGame( void );
 qbool CL_GameCommand( void );
+void CL_GameConsoleText(void);
 void CL_CGameRendering( stereoFrame_t stereo );
 void CL_SetCGameTime( void );
 

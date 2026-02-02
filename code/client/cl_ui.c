@@ -628,79 +628,6 @@ static void CL_GetClipboardData( qchar *buf, qint buflen ) {
 
 /*
 ====================
-Key_KeynumToStringBuf
-====================
-*/
-static void Key_KeynumToStringBuf( qint keynum, qchar *buf, qint buflen ) {
-	Q_strncpyz( buf, Key_KeynumToString( keynum ), buflen );
-}
-
-
-/*
-====================
-Key_GetBindingBuf
-====================
-*/
-static void Key_GetBindingBuf( qint keynum, qchar *buf, qint buflen ) {
-	const qchar *value;
-
-	value = Key_GetBinding( keynum );
-	if ( value ) {
-		Q_strncpyz( buf, value, buflen );
-	}
-	else {
-		*buf = '\0';
-	}
-}
-
-
-/*
-====================
-CLUI_GetCDKey
-====================
-*/
-static void CLUI_GetCDKey( qchar *buf, qint buflen ) {
-#ifndef STANDALONE
-	const qchar *gamedir;
-	gamedir = Cvar_VariableString( "fs_game" );
-	if ( UI_usesUniqueCDKey() && gamedir[0] != '\0' ) {
-		Com_Memcpy( buf, &cl_cdkey[16], 16 );
-		buf[16] = '\0';
-	} else {
-		Com_Memcpy( buf, cl_cdkey, 16 );
-		buf[16] = '\0';
-	}
-#else
-	*buf = '\0';
-#endif
-}
-
-
-/*
-====================
-CLUI_SetCDKey
-====================
-*/
-#ifndef STANDALONE
-static void CLUI_SetCDKey( qchar *buf ) {
-	const qchar *gamedir;
-	gamedir = Cvar_VariableString( "fs_game" );
-	if ( UI_usesUniqueCDKey() && gamedir[0] != '\0' ) {
-		Com_Memcpy( &cl_cdkey[16], buf, 16 );
-		cl_cdkey[32] = '\0';
-		// set the flag so the flag will be written at the next opportunity
-		cvar_modifiedFlags |= CVAR_ARCHIVE;
-	} else {
-		Com_Memcpy( cl_cdkey, buf, 16 );
-		// set the flag so the flag will be written at the next opportunity
-		cvar_modifiedFlags |= CVAR_ARCHIVE;
-	}
-}
-#endif
-
-
-/*
-====================
 GetConfigString
 ====================
 */
@@ -1066,9 +993,6 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return 0;
 
 	case UI_SET_CDKEY:
-#ifndef STANDALONE
-		CLUI_SetCDKey( VMA(1) );
-#endif
 		return 0;
 
 	case UI_SET_PBCLSTATUS:
@@ -1289,17 +1213,6 @@ void CL_InitUI( void ) {
 		VM_Call( uivm, 1, UI_INIT, (cls.state >= CA_AUTHORIZING && cls.state < CA_ACTIVE) );
 	}
 }
-
-
-#ifndef STANDALONE
-qbool UI_usesUniqueCDKey( void ) {
-	if (uivm) {
-		return (VM_Call( uivm, 0, UI_HASUNIQUECDKEY ) != 0);
-	} else {
-		return qfalse;
-	}
-}
-#endif
 
 
 /*

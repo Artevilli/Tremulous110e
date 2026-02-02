@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/01/2026--**
 
+* makefile/client/qcommon:<br />client progress
+
 * client/qcommon/renderer/sys:<br />fix variable types
 
 **--01/31/2026--**

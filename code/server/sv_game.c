@@ -459,6 +459,12 @@ SV_GetValue(qchar *value, qint valueSize, const qchar *key)
     return qtrue;
   }
 
+  if (!Q_stricmp(key, "trap_Cvar_SetDescription_Q3E"))
+  {
+    Com_sprintf(value, valueSize, "%i", G_CVAR_SETDESCRIPTION);
+    return qtrue;
+  }
+
   return qfalse;
 }
 
@@ -805,6 +811,11 @@ SV_GameSystemCalls(intptr_t *args)
     case
     G_TESTPRINTFLOAT:
       return sprintf(VMA(1), "%f", VMF(2));
+
+    case
+    G_CVAR_SETDESCRIPTION:
+      Cvar_SetDescription2((const qchar *)VMA(1), (const qchar *)VMA(2));
+      return 0;
 
     case
     G_TRAP_GETVALUE:

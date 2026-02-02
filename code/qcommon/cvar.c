@@ -180,7 +180,7 @@ Cvar_VariableIntegerValue(const qchar *var_name)
 Cvar_VariableString
 ============
 */
-qchar *
+const qchar *
 Cvar_VariableString(const qchar *var_name)
 {
   cvar_t *var;
@@ -1064,6 +1064,29 @@ Cvar_SetValueSafe(const qchar *var_name, float value)
 
 /*
 ============
+Cvar_SetModified
+============
+*/
+qbool
+Cvar_SetModified(const qchar *var_name, qbool modified)
+{
+  cvar_t *var;
+
+  var = Cvar_FindVar(var_name);
+
+  if (var)
+  {
+    var->modified = modified;
+    return qtrue;
+  }
+  else
+  {
+    return qfalse;
+  }
+}
+
+/*
+============
 Cvar_Reset
 ============
 */
@@ -1160,7 +1183,7 @@ Prints the contents of a cvar
 void
 Cvar_Print_f(void)
 {
-  qchar *name;
+  const qchar *name;
   cvar_t *cv;
 
   if (Cmd_Argc() != 2)
@@ -1712,7 +1735,7 @@ Cvar_List_f(void)
 {
   cvar_t *var;
   qint i;
-  qchar *match;
+  const qchar *match;
 
   //sort to get more predictable output
   if (cvar_sort)
@@ -2381,6 +2404,39 @@ const void
 Cvar_SetDescription(cvar_t *var, const qchar *var_description)
 {
   if (var_description && var_description[0] != '\0')
+  {
+    if (var->description != NULL)
+    {
+      Z_Free(var->description);
+    }
+
+    var->description = CopyString(var_description);
+  }
+}
+
+/*
+=====================
+Cvar_SetDescription
+=====================
+*/
+void
+Cvar_SetDescription2(const qchar *var_name, const qchar *var_description)
+{
+  cvar_t *var;
+
+  var = Cvar_FindVar(var_name);
+
+  if (!var || !var_description)
+  {
+    return;
+  }
+
+  if (strlen(var_description) >= MAX_CVAR_VALUE_STRING)
+  {
+    return;
+  }
+
+  if (var_description[0] != '\0')
   {
     if (var->description != NULL)
     {

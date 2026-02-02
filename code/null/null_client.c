@@ -26,26 +26,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 cvar_t *cl_shownet;
 
-void CL_Shutdown( const qchar *finalmsg ) {
-}
-
 void CL_Init( void ) {
 	cl_shownet = Cvar_Get ("cl_shownet", "0", CVAR_TEMP );
-}
-
-void CL_MouseEvent( qint dx, qint dy, qint time ) {
-}
-
-void CL_Frame ( qint msec ) {
 }
 
 void CL_PacketEvent( const netadr_t *from, msg_t *msg ) {
 }
 
 void CL_CharEvent( qint key ) {
-}
-
-void CL_Disconnect( qbool showMainMenu ) {
 }
 
 void CL_MapLoading( void ) {
@@ -65,9 +53,6 @@ qbool UI_GameCommand( void ) {
 void CL_ForwardCommandToServer( const qchar *string ) {
 }
 
-void CL_ConsolePrint( qchar *txt ) {
-}
-
 void CL_JoystickEvent( qint axis, qint value, qint time ) {
 }
 
@@ -78,9 +63,6 @@ void CL_CDDialog( void ) {
 }
 
 void CL_FlushMemory( void ) {
-}
-
-void CL_StartHunkUsers( qbool rendererOnly ) {
 }
 
 void

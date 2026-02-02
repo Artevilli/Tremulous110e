@@ -1173,7 +1173,7 @@ SV_Demo_Play_f
 static void
 SV_Demo_Play_f(void)
 {
-  qchar *arg;
+  const qchar *arg;
 
   if (Cmd_Argc() != 2)
   {

@@ -533,7 +533,7 @@ void CL_ConsolePrint( const qchar *txt ) {
 		con.initialized = qtrue;
 	}
 
-	if ( !skipnotify && !( cls.keyCatchers & KEYCATCH_CONSOLE ) ) {
+	if ( !skipnotify && !( Key_GetCatcher() & KEYCATCH_CONSOLE ) ) {
 		// feed the text to cgame
 		Cmd_TokenizeString( txt );
 		CL_GameConsoleText( );
@@ -796,23 +796,23 @@ void Con_DrawConsole( void ) {
 		Con_DrawSolidConsole( con.displayFrac );
 	}
 
-	if ( cls.keyCatchers & ( KEYCATCH_UI | KEYCATCH_CGAME ) ) {
+	if ( Key_GetCatcher() & ( KEYCATCH_UI | KEYCATCH_CGAME ) ) {
 		return;
 	}
 
 	// draw the chat line
-	if ( cls.keyCatchers & KEYCATCH_MESSAGE ) {
+	if ( Key_GetCatcher() & KEYCATCH_MESSAGE ) {
 		qint skip;
 
 		if ( chat_team ) {
-			SCR_DrawBigString( 8, 232, "Team Say:", 1.0f );
+			SCR_DrawBigString( 8, 232, "Team Say:", 1.0f, qfalse );
 			skip = 11;
 		} else {
-			SCR_DrawBigString( 8, 232, "Say:", 1.0f );
+			SCR_DrawBigString( 8, 232, "Say:", 1.0f, qfalse );
 			skip = 5;
 		}
 
-		Field_BigDraw( &chatField, skip * BIGCHAR_WIDTH, 232, SCREEN_WIDTH - ( skip + 1 ) * BIGCHAR_WIDTH, qtrue );
+		Field_BigDraw( &chatField, skip * BIGCHAR_WIDTH, 232, SCREEN_WIDTH - ( skip + 1 ) * BIGCHAR_WIDTH, qtrue, qtrue );
 	}
 }
 

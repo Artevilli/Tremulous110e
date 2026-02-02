@@ -43,15 +43,13 @@
 #define INCLUDE_SV_PINGFIX
 
 //voip support
-#define USE_VOIP
+//#define USE_VOIP
 
 //stateless challenges v2 does not support debugging yet
 #if defined(STATELESS_CHALLENGES_VERSION_ONE)
 //challenge debugging
 #define DEBUG_SV_CHALLENGE //enable for com_dprintf debugging output
 #endif
-
-#define	MAX_MASTER_SERVERS 5
 
 #define CPU_USAGE_WARNING 70
 #define FRAME_TIME_WARNING 30

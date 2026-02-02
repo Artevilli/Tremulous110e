@@ -477,8 +477,6 @@ extern unsigned queueCount;
 
 #define MAX_INFO_FLOOD_BANS 36
 
-#define	MAX_MASTERS 8 // max recipients for heartbeat packets
-
 #define SERVER_PERFORMANCECOUNTER_FRAMES 600
 #define SERVER_PERFORMANCECOUNTER_SAMPLES 6
 

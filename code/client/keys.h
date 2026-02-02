@@ -53,6 +53,10 @@ const qchar *
 Key_KeynumToString(qint keynum);
 qint
 Key_StringToKeynum(const qchar *str);
+void
+Key_KeynumToStringBuf(qint keynum, qchar *buf, qint buflen);
+void
+Key_GetBindingBuf(qint keynum, qchar *buf, qint buflen);
 
 qbool
 Key_IsDown(qint keynum);

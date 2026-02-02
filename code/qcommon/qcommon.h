@@ -335,10 +335,9 @@ enum svc_ops_e {
 	svc_snapshot,
 	svc_EOF,
 
-	// svc_extension follows a svc_EOF, followed by another svc_* ...
-	//  this keeps legacy clients compatible.
-	svc_extension,
-	svc_voip,     // not wrapped in USE_VOIP, so this value is reserved.
+	//new commands, supported only by ioquake3 protocol but not legacy
+	svc_voipSpeex,     //not wrapped in USE_VOIP, so this value is reserved.
+	svc_voipOpus,      //
 };
 
 
@@ -499,7 +498,7 @@ Cbuf_InsertText(const qchar *text);
 //adds command text at the beginning of the buffer, add \n
 
 void
-Cbuf_ExecuteText(qint exec_when, const qchar *text);
+Cbuf_ExecuteText(cbufExec_t exec_when, const qchar *text);
 //this can be used in place of either Cbuf_AddText or Cbuf_InsertText
 
 void
@@ -560,7 +559,7 @@ qint
 Cmd_Argc(void);
 void
 Cmd_Clear(void);
-qchar *
+const qchar *
 Cmd_Argv(qint arg);
 void
 Cmd_ArgvBuffer(qint arg, qchar *buffer, qint bufferLength);
@@ -652,11 +651,14 @@ void
 Cvar_SetValueSafe(const qchar *var_name, float value);
 // expands value to a string and calls Cvar_Set/Cvar_SetSafe
 
+qbool
+Cvar_SetModified(const qchar *var_name, qbool modified);
+
 float	Cvar_VariableValue( const qchar *var_name );
 qint		Cvar_VariableIntegerValue( const qchar *var_name );
 // returns 0 if not defined or non numeric
 
-qchar	*Cvar_VariableString( const qchar *var_name );
+const qchar	*Cvar_VariableString( const qchar *var_name );
 void	Cvar_VariableStringBuffer( const qchar *var_name, qchar *buffer, qint bufsize );
 void
 Cvar_VariableStringBufferSafe(const qchar *var_name, qchar *buffer, qint bufsize, qint flag);
@@ -697,6 +699,8 @@ void
 Cvar_CheckRange(cvar_t *cv, const qchar *minVal, const qchar *maxVal, cvarValidator_t type);
 const void
 Cvar_SetDescription(cvar_t *var, const qchar *var_description);
+void
+Cvar_SetDescription2(const qchar *var_name, const qchar *var_description);
 cvar_t *
 Cvar_GetAndDescribe(const qchar *varName, const qchar *value, const qint flags, const qchar *description);
 
@@ -1056,24 +1060,29 @@ extern qint CPU_Flags;
 // centralized and cleaned, that's the max string you can send to a Com_Printf / Com_DPrintf (above gets truncated)
 #define	MAXPRINTMSG	8192
 
+typedef enum
+{
+  //bk001129 - make sure SE_NONE is zero
+  SE_NONE = 0, //evTime is still valid
+  SE_KEY, //evValue is a key code, evValue2 is the down flag
+  SE_CHAR, //evValue is an ascii char
+  SE_MOUSE, //evValue and evValue2 are relative signed x / y moves
+  SE_JOYSTICK_AXIS, //evValue is an axis number and evValue2 is the current state (-127 to 127)
+  SE_CONSOLE, //evPtr is a char*
+  SE_MAX,
+}
+sysEventType_t;
 
-typedef enum {
-	// SE_NONE must be zero
-	SE_NONE = 0,	// evTime is still valid
-	SE_KEY,		// evValue is a key code, evValue2 is the down flag
-	SE_CHAR,	// evValue is an ascii qchar
-	SE_MOUSE,	// evValue and evValue2 are reletive signed x / y moves
-	SE_JOYSTICK_AXIS,	// evValue is an axis number and evValue2 is the current state (-127 to 127)
-	SE_CONSOLE	// evPtr is a qchar*
-} sysEventType_t;
-
-typedef struct {
-	qint				evTime;
-	sysEventType_t	evType;
-	qint				evValue, evValue2;
-	qint				evPtrLength;	// bytes of data pointed to by evPtr, for journaling
-	void			*evPtr;			// this must be manually freed if not NULL
-} sysEvent_t;
+typedef struct
+{
+  qint evTime;
+  sysEventType_t evType;
+  qint evValue;
+  qint evValue2;
+  qint evPtrLength; //bytes of data pointed to by evPtr, for journaling
+  void *evPtr; //this must be manually freed if not NULL
+}
+sysEvent_t;
 
 void		Com_QueueEvent( qint time, sysEventType_t type, qint value, qint value2, qint ptrLength, void *ptr );
 qint			Com_EventLoop( void );
@@ -1096,15 +1105,19 @@ qint			Com_Milliseconds( void );	// will be journaled properly
 unsigned	Com_BlockChecksum( const void *buffer, qint length );
 //md5 functions
 qchar		*Com_MD5File(const qchar *filename, qint length, const qchar *prefix, qint prefix_len);
+qchar *
+Com_MD5Buf(const qchar *data, qint length, const qchar *data2, qint length2);
 qbool
 Com_EarlyParseCmdLine(qchar *cmdLine, qchar *con_title, qint title_size, qint *vid_xpos, qint *vid_ypos);
+qint
+Com_Split(qchar *in, qchar **out, qint outsz, qint delim);
 qint			Com_Filter(const qchar *filter, const qchar *name);
 qbool
 Com_FilterExt(const qchar *filter, const qchar *name);
 qbool
 Com_HasPatterns(const qchar *str);
 qint			Com_FilterPath(const qchar *filter, const qchar *name);
-unsigned
+qint
 Com_RealTime(qtime_t *qtime);
 qbool	Com_SafeMode( void );
 void
@@ -1282,22 +1295,24 @@ void CL_InitKeyCommands( void );
 // config files, but the rest of client startup will happen later
 
 void CL_Init( void );
-void CL_Disconnect( qbool showMainMenu );
-void CL_Shutdown( const qchar *finalmsg );
-void CL_Frame( qint msec );
+qbool CL_Disconnect( qbool showMainMenu );
+void
+CL_ResetOldGame(void);
+void CL_Shutdown( const qchar *finalmsg, qbool quit );
+void CL_Frame( qint msec, qint realMsec );
 qbool CL_GameCommand( void );
 void CL_KeyEvent (qint key, qbool down, unsigned time);
 
 void CL_CharEvent( qint key );
 // qchar events are for field typing, not game control
 
-void CL_MouseEvent( qint dx, qint dy, qint time );
+void CL_MouseEvent( qint dx, qint dy /*, qint time*/ );
 
 void CL_JoystickEvent( qint axis, qint value, qint time );
 
 void CL_PacketEvent( const netadr_t *from, msg_t *msg );
 
-void CL_ConsolePrint( qchar *text );
+void CL_ConsolePrint( const qchar *text );
 
 void CL_MapLoading( void );
 // do a screen update before starting to load a map
@@ -1319,7 +1334,7 @@ void CL_ShutdownAll( void );
 void CL_FlushMemory( void );
 // dump all memory on an error
 
-void CL_StartHunkUsers( qbool rendererOnly );
+void CL_StartHunkUsers( void );
 // start all the client stuff using the hunk
 
 void
@@ -1335,7 +1350,11 @@ void Key_WriteBindings( fileHandle_t f );
 void S_ClearSoundBuffer( void );
 // call before filesystem access
 
-void SCR_DebugGraph (float value, qint color);	// FIXME: move logging to common?
+void
+CL_SystemInfoChanged(qbool onlyGame);
+
+qbool
+CL_GameSwitch(void);
 
 //AVI files have the start of pixel lines 4 byte-aligned
 #define AVI_LINE_PADDING 4
@@ -1379,15 +1398,17 @@ NON-PORTABLE SYSTEM SERVICES
 ==============================================================
 */
 
-typedef enum {
-	AXIS_SIDE,
-	AXIS_FORWARD,
-	AXIS_UP,
-	AXIS_ROLL,
-	AXIS_YAW,
-	AXIS_PITCH,
-	MAX_JOYSTICK_AXIS
-} joystickAxis_t;
+typedef enum
+{
+  AXIS_SIDE,
+  AXIS_FORWARD,
+  AXIS_UP,
+  AXIS_ROLL,
+  AXIS_YAW,
+  AXIS_PITCH,
+  MAX_JOYSTICK_AXIS
+}
+joystickAxis_t;
 
 void	Sys_Init (void);
 
@@ -1406,9 +1427,11 @@ void	*Sys_GetUIAPI( void );
 void	Sys_UnloadBotLib( void );
 void	*Sys_GetBotLibAPI( void *parms );
 
-void	QDECL Sys_Error( const qchar *error, ...) __attribute__ ((format (printf, 1, 2)));
-void	Sys_Quit (void);
+void	NORETURN FORMAT_PRINTF(1, 2) QDECL Sys_Error( const qchar *error, ...) __attribute__ ((format (printf, 1, 2)));
+void	NORETURN Sys_Quit (void);
 qchar	*Sys_GetClipboardData( void );	// note that this isn't journaled...
+void
+Sys_SetClipboardBitmap(const byte *bitmap, qint length);
 
 void	Sys_Print( const qchar *msg );
 
@@ -1422,6 +1445,8 @@ Sys_SetAffinityMask(const uint64_t mask);
 // Sys_Milliseconds should only be used for profiling purposes,
 // any game related timing information should come from event timestamps
 qint		Sys_Milliseconds (void);
+int64_t
+Sys_Microseconds(void);
 
 void	Sys_SnapVector( float *v );
 
@@ -1484,10 +1509,18 @@ qbool
 Sys_GetFileStats(const qchar *filename, fileOffset_t *size, fileTime_t *mtime, fileTime_t *ctime);
 
 void
+Sys_BeginProfiling(void);
+void
+Sys_EndProfiling(void);
+
+void
 Sys_SendKeyEvents(void);
 
 void
 Sys_Sleep(qint msec);
+
+void
+Sys_QueEvent(qint evTime, sysEventType_t evType, qint value, qint value2, qint ptrLength, void *ptr);
 
 qbool
 Sys_LowPhysicalMemory(void);

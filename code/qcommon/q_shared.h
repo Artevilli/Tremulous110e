@@ -68,6 +68,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define GAMENAME_FOR_MASTER PRODUCT_NAME_UPPPER //must NOT contain whitespaces
 
 #define MAX_TEAMNAME 32
+#define MAX_MASTER_SERVERS 5 //number of supported master servers
 
 #define DEMOEXT "dm_" //standard demo extension
 
@@ -1115,8 +1116,7 @@ unsigned
 Info_RemoveKey(qchar *s, const qchar *key);
 
 // this is only here so the functions in q_shared.c and bg_*.c can link
-//void NORETURN FORMAT_PRINTF(2, 3) QDECL
-void FORMAT_PRINTF(2, 3) QDECL
+void NORETURN FORMAT_PRINTF(2, 3) QDECL
 Com_Error(errorParm_t level, const qchar *fmt, ...);
 void FORMAT_PRINTF(1, 2) QDECL
 Com_Printf(const qchar *msg, ...);
@@ -1304,9 +1304,10 @@ typedef struct {
 
 // in order from highest priority to lowest
 // if none of the catchers are active, bound key strings will be executed
-#define KEYCATCH_CONSOLE		0x0001
-#define	KEYCATCH_UI					0x0002
-#define	KEYCATCH_CGAME			0x0008
+#define KEYCATCH_CONSOLE 0x0001
+#define	KEYCATCH_UI 0x0002
+#define KEYCATCH_MESSAGE 0x0004
+#define	KEYCATCH_CGAME 0x0008
 
 
 // sound channels

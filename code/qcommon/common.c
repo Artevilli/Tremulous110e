@@ -35,6 +35,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #if !defined(_WIN32)
 #include <netinet/in.h>
 #include <sys/stat.h> // umask
+#include <sys/time.h>
 #else
 #include <winsock.h>
 #if defined(_DEBUG)
@@ -312,8 +313,7 @@ Both client and server can use this, and it will
 do the appropriate things.
 =============
 */
-//void NORETURN FORMAT_PRINTF(2, 3) QDECL //WHERE DOES THIS RETURN?
-void FORMAT_PRINTF(2, 3) QDECL
+void NORETURN FORMAT_PRINTF(2, 3) QDECL
 Com_Error(errorParm_t code, const qchar *fmt, ...)
 {
   va_list argptr;
@@ -695,7 +695,7 @@ be after execing the config and default.
 */
 void Com_StartupVariable( const qchar *match ) {
 	qint		i;
-	qchar	*s;
+	const qchar	*s;
 
 	for (i=0 ; i < com_numConsoleLines ; i++) {
 		Cmd_TokenizeString( com_consoleLines[i] );
@@ -1037,7 +1037,7 @@ qint Com_HashKey(qchar *string, qint maxlen) {
 Com_RealTime
 ================
 */
-unsigned
+qint
 Com_RealTime(qtime_t *qtime)
 {
   time_t t;
@@ -1072,6 +1072,43 @@ Com_RealTime(qtime_t *qtime)
   return t;
 }
 
+/*
+================
+Sys_Microseconds
+================
+*/
+int64_t
+Sys_Microseconds(void)
+{
+#if defined(_WIN32)
+  static qbool inited = qfalse;
+  static LARGE_INTEGER base;
+  static LARGE_INTEGER freq;
+  LARGE_INTEGER curr;
+
+  if (!inited)
+  {
+    QueryPerformanceFrequency(&freq);
+    QueryPerformanceCounter(&base);
+
+    if (!freq.QuadPart)
+    {
+      return (int64_t)Sys_Milliseconds() * 1000LL; //fallback
+    }
+
+    inited = qtrue;
+    return 0;
+  }
+
+  QueryPerformanceCounter(&curr);
+  return ((curr.QuadPart - base.QuadPart) * 1000000LL) / freq.QuadPart;
+#else
+  struct timeval curr;
+
+  gettimeofday(&curr, NULL);
+  return (int64_t)curr.tv_sec * 1000000LL + (int64_t)curr.tv_usec;
+#endif
+}
 
 /*
 ==============================================================================
@@ -3149,9 +3186,10 @@ Com_GameRestart(qint checksumFeed, qbool clientRestart)
     {
       CL_Disconnect(qfalse);
       CL_ShutdownAll();
-      Hunk_Clear();
+      CL_ClearMemory; //Hunk_Clear(); //-EC-
     }
 #endif
+
     //kill server if we have one
     if (com_sv_running->integer)
     {
@@ -3161,16 +3199,21 @@ Com_GameRestart(qint checksumFeed, qbool clientRestart)
     //reset console command history
     Con_ResetHistory();
 
-    //shutdown fs early so cvar_restart will not reset old game cvars
+    //shutdown FS early so Cvar_Restart will not reset old game cvars
     FS_Shutdown(qtrue);
 
-    //clean out any user and qvm created cvars
+    //clean out any user and VM created cvars
     Cvar_Restart(qtrue);
+
+#if !defined(DEDICATED)
+    //reparse pure paks and update cvars before FS startup
+    if (CL_GameSwitch())
+    {
+      CL_SystemInfoChanged(qfalse);
+    }
+#endif
 
     FS_Restart(checksumFeed);
-
-    //clean out any user and vm created cvars
-    Cvar_Restart(qtrue);
 
     //load new configuration
     Com_ExecuteCfg();
@@ -3181,6 +3224,7 @@ Com_GameRestart(qint checksumFeed, qbool clientRestart)
       CL_StartHunkUsers();
     }
 #endif
+
     com_gameRestarting = qfalse;
   }
 }

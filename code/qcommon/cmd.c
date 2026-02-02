@@ -248,7 +248,7 @@ Cbuf_ExecuteText
 ============
 */
 void
-Cbuf_ExecuteText(qint exec_when, const qchar *text)
+Cbuf_ExecuteText(cbufExec_t exec_when, const qchar *text)
 {
   switch(exec_when)
   {
@@ -586,7 +586,7 @@ Cmd_Clear(void)
 Cmd_Argv
 ============
 */
-qchar *
+const qchar *
 Cmd_Argv(qint arg)
 {
   if ((unsigned)arg >= cmd_argc)

@@ -42,7 +42,7 @@ USE_RENDERER_DLOPEN = 0
 # valid options: opengl, vulkan, opengl2
 RENDERER_DEFAULT = opengl
 
-CNAME            = quake3e
+CNAME            = tremulous
 DNAME            = tremded
 
 RENDERER_PREFIX  = $(CNAME)

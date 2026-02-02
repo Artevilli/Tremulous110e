@@ -1652,7 +1652,7 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
   s = MSG_ReadStringLine(msg);
   Cmd_TokenizeString(s);
 
-  c = Q_strlwr(Cmd_Argv(0));
+  c = Cmd_Argv(0);
 
   for(i = SVC_FIRST;i < SVC_MAX && cmd == SVC_INVALID;i++)
   {
