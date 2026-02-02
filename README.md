@@ -13,7 +13,7 @@ This is a modern idTech 3 Tremulous engine aimed to be fast, secure, and (hopefu
 * optimized Vulkan renderer
 * raw mouse input support, enabled automatically instead of DirectInput(**\in_mouse 1**) if available
 * unlagged mouse events processing, can be reverted by setting **\in_lagged 1**
-* **\in_minimize** - hotkey for monimize/restore main window (win32-only, direct replacement for Q3Minimizer)
+* **\in_minimize** - hotkey for minimize/restore main window (win32-only, direct replacement for Q3Minimizer)
 * **\video-pipe** - to use external ffmpeg binary as an encoder for better quality and smaller output files
 * significantly reworked QVM (Quake Virtual Machine)
 * improved server-side DoS protection, much reduced memory usage

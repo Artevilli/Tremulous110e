@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--02/02/2026--**
+
+* readme:<br />fixed typo
+
 **--02/01/2026--**
 
 * makefile/client/qcommon:<br />client progress
