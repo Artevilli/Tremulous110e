@@ -304,6 +304,8 @@ typedef float net_float;
 #define	MAX_QINT			0x7fffffff
 #define	MIN_QINT			(-MAX_QINT-1)
 
+#define MAX_UINT ((unsigned)(~0))
+
 
 // angle indexes
 #define	PITCH				0		// up / down
@@ -446,6 +448,8 @@ typedef vec_t vec2_t[2];
 typedef vec_t vec3_t[3];
 typedef vec_t vec4_t[4];
 typedef vec_t vec5_t[5];
+
+typedef vec_t quat_t[4];
 
 typedef	qint	fixed4_t;
 typedef	qint	fixed8_t;
@@ -657,6 +661,10 @@ signed short ClampShort( qint i );
 qint DirToByte( vec3_t dir );
 void ByteToDir( qint b, vec3_t dir );
 
+#if !defined(SGN)
+#define SGN(x) (((x) >= 0) ? !!(x):-1)
+#endif
+
 #if	1
 
 #define DotProduct(x,y)			((x)[0]*(y)[0]+(x)[1]*(y)[1]+(x)[2]*(y)[2])
@@ -668,6 +676,10 @@ void ByteToDir( qint b, vec3_t dir );
 #define VectorLerp( f, s, e, r ) ((r)[0]=(s)[0]+(f)*((e)[0]-(s)[0]),\
   (r)[1]=(s)[1]+(f)*((e)[1]-(s)[1]),\
   (r)[2]=(s)[2]+(f)*((e)[2]-(s)[2])) 
+
+
+#define DotProduct4(a,b)		((a)[0]*(b)[0] + (a)[1]*(b)[1] + (a)[2]*(b)[2] + (a)[3]*(b)[3])
+#define VectorScale4(a,b,c)		((c)[0]=(a)[0]*(b),(c)[1]=(a)[1]*(b),(c)[2]=(a)[2]*(b),(c)[3]=(a)[3]*(b))
 
 #else
 
@@ -695,10 +707,13 @@ typedef struct {
 #define VectorClear(a)			((a)[0]=(a)[1]=(a)[2]=0)
 #define VectorNegate(a,b)		((b)[0]=-(a)[0],(b)[1]=-(a)[1],(b)[2]=-(a)[2])
 #define VectorSet(v, x, y, z)	((v)[0]=(x), (v)[1]=(y), (v)[2]=(z))
+#define Vector4Set(v,x,y,z,w)	((v)[0]=(x), (v)[1]=(y), (v)[2]=(z), v[3]=(w))
 #define Vector4Copy(a,b)		((b)[0]=(a)[0],(b)[1]=(a)[1],(b)[2]=(a)[2],(b)[3]=(a)[3])
 #define Vector4Add(a,b,c)    ((c)[0]=(a)[0]+(b)[0],(c)[1]=(a)[1]+(b)[1],(c)[2]=(a)[2]+(b)[2],(c)[3]=(a)[3]+(b)[3])
 
 #define Byte4Copy(a,b) ((b)[0]=(a)[0],(b)[1]=(a)[1],(b)[2]=(a)[2],(b)[3]=(a)[3])
+
+#define QuatCopy(a,b) ((b)[0] = (a)[0], (b)[1] = (a)[1], (b)[2] = (a)[2], (b)[3] = (a)[3])
 
 #define	SnapVector(v) {v[0]=((qint)(v[0]));v[1]=((qint)(v[1]));v[2]=((qint)(v[2]));}
 // just in case you don't want to use the macros
@@ -926,7 +941,7 @@ COM_ParseComplex(const qchar **data_p, qbool allowLineBreak);
 
 typedef enum
 {
-  TK_GENERIC = 0, //for single-qchar tokens
+  TK_GENEGIC = 0, //for single-qchar tokens
   TK_STRING,
   TK_QUOTED,
   TK_EQ,
@@ -972,8 +987,8 @@ typedef struct pc_token_s
 void
 COM_MatchToken(const qchar **buf_p, const qchar *match);
 
-void
-SkipBracedSection(const qchar **program);
+qbool
+SkipBracedSection(const qchar **program, qint depth);
 void
 SkipRestOfLine(const qchar **data);
 
@@ -1043,8 +1058,9 @@ void	Q_strncpyz( qchar *dest, const qchar *src, qint destsize );
 qchar *
 Q_strncpy(qchar *dest, qchar *src, qint destsize);
 void	Q_strcat( qchar *dest, qint size, const qchar *src );
-qbool
-Q_strreplace(qchar *dest, qint destsize, const qchar *find, const qchar *replace);
+
+qint
+Q_replace(const qchar *str1, const qchar *str2, qchar *src, qint max_len);
 
 // strlen that discounts Quake color sequences
 qint Q_PrintStrlen( const qchar *string );

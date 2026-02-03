@@ -1042,6 +1042,9 @@ MISC
 ==============================================================
 */
 
+//customizable client window title
+extern qchar cl_title[MAX_CVAR_VALUE_STRING];
+
 extern qint CPU_Flags;
 
 //x86 flags
@@ -1330,6 +1333,10 @@ void CL_CDDialog( void );
 
 void CL_ShutdownAll( void );
 // shutdown all the client stuff
+
+void
+CL_ClearMemory(void);
+//clear memory
 
 void CL_FlushMemory( void );
 // dump all memory on an error

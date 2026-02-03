@@ -448,7 +448,7 @@ Com_Error(errorParm_t code, const qchar *fmt, ...)
   {
     VM_Forced_Unload_Start();
 #if !defined(DEDICATED)
-    CL_Shutdown(va("Server fatal crashed: %s", com_errorMessage));
+    CL_Shutdown(va("Server fatal crashed: %s", com_errorMessage), qtrue);
 #endif
     SV_Shutdown(va("Server fatal crashed: %s", com_errorMessage));
     Com_EndRedirect();
@@ -485,7 +485,7 @@ Com_Quit_f(void)
     VM_Forced_Unload_Start();
     SV_Shutdown(p[0] ? p:"Server quit");
 #if !defined(DEDICATED)
-    CL_Shutdown(p[0] ? p:"Client quit");
+    CL_Shutdown(p[0] ? p:"Client quit", qtrue);
 #endif
     VM_Forced_Unload_Done();
     Com_Shutdown();
@@ -2728,97 +2728,143 @@ EVENT LOOP
 ========================================================================
 */
 
-#define MAX_QUEUED_EVENTS  256
-#define MASK_QUEUED_EVENTS ( MAX_QUEUED_EVENTS - 1 )
+#define MAX_QUED_EVENTS  128
+#define MASK_QUED_EVENTS (MAX_QUED_EVENTS - 1)
 
-static sysEvent_t  eventQueue[ MAX_QUEUED_EVENTS ];
-static qint         eventHead = 0;
-static qint         eventTail = 0;
+static sysEvent_t eventQue[ MAX_QUED_EVENTS ];
+static sysEvent_t *lastEvent = eventQue + MAX_QUED_EVENTS - 1;
+static unsigned eventHead = 0;
+static unsigned eventTail = 0;
+
+static const char *
+Sys_EventName(sysEventType_t evType)
+{
+  static const char *evNames[SE_MAX] =
+  {
+    "SE_NONE",
+    "SE_KEY",
+    "SE_CHAR",
+    "SE_MOUSE",
+    "SE_JOYSTICK_AXIS",
+    "SE_CONSOLE"
+  };
+
+  if ((unsigned)evType >= ARRAY_LEN(evNames))
+  {
+    return "SE_UNKNOWN";
+  }
+  else
+  {
+    return evNames[evType];
+  }
+}
 
 /*
 ================
-Com_QueueEvent
+Sys_QueEvent
 
 A time of 0 will get the current time
 Ptr should either be null, or point to a block of data that can
 be freed by the game later.
 ================
 */
-void Com_QueueEvent( qint time, sysEventType_t type, qint value, qint value2, qint ptrLength, void *ptr )
+void
+Sys_QueEvent(qint evTime, sysEventType_t evType, qint value, qint value2, qint ptrLength, void *ptr)
 {
-	sysEvent_t  *ev;
+  sysEvent_t	*ev;
 
-	ev = &eventQueue[ eventHead & MASK_QUEUED_EVENTS ];
+#if 0
+  Com_Printf("%-10s: evTime=%i, evTail=%i, evHead=%i\n", Sys_EventName(evType), evTime, eventTail, eventHead);
+#endif
 
-	if ( eventHead - eventTail >= MAX_QUEUED_EVENTS )
-	{
-		Com_Printf("Com_QueueEvent: overflow\n");
-		// we are discarding an event, but don't leak memory
-		if ( ev->evPtr )
-		{
-			Z_Free( ev->evPtr );
-		}
-		eventTail++;
-	}
+  if (evTime == 0)
+  {
+    evTime = Sys_Milliseconds();
+  }
 
-	eventHead++;
+  //try to combine all sequential mouse moves in one event
+  if (evType == SE_MOUSE && lastEvent->evType == SE_MOUSE && eventHead != eventTail)
+  {
+    lastEvent->evValue += value;
+    lastEvent->evValue2 += value2;
+    lastEvent->evTime = evTime;
+    return;
+  }
 
-	if ( time == 0 )
-	{
-		time = Sys_Milliseconds();
-	}
+  ev = &eventQue[eventHead & MASK_QUED_EVENTS];
 
-	ev->evTime = time;
-	ev->evType = type;
-	ev->evValue = value;
-	ev->evValue2 = value2;
-	ev->evPtrLength = ptrLength;
-	ev->evPtr = ptr;
+  if (eventHead - eventTail >= MAX_QUED_EVENTS)
+  {
+    Com_Printf("%s(type=%s,keys=(%i,%i),time=%i): overflow\n", __func__, Sys_EventName(evType), value, value2, evTime);
+
+    //we are discarding an event, but don't leak memory
+    if (ev->evPtr)
+    {
+      Z_Free(ev->evPtr);
+    }
+
+    eventTail++;
+  }
+
+  eventHead++;
+
+  ev->evTime = evTime;
+  ev->evType = evType;
+  ev->evValue = value;
+  ev->evValue2 = value2;
+  ev->evPtrLength = ptrLength;
+  ev->evPtr = ptr;
+
+  lastEvent = ev;
 }
 
 /*
 ================
 Com_GetSystemEvent
-
 ================
 */
-static sysEvent_t Com_GetSystemEvent( void )
+static sysEvent_t
+Com_GetSystemEvent(void)
 {
-	sysEvent_t  ev;
-	qchar        *s;
+  sysEvent_t ev;
+  const qchar *s;
+  qint evTime;
 
-	// return if we have data
-	if ( eventHead > eventTail )
-	{
-		eventTail++;
-		return eventQueue[ ( eventTail - 1 ) & MASK_QUEUED_EVENTS ];
-	}
+  //return if we have data
+  if (eventHead - eventTail > 0)
+  {
+    return eventQue[(eventTail++) & MASK_QUED_EVENTS];
+  }
 
-	// check for console commands
-	s = Sys_ConsoleInput();
-	if ( s )
-	{
-		qchar  *b;
-		qint   len;
+  Sys_SendKeyEvents();
 
-		len = strlen( s ) + 1;
-		b = Z_Malloc( len );
-		strcpy( b, s );
-		Com_QueueEvent( 0, SE_CONSOLE, 0, 0, len, b );
-	}
+  evTime = Sys_Milliseconds();
 
-	// return if we have data
-	if ( eventHead > eventTail )
-	{
-		eventTail++;
-		return eventQueue[ ( eventTail - 1 ) & MASK_QUEUED_EVENTS ];
-	}
+  //check for console commands
+  s = Sys_ConsoleInput();
 
-	// create an empty event to return
-	memset( &ev, 0, sizeof( ev ) );
-	ev.evTime = Sys_Milliseconds();
+  if (s)
+  {
+    qchar *b;
+    qint len;
 
-	return ev;
+    len = strlen(s) + 1;
+    b = Z_Malloc(len);
+    strcpy(b, s);
+    Sys_QueEvent(evTime, SE_CONSOLE, 0, 0, len, b);
+  }
+
+  //return if we have data
+  if (eventHead - eventTail > 0)
+  {
+    return eventQue[(eventTail++) & MASK_QUED_EVENTS];
+  }
+
+  //create an empty event to return
+  Com_Memset(&ev, 0, sizeof(ev));
+  ev.evTime = evTime;
+
+  return ev;
 }
 
 /*
@@ -3019,7 +3065,7 @@ Com_EventLoop(void)
 
       case
       SE_MOUSE:
-        CL_MouseEvent(ev.evValue, ev.evValue2, ev.evTime);
+        CL_MouseEvent(ev.evValue, ev.evValue2 /*, ev.evTime*/);
         break;
 
       case
@@ -3186,7 +3232,7 @@ Com_GameRestart(qint checksumFeed, qbool clientRestart)
     {
       CL_Disconnect(qfalse);
       CL_ShutdownAll();
-      CL_ClearMemory; //Hunk_Clear(); //-EC-
+      CL_ClearMemory(); //Hunk_Clear(); //-EC-
     }
 #endif
 
@@ -3885,9 +3931,6 @@ Com_Init(qchar *commandLine)
     Sys_Error("Error during initialization");
   }
 
-  //Clear queues
-  Com_Memset(&eventQueue[0], 0, MAX_QUEUED_EVENTS * sizeof(sysEvent_t));
-
   //initialize the weak pseudo-random number generator for use later
   Com_InitRand();
 
@@ -4169,26 +4212,24 @@ static void Com_WriteConfigToFile( const qchar *filename ) {
 }
 
 
-/*
-===============
-Com_WriteConfiguration
+void
+Com_WriteConfiguration(void)
+{
+  //if we are quitting without fully initializing, make sure
+  //we don't write out anything
+  if (!com_fullyInitialized)
+  {
+    return;
+  }
 
-Writes key bindings and archived cvars to config file if modified
-===============
-*/
-void Com_WriteConfiguration( void ) {
-	// if we are quiting without fully initializing, make sure
-	// we don't write out anything
-	if ( !com_fullyInitialized ) {
-		return;
-	}
+  if (!(cvar_modifiedFlags & CVAR_ARCHIVE))
+  {
+    return;
+  }
 
-	if ( !(cvar_modifiedFlags & CVAR_ARCHIVE ) ) {
-		return;
-	}
-	cvar_modifiedFlags &= ~CVAR_ARCHIVE;
+  cvar_modifiedFlags &= ~CVAR_ARCHIVE;
 
-	Com_WriteConfigToFile( Q3CONFIG_CFG );
+  Com_WriteConfigToFile(Q3CONFIG_CFG);
 }
 
 
@@ -4199,26 +4240,29 @@ Com_WriteConfig_f
 Write the config file to a specific name
 ===============
 */
-static void Com_WriteConfig_f( void ) {
-	qchar	filename[MAX_QPATH];
-	const qchar *ext;
+static void
+Com_WriteConfig_f(void)
+{
+  qchar filename[MAX_QPATH];
+  const qchar *ext;
 
-	if ( Cmd_Argc() != 2 ) {
-		Com_Printf( "Usage: writeconfig <filename>\n" );
-		return;
-	}
+  if (Cmd_Argc() != 2)
+  {
+    Com_Printf( "Usage: writeconfig <filename>\n" );
+    return;
+  }
 
-	Q_strncpyz( filename, Cmd_Argv(1), sizeof( filename ) );
-	COM_DefaultExtension( filename, sizeof( filename ), ".cfg" );
+  Q_strncpyz(filename, Cmd_Argv(1), sizeof(filename));
+  COM_DefaultExtension(filename, sizeof(filename), ".cfg");
 
-        if (!FS_AllowedExtension(filename, qfalse, &ext))
-        {
-          Com_Printf("%s: Invalid filename extension: '%s'.\n", __func__, ext);
-          return;
-        }
+  if (!FS_AllowedExtension(filename, qfalse, &ext))
+  {
+    Com_Printf("%s: Invalid filename extension: '%s'.\n", __func__, ext);
+    return;
+  }
 
-	Com_Printf( "Writing %s.\n", filename );
-	Com_WriteConfigToFile( filename );
+  Com_Printf("Writing %s.\n", filename);
+  Com_WriteConfigToFile(filename);
 }
 
 /*
@@ -4506,8 +4550,8 @@ Com_Frame(qbool noDelay)
     else
     {
 #if !defined(DEDICATED)
-      CL_Shutdown();
-      CL_FlushMemory();
+      CL_Shutdown("", qfalse);
+      CL_ClearMemory();
 #endif
       Sys_ShowConsole(1, qtrue);
       SV_AddDedicatedCommands();
@@ -4540,7 +4584,7 @@ Com_Frame(qbool noDelay)
       timeBeforeClient = Sys_Milliseconds();
     }
 
-    CL_Frame(msec);
+    CL_Frame(msec, realMsec);
 
     if (com_speeds->integer)
     {

@@ -60,6 +60,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define	CONTENTS_TRANSLUCENT	0x20000000	// don't consume surface fragments inside
 #define	CONTENTS_TRIGGER		0x40000000
 #define	CONTENTS_NODROP			0x80000000	// don't leave bodies or items (death fog, lava)
+#define CONTENTS_NODE 0xFFFFFFFF
 
 // custominfoparms below
 #define	CONTENTS_NOALIENBUILD			0x1000	//disallow alien building

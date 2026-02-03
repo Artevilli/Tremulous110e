@@ -75,14 +75,14 @@ void mdct_init(mdct_lookup *lookup,int n){
   /* bitreverse lookup... */
 
   {
-    int mask=(1<<(log2n-1))-1,i,j;
+    int mask=(1<<(log2n-1))-1,j,k;
     int msb=1<<(log2n-2);
-    for(i=0;i<n/8;i++){
+    for(j=0;j<n/8;j++){
       int acc=0;
-      for(j=0;msb>>j;j++)
-        if((msb>>j)&i)acc|=1<<j;
-      bitrev[i*2]=((~acc)&mask)-1;
-      bitrev[i*2+1]=acc;
+      for(k=0;msb>>k;k++)
+        if((msb>>k)&j)acc|=1<<k;
+      bitrev[j*2]=((~acc)&mask)-1;
+      bitrev[j*2+1]=acc;
 
     }
   }
@@ -114,7 +114,7 @@ STIN void mdct_butterfly_8(DATA_TYPE *x){
 }
 
 /* 16 point butterfly (in place, 4 register) */
-STIN void mdct_butterfly_16(DATA_TYPE *x){
+void mdct_butterfly_16(DATA_TYPE *x){
   REG_TYPE r0     = x[1]  - x[9];
   REG_TYPE r1     = x[0]  - x[8];
 
@@ -149,7 +149,7 @@ STIN void mdct_butterfly_16(DATA_TYPE *x){
 }
 
 /* 32 point butterfly (in place, 4 register) */
-STIN void mdct_butterfly_32(DATA_TYPE *x){
+void mdct_butterfly_32(DATA_TYPE *x){
   REG_TYPE r0     = x[30] - x[14];
   REG_TYPE r1     = x[31] - x[15];
 
@@ -213,7 +213,7 @@ STIN void mdct_butterfly_32(DATA_TYPE *x){
 }
 
 /* N point first stage butterfly (in place, 2 register) */
-STIN void mdct_butterfly_first(DATA_TYPE *T,
+void mdct_butterfly_first(DATA_TYPE *T,
                                         DATA_TYPE *x,
                                         int points){
 
@@ -260,7 +260,7 @@ STIN void mdct_butterfly_first(DATA_TYPE *T,
 }
 
 /* N/stage point generic N stage butterfly (in place, 2 register) */
-STIN void mdct_butterfly_generic(DATA_TYPE *T,
+void mdct_butterfly_generic(DATA_TYPE *T,
                                           DATA_TYPE *x,
                                           int points,
                                           int trigint){
@@ -343,7 +343,7 @@ void mdct_clear(mdct_lookup *l){
   }
 }
 
-STIN void mdct_bitreverse(mdct_lookup *init,
+ void mdct_bitreverse(mdct_lookup *init,
                             DATA_TYPE *x){
   int        n       = init->n;
   int       *bit     = init->bitrev;
@@ -436,26 +436,26 @@ void mdct_backward(mdct_lookup *init, DATA_TYPE *in, DATA_TYPE *out){
   {
     DATA_TYPE *oX1=out+n2+n4;
     DATA_TYPE *oX2=out+n2+n4;
-    DATA_TYPE *iX =out;
+    DATA_TYPE *inX =out;
     T             =init->trig+n2;
 
     do{
       oX1-=4;
 
-      oX1[3]  =  MULT_NORM (iX[0] * T[1] - iX[1] * T[0]);
-      oX2[0]  = -MULT_NORM (iX[0] * T[0] + iX[1] * T[1]);
+      oX1[3]  =  MULT_NORM (inX[0] * T[1] - inX[1] * T[0]);
+      oX2[0]  = -MULT_NORM (inX[0] * T[0] + inX[1] * T[1]);
 
-      oX1[2]  =  MULT_NORM (iX[2] * T[3] - iX[3] * T[2]);
-      oX2[1]  = -MULT_NORM (iX[2] * T[2] + iX[3] * T[3]);
+      oX1[2]  =  MULT_NORM (inX[2] * T[3] - inX[3] * T[2]);
+      oX2[1]  = -MULT_NORM (inX[2] * T[2] + inX[3] * T[3]);
 
-      oX1[1]  =  MULT_NORM (iX[4] * T[5] - iX[5] * T[4]);
-      oX2[2]  = -MULT_NORM (iX[4] * T[4] + iX[5] * T[5]);
+      oX1[1]  =  MULT_NORM (inX[4] * T[5] - inX[5] * T[4]);
+      oX2[2]  = -MULT_NORM (inX[4] * T[4] + inX[5] * T[5]);
 
-      oX1[0]  =  MULT_NORM (iX[6] * T[7] - iX[7] * T[6]);
-      oX2[3]  = -MULT_NORM (iX[6] * T[6] + iX[7] * T[7]);
+      oX1[0]  =  MULT_NORM (inX[6] * T[7] - inX[7] * T[6]);
+      oX2[3]  = -MULT_NORM (inX[6] * T[6] + inX[7] * T[7]);
 
       oX2+=4;
-      iX    +=   8;
+      inX   +=   8;
       T     +=   8;
     }while(iX<oX1);
 

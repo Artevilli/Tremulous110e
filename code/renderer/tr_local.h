@@ -1730,7 +1730,7 @@ ANIMATED MODELS
 
 =============================================================
 */
-
+#include "../qcommon/qfiles.h"
 void R_MDRAddAnimSurfaces( trRefEntity_t *ent );
 void RB_MDRSurfaceAnim( mdrSurface_t *surface );
 qbool R_LoadIQM (model_t *mod, void *buffer, qint filesize, const qchar *name );

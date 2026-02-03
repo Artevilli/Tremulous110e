@@ -598,16 +598,14 @@ SV_SpawnServer(const qchar *server, qbool killBots)
   //clear the whole hunk because we're (re)loading the server
   Hunk_Clear();
 
-#if !defined(DEDICATED)
-  //restart renderer
-  CL_StartHunkUsers(qtrue);
-#endif
-
   //clear collision map data
   CM_ClearMap();
 
   //timescale can be updated before SV_Frame() and cause division-by-zero in SV_RateMsec()
   Cvar_CheckRange(com_timescale, "0.001", NULL, CV_FLOAT);
+
+  //restart renderer?
+  //CL_StartHunkUsers();
 
   //init client structures and svs.numSnapshotEntities 
   if (!Cvar_VariableValue("sv_running"))

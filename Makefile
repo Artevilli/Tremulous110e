@@ -20,24 +20,24 @@ ifeq ($(COMPILE_PLATFORM),mingw32)
   endif
 endif
 
-BUILD_CLIENT     = 0
+BUILD_CLIENT     = 1
 BUILD_SERVER     = 1
 
-USE_SDL          = 0
-USE_CURL         = 0
+USE_SDL          = 1
+USE_CURL         = 1
 USE_LOCAL_HEADERS= 0
 USE_SYSTEM_JPEG  = 0
 
-USE_OGG_VORBIS    = 0
+USE_OGG_VORBIS    = 1
 USE_SYSTEM_OGG    = 0
 USE_SYSTEM_VORBIS = 0
 
-USE_VULKAN       = 0
-USE_OPENGL       = 0
+USE_VULKAN       = 1
+USE_OPENGL       = 1
 USE_OPENGL2      = 0
-USE_OPENGL_API   = 0
-USE_VULKAN_API   = 0
-USE_RENDERER_DLOPEN = 0
+USE_OPENGL_API   = 1
+USE_VULKAN_API   = 1
+USE_RENDERER_DLOPEN = 1
 
 # valid options: opengl, vulkan, opengl2
 RENDERER_DEFAULT = opengl
@@ -1060,6 +1060,7 @@ Q3OBJ = \
   $(B)/client/net_ip.o \
   $(B)/client/huffman.o \
   $(B)/client/huffman_static.o \
+  $(B)/client/parse.o \
   \
   $(B)/client/snd_adpcm.o \
   $(B)/client/snd_dma.o \
@@ -1072,15 +1073,21 @@ Q3OBJ = \
   $(B)/client/snd_codec_wav.o \
   \
   $(B)/client/sv_bot.o \
+  $(B)/client/sv_challenge.o \
   $(B)/client/sv_ccmds.o \
   $(B)/client/sv_client.o \
+  $(B)/client/sv_cvars.o \
+  $(B)/client/sv_demo.o \
   $(B)/client/sv_filter.o \
   $(B)/client/sv_game.o \
+  $(B)/client/sv_game_java.o \
   $(B)/client/sv_init.o \
   $(B)/client/sv_main.o \
   $(B)/client/sv_net_chan.o \
   $(B)/client/sv_snapshot.o \
   $(B)/client/sv_world.o \
+  $(B)/client/sv_mysql.o \
+  $(B)/client/globalv2loader.o \
   \
   $(B)/client/q_math.o \
   $(B)/client/q_shared.o \

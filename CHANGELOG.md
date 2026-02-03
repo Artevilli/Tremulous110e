@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/02/2026--**
 
+* makefile/client/renderer/qcommon/server:<br />client compiles
+
 * readme:<br />fixed typo
 
 **--02/01/2026--**

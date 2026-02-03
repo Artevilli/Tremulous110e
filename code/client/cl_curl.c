@@ -758,9 +758,15 @@ static qint Com_DL_CallbackProgress( void *data, double dltotal, double dlnow, d
 #else
 		percentage = ( dlnow / dltotal ) * 100.0;
 #endif
-		sprintf( dl->progress, " downloading %s: %s (%i%%)", dl->Name, sizeToString( dl->Count ), (qint)percentage );
+		qchar temp[256];
+
+		snprintf(temp, sizeof(temp), " downloading %s: %s (%i%%)", dl->Name, sizeToString(dl->Count), (qint)percentage);
+		strncpy(dl->progress, temp, sizeof(dl->progress));
 	} else {
-		sprintf( dl->progress, " downloading %s: %s", dl->Name, sizeToString( dl->Count ) );
+		qchar temp[256];
+
+		snprintf(temp, sizeof(temp), " downloading %s: %s", dl->Name, sizeToString(dl->Count));
+		strncpy(dl->progress, temp, sizeof(dl->progress));
 	}
 
 #if CURL_AT_LEAST_VERSION(7, 55, 0)
@@ -909,7 +915,7 @@ Start downloading file from remoteURL and save it under fs_game/localName
 */
 qbool Com_DL_Begin( download_t *dl, const qchar *localName, const qchar *remoteURL, qbool autoDownload )
 {
-	qchar *s;
+	const qchar *s;
 
 	if ( Com_DL_InProgress( dl ) )
 	{

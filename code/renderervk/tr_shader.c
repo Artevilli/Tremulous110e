@@ -3573,18 +3573,18 @@ static shader_t *FinishShader( void ) {
 
 #ifdef USE_FOG_COLLAPSE
 			if ( fogCollapse && tr.numFogs > 0 ) {
-				Vk_Pipeline_Def def;
+				Vk_Pipeline_Def def1;
 				Vk_Pipeline_Def def_mirror;
 
-				vk_get_pipeline_def( pStage->vk_pipeline[0], &def );
+				vk_get_pipeline_def( pStage->vk_pipeline[0], &def1 );
 				vk_get_pipeline_def( pStage->vk_mirror_pipeline[0], &def_mirror );
 
-				def.fog_stage = 1;
+				def1.fog_stage = 1;
 				def_mirror.fog_stage = 1;
-				def.acff = pStage->bundle[0].adjustColorsForFog;
+				def1.acff = pStage->bundle[0].adjustColorsForFog;
 				def_mirror.acff = pStage->bundle[0].adjustColorsForFog;
 
-				pStage->vk_pipeline[1] = vk_find_pipeline_ext( 0, &def, qfalse );
+				pStage->vk_pipeline[1] = vk_find_pipeline_ext( 0, &def1, qfalse );
 				pStage->vk_mirror_pipeline[1] = vk_find_pipeline_ext( 0, &def_mirror, qfalse );
 
 				pStage->bundle[0].adjustColorsForFog = ACFF_NONE; // will be handled in shader from now

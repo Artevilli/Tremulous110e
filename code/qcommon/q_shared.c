@@ -1068,7 +1068,7 @@ COM_ParseComplex(const qchar **data_p, qbool allowLineBreaks)
   str = (byte *)*data_p;
   len = 0; 
   shift = 0; //token line shift relative to com_lines
-  com_tokentype = TK_GENERIC;
+  com_tokentype = TK_GENEGIC;
 	
 __reswitch:
   switch(*str)
@@ -1398,27 +1398,35 @@ void COM_MatchToken( const qchar **buf_p, const qchar *match ) {
 =================
 SkipBracedSection
 
-The next token should be an open brace.
+The next token should be an open brace or set depth to 1 if already parsed it.
 Skips until a matching close brace is found.
 Internal brace depths are properly skipped.
 =================
 */
-void SkipBracedSection (const qchar **program) {
-	qchar			*token;
-	qint				depth;
+qbool
+SkipBracedSection(const qchar **program, qint depth)
+{
+  const qchar *token;
 
-	depth = 0;
-	do {
-		token = COM_ParseExt( program, qtrue );
-		if( token[1] == 0 ) {
-			if( token[0] == '{' ) {
-				depth++;
-			}
-			else if( token[0] == '}' ) {
-				depth--;
-			}
-		}
-	} while( depth && *program );
+  do
+  {
+    token = COM_ParseExt(program, qtrue);
+
+    if (token[1] == 0)
+    {
+      if (token[0] == '{')
+      {
+        depth++;
+      }
+      else if (token[0] == '}')
+      {
+        depth--;
+      }
+    }
+  }
+  while(depth && *program);
+
+  return (depth == 0);
 }
 
 /*
@@ -2104,42 +2112,118 @@ Q_stristr(const qchar *s, const qchar *find)
   return s;
 }
 
-/*
-=============
-Q_strreplace
-
-replaces content of find by replace in dest
-=============
-*/
-qbool
-Q_strreplace(qchar *dest, qint destsize, const qchar *find, const qchar *replace)
+qint
+Q_replace(const qchar *str1, const qchar *str2, qchar *src, qint max_len) 
 {
-  qint lstart;
-  const qint lfind = strlen(find);
-  const qint lreplace = strlen(replace);
-  const qint lend = strlen(dest) - 1;
-  qchar *s;
-  qchar backup[32000]; //big, but small enough to fit in PPC stack
+  qint len1;
+  qint len2;
+  qint d;
+  qint count;
+  const qchar *s0;
+  const qchar *s1;
+  const qchar *s2;
+  const qchar *max;
+  qchar *match;
+  qchar *dst;
 
-  if (lend >= destsize)
+  match = strstr(src, str1);
+
+  if (!match)
   {
-    Com_Error(ERR_FATAL, "Q_strreplace: already overflowed");
+    return 0;
   }
 
-  s = strstr(dest, find);
+  count = 0; //replace count
 
-  if (!s)
+  len1 = strlen(str1);
+  len2 = strlen(str2);
+  d = len2 - len1;
+
+  if (d > 0) //expand and replace mode    
   {
-    return qfalse;
+    max = src + max_len;
+    src += strlen(src);
+
+    do  
+    {
+      //expand source string
+      s1 = src;
+      src += d;
+
+      if (src >= max)
+      {
+        return count;
+      }
+
+      dst = src;
+            
+      s0 = match + len1;
+
+      while(s1 >= s0)
+      {
+        *dst-- = *s1--;
+      }
+			
+      //replace match
+      s2 = str2;
+
+      while(*s2)
+      {
+        *match++ = *s2++;
+      }
+
+      match = strstr(match, str1);
+
+      count++;
+    }
+    while(match);
+
+    return count;
+  } 
+  else if (d < 0) //shrink and replace mode
+  {
+    do 
+    {
+      //shrink source string
+      s1 = match + len1;
+      dst = match + len2;
+
+      while((*dst++ = *s1++) != '\0');
+			
+      //replace match
+      s2 = str2;
+
+      while(*s2)
+      {
+        *match++ = *s2++;
+      }
+
+      match = strstr(match, str1);
+
+      count++;
+    } 
+    while(match);
+
+    return count;
   }
   else
   {
-    Q_strncpyz(backup, dest, lend + 1);
-    lstart = s - dest;
-    strncpy(s, replace, destsize - lstart - 1);
-    strncpy(s + lreplace, backup + lstart + lfind, destsize - lstart - lreplace - 1);
-    return qtrue;
+    do //just replace match
+    {
+      s2 = str2;
+
+      while(*s2)
+      {
+        *match++ = *s2++;
+      }
+
+      match = strstr(match, str1);
+      count++;
+    } 
+    while(match);
   }
+
+  return count;
 }
 
 qint Q_PrintStrlen( const qchar *string ) {

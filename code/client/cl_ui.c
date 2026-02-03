@@ -781,24 +781,24 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return 0;
 
 	case UI_FS_FOPENFILE:
-		return FS_VM_OpenFile( VMA(1), VMA(2), args[3], H_Q3UI );
+		return FS_VM_OpenFile( VMA(1), VMA(2), args[3], H_UI );
 
 	case UI_FS_READ:
 		VM_CHECKBOUNDS( uivm, args[1], args[2] );
-		FS_VM_ReadFile( VMA(1), args[2], args[3], H_Q3UI );
+		FS_VM_ReadFile( VMA(1), args[2], args[3], H_UI );
 		return 0;
 
 	case UI_FS_WRITE:
 		VM_CHECKBOUNDS( uivm, args[1], args[2] );
-		FS_VM_WriteFile( VMA(1), args[2], args[3], H_Q3UI );
+		FS_VM_WriteFile( VMA(1), args[2], args[3], H_UI );
 		return 0;
 
 	case UI_FS_FCLOSEFILE:
-		FS_VM_CloseFile( args[1], H_Q3UI );
+		FS_VM_CloseFile( args[1], H_UI );
 		return 0;
 
 	case UI_FS_SEEK:
-		return FS_VM_SeekFile( args[1], args[2], args[3], H_Q3UI );
+		return FS_VM_SeekFile( args[1], args[2], args[3], H_UI );
 
 	case UI_FS_GETFILELIST:
 		VM_CHECKBOUNDS( uivm, args[3], args[4] );
@@ -987,14 +987,6 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 	case UI_MEMORY_REMAINING:
 		return Hunk_MemoryRemaining();
 
-	case UI_GET_CDKEY:
-		VM_CHECKBOUNDS( uivm, args[1], args[2] );
-		CLUI_GetCDKey( VMA(1), args[2] );
-		return 0;
-
-	case UI_SET_CDKEY:
-		return 0;
-
 	case UI_SET_PBCLSTATUS:
 		return 0;
 
@@ -1080,9 +1072,6 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		re.RemapShader( VMA(1), VMA(2), VMA(3) );
 		return 0;
 
-	case UI_VERIFY_CDKEY:
-		return Com_CDKeyValidate(VMA(1), VMA(2));
-
 	// engine extensions
 	case UI_R_ADDREFENTITYTOSCENE2:
 		re.AddRefEntityToScene( VMA(1), qtrue );
@@ -1148,7 +1137,7 @@ void CL_ShutdownUI( void ) {
 	VM_Call( uivm, 0, UI_SHUTDOWN );
 	VM_Free( uivm );
 	uivm = NULL;
-	FS_VM_CloseFiles( H_Q3UI );
+	FS_VM_CloseFiles( H_UI );
 }
 
 
