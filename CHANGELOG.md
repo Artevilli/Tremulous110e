@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--02/03/2026--**
+
+* client:<br />small update
+
 **--02/02/2026--**
 
 * makefile/client/renderer/qcommon/server:<br />client compiles
