@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/03/2026--**
 
+* qcommon:<br />return full length of read file rather than just that it exists
+
 * client:<br />small update
 
 **--02/02/2026--**

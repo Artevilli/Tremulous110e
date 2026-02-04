@@ -1886,7 +1886,7 @@ FS_FOpenFileRead(const qchar *filename, fileHandle_t *file, qbool uniqueFILE)
           if (!FS_FilenameCompare(pakFile->name, filename))
           {
             //found it!
-            return qtrue;
+            return pakFile->size;
           }
 
           pakFile = pakFile->next;
