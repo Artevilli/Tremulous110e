@@ -6726,12 +6726,6 @@ FS_LoadLibrary(const qchar *name)
 {
   const searchpath_t *sp = fs_searchpaths;
   void *libHandle = NULL;
-  qchar *fn;
-
-#if defined(DEBUG)
-  fn = FS_BuildOSPath(Sys_Pwd(), name, NULL);
-  libHandle = Sys_LoadLibrary(fn);
-#endif
 
   while(!libHandle && sp)
   {
@@ -6742,15 +6736,10 @@ FS_LoadLibrary(const qchar *name)
 
     if (sp)
     {
-      fn = FS_BuildOSPath(sp->dir->path, name, NULL);
+      const qchar *fn = FS_BuildOSPath(sp->dir->path, name, NULL);
       libHandle = Sys_LoadLibrary(fn);
       sp = sp->next;
     }
-  }
-
-  if (!libHandle)
-  {
-    return NULL;
   }
 
   return libHandle;

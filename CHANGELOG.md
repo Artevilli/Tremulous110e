@@ -4,6 +4,9 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--02/04/2026--**
+
+* qcommon:<br />cleanup `FS_LoadLibrary()`
 **--02/03/2026--**
 
 * qcommon:<br />return full length of read file rather than just that it exists
