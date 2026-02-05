@@ -446,6 +446,9 @@ void CL_StartHunkUsers( void );
 
 void CL_Disconnect_f( void );
 void CL_ReadDemoMessage( void );
+demoState_t CL_DemoState( void );
+qint CL_DemoPos( void );
+void CL_DemoName( qchar *buffer, qint size );
 void CL_StopRecord_f( void );
 
 void CL_InitDownloads( void );

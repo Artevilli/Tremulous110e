@@ -6,7 +6,10 @@ Changes
 -----------------------
 **--02/04/2026--**
 
+* client:<br />compatibility calls
+
 * qcommon:<br />cleanup `FS_LoadLibrary()`
+
 **--02/03/2026--**
 
 * qcommon:<br />return full length of read file rather than just that it exists

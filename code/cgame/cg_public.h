@@ -38,20 +38,20 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // they may be dropped by the network.
 typedef struct
 {
-  int           snapFlags;                            // SNAPFLAG_RATE_DELAYED, etc
-  int           ping;
+  qint           snapFlags;                            // SNAPFLAG_RATE_DELAYED, etc
+  qint           ping;
 
-  int           serverTime;                           // server time the message is valid for (in msec)
+  qint           serverTime;                           // server time the message is valid for (in msec)
 
   byte          areamask[ MAX_MAP_AREA_BYTES ];       // portalarea visibility bits
 
   playerState_t ps;                                   // complete information about the current player at this time
 
-  int           numEntities;                          // all of the entities that need to be presented
+  qint           numEntities;                          // all of the entities that need to be presented
   entityState_t entities[ MAX_ENTITIES_IN_SNAPSHOT ]; // at the time of this snapshot
 
-  int           numServerCommands;                    // text based server commands to execute when this
-  int           serverCommandSequence;                // snapshot becomes current
+  qint           numServerCommands;                    // text based server commands to execute when this
+  qint           serverCommandSequence;                // snapshot becomes current
 } snapshot_t;
 
 enum
@@ -159,6 +159,7 @@ typedef enum
   CG_GET_ENTITY_TOKEN,
   CG_R_ADDPOLYSTOSCENE,
   CG_R_INPVS,
+  // 1.32
   CG_FS_SEEK,
   CG_FS_GETFILELIST,
   CG_LITERAL_ARGS,
@@ -178,26 +179,25 @@ typedef enum
   CG_PARSE_READ_TOKEN,
   CG_PARSE_SOURCE_FILE_AND_LINE,
 
-  CG_KEY_SETOVERSTRIKEMODE,
+  CG_KEY_SETOVERSTRIKEMODE = 200,
   CG_KEY_GETOVERSTRIKEMODE,
 
   CG_S_SOUNDDURATION,
 
-  CG_FLOOR = 107,
+  CG_FLOOR = 207,
   CG_CEIL,
   CG_TESTPRINTINT,
   CG_TESTPRINTFLOAT,
   CG_ACOS,
 
-  //engine extensions
+  // engine extensions
   CG_R_ADDREFENTITYTOSCENE2,
   CG_R_FORCEFIXEDDLIGHTS,
   CG_R_ADDLINEARLIGHTTOSCENE,
   CG_IS_RECORDING_DEMO,
   CG_CVAR_SETDESCRIPTION,
   CG_TRAP_GETVALUE = COM_TRAP_GETVALUE,
-}
-cgameImport_t;
+} cgameImport_t;
 
 
 /*
@@ -211,7 +211,7 @@ functions exported to the main executable
 typedef enum
 {
   CG_INIT,
-  // void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum )
+  // void CG_Init( qint serverMessageNum, qint serverCommandSequence, qint clientNum )
   // called when the level loads or when the renderer is restarted
   // all media should be registered at this time
   // cgame will display loading status by calling SCR_Update, which
@@ -231,23 +231,24 @@ typedef enum
   // command is not known to the game
 
   CG_DRAW_ACTIVE_FRAME,
-  // void (*CG_DrawActiveFrame)( int serverTime, stereoFrame_t stereoView, qbool demoPlayback );
+  // void (*CG_DrawActiveFrame)( qint serverTime, stereoFrame_t stereoView, qbool demoPlayback );
   // Generates and draws a game scene and status information at the given time.
   // If demoPlayback is set, local movement prediction will not be enabled
 
   CG_CROSSHAIR_PLAYER,
-  // int (*CG_CrosshairPlayer)( void );
+  // qint (*CG_CrosshairPlayer)( void );
 
   CG_LAST_ATTACKER,
-  // int (*CG_LastAttacker)( void );
+  // qint (*CG_LastAttacker)( void );
 
   CG_KEY_EVENT,
-  // void  (*CG_KeyEvent)( int key, qbool down );
+  // void  (*CG_KeyEvent)( qint key, qbool down );
 
   CG_MOUSE_EVENT,
-  // void  (*CG_MouseEvent)( int dx, int dy );
+  // void  (*CG_MouseEvent)( qint dx, qint dy );
+
   CG_EVENT_HANDLING,
-  // void (*CG_EventHandling)(int type);
+  // void (*CG_EventHandling)(qint type);
 
   CG_CONSOLE_TEXT,
   // void (*CG_ConsoleText)( void );

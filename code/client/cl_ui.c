@@ -131,7 +131,6 @@ static void LAN_ResetPings(qint source) {
 	}
 }
 
-
 /*
 ====================
 LAN_AddServer
@@ -206,7 +205,7 @@ static void LAN_RemoveServer(qint source, const qchar *addr) {
 	}
 	if (servers) {
 		netadr_t comp;
-		NET_StringToAdr( addr, &comp, NA_UNSPEC );
+		NET_StringToAdr( addr, &comp, NA_IP );
 		for (i = 0; i < *count; i++) {
 			if (NET_CompareAdr( &comp, &servers[i].adr)) {
 				qint j = i;
@@ -314,10 +313,7 @@ static void LAN_GetServerInfo( qint source, qint n, qchar *buf, qint buflen ) {
 		Info_SetValueForKey( info, "game", server->game);
 		Info_SetValueForKey( info, "gametype", va("%i",server->gameType));
 		Info_SetValueForKey( info, "nettype", va("%i",server->netType));
-		Info_SetValueForKey( info, "addr", NET_AdrToStringwPort(&server->adr));
-		Info_SetValueForKey( info, "punkbuster", va("%i", server->punkbuster));
-		Info_SetValueForKey( info, "g_needpass", va("%i", server->g_needpass));
-		Info_SetValueForKey( info, "g_humanplayers", va("%i", server->g_humanplayers));
+		Info_SetValueForKey( info, "addr", NET_AdrToString(&server->adr));
 		Q_strncpyz(buf, info, buflen);
 	} else {
 		if (buf) {
@@ -357,6 +353,7 @@ static qint LAN_GetServerPing( qint source, qint n ) {
 	}
 	return -1;
 }
+
 
 /*
 ====================
@@ -404,7 +401,28 @@ static qint LAN_CompareServers( qint source, qint sortKey, qint sortDir, qint s1
 	res = 0;
 	switch( sortKey ) {
 		case SORT_HOST:
-			res = Q_stricmp( server1->hostName, server2->hostName );
+			{
+				qchar	hostName1[ MAX_HOSTNAME_LENGTH ];
+				qchar	hostName2[ MAX_HOSTNAME_LENGTH ];
+				qchar	*p;
+				qint		i;
+
+				for( p = server1->hostName, i = 0; *p != '\0'; p++ )
+				{
+					if( Q_isalpha( *p ) )
+						hostName1[ i++ ] = *p;
+				}
+				hostName1[ i ] = '\0';
+
+				for( p = server2->hostName, i = 0; *p != '\0'; p++ )
+				{
+					if( Q_isalpha( *p ) )
+						hostName2[ i++ ] = *p;
+				}
+				hostName2[ i ] = '\0';
+
+				res = Q_stricmp( hostName1, hostName2 );
+			}
 			break;
 
 		case SORT_MAP:
@@ -415,17 +433,6 @@ static qint LAN_CompareServers( qint source, qint sortKey, qint sortDir, qint s1
 				res = -1;
 			}
 			else if (server1->clients > server2->clients) {
-				res = 1;
-			}
-			else {
-				res = 0;
-			}
-			break;
-		case SORT_GAME:
-			if (server1->gameType < server2->gameType) {
-				res = -1;
-			}
-			else if (server1->gameType > server2->gameType) {
 				res = 1;
 			}
 			else {
@@ -590,7 +597,7 @@ static qbool LAN_UpdateVisiblePings(qint source ) {
 LAN_GetServerStatus
 ====================
 */
-static qint LAN_GetServerStatus( const qchar *serverAddress, qchar *serverStatus, qint maxLen ) {
+static qint LAN_GetServerStatus( qchar *serverAddress, qchar *serverStatus, qint maxLen ) {
 	return CL_ServerStatus( serverAddress, serverStatus, maxLen );
 }
 
@@ -601,7 +608,7 @@ CL_GetGlConfig
 ====================
 */
 static void CL_GetGlconfig( glconfig_t *config ) {
-	*config = *re.GetConfig();
+	*config = cls.glconfig;
 }
 
 
@@ -647,7 +654,7 @@ static qint GetConfigString(qint index, qchar *buf, qint size)
 	}
 
 	Q_strncpyz( buf, cl.gameState.stringData+offset, size);
-
+ 
 	return qtrue;
 }
 
@@ -723,7 +730,7 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return Sys_Milliseconds();
 
 	case UI_CVAR_REGISTER:
-		Cvar_Register( VMA(1), VMA(2), VMA(3), args[4], uivm->privateFlag );
+		Cvar_Register( VMA(1), VMA(2), VMA(3), args[4], uivm->privateFlag ); 
 		return 0;
 
 	case UI_CVAR_UPDATE:
@@ -768,10 +775,9 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return 0;
 
 	case UI_CMD_EXECUTETEXT:
-		if(args[1] == EXEC_NOW
+		if(args[1] == 0
 		&& (!strncmp(VMA(2), "snd_restart", 11)
 		|| !strncmp(VMA(2), "vid_restart", 11)
-		|| !strncmp(VMA(2), "disconnect", 10)
 		|| !strncmp(VMA(2), "quit", 5)))
 		{
 			Com_Printf (S_COLOR_YELLOW "turning EXEC_NOW '%.11s' into EXEC_INSERT\n", (const qchar*)VMA(2));
@@ -803,7 +809,7 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 	case UI_FS_GETFILELIST:
 		VM_CHECKBOUNDS( uivm, args[3], args[4] );
 		return FS_GetFileList( VMA(1), VMA(2), VMA(3), args[4] );
-
+	
 	case UI_R_REGISTERMODEL:
 		return re.RegisterModel( VMA(1) );
 
@@ -904,7 +910,7 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 	case UI_GETCLIENTSTATE:
 		VM_CHECKBOUNDS( uivm, args[1], sizeof( uiClientState_t ) );
 		GetClientState( VMA(1) );
-		return 0;
+		return 0;		
 
 	case UI_GETGLCONFIG:
 		VM_CHECKBOUNDS( uivm, args[1], sizeof( glconfig_t ) );
@@ -988,7 +994,7 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return Hunk_MemoryRemaining();
 
 	case UI_SET_PBCLSTATUS:
-		return 0;
+		return 0;	
 
 	case UI_R_REGISTERFONT:
 		re.RegisterFont( VMA(1), args[2], VMA(3));
@@ -1129,7 +1135,7 @@ CL_ShutdownUI
 ====================
 */
 void CL_ShutdownUI( void ) {
-	Key_SetCatcher( Key_GetCatcher() & ~KEYCATCH_UI );
+	Key_SetCatcher( Key_GetCatcher( ) & ~KEYCATCH_UI );
 	cls.uiStarted = qfalse;
 	if ( !uivm ) {
 		return;
@@ -1137,9 +1143,8 @@ void CL_ShutdownUI( void ) {
 	VM_Call( uivm, 0, UI_SHUTDOWN );
 	VM_Free( uivm );
 	uivm = NULL;
-	FS_VM_CloseFiles( H_UI );
+	FS_VM_CloseFiles(H_UI);
 }
-
 
 /*
 ====================
@@ -1202,7 +1207,6 @@ void CL_InitUI( void ) {
 		VM_Call( uivm, 1, UI_INIT, (cls.state >= CA_AUTHORIZING && cls.state < CA_ACTIVE) );
 	}
 }
-
 
 /*
 ====================

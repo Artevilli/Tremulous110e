@@ -356,7 +356,7 @@ qint SCR_GetBigStringWidth( const qchar *str ) {
 
 
 //===============================================================================
-
+#if 0
 /*
 =================
 SCR_DrawDemoRecording
@@ -383,7 +383,7 @@ static void SCR_DrawDemoRecording( void ) {
 		SCR_DrawStringExt(320 - strlen(string) * 4, 20, 8, string, g_color_table[ColorIndex(COLOR_WHITE)], qtrue, qfalse);
 	}
 }
-
+#endif
 
 #ifdef USE_VOIP
 /*
@@ -577,7 +577,7 @@ static void SCR_DrawScreenField( stereoFrame_t stereoFrame ) {
 		case CA_ACTIVE:
 			// always supply STEREO_CENTER as vieworg offset is now done by the engine.
 			CL_CGameRendering( stereoFrame );
-			SCR_DrawDemoRecording();
+			//SCR_DrawDemoRecording();
 #ifdef USE_VOIP
 			SCR_DrawVoipMeter();
 #endif

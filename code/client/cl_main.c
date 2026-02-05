@@ -977,6 +977,56 @@ static void CL_NextDemo( void ) {
 }
 
 
+/*
+==================
+CL_DemoState
+
+Returns the current state of the demo system
+==================
+*/
+demoState_t CL_DemoState( void ) {
+	if( clc.demoplaying ) {
+		return DS_PLAYBACK;
+	} else if( clc.demorecording ) {
+		return DS_RECORDING;
+	} else {
+		return DS_NONE;
+	}
+}
+
+
+/*
+==================
+CL_DemoPos
+
+Returns the current position of the demo
+==================
+*/
+qint CL_DemoPos( void ) {
+	if( clc.demoplaying || clc.demorecording ) {
+		return FS_FTell( clc.demofile );
+	} else {
+		return 0;
+	}
+}
+
+
+/*
+==================
+CL_DemoName
+
+Returns the name of the demo
+==================
+*/
+void CL_DemoName( qchar *buffer, qint size ) {
+	if( clc.demoplaying || clc.demorecording ) {
+		Q_strncpyz( buffer, clc.demoName, size );
+	} else if( size >= 1 ) {
+		buffer[ 0 ] = '\0';
+	}
+}
+
+
 //======================================================================
 
 /*

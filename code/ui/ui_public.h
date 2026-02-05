@@ -11,28 +11,29 @@ or (at your option) any later version.
 
 Quake III Arena source code is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with Quake III Arena source code; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA	02110-1301	USA
 ===========================================================================
 */
 //
-#ifndef __UI_PUBLIC_H__
-#define __UI_PUBLIC_H__
+#ifndef UI_PUBLIC_H
+#define UI_PUBLIC_H
 
 #define UI_API_VERSION	6
 
 typedef struct {
-	connstate_t		connState;
-	int				connectPacketCount;
-	int				clientNum;
+	connstate_t	 connState;
+	int			 connectPacketCount;
+	int			 clientNum;
 	char			servername[MAX_STRING_CHARS];
 	char			updateInfoString[MAX_STRING_CHARS];
 	char			messageString[MAX_STRING_CHARS];
-} uiClientState_t;
+}
+uiClientState_t;
 
 typedef enum {
 	UI_ERROR,
@@ -88,15 +89,8 @@ typedef enum {
 	UI_CVAR_REGISTER,
 	UI_CVAR_UPDATE,
 	UI_MEMORY_REMAINING,
-	UI_GET_CDKEY,
-	UI_SET_CDKEY,
 	UI_R_REGISTERFONT,
 	UI_R_MODELBOUNDS,
-	UI_PC_ADD_GLOBAL_DEFINE,
-	UI_PC_LOAD_SOURCE,
-	UI_PC_FREE_SOURCE,
-	UI_PC_READ_TOKEN,
-	UI_PC_SOURCE_FILE_AND_LINE,
 	UI_S_STOPBACKGROUNDTRACK,
 	UI_S_STARTBACKGROUNDTRACK,
 	UI_REAL_TIME,
@@ -116,7 +110,6 @@ typedef enum {
 	UI_CIN_DRAWCINEMATIC,
 	UI_CIN_SETEXTENTS,
 	UI_R_REMAP_SHADER,
-	UI_VERIFY_CDKEY,
 	UI_LAN_SERVERSTATUS,
 	UI_LAN_GETSERVERPING,
 	UI_LAN_SERVERISVISIBLE,
@@ -131,7 +124,7 @@ typedef enum {
 	UI_PARSE_READ_TOKEN,
 	UI_PARSE_SOURCE_FILE_AND_LINE,
 
-	UI_FLOOR = 107,
+	UI_FLOOR = 207,
 	UI_CEIL,
 
 	// engine extensions
@@ -139,52 +132,66 @@ typedef enum {
 	UI_R_ADDLINEARLIGHTTOSCENE,
 	UI_CVAR_SETDESCRIPTION,
 	UI_TRAP_GETVALUE = COM_TRAP_GETVALUE,
-
-} uiImport_t;
+}
+uiImport_t;
 
 typedef enum {
 	UIMENU_NONE,
 	UIMENU_MAIN,
 	UIMENU_INGAME
-} uiMenuCommand_t;
-
-#define SORT_HOST			0
-#define SORT_MAP			1
-#define SORT_CLIENTS		2
-#define SORT_GAME			3
-#define SORT_PING			4
+}
+uiMenuCommand_t;
 
 typedef enum {
-	UI_GETAPIVERSION = 0,	// system reserved
+	SORT_HOST,
+	SORT_MAP,
+	SORT_CLIENTS,
+	SORT_PING
+}
+serverSortField_t;
+
+typedef enum {
+	UI_GETAPIVERSION = 0, // system reserved
 
 	UI_INIT,
-//	void	UI_Init( void );
+	//	void	UI_Init( void );
 
 	UI_SHUTDOWN,
-//	void	UI_Shutdown( void );
+	//	void	UI_Shutdown( void );
 
 	UI_KEY_EVENT,
-//	void	UI_KeyEvent( int key, int down );
+	//	void	UI_KeyEvent( int key );
 
 	UI_MOUSE_EVENT,
-//	void	UI_MouseEvent( int dx, int dy );
+	//	void	UI_MouseEvent( int dx, int dy );
+
+	UI_MOUSE_POSITION,
+	//	int	 UI_MousePosition( void );
+
+	UI_SET_MOUSE_POSITION,
+	//	void	UI_SetMousePosition( int x, int y );
 
 	UI_REFRESH,
-//	void	UI_Refresh( int time );
+	//	void	UI_Refresh( int time );
 
 	UI_IS_FULLSCREEN,
-//	qboolean UI_IsFullscreen( void );
+	//	qboolean UI_IsFullscreen( void );
 
 	UI_SET_ACTIVE_MENU,
-//	void	UI_SetActiveMenu( uiMenuCommand_t menu );
+	//	void	UI_SetActiveMenu( uiMenuCommand_t menu );
 
 	UI_CONSOLE_COMMAND,
-//	qboolean UI_ConsoleCommand( int realTime );
+	//	qboolean UI_ConsoleCommand( int realTime );
 
 	UI_DRAW_CONNECT_SCREEN,
-//	void	UI_DrawConnectScreen( qboolean overlay );
-	
+	//	void	UI_DrawConnectScreen( qboolean overlay );
+
+	// if !overlay, the background will be drawn, otherwise it will be
+	// overlayed over whatever the cgame has drawn.
+	// a GetClientState syscall will be made to get the current strings
+
 	UI_EXPORT_LAST,
-} uiExport_t;
+}
+uiExport_t;
 
 #endif
