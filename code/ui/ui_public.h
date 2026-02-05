@@ -124,7 +124,7 @@ typedef enum {
 	UI_PARSE_READ_TOKEN,
 	UI_PARSE_SOURCE_FILE_AND_LINE,
 
-	UI_FLOOR = 207,
+	UI_FLOOR = 107,
 	UI_CEIL,
 
 	// engine extensions

@@ -729,25 +729,25 @@ static intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		return Key_GetOverstrikeMode( );
 
 	// shared syscalls
-	case TRAP_MEMSET:
+	case CG_MEMSET:
 		VM_CHECKBOUNDS( cgvm, args[1], args[3] );
 		Com_Memset( VMA(1), args[2], args[3] );
 		return args[1];
-	case TRAP_MEMCPY:
+	case CG_MEMCPY:
 		VM_CHECKBOUNDS2( cgvm, args[1], args[2], args[3] );
 		Com_Memcpy( VMA(1), VMA(2), args[3] );
 		return args[1];
-	case TRAP_STRNCPY:
+	case CG_STRNCPY:
 		VM_CHECKBOUNDS( cgvm, args[1], args[3] );
 		Q_strncpy( VMA(1), VMA(2), args[3] );
 		return args[1];
-	case TRAP_SIN:
+	case CG_SIN:
 		return FloatAsInt( sin( VMF(1) ) );
-	case TRAP_COS:
+	case CG_COS:
 		return FloatAsInt( cos( VMF(1) ) );
-	case TRAP_ATAN2:
+	case CG_ATAN2:
 		return FloatAsInt( atan2( VMF(1), VMF(2) ) );
-	case TRAP_SQRT:
+	case CG_SQRT:
 		return FloatAsInt( sqrt( VMF(1) ) );
 
 	case CG_FLOOR:

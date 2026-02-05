@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--02/05/2026--**
+
+* client:<br />avoid sharing syscalls when calling from cgame
+
 **--02/04/2026--**
 
 * client:<br />compatibility calls
