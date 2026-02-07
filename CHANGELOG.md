@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--02/07/2026--**
+
+* renderers:<br />fix dlight regression
+
 **--02/06/2026--**
 
 * makefile:<br />stack protection
