@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/07/2026--**
 
+* qcommon:<br />only use cvtss2si on SSE1-only CPUs
+
 * makefile:<br />more runtime protection flags
 
 * renderers:<br />fix dlight regression

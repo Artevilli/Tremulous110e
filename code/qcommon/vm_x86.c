@@ -1538,6 +1538,15 @@ emit_cvttss2si(uint32_t intreg, uint32_t xmmreg)
 #endif
 }
 
+#if id386
+static void
+emit_cvtss2si(uint32_t intreg, uint32_t xmmreg)
+{
+  Emit1(0xF3);
+  emit_op_reg(0x0F, 0x2D, xmmreg, intreg);
+}
+#endif
+
 static void
 emit_sqrt(uint32_t xmmreg, uint32_t base, int32_t offset)
 {
@@ -6121,7 +6130,7 @@ __compile:
             }
 
             unmask_sx(sx[0]);
-            store_sx_opstack(sx[1]); //*opstack = xmm0
+            store_sx_opstack(sx[1]); //*opstack = xmm1
           }
           else
           {
@@ -6208,7 +6217,26 @@ __compile:
           {
             rx[0] = alloc_rx(R_EAX);
             sx[0] = load_sx_opstack(R_XMM0 | RCONST); //xmm0 = *opstack
+#if idx64
             emit_cvttss2si(rx[0], sx[0]); //cvttss2si xmm0, eax
+#else
+            if (CPU_Flags & CPU_SSE2)
+            {
+              emit_cvttss2si(rx[0], sx[0]); //cvttss2si xmm0, eax
+            }
+            else
+            {
+              static int32_t sse_cw[2] = {0x0000, 0x7FA0}; //[0] - current value, [1] - round towards zero
+
+              EmitString("0F AE 1D"); //stmxcsr [0x12345678]
+              Emit4((intptr_t)&sse_cw[0]);
+              EmitString("0F AE 15"); //ldmxcsr [0x12345678]
+              Emit4((intptr_t)&sse_cw[1]);
+              emit_cvtss2si(rx[0], sx[0]); //cvtss2si xmm0, eax
+              EmitString("0F AE 15");
+              Emit4((intptr_t)&sse_cw[0]);
+            }
+#endif
             unmask_sx(sx[0]);
             store_rx_opstack(rx[0]); //*opstack = eax
           }
