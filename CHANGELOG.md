@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/07/2026--**
 
+* makefile:<br />more runtime protection flags
+
 * renderers:<br />fix dlight regression
 
 **--02/06/2026--**
