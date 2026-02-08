@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--02/08/2026--**
+
+* client:<br />fix compiler warnings when built as debug
+
 **--02/07/2026--**
 
 * qcommon:<br />only use cvtss2si on SSE1-only CPUs

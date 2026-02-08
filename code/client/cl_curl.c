@@ -758,15 +758,9 @@ static qint Com_DL_CallbackProgress( void *data, double dltotal, double dlnow, d
 #else
 		percentage = ( dlnow / dltotal ) * 100.0;
 #endif
-		qchar temp[256];
-
-		snprintf(temp, sizeof(temp), " downloading %s: %s (%i%%)", dl->Name, sizeToString(dl->Count), (qint)percentage);
-		strncpy(dl->progress, temp, sizeof(dl->progress));
+		Com_sprintf( dl->progress, sizeof( dl->progress ), " downloading %s: %s (%i%%)", dl->Name, sizeToString( dl->Count ), (qint)percentage );
 	} else {
-		qchar temp[256];
-
-		snprintf(temp, sizeof(temp), " downloading %s: %s", dl->Name, sizeToString(dl->Count));
-		strncpy(dl->progress, temp, sizeof(dl->progress));
+		Com_sprintf( dl->progress, sizeof( dl->progress ), " downloading %s: %s", dl->Name, sizeToString( dl->Count ) );
 	}
 
 #if CURL_AT_LEAST_VERSION(7, 55, 0)
