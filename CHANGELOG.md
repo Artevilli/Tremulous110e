@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--02/09/2026--**
+
+* client:<br />format header consistency
+
 **--02/08/2026--**
 
 * client:<br />fix compiler warnings when built as debug
