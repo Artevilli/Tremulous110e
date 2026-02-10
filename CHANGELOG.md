@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/10/2026--**
 
+* makefile/qcommon:<br />add powerpc support
+
 * makefile:<br />ppc64le support
 
 * qcommon:<br />remove debug code
