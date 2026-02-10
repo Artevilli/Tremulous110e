@@ -192,6 +192,10 @@ typedef qint intptr_t;
 short ShortSwap(short l);
 int LongSwap(qint l);
 float FloatSwap(const float *f);
+void
+CopyShortSwap(void *dest, void *src);
+void
+CopyLongSwap(void *dest, void *src);
 
 #include "q_platform.h"
 

@@ -196,7 +196,7 @@ const void MD5Update(struct MD5Context *ctx, unsigned qchar const *buf,
 	    return;
 	}
 	memcpy(p, buf, t);
-	byteReverse(ctx->in, 16);
+	byteReverse(ctx->in.b, 16);
 	MD5Transform(ctx->buf, ctx->in.u32);
 	buf += t;
 	len -= t;
@@ -205,7 +205,7 @@ const void MD5Update(struct MD5Context *ctx, unsigned qchar const *buf,
 
     while (len >= MD5_BLOCK_SIZE) {
 	memcpy(ctx->in.b, buf, MD5_BLOCK_SIZE);
-	byteReverse(ctx->in.u, 16);
+	byteReverse(ctx->in.b, 16);
 	MD5Transform(ctx->buf, ctx->in.u32);
 	buf += MD5_BLOCK_SIZE;
 	len -= MD5_BLOCK_SIZE;
@@ -242,7 +242,7 @@ MD5Final(struct MD5Context *ctx, byte *digest)
     if (count < 8) {
 	/* Two lots of padding:  Pad the first block to 64 bytes */
 	memset(p, 0, count);
-	byteReverse(ctx->in, 16);
+	byteReverse(ctx->in.b, 16);
 	MD5Transform(ctx->buf, ctx->in.u32);
 
 	/* Now fill the next block with 56 bytes */
@@ -251,7 +251,7 @@ MD5Final(struct MD5Context *ctx, byte *digest)
 	/* Pad block to 56 bytes */
 	memset(p, 0, count - 8);
     }
-    byteReverse(ctx->in, 14);
+    byteReverse(ctx->in.b, 14);
 
     /* Append length in bits and transform */
     ctx->in.u32[14] = ctx->bits[0];
