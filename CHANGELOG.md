@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/10/2026--**
 
+* qcommon:<br />remove debug code
+
 * qcommon:<br />revert last qvm change and use movss instead of movd
 
 * makefile/null:<br />remove unused null directory
