@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/10/2026--**
 
+* makefile:<br />fix `RENDERER_DEFAULT`
+
 * makefile/qcommon:<br />ppc64 support
 
 * makefile/qcommon:<br />add powerpc support
