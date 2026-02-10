@@ -198,7 +198,6 @@ BD=$(BUILD_DIR)/debug-$(PLATFORM)-$(ARCH)
 BR=$(BUILD_DIR)/release-$(PLATFORM)-$(ARCH)
 ADIR=$(MOUNT_DIR)/asm
 CDIR=$(MOUNT_DIR)/client
-NDIR=$(MOUNT_DIR)/null
 SDIR=$(MOUNT_DIR)/server
 RCDIR=$(MOUNT_DIR)/renderercommon
 R1DIR=$(MOUNT_DIR)/renderer
@@ -1291,10 +1290,6 @@ Q3DOBJ = \
   $(B)/ded/q_shared.o \
   \
   $(B)/ded/unzip.o \
-  \
-  $(B)/ded/null_client.o \
-  $(B)/ded/null_input.o \
-  $(B)/ded/null_snddma.o \
 
 ifdef MINGW
   Q3DOBJ += \
@@ -1420,9 +1415,6 @@ $(B)/client/%.o: $(W32DIR)/%.rc
 
 $(B)/ded/%.o: $(ADIR)/%.s
 	$(DO_AS)
-
-$(B)/ded/%.o: $(NDIR)/%.c
-	$(DO_DED_CC)
 
 $(B)/ded/%.o: $(SDIR)/%.c
 	$(DO_DED_CC)
