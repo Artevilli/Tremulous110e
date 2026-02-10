@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/10/2026--**
 
+* makefile:<br />ppc64le support
+
 * qcommon:<br />remove debug code
 
 * qcommon:<br />revert last qvm change and use movss instead of movd

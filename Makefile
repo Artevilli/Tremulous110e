@@ -561,6 +561,10 @@ else
     ARCHEXT = .aarch64
   endif
 
+  ifeq ($(ARCH),ppc64le)
+    ARCHEXT = .ppc64le
+  endif
+
   SHLIBEXT = so
   SHLIBCFLAGS = -fPIC -fvisibility=hidden
   SHLIBLDFLAGS = -shared $(LDFLAGS)
