@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/10/2026--**
 
+* qcommon:<br />add isa jit optimizations to `vm_powerpc.c`
+
 * makefile:<br />fix `RENDERER_DEFAULT`
 
 * makefile/qcommon:<br />ppc64 support
