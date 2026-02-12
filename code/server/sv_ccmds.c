@@ -204,7 +204,6 @@ SV_Map_f(void)
   qbool cheat;
   qchar expanded[MAX_QPATH];
   qchar mapname[MAX_QPATH];
-  qint i;
   qint len;
 
   map = Cmd_Argv(1);
@@ -275,12 +274,6 @@ SV_Map_f(void)
   else
   {
     Cvar_Set("sv_cheats", "0");
-  }
-  
-  //This forces the local master server IP address cache to be updated on sending the next heartbeat
-  for(i = 0;i < MAX_MASTER_SERVERS;i++)
-  {
-    sv_master[i]->modified = qtrue;
   }
 }
 

@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/12/2026--**
 
+* server:<br />dont resolve master every new map
+
 * renderer:<br />null pointer dereference fix
 
 * qcommon/server:<br />syscall overflow detection
