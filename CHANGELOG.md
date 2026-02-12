@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/12/2026--**
 
+* qcommon:<br />use divss instead of divps
+
 * server:<br />dont resolve master every new map
 
 * renderer:<br />null pointer dereference fix
