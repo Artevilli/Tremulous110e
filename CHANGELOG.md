@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/12/2026--**
 
+* renderer:<br />null pointer dereference fix
+
 * qcommon/server:<br />syscall overflow detection
 
 * qcommon/client/server:<br />undo some custom values
