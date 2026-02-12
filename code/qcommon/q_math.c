@@ -328,14 +328,6 @@ float NormalizeColor( const vec3_t in, vec3_t out ) {
 	return max;
 }
 
-void
-CrossProduct(const vec3_t v1, const vec3_t v2, vec3_t cross)
-{
-  cross[0] = v1[1]*v2[2] - v1[2]*v2[1];
-  cross[1] = v1[2]*v2[0] - v1[0]*v2[2];
-  cross[2] = v1[0]*v2[1] - v1[1]*v2[0];
-}
-
 /*
 =====================
 PlaneFromPoints

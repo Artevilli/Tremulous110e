@@ -729,7 +729,7 @@ COM_ParseError(const qchar *format, ...)
 }
 
 void
-COM_ParseWarning(qchar *format, ...)
+COM_ParseWarning(const qchar *format, ...)
 {
   va_list argptr;
   static qchar string[4096];
@@ -871,7 +871,7 @@ COM_Compress(qchar *data_p)
   return out - data_p;
 }
 
-qchar *COM_ParseExt( const qchar **data_p, qbool allowLineBreaks )
+const qchar *COM_ParseExt( const qchar **data_p, qbool allowLineBreaks )
 {
 	qint c = 0, len;
 	qbool hasNewLines = qfalse;
@@ -2631,7 +2631,7 @@ Info_NextPair(const qchar *s, qchar *key, qchar *value)
 Info_RemoveKey
 ===================
 */
-unsigned
+qint
 Info_RemoveKey(qchar *s, const qchar *key)
 {
   qchar *start;
@@ -2770,7 +2770,7 @@ Changes or adds a key/value pair
 ==================
 */
 qbool
-Info_SetValueForKey_s(qchar *s, unsigned slen, const qchar *key, const qchar *value)
+Info_SetValueForKey_s(qchar *s, qint slen, const qchar *key, const qchar *value)
 {
   qchar newi[BIG_INFO_STRING + 2];
   unsigned len1;
@@ -2869,7 +2869,7 @@ Com_SkipTokens
 ==================
 */
 const qchar *
-Com_SkipTokens(const qchar *s, unsigned numTokens, const qchar *sep)
+Com_SkipTokens(const qchar *s, qint numTokens, const qchar *sep)
 {
   unsigned sepCount;
   const qchar *p = s;

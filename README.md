@@ -8,7 +8,6 @@ This is a modern idTech 3 Tremulous engine aimed to be fast, secure, and (hopefu
 
 **Key features**:
 * integrated ACEBot navigation logic through syscalls
-* up to 128 clients, including bots
 * optimized OpenGL renderer
 * optimized Vulkan renderer
 * raw mouse input support, enabled automatically instead of DirectInput(**\in_mouse 1**) if available

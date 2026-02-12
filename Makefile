@@ -538,9 +538,9 @@ else
 #############################################################################
 
   BASE_CFLAGS += -Wall -Wimplicit -Wstrict-prototypes -pipe \
-    -Wformat-security -Winline -Wshadow -Werror -D_FORTIFY_SOURCE=3 \
-    -fstack-protector-strong -D_GLIBCXX_ASSERTIONS -fstrict-flex-arrays \
-    -fstack-clash-protection
+    -Wformat-security -Winline -Wshadow -Werror #-D_FORTIFY_SOURCE=3 \
+    #-fstack-protector-strong -D_GLIBCXX_ASSERTIONS -fstrict-flex-arrays \
+    #-fstack-clash-protection
 
   BASE_CFLAGS += -Wno-unused-result
 

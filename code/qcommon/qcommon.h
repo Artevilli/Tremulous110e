@@ -45,6 +45,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define USE_AFFINITY_MASK
 #endif
 
+//stringify macro
+#define XSTRING(x) STRING(x)
+#define STRING(x) #x
+
 #define DELAY_WRITECONFIG
 
 //============================================================================
@@ -1133,6 +1137,10 @@ void		Com_StartupVariable( const qchar *match );
 
 void
 Com_WriteConfiguration(void);
+qint
+Com_HexStrToInt(const qchar *str);
+qbool
+Com_GetHashColor(const qchar *str, byte *color);
 
 static ID_INLINE unsigned
 log2pad(unsigned v, qint roundup)

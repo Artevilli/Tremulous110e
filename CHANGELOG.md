@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--02/12/2026--**
+
+* qcommon/client/server:<br />undo some custom values
+
 **--02/10/2026--**
 
 * qcommon:<br />add isa jit optimizations to `vm_powerpc.c`
@@ -318,7 +322,7 @@ Changes
 
 * qcommon/server:<br />`FRAGMENT_BIT` memory fix and fix bitvector overflows in `SV_AddEntitiesVisibleFromPoint`
 
-* tremded:<br />accompanying the increased sv_dlRate range, increase the last package acknowledge time to 12 seconds
+* server:<br />accompanying the increased sv_dlRate range, increase the last package acknowledge time to 12 seconds
 
 * qcommon:<br />flag `com_affinityMask` and `vm_rtChecks` as `CVAR_SERVERINFO` for transparency 
 
