@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/12/2026--**
 
+* qcommon/server:<br />syscall overflow detection
+
 * qcommon/client/server:<br />undo some custom values
 
 **--02/10/2026--**

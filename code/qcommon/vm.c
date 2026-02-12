@@ -2487,6 +2487,12 @@ VM_Call(vm_t *vm, qint nargs, qint callnum, ...)
 
   ++vm->callLevel;
 
+  //reset syscall counter for top-level calls to detect infinite loops
+  if (vm->callLevel == 1)
+  {
+    vm->syscallCount = 0;
+  }
+
   //if we have a dll loaded, call it directly
   if (vm->entryPoint)
   {
