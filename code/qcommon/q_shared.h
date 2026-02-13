@@ -1008,35 +1008,34 @@ default values.
 ==========================================================
 */
 
-typedef enum
-cvar_flags_s
-{
-  CVAR_ARCHIVE = BIT(0), //set to cause it to be saved to vars.rc used for system variables, not for player specific configurations
-  CVAR_USERINFO = BIT(1), //sent to server on connect or change
-  CVAR_SERVERINFO = BIT(2), //sent in response to front end requests
-  CVAR_SYSTEMINFO = BIT(3), //these cvars will be duplicated on all clients
-  CVAR_INIT = BIT(4), //don't allow change from console at all, but can be set from the command line
-  CVAR_LATCH = BIT(5), //will only change when C code next does a Cvar_Get(), so it can't be changed without proper initialization.  modified will be set, even though the value hasn't changed yet
-  CVAR_ROM = BIT(6), //display only, cannot be set by user at all
-  CVAR_USER_CREATED = BIT(7), //created by a set command
-  CVAR_TEMP = BIT(8), //can be set even when cheats are disabled, but is not archived
-  CVAR_CHEAT = BIT(9), //can not be changed if cheats are disabled
-  CVAR_NORESTART = BIT(10), //do not clear when a cvar_restart is issued
-  CVAR_SERVER_CREATED = BIT(11), //cvar was created by a server the client connected to
-  CVAR_PROTECTED = BIT(12), //prevent modifying this var from VMs or the server
-  CVAR_VM_CREATED = BIT(13), //cvar was created exclusively in one of the VMs.
-  CVAR_SHADER = BIT(14), //tell renderer to recompile shaders.
-  CVAR_NODEFAULT = BIT(15),
-  CVAR_PRIVATE = BIT(16), //can't be read from VM
-  CVAR_DEVELOPER = BIT(17), //can be set only in developer mode
-  CVAR_NOTABCOMPLETE = BIT(18), //no tab completion in console
-  CVAR_ARCHIVE_ND = (CVAR_ARCHIVE | CVAR_NODEFAULT),
+#define	CVAR_ARCHIVE 0x0001 //set to cause it to be saved to vars.rc used for system variables, not for player specific configurations
+#define	CVAR_USERINFO 0x0002 //sent to server on connect or change
+#define	CVAR_SERVERINFO 0x0004 //sent in response to front end requests
+#define	CVAR_SYSTEMINFO 0x0008 //these cvars will be duplicated on all clients
+#define	CVAR_INIT 0x0010 //don't allow change from console at all, but can be set from the command line
+#define	CVAR_LATCH 0x0020 //will only change when C code next does a Cvar_Get(), so it can't be changed without proper initialization.  modified will be set, even though the value hasn't changed yet
+#define	CVAR_ROM 0x0040 //display only, cannot be set by user at all
+#define	CVAR_USER_CREATED 0x0080 //created by a set command
+#define	CVAR_TEMP 0x0100 //can be set even when cheats are disabled, but is not archived
+#define CVAR_CHEAT 0x0200 //can not be changed if cheats are disabled
+#define CVAR_NORESTART 0x0400  //do not clear when a cvar_restart is issued
 
-  //these flags are only returned by the Cvar_Flags() function
-  CVAR_MODIFIED = BIT(17), //cvar was modified
-  CVAR_NONEXISTENT = 0xFFFFFFFF //cvar doesn't exist
-}
-cvar_flags_t;
+#define CVAR_SERVER_CREATED 0x0800 //cvar was created by a server the client connected to
+#define CVAR_VM_CREATED 0x1000 //cvar was created exclusively in one of the VMs.
+#define CVAR_PROTECTED 0x2000 //prevent modifying this var from VMs or the server
+
+#define CVAR_NODEFAULT 0x4000 //do not write to config if matching with default value
+
+#define CVAR_PRIVATE 0x8000 //can't be read from VM
+
+#define CVAR_DEVELOPER 0x10000 //can be set only in developer mode
+#define CVAR_NOTABCOMPLETE 0x20000 //no tab completion in console
+
+#define CVAR_ARCHIVE_ND (CVAR_ARCHIVE | CVAR_NODEFAULT)
+
+//these flags are only returned by the Cvar_Flags() function
+#define CVAR_MODIFIED 0x40000000 //cvar was modified
+#define CVAR_NONEXISTENT 0x80000000 //cvar doesn't exist
 
 typedef enum
 {

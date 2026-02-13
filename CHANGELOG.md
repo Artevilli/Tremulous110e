@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--02/13/2026--**
+
+* qcommon:<br />fix cvar flags
+
 **--02/12/2026--**
 
 * qcommon/server:<br />temporarily drop syscallCount
