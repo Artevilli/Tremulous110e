@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/12/2026--**
 
+* qcommon/server:<br />temporarily drop syscallCount
+
 * qcommon/server:<br />syscallCount optimization
 
 * qcommon:<br />use divss instead of divps
