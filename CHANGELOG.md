@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/14/2026--**
 
+* client:<br />more misc fixes
+
 * client:<br />misc fixes
 
 * qcommon/client/renderer:<br />buggy driver prints

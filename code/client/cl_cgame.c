@@ -56,7 +56,7 @@ static qbool CL_GetUserCmd( qint cmdNumber, usercmd_t *ucmd ) {
 	// cmds[cmdNumber] is the last properly generated command
 
 	// can't return anything that we haven't created yet
-	if ( cmdNumber - cl.cmdNumber < 0 ) {
+	if ( cl.cmdNumber - cmdNumber < 0 ) {
 		Com_Error( ERR_DROP, "CL_GetUserCmd: cmdNumber (%i) > cl.cmdNumber (%i)", cmdNumber, cl.cmdNumber );
 	}
 
@@ -293,7 +293,7 @@ rescan:
 		if ( argc >= 2 )
 			Com_Error( ERR_SERVERDISCONNECT, "Server disconnected - %s", Cmd_Argv( 1 ) );
 		else
-			Com_Error( ERR_SERVERDISCONNECT, "Server disconnected\n" );
+			Com_Error( ERR_SERVERDISCONNECT, "Server disconnected" );
 	}
 
 	if ( !strcmp( cmd, "bcs0" ) ) {
@@ -470,7 +470,7 @@ static intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		Com_Printf( "%s", (const qchar*)VMA(1) );
 		return 0;
 	case CG_ERROR:
-		Com_Error( ERR_DROP, "%s", (const qchar*)VMA(1) );
+		CL_CgameError( VMA(1) );
 		return 0;
 	case CG_MILLISECONDS:
 		return Sys_Milliseconds();
