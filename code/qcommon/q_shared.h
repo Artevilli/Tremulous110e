@@ -327,6 +327,7 @@ typedef qint		clipHandle_t;
 #endif
 
 #define	MAX_NAME_LENGTH		32		// max length of a client name
+#define	MAX_HOSTNAME_LENGTH 80 //max length of a host name
 
 #define	MAX_SAY_TEXT	800
 
@@ -1523,9 +1524,9 @@ typedef struct qtime_s {
 
 // server browser sources
 // TTimo: AS_MPLAYER is no longer used
-#define AS_LOCAL			0
+#define AS_GLOBAL			0
 #define AS_MPLAYER		1
-#define AS_GLOBAL			2
+#define AS_LOCAL			2
 #define AS_FAVORITES	3
 
 

@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--02/14/2026--**
+
+* client:<br />tiny fix to server browser name length
+
 **--02/13/2026--**
 
 * qcommon:<br />fix cvar flags

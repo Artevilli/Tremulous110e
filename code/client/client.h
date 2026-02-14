@@ -273,7 +273,7 @@ typedef struct {
 
 typedef struct {
 	netadr_t	adr;
-	qchar	  	hostName[MAX_NAME_LENGTH];
+	qchar	  	hostName[MAX_HOSTNAME_LENGTH];
 	qchar	  	mapName[MAX_NAME_LENGTH];
 	qchar	  	game[MAX_NAME_LENGTH];
 	qint			netType;

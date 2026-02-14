@@ -782,12 +782,12 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		FS_VM_CloseFile( args[1], H_UI );
 		return 0;
 
-	case UI_FS_SEEK:
-		return FS_VM_SeekFile( args[1], args[2], args[3], H_UI );
-
 	case UI_FS_GETFILELIST:
 		VM_CHECKBOUNDS( uivm, args[3], args[4] );
 		return FS_GetFileList( VMA(1), VMA(2), VMA(3), args[4] );
+
+	case UI_FS_SEEK:
+		return FS_VM_SeekFile( args[1], args[2], args[3], H_UI );
 	
 	case UI_R_REGISTERMODEL:
 		return re.RegisterModel( VMA(1) );
