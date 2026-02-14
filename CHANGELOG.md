@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/14/2026--**
 
+* qcommon/client/renderer:<br />buggy driver prints
+
 * client:<br />tiny fix to server browser name length
 
 **--02/13/2026--**
