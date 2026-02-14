@@ -282,7 +282,7 @@ Key_IsDown
 qbool
 Key_IsDown(qint keynum)
 {
-  if (keynum < 0 || keynum > MAX_KEYS)
+  if (keynum < 0 || keynum >= MAX_KEYS)
   {
     return qfalse;
   }
