@@ -299,6 +299,7 @@ static cvar_t *fs_homepath;
 //Also search the .app bundle for .pk3 files
 static cvar_t *fs_apppath;
 #endif
+static cvar_t *fs_steampath;
 
 static cvar_t *fs_basepath;
 static cvar_t *fs_basegame;
@@ -1083,6 +1084,20 @@ FS_SV_FOpenFileRead(const qchar *filename, fileHandle_t *fp)
 
       fd->handleFiles.file.o = Sys_FOpen(ospath, "rb");
     }
+
+    //check fs_steampath too
+    if (!fd->handleFiles.file.o && fs_steampath->string[0])
+    {
+      //search steampath
+      ospath = FS_BuildOSPath(fs_steampath->string, filename, NULL);
+
+      if (fs_debug->integer)
+      {
+        Com_Printf("FS_SV_FOpenFileRead (fs_steampath): %s\n", ospath);
+      }
+
+      fd->handleFiles.file.o = Sys_FOpen(ospath, "rb");
+    }
   }
   
   if (fd->handleFiles.file.o != NULL)
@@ -1661,56 +1676,6 @@ FS_RestorePure(void)
   fs_numServerPaks = numServerPaks;
 }
 
-/*
-===========
-FS_Home_FOpenFileRead
-===========
-*/
-qint
-FS_Home_FOpenFileRead(const qchar *filename, fileHandle_t *file)
-{
-  qchar path[MAX_OSPATH * 3 + 1];
-  fileHandleData_t *fd;
-  fileHandle_t f;
-
-  if (!fs_searchpaths)
-  {
-    Com_Error(ERR_FATAL, "Filesystem call made without initialization");
-  }
-
-  //should never happen but for safe
-  if (!file)
-  {
-    return -1;
-  }
-
-  //allocate new file handle
-  f = FS_HandleForFile();
-  fd = &fsh[f];
-  FS_InitHandle(fd);
-
-  Com_sprintf(path, sizeof(path), "%s%c%s%c%s", fs_homepath->string, PATH_SEP, fs_gamedir, PATH_SEP, filename);
-
-  if (fs_debug->integer)
-  {
-    Com_Printf("%s: %s\n", __func__, path);
-  }
-
-  fd->handleFiles.file.o = Sys_FOpen(path, "rb");
-
-  if (fd->handleFiles.file.o != NULL)
-  {
-    Q_strncpyz(fd->name, filename, sizeof(fd->name));
-    fd->handleSync = qfalse;
-    fd->zipFile = qfalse;
-    *file = f;
-    return FS_FileLength(fd->handleFiles.file.o);
-  }
-
-  *file = FS_INVALID_HANDLE;
-  return -1;
-}
-
 static qint
 FS_OpenFileInPak(fileHandle_t *file, pack_t *pak, fileInPack_t *pakFile, qbool uniqueFILE)
 {
@@ -2063,41 +2028,53 @@ FS_TouchFileInPak(const qchar *filename)
 }
 
 /*
-=================
-FS_FindDll
-=================
+===========
+FS_Home_FOpenFileRead
+===========
 */
-qchar *
-FS_FindDll(const qchar *filename)
+qint
+FS_Home_FOpenFileRead(const qchar *filename, fileHandle_t *file)
 {
-  const searchpath_t *search;
-  directory_t *dir;
+  qchar path[MAX_OSPATH * 3 + 1];
+  fileHandleData_t *fd;
+  fileHandle_t f;
 
   if (!fs_searchpaths)
   {
     Com_Error(ERR_FATAL, "Filesystem call made without initialization");
   }
 
-  for(search = fs_searchpaths;search;search = search->next)
+  //should never happen but for safe
+  if (!file)
   {
-    if (search->dir)
-    {
-      FILE *f;
-      qchar *netpath;
-
-      dir = search->dir;
-      netpath = FS_BuildOSPath(dir->path, dir->gamedir, filename);
-      f = Sys_FOpen(netpath, "rb");
-
-      if (f)
-      {
-        fclose(f);
-        return netpath;
-      }
-    }
+    return -1;
   }
 
-  return NULL;
+  //allocate new file handle
+  f = FS_HandleForFile();
+  fd = &fsh[f];
+  FS_InitHandle(fd);
+
+  Com_sprintf(path, sizeof(path), "%s%c%s%c%s", fs_homepath->string, PATH_SEP, fs_gamedir, PATH_SEP, filename);
+
+  if (fs_debug->integer)
+  {
+    Com_Printf("%s: %s\n", __func__, path);
+  }
+
+  fd->handleFiles.file.o = Sys_FOpen(path, "rb");
+
+  if (fd->handleFiles.file.o != NULL)
+  {
+    Q_strncpyz(fd->name, filename, sizeof(fd->name));
+    fd->handleSync = qfalse;
+    fd->zipFile = qfalse;
+    *file = f;
+    return FS_FileLength(fd->handleFiles.file.o);
+  }
+
+  *file = FS_INVALID_HANDLE;
+  return -1;
 }
 
 /*
@@ -4480,7 +4457,8 @@ FS_GetModList(qchar *listbuf, qint bufsize)
   cvar_t *const *paths[] =
   {
     &fs_basepath,
-    &fs_homepath
+    &fs_homepath,
+    &fs_steampath
   };
 
   *listbuf = '\0';
@@ -5551,8 +5529,9 @@ FS_Startup(void)
 
   fs_debug = Cvar_GetAndDescribe("fs_debug", "0", 0, "Debugging tool for the filesystem. Run the game in debug mode. Prints additional information regarding read files into the console.");
   fs_copyfiles = Cvar_GetAndDescribe("fs_copyfiles", "0", CVAR_INIT, "Whether or not to copy files when loading them into the game. Every file found in the cdpath will be copied over.");
-  fs_basepath = Cvar_GetAndDescribe("fs_basepath", Sys_DefaultBasePath(), CVAR_INIT | CVAR_PROTECTED, "Write-protected CVAR specifying the path to the installation folder of the game.");
+  fs_basepath = Cvar_GetAndDescribe("fs_basepath", Sys_DefaultBasePath(), CVAR_INIT | CVAR_PROTECTED | CVAR_PRIVATE, "Write-protected CVAR specifying the path to the installation folder of the game.");
   fs_basegame = Cvar_GetAndDescribe("fs_basegame", BASEGAME, CVAR_INIT | CVAR_PROTECTED, "Write-protected CVAR specifying the path to the base game folder.");
+  fs_steampath = Cvar_Get("fs_steampath", Sys_SteamPath(), CVAR_INIT | CVAR_PROTECTED | CVAR_PRIVATE);
 #if !defined(USE_HANDLE_CACHE)
   fs_locked = Cvar_GetAndDescribe("fs_locked", "0", CVAR_INIT, "Set file handle policy for pk3 files:\n0 - release after use, unlimited number of pk3 files can be loaded\n1 - keep file handle locked, more consistent, total pk3 files count limited to ~1k-4k\n");
 #endif
@@ -5564,12 +5543,12 @@ FS_Startup(void)
 
   homePath = Sys_DefaultHomePath();
 
-  if (!homePath || !homePath[0])
+  if (homePath == NULL || homePath[0] == '\0')
   {
     homePath = fs_basepath->string;
   }
 
-  fs_homepath = Cvar_GetAndDescribe("fs_homepath", homePath, CVAR_INIT | CVAR_PROTECTED, "Directory to store user configuration and downloaded files.");
+  fs_homepath = Cvar_GetAndDescribe("fs_homepath", homePath, CVAR_INIT | CVAR_PROTECTED | CVAR_PRIVATE, "Directory to store user configuration and downloaded files.");
   fs_gamedirvar = Cvar_GetAndDescribe("fs_game", "", CVAR_INIT | CVAR_SYSTEMINFO, "Specify an alternate mod directory and run the game with this mod.");
   Cvar_CheckRange(fs_gamedirvar, NULL, NULL, CV_FSPATH);
 
@@ -5594,6 +5573,11 @@ FS_Startup(void)
 #endif
 
   //add search path elements in reverse priority order
+  if (fs_steampath->string[0])
+  {
+    FS_AddGameDirectory(fs_steampath->string, fs_basegame->string);
+  }
+
   if (fs_basepath->string[0])
   {
     FS_AddGameDirectory(fs_basepath->string, fs_basegame->string);
@@ -5640,12 +5624,17 @@ FS_Startup(void)
   //check for additional game folder for mods
   if (fs_gamedirvar->string[0] && Q_stricmp(fs_gamedirvar->string, fs_basegame->string))
   {
-    if (fs_basepath->string[0])
+    if (fs_steampath->string[0] != '\0')
+    {
+      FS_AddGameDirectory(fs_steampath->string, fs_gamedirvar->string);
+    }
+
+    if (fs_basepath->string[0] != '\0')
     {
       FS_AddGameDirectory(fs_basepath->string, fs_gamedirvar->string);
     }
 
-    if (fs_homepath->string[0] && Q_stricmp(fs_homepath->string,fs_basepath->string))
+    if (fs_homepath->string[0] != '\0' && Q_stricmp(fs_homepath->string,fs_basepath->string))
     {
       FS_AddGameDirectory(fs_homepath->string, fs_gamedirvar->string);
     }

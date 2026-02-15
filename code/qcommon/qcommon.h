@@ -772,8 +772,6 @@ handleOwner_t;
 
 #define MAX_FOUND_FILES 0x5000
 
-#define BASEGAME "base"
-
 #if defined(DEDICATED)
 #define Q3CONFIG_CFG "autogen_server.cfg"
 #define CONSOLE_HISTORY_FILE "autogen_server_history.cfg"
@@ -1067,73 +1065,64 @@ extern qint CPU_Flags;
 // centralized and cleaned, that's the max string you can send to a Com_Printf / Com_DPrintf (above gets truncated)
 #define	MAXPRINTMSG	8192
 
-typedef enum
-{
-  //bk001129 - make sure SE_NONE is zero
-  SE_NONE = 0, //evTime is still valid
-  SE_KEY, //evValue is a key code, evValue2 is the down flag
-  SE_CHAR, //evValue is an ascii char
-  SE_MOUSE, //evValue and evValue2 are relative signed x / y moves
-  SE_JOYSTICK_AXIS, //evValue is an axis number and evValue2 is the current state (-127 to 127)
-  SE_CONSOLE, //evPtr is a char*
-  SE_MAX,
-}
-sysEventType_t;
+qchar *
+CopyString(const qchar *in);
+void
+Info_Print(const qchar *s);
 
-typedef struct
-{
-  qint evTime;
-  sysEventType_t evType;
-  qint evValue;
-  qint evValue2;
-  qint evPtrLength; //bytes of data pointed to by evPtr, for journaling
-  void *evPtr; //this must be manually freed if not NULL
-}
-sysEvent_t;
-
-void		Com_QueueEvent( qint time, sysEventType_t type, qint value, qint value2, qint ptrLength, void *ptr );
-qint			Com_EventLoop( void );
-
-qchar		*CopyString( const qchar *in );
-void		Info_Print( const qchar *s );
-
-void		Com_BeginRedirect (qchar *buffer, qint buffersize, void (*flush)(const qchar *));
-void		Com_EndRedirect( void );
-void FORMAT_PRINTF(1, 2) QDECL
-Com_Printf(const qchar *fmt, ...);
-void FORMAT_PRINTF(1, 2) QDECL
-Com_DPrintf(const qchar *fmt, ...);
-void 		Com_Quit_f( void );
+void
+Com_BeginRedirect(qchar *buffer, qint buffersize, void (*flush)(const qchar *));
+void
+Com_EndRedirect(void);
+void QDECL
+Com_Printf(const qchar *fmt, ...) __attribute__((format(printf, 1, 2)));
+void QDECL
+Com_DPrintf(const qchar *fmt, ...) __attribute__((format(printf, 1, 2)));
+void
+Com_Quit_f(void);
 void
 Com_GameRestart(qint checksumFeed, qbool clientRestart);
 
-qint			Com_Milliseconds( void );	// will be journaled properly
+qint
+Com_EventLoop(void);
+qint
+Com_Milliseconds(void); //will be journaled properly
+
 //md4 functions
-unsigned	Com_BlockChecksum( const void *buffer, qint length );
+unsigned
+Com_BlockChecksum(const void *buffer, qint length);
+
 //md5 functions
-qchar		*Com_MD5File(const qchar *filename, qint length, const qchar *prefix, qint prefix_len);
+qchar *
+Com_MD5File(const qchar *filename, qint length, const qchar *prefix, qint prefix_len);
 qchar *
 Com_MD5Buf(const qchar *data, qint length, const qchar *data2, qint length2);
+
 qbool
 Com_EarlyParseCmdLine(qchar *cmdLine, qchar *con_title, qint title_size, qint *vid_xpos, qint *vid_ypos);
 qint
 Com_Split(qchar *in, qchar **out, qint outsz, qint delim);
-qint			Com_Filter(const qchar *filter, const qchar *name);
+
+qint
+Com_Filter(const qchar *filter, const qchar *name);
 qbool
 Com_FilterExt(const qchar *filter, const qchar *name);
 qbool
 Com_HasPatterns(const qchar *str);
-qint			Com_FilterPath(const qchar *filter, const qchar *name);
+qint
+Com_FilterPath(const qchar *filter, const qchar *name);
 qint
 Com_RealTime(qtime_t *qtime);
-qbool	Com_SafeMode( void );
+qbool
+Com_SafeMode(void);
 void
 Com_RunAndTimeServerPacket(const netadr_t *evFrom, msg_t *buf);
 
-void		Com_StartupVariable( const qchar *match );
-// checks for and removes command line "+set var arg" constructs
-// if match is NULL, all set commands will be executed, otherwise
-// only a set with the exact name.  Only used during startup.
+void
+Com_StartupVariable(const qchar *match);
+//checks for and removes command line "+set var arg" constructs
+//if match is NULL, all set commands will be executed, otherwise
+//only a set with the exact name. Only used during startup.
 
 void
 Com_WriteConfiguration(void);
@@ -1425,30 +1414,56 @@ typedef enum
 }
 joystickAxis_t;
 
-void	Sys_Init (void);
+typedef enum
+{
+  //bk001129 - make sure SE_NONE is zero
+  SE_NONE = 0, //evTime is still valid
+  SE_KEY, //evValue is a key code, evValue2 is the down flag
+  SE_CHAR, //evValue is an ascii char
+  SE_MOUSE, //evValue and evValue2 are relative signed x / y moves
+  SE_JOYSTICK_AXIS, //evValue is an axis number and evValue2 is the current state (-127 to 127)
+  SE_CONSOLE, //evPtr is a char*
+  SE_MAX,
+}
+sysEventType_t;
 
-// general development dll loading for virtual machine testing
+typedef struct
+{
+  qint evTime;
+  sysEventType_t evType;
+  qint evValue;
+  qint evValue2;
+  qint evPtrLength; //bytes of data pointed to by evPtr, for journaling
+  void *evPtr; //this must be manually freed if not NULL
+}
+sysEvent_t;
 
-void	Sys_UnloadGame( void );
-void	*Sys_GetGameAPI( void *parms );
+void
+Sys_Init(void);
+void
+Sys_QueEvent(qint evTime, sysEventType_t evType, qint value, qint value2, qint ptrLength, void *ptr);
+void
+Sys_SendKeyEvents(void);
+void
+Sys_Sleep(qint msec);
+qchar *
+Sys_ConsoleInput(void);
 
-void	Sys_UnloadCGame( void );
-void	*Sys_GetCGameAPI( void );
-
-void	Sys_UnloadUI( void );
-void	*Sys_GetUIAPI( void );
-
-//bot libraries
-void	Sys_UnloadBotLib( void );
-void	*Sys_GetBotLibAPI( void *parms );
-
-void	NORETURN FORMAT_PRINTF(1, 2) QDECL Sys_Error( const qchar *error, ...) __attribute__ ((format (printf, 1, 2)));
-void	NORETURN Sys_Quit (void);
-qchar	*Sys_GetClipboardData( void );	// note that this isn't journaled...
+void NORETURN FORMAT_PRINTF(1, 2) QDECL
+Sys_Error(const qchar *error, ...);
+void NORETURN
+Sys_Quit(void);
+qchar *
+Sys_GetClipboardData(void); //note that this isn't journaled...
 void
 Sys_SetClipboardBitmap(const byte *bitmap, qint length);
 
-void	Sys_Print( const qchar *msg );
+void
+Sys_Print(const qchar *msg);
+
+//dedicated console status, win32-only at the moment
+void QDECL
+Sys_SetStatus(const qchar *format, ...) __attribute__((format(printf, 1, 2)));
 
 #if defined(USE_AFFINITY_MASK)
 uint64_t
@@ -1459,25 +1474,31 @@ Sys_SetAffinityMask(const uint64_t mask);
 
 // Sys_Milliseconds should only be used for profiling purposes,
 // any game related timing information should come from event timestamps
-qint		Sys_Milliseconds (void);
+qint
+Sys_Milliseconds(void);
 int64_t
 Sys_Microseconds(void);
 
-void	Sys_SnapVector( float *v );
+void
+Sys_SnapVector(float *v);
 
-qbool Sys_RandomBytes( byte *string, qint len );
+qbool
+Sys_RandomBytes(byte *string, qint len);
 
 // the system console is shown when a dedicated server is running
-void	Sys_DisplaySystemConsole( qbool show );
+void
+Sys_DisplaySystemConsole(qbool show);
 
 void
 Sys_ShowConsole(qint level, qbool quitOnClose);
+void
+Sys_SetErrorText(const qchar *text);
 
-void	Sys_SetErrorText( const qchar *text );
+void
+Sys_SendPacket(qint length, const void *data, const netadr_t *to);
 
-void	Sys_SendPacket( qint length, const void *data, const netadr_t *to );
-
-qbool	Sys_StringToAdr( const qchar *s, netadr_t *a, netadrtype_t family );
+qbool
+Sys_StringToAdr(const qchar *s, netadr_t *a, netadrtype_t family);
 //Does NOT parse port numbers, only base addresses.
 
 qbool
@@ -1491,34 +1512,25 @@ FILE *
 Sys_FOpen(const qchar *ospath, const qchar *mode);
 qbool
 Sys_ResetReadOnlyAttribute(const qchar *ospath);
+
 const qchar *
 Sys_Pwd(void);
 const qchar *
 Sys_DefaultBasePath(void);
-void
-Sys_SetDefaultInstallPath(const qchar *path);
+const qchar *
+Sys_DefaultHomePath(void);
+const qchar *
+Sys_SteamPath(void);
 
 #if defined(__APPLE__)
 qchar *
 Sys_DefaultAppPath(void);
 #endif
 
-void
-Sys_SetDefaultHomePath(const qchar *path);
-const qchar *
-Sys_DefaultHomePath(void);
-const qchar *
-Sys_TempPath(void);
-const qchar *
-Sys_Dirname(qchar *path);
-const qchar *
-Sys_Basename(qchar *path);
-qchar *
-Sys_ConsoleInput(void);
-
 qchar **
 Sys_ListFiles(const qchar *directory, const qchar *extension, const qchar *filter, qint *numfiles, qint subdirs);
-void	Sys_FreeFileList( qchar **list );
+void
+Sys_FreeFileList(qchar **list);
 
 qbool
 Sys_GetFileStats(const qchar *filename, fileOffset_t *size, fileTime_t *mtime, fileTime_t *ctime);
@@ -1527,15 +1539,6 @@ void
 Sys_BeginProfiling(void);
 void
 Sys_EndProfiling(void);
-
-void
-Sys_SendKeyEvents(void);
-
-void
-Sys_Sleep(qint msec);
-
-void
-Sys_QueEvent(qint evTime, sysEventType_t evType, qint value, qint value2, qint ptrLength, void *ptr);
 
 qbool
 Sys_LowPhysicalMemory(void);

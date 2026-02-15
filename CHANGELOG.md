@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--02/15/2026--**
+
+* qcommon:<br />finalize steampath
+
 **--02/14/2026--**
 
 * client:<br />more misc fixes

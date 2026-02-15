@@ -62,6 +62,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define Q3_ENGINE ENGINE_NAME " " ENGINE_VERSION
 #define Q3_ENGINE_DATE          __DATE__
 
+#define BASEGAME "base"
+#define BASEDEMO "demo"
+#define BASETA "missionpack"
+#define STEAMPATH_NAME "Tremulous"
+#define STEAMPATH_APPID "2200"
+
 #define CLIENT_WINDOW_TITLE       PRODUCT_VERSION
 #define CLIENT_WINDOW_MIN_TITLE   PRODUCT_NAME_LOWER
 
