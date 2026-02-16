@@ -23,6 +23,7 @@
  */
 
 #include "server.h"
+#if defined(USE_WEBCONSOLE)
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -173,3 +174,4 @@ sv_webconsole_read(qint *sockfd, qbool *connected)
   //case where the call failed
   return NULL;
 }
+#endif

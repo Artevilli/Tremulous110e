@@ -860,7 +860,9 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_WEBCONSOLE_SEND:
+#if defined(USE_WEBCONSOLE)
       sv_webconsole_send(&sv_webconsoleSocket, VMA(1), &sv_webconsoleConnected);
+#endif
       return 0;
 
     default:

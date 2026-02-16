@@ -71,6 +71,9 @@ protect_flags_t;
 //allow mods to set custom player scores that are sent in response to status queries rather than using the playerstate score field
 #define SUPPORT_STATUS_SCORES_OVERRIDE
 
+//webconsole support
+//#define USE_WEBCONSOLE
+
 #if defined(USE_VOIP)
 typedef struct
 voipServerPacket_s

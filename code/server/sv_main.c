@@ -1732,8 +1732,10 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
 
     case
     SVC_CONNECTW:
+#if defined(USE_WEBCONSOLE)
       Com_Printf("Call to connectw!\n");
       SV_DirectConnect(from);
+#endif
       break;
 
     case
@@ -2481,8 +2483,10 @@ SV_Frame(const qint msec)
   SV_SendClientMessages(); //send messages back to the clients
   SV_MasterHeartbeat(HEARTBEAT_GAME); //send a heartbeat to the master if needed
 
+#if defined(USE_WEBCONSOLE)
   //webconsole - fetch message from socket
   sv_webconsole_read(&sv_webconsoleSocket, &sv_webconsoleConnected);
+#endif
 
   if (com_dedicated->integer)
   {
