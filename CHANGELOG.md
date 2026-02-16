@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/16/2026--**
 
+* server:<br />remove some unused server vars
+
 * qcommon:<br />fix ppc variables
 
 * qcommon:<br />fix opStack address assigning in vm_powerpc.c

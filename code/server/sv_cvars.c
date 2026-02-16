@@ -44,8 +44,6 @@ cvar_t *sv_cl_allowDownload;
 cvar_t *sv_maxclients;
 cvar_t *sv_maxclientsPerIP;
 cvar_t *sv_clientTLD;
-cvar_t *sv_guidCheck;
-cvar_t *sv_guidCheckAllowStock;
 cvar_t *sv_democlients; //number of slots reserved for playing a demo
 cvar_t *sv_collectClientJunkInfo;
 cvar_t *sv_cheats;
@@ -79,7 +77,6 @@ cvar_t *sv_floodProtect;
 cvar_t *sv_pingFix;
 #endif
 cvar_t *sv_userInfoFloodProtect;
-cvar_t *sv_forceSendFragments;
 cvar_t *sv_showAverageBPS;
 cvar_t *sv_lanForceRate; //dedicated 1 (LAN) server forces local client rates to 99999 (bug #491)
 cvar_t *sv_protect; //attack protection, 0 unpretected, 1 xreal, 2 openwolf, 4 print to console
@@ -124,8 +121,6 @@ SV_InitCvars(void)
   Cvar_CheckRange(sv_maxclientsPerIP, "1", NULL, CV_INTEGER);
   sv_clientTLD = Cvar_GetAndDescribe("sv_clientTLD", "0", CVAR_ARCHIVE_ND, "Client country detection code.");
   Cvar_CheckRange(sv_clientTLD, NULL, NULL, CV_INTEGER);
-  sv_guidCheck = Cvar_GetAndDescribe("sv_guidCheck", "0", CVAR_ARCHIVE | CVAR_SERVERINFO, "More thorough GUID validity check for connecting players.\nNOTE: setting this to 1 bricks clients without a guid (notably stock 1.1)!\nNOTE: to bypass this, check sv_guidCheckAllowStock");
-  sv_guidCheckAllowStock = Cvar_GetAndDescribe("sv_guidCheckAllowStock", "0", CVAR_ARCHIVE | CVAR_SERVERINFO, "Toggles whether or not to allow stock 1.1 to bypass the guid check set by sv_guidCheck.");
   sv_democlients = Cvar_GetAndDescribe("sv_democlients", "0", CVAR_SERVERINFO | CVAR_LATCH | CVAR_ARCHIVE, "Maximum number of people allowed to view serverside demos.");
   sv_minRate = Cvar_GetAndDescribe("sv_minRate", "0", CVAR_ARCHIVE_ND | CVAR_SERVERINFO, "Minimum server bandwidth (in bit per second) a client can use.");
   Cvar_CheckRange(sv_minRate, "0", "100000", CV_INTEGER);
@@ -161,7 +156,6 @@ SV_InitCvars(void)
   sv_pingFix = Cvar_GetAndDescribe("sv_pingFix", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, "Fix client ping calculation to more accurately reflect packet loss and force minimum ping for humans to 1");
 #endif
   sv_userInfoFloodProtect = Cvar_GetAndDescribe("sv_userInfoFloodProtect", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, "Prevents users from flooding the server with userinfo changes by delaying the next change for 5 seconds.");
-  sv_forceSendFragments = Cvar_GetAndDescribe("sv_forceSendFragments", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, "Forces all unsent fragments to be sent to each client each time a snapshot is created.");
   sv_showAverageBPS = Cvar_GetAndDescribe("sv_showAverageBPS", "0", 0, "BSP Network debugging");
   sv_collectClientJunkInfo = Cvar_GetAndDescribe("sv_collectClientJunkInfo", "0", CVAR_ARCHIVE, "If this is set, prints if message readcount isn't equal to the message cursize.");
 

@@ -70,8 +70,6 @@ extern cvar_t *sv_cl_allowDownload;
 extern cvar_t *sv_maxclients;
 extern cvar_t *sv_maxclientsPerIP;
 extern cvar_t *sv_clientTLD;
-extern cvar_t *sv_guidCheck;
-extern cvar_t *sv_guidCheckAllowStock;
 extern cvar_t *sv_democlients; //number of slots reserved for playing a demo
 extern cvar_t *sv_collectClientJunkInfo;
 extern cvar_t *sv_cheats;
@@ -106,7 +104,6 @@ extern cvar_t *sv_floodProtect;
 extern cvar_t *sv_pingFix;
 #endif
 extern cvar_t *sv_userInfoFloodProtect;
-extern cvar_t *sv_forceSendFragments;
 extern cvar_t *sv_showAverageBPS;
 extern cvar_t *sv_lanForceRate; //dedicated 1 (LAN) server forces local client rates to 99999 (bug #491)
 extern cvar_t *sv_protect; //attack protection, 0 unpretected, 1 xreal, 2 openwolf, 4 print to console
