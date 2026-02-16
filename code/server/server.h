@@ -72,7 +72,7 @@ protect_flags_t;
 #define SUPPORT_STATUS_SCORES_OVERRIDE
 
 //webconsole support
-//#define USE_WEBCONSOLE
+#define USE_WEBCONSOLE
 
 #if defined(USE_VOIP)
 typedef struct

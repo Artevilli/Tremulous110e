@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/16/2026--**
 
+* server:<br />enable webconsole
+
 * server:<br />make webconsole optional
 
 * server:<br />remove some unused server vars
