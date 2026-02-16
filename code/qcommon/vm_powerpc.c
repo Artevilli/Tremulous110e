@@ -168,7 +168,7 @@ static uint32_t pass;
 static uint32_t savedOffset[ OFFSET_T_LAST ];
 
 // opstack tracking (simplified - no dynamic register allocation)
-static int opstack;
+static qint opstack;
 
 static void VM_FreeBuffers( void )
 {
@@ -588,7 +588,7 @@ static void VM_FreeBuffers( void )
 // fctiwz frt, frb  (convert to integer word, round toward zero)
 #define PPC_FCTIWZ(frt, frb)		PPC_X(63, frt, 0, frb, 15, 0)
 // fcfids frt, frb  (convert from integer doubleword to single, Power ISA 2.06+)
-// This is the modern way to do int-to-float on Power7+
+// This is the modern way to do qint-to-float on Power7+
 #define PPC_FCFIDS(frt, frb)		PPC_X(59, frt, 0, frb, 846, 0)
 
 // -- Floating-Point round to single (frsp) --
@@ -641,7 +641,7 @@ static void emit( uint32_t isn )
 }
 
 
-static void emitAlign( int align )
+static void emitAlign( qint align )
 {
 	while ( compiledOfs & ( align - 1 ) )
 		emit( PPC_NOP() );
@@ -674,14 +674,14 @@ static void dec_opstack( void )
 
 // Load the top of opstack into a GPR
 // rt = *(rOPSTACK + opstack)
-static void load_opstack( int rt )
+static void load_opstack( qint rt )
 {
 	emit( PPC_LWZ( rt, opstack, rOPSTACK ) );
 }
 
 // Store a GPR to the top of opstack
 // *(rOPSTACK + opstack) = rs
-static void store_opstack( int rs )
+static void store_opstack( qint rs )
 {
 	emit( PPC_STW( rs, opstack, rOPSTACK ) );
 }
@@ -694,7 +694,7 @@ static void store_opstack( int rs )
 // Uses up to 5 instructions for arbitrary 64-bit values.
 // PPC64 sequence: lis + ori + sldi + oris + ori
 
-static void emit_MOVi64( int rt, uint64_t imm )
+static void emit_MOVi64( qint rt, uint64_t imm )
 {
 	if ( imm == (uint64_t)(int16_t)imm ) {
 		// fits in signed 16-bit
@@ -740,7 +740,7 @@ static void emit_MOVi64( int rt, uint64_t imm )
 
 // Load a 32-bit value into a register (zero-extended to 64-bit for unsigned,
 // or sign-extended for signed). For VM values these are 32-bit.
-static void emit_MOVi32( int rt, uint32_t imm )
+static void emit_MOVi32( qint rt, uint32_t imm )
 {
 	if ( (int32_t)imm >= -32768 && (int32_t)imm <= 32767 ) {
 		emit( PPC_LI( rt, imm & 0xFFFF ) );
@@ -823,7 +823,7 @@ static void __attribute__((__noreturn__)) ErrBadDataWrite( void )
 
 // Data access check: either mask the address or check bounds and call error
 // reg contains the address to check, it will be masked/checked in place
-static void emit_CheckReg( vm_t *vm, int reg, offset_t func )
+static void emit_CheckReg( vm_t *vm, qint reg, offset_t func )
 {
 	if ( vm->forceDataMask || !( vm_rtChecks->integer & VM_RTCHECK_DATA ) ) {
 		// just mask it
@@ -839,7 +839,7 @@ static void emit_CheckReg( vm_t *vm, int reg, offset_t func )
 
 
 // Jump target check
-static void emit_CheckJump( vm_t *vm, int reg, int proc_base, int proc_len )
+static void emit_CheckJump( vm_t *vm, qint reg, qint proc_base, qint proc_len )
 {
 	if ( ( vm_rtChecks->integer & VM_RTCHECK_JUMP ) == 0 ) {
 		return;
@@ -896,7 +896,7 @@ static void emit_CheckProc( vm_t *vm, instruction_t *ins )
 
 static void emitCallFunc( vm_t *vm )
 {
-	int i;
+	qint i;
 
 	init_opstack();
 
@@ -1084,7 +1084,7 @@ static void emitBlockCopyFunc( vm_t *vm )
 // for any VM size.
 
 // Map an opcode to (BO, BI) for the TRUE condition
-static void get_branch_cond( int op, int *bo, int *bi )
+static void get_branch_cond( qint op, qint *bo, qint *bi )
 {
 	switch ( op ) {
 		case OP_EQ:  case OP_EQF: *bo = BO_TRUE;  *bi = BI_EQ; break;
@@ -1097,11 +1097,11 @@ static void get_branch_cond( int op, int *bo, int *bi )
 	}
 }
 
-static void emit_branchConditional( vm_t *vm, instruction_t *ci, int op )
+static void emit_branchConditional( vm_t *vm, instruction_t *ci, qint op )
 {
 	int32_t target = ci->value;  // target instruction index
 	int32_t targetOfs = vm->instructionPointers[ target ] - compiledOfs;
-	int bo, bi;
+	qint bo, bi;
 
 	get_branch_cond( op, &bo, &bi );
 	if ( bo == -1 ) {
@@ -1112,7 +1112,7 @@ static void emit_branchConditional( vm_t *vm, instruction_t *ci, int op )
 	// Long form: inverted bc skips over unconditional b
 	// Invert: BO_TRUE(12) <-> BO_FALSE(4)
 	{
-		int inv_bo = ( bo == BO_TRUE ) ? BO_FALSE : BO_TRUE;
+		qint inv_bo = ( bo == BO_TRUE ) ? BO_FALSE : BO_TRUE;
 		emit( PPC_BC( inv_bo, bi, +8 ) );  // skip next instruction if NOT condition
 		emit( PPC_B( targetOfs - 4 ) );    // -4 because compiledOfs advanced by 4
 	}
@@ -1123,14 +1123,14 @@ static void emit_branchConditional( vm_t *vm, instruction_t *ci, int op )
 // VM_Compile
 // =========================================================================
 
-qboolean VM_Compile( vm_t *vm, vmHeader_t *header )
+qbool VM_Compile( vm_t *vm, vmHeader_t *header )
 {
-	const char *errMsg;
+	const qchar *errMsg;
 	instruction_t *ci;
-	int proc_base;
-	int proc_len;
-	int proc_end;
-	int i;
+	qint proc_base;
+	qint proc_len;
+	qint proc_end;
+	qint i;
 
 	inst = (instruction_t*)Z_Malloc( (header->instructionCount + 8) * sizeof( instruction_t ) );
 
@@ -1795,7 +1795,7 @@ __recompile:
 			emit( PPC_LFS( F0, opstack, rOPSTACK ) );      // load float
 			emit( PPC_FCTIWZ( F0, F0 ) );                  // convert to int32 (in FPR)
 			emit( PPC_STFD( F0, ENTER_SCRATCH, R1 ) );     // store doubleword to scratch
-			// fctiwz places the 32-bit int in the low-order word of the doubleword.
+			// fctiwz places the 32-bit qint in the low-order word of the doubleword.
 			// On little-endian, the low-order word is at the base address (offset+0).
 			// On big-endian, the low-order word is at offset+4.
 #ifdef PPC64_ELFv1
@@ -1958,12 +1958,12 @@ __recompile:
 // VM_CallCompiled
 // =========================================================================
 
-int32_t VM_CallCompiled( vm_t *vm, int nargs, int32_t *args )
+int32_t VM_CallCompiled( vm_t *vm, qint nargs, int32_t *args )
 {
 	static int32_t		opStack[ MAX_OPSTACK_SIZE ];
 	int32_t		stackOnEntry;
 	int32_t		*image;
-	int			i;
+	qint			i;
 
 	// we might be called recursively, so this might not be the very top
 	stackOnEntry = vm->programStack;

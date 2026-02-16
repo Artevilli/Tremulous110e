@@ -6,7 +6,9 @@ Changes
 -----------------------
 **--02/16/2026--**
 
-* qcommon:<br /> fix opStack address assigning in vm_powerpc.c
+* qcommon:<br />fix ppc variables
+
+* qcommon:<br />fix opStack address assigning in vm_powerpc.c
 
 * makefile/server:<br />webconsole
 
