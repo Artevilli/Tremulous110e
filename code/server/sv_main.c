@@ -1594,6 +1594,7 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
   {
     "invalid",
     "connect",
+    "connectw",
     "getstatus",
     "getinfo",
     "getchallenge",
@@ -1726,6 +1727,12 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
 
     case
     SVC_CONNECT:
+      SV_DirectConnect(from);
+      break;
+
+    case
+    SVC_CONNECTW:
+      Com_Printf("Call to connectw!\n");
       SV_DirectConnect(from);
       break;
 
@@ -2473,6 +2480,9 @@ SV_Frame(const qint msec)
   SV_IssueNewSnapshot(); //reset current and build new snapshot on first query
   SV_SendClientMessages(); //send messages back to the clients
   SV_MasterHeartbeat(HEARTBEAT_GAME); //send a heartbeat to the master if needed
+
+  //webconsole - fetch message from socket
+  sv_webconsole_read(&sv_webconsoleSocket, &sv_webconsoleConnected);
 
   if (com_dedicated->integer)
   {

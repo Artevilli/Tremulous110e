@@ -1048,6 +1048,8 @@ SV_Init(void)
   SV_InitAttackLog();
   //init mysql with tremded.
   sv_mysql_init();
+  //attempt to connect to webconsole
+  sv_webconsoleConnected = sv_webconsole_connect(&sv_webconsoleSocket);
 
   svs.serverLoad = 0;
 
@@ -1137,6 +1139,10 @@ SV_Shutdown(const qchar *finalmsg)
   }
 
   Com_Printf("----- Server Shutdown (%s) -----\n", finalmsg);
+
+  //webconsole shutdown
+  sv_webconsole_close(&sv_webconsoleSocket);
+
 #if defined(USE_IPV6)
   NET_LeaveMulticast6();
 #endif

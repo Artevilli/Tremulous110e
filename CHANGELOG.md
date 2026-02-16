@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--02/16/2026--**
+
+* makefile/server:<br />webconsole
+
 **--02/15/2026--**
 
 * qcommon:<br />finalize steampath

@@ -1102,6 +1102,7 @@ Q3OBJ = \
   $(B)/client/sv_snapshot.o \
   $(B)/client/sv_world.o \
   $(B)/client/sv_mysql.o \
+  $(B)/client/sv_webconsole.o \
   $(B)/client/globalv2loader.o \
   \
   $(B)/client/q_math.o \
@@ -1284,6 +1285,7 @@ Q3DOBJ = \
   $(B)/ded/sv_snapshot.o \
   $(B)/ded/sv_world.o \
   $(B)/ded/sv_mysql.o \
+  $(B)/ded/sv_webconsole.o \
   $(B)/ded/globalv2loader.o \
   \
   $(B)/ded/cm_load.o \

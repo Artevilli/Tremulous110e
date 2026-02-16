@@ -189,6 +189,7 @@ typedef enum
 {
   SVC_INVALID,
   SVC_CONNECT,
+  SVC_CONNECTW,
   SVC_GETSTATUS,
   SVC_FIRST = SVC_GETSTATUS,
   SVC_GETINFO,
@@ -473,6 +474,10 @@ extern netadr_t queue[MAX_QUEUE];
 extern unsigned lastQueue[MAX_QUEUE];
 extern unsigned queueCount;
 
+//webconsole
+extern qint sv_webconsoleSocket;
+extern qbool sv_webconsoleConnected;
+
 #define MAX_INFO_RECEIPTS 48 //max number of getstatus and getinfo responses sent in two second time period
 
 #define MAX_INFO_FLOOD_BANS 36
@@ -596,6 +601,16 @@ void
 sv_mysql_fetchfieldbyName(const qchar *name, qchar *buffer, qint len);
 void
 sv_mysql_reconnect(void);
+
+//sv_webconsole.c
+qbool
+sv_webconsole_connect(qint *sockfd);
+void
+sv_webconsole_send(qint *sockfd, qchar *message, qbool *connected);
+void
+sv_webconsole_close(qint *sockfd);
+const qchar *
+sv_webconsole_read(qint *sockfd, qbool *connected);
 
 //
 //sv_init.c
