@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--02/18/2026--**
+
+* server:<br />disable webconsole
+
 **--02/16/2026--**
 
 * server:<br />enable webconsole

@@ -72,7 +72,7 @@ protect_flags_t;
 #define SUPPORT_STATUS_SCORES_OVERRIDE
 
 //webconsole support
-#define USE_WEBCONSOLE
+//#define USE_WEBCONSOLE
 
 #if defined(USE_VOIP)
 typedef struct
@@ -478,8 +478,10 @@ extern unsigned lastQueue[MAX_QUEUE];
 extern unsigned queueCount;
 
 //webconsole
+#if defined(USE_WEBCONSOLE)
 extern qint sv_webconsoleSocket;
 extern qbool sv_webconsoleConnected;
+#endif
 
 #define MAX_INFO_RECEIPTS 48 //max number of getstatus and getinfo responses sent in two second time period
 
@@ -606,6 +608,7 @@ void
 sv_mysql_reconnect(void);
 
 //sv_webconsole.c
+#if defined(USE_WEBCONSOLE)
 qbool
 sv_webconsole_connect(qint *sockfd);
 void
@@ -614,6 +617,7 @@ void
 sv_webconsole_close(qint *sockfd);
 const qchar *
 sv_webconsole_read(qint *sockfd, qbool *connected);
+#endif
 
 //
 //sv_init.c
