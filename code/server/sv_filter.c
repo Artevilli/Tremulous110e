@@ -1210,15 +1210,6 @@ Q_AddDate(qtime_t *qtime, qint n)
   n /= 12;
   year += n;
 
-  if (IS_LEAP(year))
-  {
-    md[1] = 29;
-  }
-  else
-  {
-    md[1] = 28;
-  }
-
   if (last)
   {
     day = md[month];

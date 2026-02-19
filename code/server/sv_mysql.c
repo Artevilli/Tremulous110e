@@ -131,7 +131,7 @@ sv_mysql_fetchfieldbyID(qint id, qchar *buffer, qint len)
 void
 sv_mysql_fetchfieldbyName(const qchar *name, qchar *buffer, qint len)
 {
-  MYSQL_FIELD *fields;
+  const MYSQL_FIELD *fields;
   qint num_fields;
   qint i;
 

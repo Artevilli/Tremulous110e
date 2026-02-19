@@ -39,7 +39,7 @@ SV_Netchan_Encode(client_t *client, msg_t *msg, const qchar *commandString)
   long i;
   long index;
   byte key;
-  byte *string;
+  const byte *string;
   qint srdc;
   qint sbit;
   qbool soob;
@@ -115,7 +115,7 @@ SV_Netchan_Decode(client_t *client, msg_t *msg)
   qint sbit;
   qbool soob;
   byte key;
-  byte *string;
+  const byte *string;
 
   srdc = msg->readcount;
   sbit = msg->bit;

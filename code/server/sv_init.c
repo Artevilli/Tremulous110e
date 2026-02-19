@@ -579,7 +579,7 @@ SV_SpawnServer(const qchar *server, qbool killBots)
   qint checksum;
   const qchar *p;
   qtime_t now;
-  qchar *denied;
+  const qchar *denied;
   qbool isBot;
 
   //shut down the existing game if it is running

@@ -1032,7 +1032,7 @@ SVC_Status(const netadr_t *from)
   qchar *s;
   unsigned i;
   client_t *cl;
-  playerState_t *ps;
+  const playerState_t *ps;
   unsigned statusLength;
   unsigned playerLength;
   qchar infostring[MAX_INFO_STRING + 160]; //add some space for challenge string
@@ -1946,7 +1946,7 @@ SV_CalcPings(void)
       for(j = 0;j < PACKET_BACKUP && current_frame > 0;j++)
       {
         //read frames backwards from recent to old
-        clientSnapshot_t *frame = &cl->frames[(current_frame--) & PACKET_MASK];
+        const clientSnapshot_t *frame = &cl->frames[(current_frame--) & PACKET_MASK];
 
         if (frame->messageAcked && (!current_ack_time || frame->messageAcked < current_ack_time))
         {
@@ -2096,7 +2096,7 @@ SV_CheckPaused(void)
   return qfalse;
 #else
   qbool players = qfalse;
-  client_t *cl;
+  const client_t *cl;
   qint  i;
 
   if (!cl_paused->integer)

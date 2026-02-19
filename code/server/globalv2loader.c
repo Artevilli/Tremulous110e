@@ -5,15 +5,11 @@
 qint
 xglobal_mask(unsigned qchar in, unsigned qchar *out);
 qint
-xglobal_load_c(qchar *path);
+xglobal_parse_file_c(const qchar *data, unsigned long size);
 qint
-xglobal_parse_file_c(qchar *data, unsigned long size);
+xglobal_insert_c(const qchar *data);
 qint
-xglobal_insert_c(qchar *data);
-qint
-xglobal_match(unsigned qchar * ip1,unsigned qchar * ip2, unsigned qchar *mask);
-unsigned qchar
-xglobal_flags(qchar *ip);
+xglobal_match(const unsigned qchar * ip1, const unsigned qchar * ip2, const unsigned qchar *mask);
 void
 xglobal_free(void);
 
@@ -36,7 +32,7 @@ xglobal_seterror(qchar *es)
   global_error = es;
 }
 
-qchar *
+const qchar *
 xglobal_geterror(void)
 {
   qchar *errorm = global_error;
@@ -53,18 +49,18 @@ xglobal_mask(unsigned qchar in, unsigned qchar *out)
     return 1;
   }
 
-  out[0] = out[1] = out[2] = out[3] = 0;
+  out[0] = out[1] = out[2] = out[3] = '\0';
 
   while (in > 0)
   {
-    out[(in - 1) / 8] |= (1 << ((in - 1) % 8));
+    out[(in - 1) / 8] |= (BIT((in - 1) % 8));
     in--;
   }
   return 0;
 }
 
 qint
-xglobal_load_c(qchar *path)
+xglobal_load_c(const qchar *path)
 {
   qchar *buffer;
   unsigned long size;
@@ -121,7 +117,7 @@ xglobal_load_c(qchar *path)
 #define GLOBAL_SIZE 6
 #define HEADER_SIZE 9
 qint
-xglobal_parse_file_c(qchar *data, unsigned long size)
+xglobal_parse_file_c(const qchar *data, unsigned long size)
 {
   unsigned long i;
   
@@ -154,7 +150,7 @@ xglobal_parse_file_c(qchar *data, unsigned long size)
 }
 
 qint
-xglobal_insert_c(qchar *data)
+xglobal_insert_c(const qchar *data)
 {
   xglobal **temp;
 
@@ -200,7 +196,7 @@ xglobal_insert_c(qchar *data)
 }
 
 qint
-xglobal_match(unsigned qchar *ip1, unsigned qchar *ip2, unsigned qchar *mask)
+xglobal_match(const unsigned qchar *ip1, const unsigned qchar *ip2, const unsigned qchar *mask)
 {
   if (ip1 == NULL || ip2 == NULL || mask == NULL)
   {

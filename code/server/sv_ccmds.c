@@ -1026,7 +1026,7 @@ Examine all a users info strings
 static void
 SV_DumpUser_f(void)
 {
-  client_t *cl;
+  const client_t *cl;
 
   //make sure server is running
   if (!com_sv_running->integer)
@@ -1139,11 +1139,12 @@ SV_Demo_Record_f(void)
       {
         break; //no file
       }
-      if (number < 0)
-      {
-        Com_Printf("cant make filename for demo, delete old\n");
-        return;
-      }
+    }
+
+    if (number < 0)
+    {
+      Com_Printf("cant make filename for demo, delete old\n");
+      return;
     }
   }
 

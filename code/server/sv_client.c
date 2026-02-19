@@ -1693,7 +1693,7 @@ SV_ReadDownloadBlock(client_t *cl, qchar **dataOut, qint *sizeOut)
     if (cl->downloadSrcChunkPos >= cl->downloadSrcChunkSize)
     {
       //check for eof
-      if (cl->downloadSrcFileRemaining <= 0)
+      if (cl->downloadSrcFileRemaining == 0)
       {
         break;
       }
@@ -1855,13 +1855,16 @@ SV_WriteDownloadToClient(client_t *cl)
     }
 
     Com_Printf("clientDownload: %d: beginning \"%s\"\n", ARRAY_INDEX(svs.clients, cl), cl->downloadName);
-    cl->downloadCurrentBlock = cl->downloadClientBlock = cl->downloadXmitBlock = 0;
+    cl->downloadClientBlock = 0;
+    cl->downloadXmitBlock = 0;
     cl->downloadSrcFileRemaining = cl->downloadSize;
     cl->downloadSrcChunkPos = 0;
     cl->downloadSrcChunkSize = 0;
     cl->downloadCurrentBlock = 0;
     cl->downloadSrcChunk = Z_Malloc(DOWNLOAD_READ_CHUNK_SIZE);
-    cl->downloadClientMsg = cl->downloadRetransmitMsg = cl->downloadCurrentMsg = 0;
+    cl->downloadClientMsg = 0;
+    cl->downloadRetransmitMsg = 0;
+    cl->downloadCurrentMsg = 0;
     cl->downloadLastSentTime = Sys_Milliseconds();
     cl->downloadCurrentRate = DOWNLOAD_MAX_RATE;
     cl->downloadRatePool = 0;
@@ -1873,7 +1876,7 @@ SV_WriteDownloadToClient(client_t *cl)
   //check if we have unsent fragments or queue already in the pipe and don't add to the issue (too much)
   if (cl->netchan_start_queue)
   {
-    netchan_buffer_t *next = cl->netchan_start_queue;
+    const netchan_buffer_t *next = cl->netchan_start_queue;
     qint count = 0;
 
     while(next)
@@ -1904,7 +1907,7 @@ SV_WriteDownloadToClient(client_t *cl)
   //check acknowledged messages
   while(cl->downloadClientMsg < cl->downloadCurrentMsg)
   {
-    downloadMessageRecord_t *record = &cl->downloadMsgTable[cl->downloadClientMsg % MAX_DOWNLOAD_MESSAGE_HISTORY];
+    const downloadMessageRecord_t *record = &cl->downloadMsgTable[cl->downloadClientMsg % MAX_DOWNLOAD_MESSAGE_HISTORY];
 
     if (cl->messageAcknowledge < record->msgNumber)
     {
@@ -3303,7 +3306,7 @@ Also called by bot code
 ==================
 */
 const void
-SV_ClientThink(client_t *cl, usercmd_t *cmd)
+SV_ClientThink(client_t *cl, const usercmd_t *cmd)
 {
   cl->lastUsercmd = *cmd;
 

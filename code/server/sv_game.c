@@ -205,7 +205,7 @@ SV_inPVS(const vec3_t p1, const vec3_t p2)
   qint cluster;
   qint area1;
   qint area2;
-  byte *mask;
+  const byte *mask;
 
   leafnum = CM_PointLeafnum(p1);
   cluster = CM_LeafCluster(leafnum);
@@ -242,7 +242,7 @@ SV_inPVSIgnorePortals(const vec3_t p1, const vec3_t p2)
 {
   qint leafnum;
   qint cluster;
-  byte *mask;
+  const byte *mask;
 
   leafnum = CM_PointLeafnum(p1);
   cluster = CM_LeafCluster(leafnum);
@@ -268,7 +268,7 @@ SV_AdjustAreaPortalState
 static void
 SV_AdjustAreaPortalState(sharedEntity_t *ent, qbool open)
 {
-  svEntity_t *svEnt;
+  const svEntity_t *svEnt;
 
   svEnt = SV_SvEntityForGentity(ent);
 

@@ -57,8 +57,8 @@ Writes a delta update of an entityState_t list to the message.
 static void
 SV_EmitPacketEntities(const clientSnapshot_t *from, const clientSnapshot_t *to, msg_t *msg, qint maxEntityBaseline)
 {
-  entityState_t *newent = NULL;
-  entityState_t *oldent = NULL;
+  const entityState_t *newent = NULL;
+  const entityState_t *oldent = NULL;
   qint oldindex = 0;
   qint newindex = 0;
   qint oldnum;
@@ -448,14 +448,14 @@ SV_AddEntitiesVisibleFromPoint(const vec3_t origin, clientSnapshot_t *frame, sna
   qint i;
   sharedEntity_t *ent;
   svEntity_t *svEnt;
-  entityState_t *es;
+  const entityState_t *es;
   qint l;
   qint clientarea;
   qint clientcluster;
   qint leafnum;
   qint eventNumber;
   byte *clientpvs;
-  byte *bitvector;
+  const byte *bitvector;
 
   //during an error shutdown message we may need to transmit
   //the shutdown message after the server has shutdown, so

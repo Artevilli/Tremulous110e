@@ -114,7 +114,7 @@ void
 SV_DemoWriteFrame(void)
 {
   msg_t msg;
-  playerState_t *player;
+  const playerState_t *player;
   sharedEntity_t *entity;
   qint i;
 

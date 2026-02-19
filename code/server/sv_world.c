@@ -92,7 +92,7 @@ SV_SectorList_f(void)
   unsigned i;
   unsigned c;
   worldSector_t *sec;
-  svEntity_t *ent;
+  const svEntity_t *ent;
 
   for(i = 0;i < AREA_NODES;i++)
   {
@@ -250,7 +250,7 @@ SV_LinkEntity(sharedEntity_t *gEnt)
   qint k;
   qint area;
   qint lastLeaf;
-  float *origin, *angles;
+  const float *origin, *angles;
   svEntity_t *ent;
 
   ent = SV_SvEntityForGentity(gEnt);
@@ -476,7 +476,7 @@ SV_AreaEntities_r(worldSector_t *node, areaParms_t *ap)
 {
   svEntity_t *check;
   svEntity_t *next;
-  sharedEntity_t *gcheck;
+  const sharedEntity_t *gcheck;
 
   for(check = node->entities;check;check = next)
   {

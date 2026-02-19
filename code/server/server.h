@@ -689,7 +689,7 @@ SV_SendClientGameState(client_t *client);
 qbool
 SV_ExecuteClientCommand(client_t *cl, const qchar *s);
 void
-SV_ClientThink(client_t *cl, usercmd_t *cmd);
+SV_ClientThink(client_t *cl, const usercmd_t *cmd);
 const qint
 SV_SendDownloadMessages(void);
 const qint
