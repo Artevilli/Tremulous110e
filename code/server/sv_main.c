@@ -273,6 +273,7 @@ MASTER SERVER FUNCTIONS
 
 #define NEW_RESOLVE_DURATION 86400000 //24 hours
 static unsigned g_lastResolveTime[MAX_MASTER_SERVERS];
+static netadr_t masterAddr[MAX_MASTER_SERVERS][2]; //[2] for v4 and v6 addresses for the same address string.
 
 /*
 ================
@@ -314,7 +315,6 @@ but not on every player enter or exit.
 static const void
 SV_MasterHeartbeat(const qchar *message)
 {
-  static netadr_t adr[MAX_MASTER_SERVERS][2]; //[2] for v4 and v6 addresses for the same address string.
   unsigned i;
 
   if (sv_hidden->integer)
@@ -351,7 +351,7 @@ SV_MasterHeartbeat(const qchar *message)
     }
 
     //see if we haven't already resolved the name, resolving usually causes hitches on win95 so only do it when needed
-    if (sv_master[i]->modified || (adr[i][0].type == NA_BAD && adr[i][1].type == NA_BAD) || SV_MasterNeedsResolving(i, time))
+    if (sv_master[i]->modified || (masterAddr[i][0].type == NA_BAD && masterAddr[i][1].type == NA_BAD) || SV_MasterNeedsResolving(i, time))
     {
       sv_master[i]->modified = qfalse;
       g_lastResolveTime[i] = time;
@@ -359,17 +359,17 @@ SV_MasterHeartbeat(const qchar *message)
       if (netenabled & NET_ENABLEV4)
       {
         Com_Printf("Resolving %s (IPv4)\n", sv_master[i]->string);
-        const qint res = NET_StringToAdr(sv_master[i]->string, &adr[i][0], NA_IP);
+        const qint res = NET_StringToAdr(sv_master[i]->string, &masterAddr[i][0], NA_IP);
 
         if (res == 2)
         {
           //if no port was specified, use the default master port
-          adr[i][0].port = BigShort(PORT_MASTER);
+          masterAddr[i][0].port = BigShort(PORT_MASTER);
         }
 
         if (res)
         {
-          Com_Printf("%s resolved to %s\n", sv_master[i]->string, NET_AdrToStringwPort(&adr[i][0]));
+          Com_Printf("%s resolved to %s\n", sv_master[i]->string, NET_AdrToStringwPort(&masterAddr[i][0]));
         }
         else
         {
@@ -380,17 +380,17 @@ SV_MasterHeartbeat(const qchar *message)
       if (netenabled & NET_ENABLEV6)
       {
         Com_Printf("Resolving %s (IPv6)\n", sv_master[i]->string);
-        const qint res = NET_StringToAdr(sv_master[i]->string, &adr[i][1], NA_IP6);
+        const qint res = NET_StringToAdr(sv_master[i]->string, &masterAddr[i][1], NA_IP6);
 
         if (res == 2)
         {
           //if no port was specified, use the default master port
-          adr[i][1].port = BigShort(PORT_MASTER);
+          masterAddr[i][1].port = BigShort(PORT_MASTER);
         }
 
         if (res)
         {
-          Com_Printf("%s resolved to %s\n", sv_master[i]->string, NET_AdrToStringwPort(&adr[i][1]));
+          Com_Printf("%s resolved to %s\n", sv_master[i]->string, NET_AdrToStringwPort(&masterAddr[i][1]));
         }
         else
         {
@@ -398,7 +398,7 @@ SV_MasterHeartbeat(const qchar *message)
         }
       }
 #endif
-      if (adr[i][0].type == NA_BAD && adr[i][1].type == NA_BAD)
+      if (masterAddr[i][0].type == NA_BAD && masterAddr[i][1].type == NA_BAD)
       {
         //if the address failed to resolve, clear it to avoid taking repeated dns hits
         Com_Printf("Couldn't resolve address: %s\n", sv_master[i]->string);
@@ -411,14 +411,14 @@ SV_MasterHeartbeat(const qchar *message)
     Com_Printf("Sending heartbeat to %s\n", sv_master[i]->string);
 
     //this command should be changed if the server info / status format ever incompatably changes
-    if (adr[i][0].type != NA_BAD)
+    if (masterAddr[i][0].type != NA_BAD)
     {
-      NET_OutOfBandPrint(NS_SERVER, &adr[i][0], "heartbeat %s\n", message);
+      NET_OutOfBandPrint(NS_SERVER, &masterAddr[i][0], "heartbeat %s\n", message);
     }
 
-    if (adr[i][1].type != NA_BAD)
+    if (masterAddr[i][1].type != NA_BAD)
     {
-      NET_OutOfBandPrint(NS_SERVER, &adr[i][1], "heartbeat %s\n", message);
+      NET_OutOfBandPrint(NS_SERVER, &masterAddr[i][1], "heartbeat %s\n", message);
     }
   }
 }
@@ -453,7 +453,7 @@ SV_MasterGameStat
 const void
 SV_MasterGameStat(const qchar *data)
 {
-  static netadr_t adr;
+  qint i;
 
   if (!com_dedicated || com_dedicated->integer != 2)
   {
@@ -466,27 +466,41 @@ SV_MasterGameStat(const qchar *data)
     return;
   }
 
-  Com_Printf("Resolving %s\n", MASTER_SERVER_NAME);
-
-  switch(NET_StringToAdr(MASTER_SERVER_NAME, &adr, NA_UNSPEC))
+  //send to group masters (IPv4)
+  for(i = 0;i < MAX_MASTER_SERVERS;i++)
   {
-    case
-    0:
-      Com_Printf("Couldn't resolve address: %s\n", MASTER_SERVER_NAME);
-      return;
+    if (!sv_master[i] || !sv_master[i]->string[0])
+    {
+      continue;
+    }
 
-    case
-    2:
-      adr.port = BigShort(PORT_MASTER);
+    if (masterAddr[i][0].type == NA_BAD)
+    {
+      continue;
+    }
 
-    default:
-      break;
+    Com_Printf("Sending gamestat to %s\n", sv_master[i]->string);
+    NET_OutOfBandPrint(NS_SERVER, &masterAddr[i][0], "gamestat %s", data);
   }
 
-  Com_Printf("%s resolved to %s\n", MASTER_SERVER_NAME, NET_AdrToStringwPort(&adr));
+#if defined(USE_IPV6)
+  //send to group masters (IPv6)
+  for(i = 0;i < MAX_MASTER_SERVERS;i++)
+  {
+    if (!sv_master[i] || !sv_master[i]->string[0])
+    {
+      continue;
+    }
 
-  Com_Printf("Sending gamestat to %s\n", MASTER_SERVER_NAME);
-  NET_OutOfBandPrint(NS_SERVER, &adr, "gamestat %s", data);
+    if (masterAddr[i][1].type == NA_BAD)
+    {
+      continue;
+    }
+
+    Com_Printf("Sending gamestat to %s\n", sv_master[i]->string);
+    NET_OutOfBandPrint(NS_SERVER, &masterAddr[i][1], "gamestat %s", data);
+  }
+#endif
 }
 
 // This is deliberately quite large to make it more of an effort to DoS
