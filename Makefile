@@ -606,7 +606,7 @@ else
   endif
 
   ifeq ($(PLATFORM),linux)
-    LDFLAGS += -ldl -Wl,--hash-style=both $(shell mysql_config --libs) #mysql added
+    LDFLAGS += -ldl -Wl,--hash-style=both
     ifeq ($(ARCH),x86)
       # linux32 make ...
       BASE_CFLAGS += -m32
@@ -1101,9 +1101,7 @@ Q3OBJ = \
   $(B)/client/sv_net_chan.o \
   $(B)/client/sv_snapshot.o \
   $(B)/client/sv_world.o \
-  $(B)/client/sv_mysql.o \
   $(B)/client/sv_webconsole.o \
-  $(B)/client/globalv2loader.o \
   \
   $(B)/client/q_math.o \
   $(B)/client/q_shared.o \
@@ -1284,9 +1282,7 @@ Q3DOBJ = \
   $(B)/ded/sv_net_chan.o \
   $(B)/ded/sv_snapshot.o \
   $(B)/ded/sv_world.o \
-  $(B)/ded/sv_mysql.o \
   $(B)/ded/sv_webconsole.o \
-  $(B)/ded/globalv2loader.o \
   \
   $(B)/ded/cm_load.o \
   $(B)/ded/cm_patch.o \

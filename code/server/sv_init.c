@@ -1046,8 +1046,6 @@ SV_Init(void)
   SV_InitCvars();
   //init attack log with tremded
   SV_InitAttackLog();
-  //init mysql with tremded.
-  sv_mysql_init();
 #if defined(USE_WEBCONSOLE)
   //attempt to connect to webconsole
   sv_webconsoleConnected = sv_webconsole_connect(&sv_webconsoleSocket);

@@ -6,7 +6,9 @@ Changes
 -----------------------
 **--02/25/2026--**
 
-* renderer: fix typos
+* makefile/server:<br />drop mysql support
+
+* renderer:<br />fix typos
 
 **--02/19/2026--**
 

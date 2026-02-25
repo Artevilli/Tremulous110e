@@ -30,7 +30,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../qcommon/md5.h"
 #include "../game/g_public.h"
 #include "../game/bg_public.h"
-#include "globalv2loader.h"
 #include "sv_cvars.h"
 
 //=============================================================================
@@ -588,24 +587,6 @@ void
 SV_MasterGameStat(const qchar *data);
 qint
 SV_RateMsec(const client_t *client);
-
-//sv_mysql.c
-void
-sv_mysql_init(void);
-void
-sv_mysql_shutdown(void);
-qbool
-sv_mysql_runquery(const qchar *query);
-void
-sv_mysql_finishquery(void);
-qbool
-sv_mysql_fetchrow(void);
-void
-sv_mysql_fetchfieldbyID(qint id, qchar *buffer, qint len);
-void
-sv_mysql_fetchfieldbyName(const qchar *name, qchar *buffer, qint len);
-void
-sv_mysql_reconnect(void);
 
 //sv_webconsole.c
 #if defined(USE_WEBCONSOLE)

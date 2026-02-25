@@ -823,42 +823,6 @@ SV_GameSystemCalls(intptr_t *args)
       return SV_GetValue(VMA(1), args[2], VMA(3));
 
     case
-    G_SQL_RUNQUERY:
-      return sv_mysql_runquery(VMA(1));
-
-    case
-    G_SQL_FINISHQUERY:
-      sv_mysql_finishquery();
-      return 0;
-
-    case
-    G_SQL_FETCHROW:
-      return sv_mysql_fetchrow();
-
-    case
-    G_SQL_FETCHFIELDBYID:
-      sv_mysql_fetchfieldbyID(args[1], VMA(2), args[3]);
-      return 0;
-
-    case
-    G_SQL_FETCHFIELDBYNAME:
-      sv_mysql_fetchfieldbyName(VMA(1), VMA(2), args[3]);
-      return 0;
-
-    case
-    G_SQL_RECONNECT:
-      sv_mysql_reconnect();
-      return 0;
-
-    case
-    G_XGLOBAL_LOAD_C:
-      return xglobal_load_c(VMA(1));
-
-    case
-    G_XGLOBAL_FLAGS:
-      return xglobal_flags(VMA(1));
-
-    case
     G_WEBCONSOLE_SEND:
 #if defined(USE_WEBCONSOLE)
       sv_webconsole_send(&sv_webconsoleSocket, VMA(1), &sv_webconsoleConnected);
