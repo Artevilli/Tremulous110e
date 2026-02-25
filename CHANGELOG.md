@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--02/25/2026--**
+
+* renderer: fix typos
+
 **--02/19/2026--**
 
 * server:<br />don't resolve master every time gamestat is sent
