@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--02/26/2026--**
+
+* readme:<br />rename repository (`z-tremded-enhanced` -> `Tremulous11e`) and update readme
+
 **--02/25/2026--**
 
 * makefile/server:<br />drop mysql support
