@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/26/2026--**
 
+* client:<br />fix syscalls
+
 * code:<br />drop qvm code
 
 * readme:<br />rename repository (`z-tremded-enhanced` -> `Tremulous11e`) and update readme

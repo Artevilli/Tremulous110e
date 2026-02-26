@@ -605,8 +605,6 @@ static intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		return 0;
 	case CG_S_REGISTERSOUND:
 		return S_RegisterSound( VMA(1), args[2] );
-	case CG_S_SOUNDDURATION:
-		return S_SoundDuration( args[1] );
 	case CG_S_STARTBACKGROUNDTRACK:
 		S_StartBackgroundTrack( VMA(1), VMA(2) );
 		return 0;
@@ -721,12 +719,6 @@ static intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		return Parse_ReadTokenHandle( args[1], VMA(2) );
 	case CG_PARSE_SOURCE_FILE_AND_LINE:
 		return Parse_SourceFileAndLine( args[1], VMA(2), VMA(3) );
-
-	case CG_KEY_SETOVERSTRIKEMODE:
-		Key_SetOverstrikeMode( args[1] );
-		return 0;
-	case CG_KEY_GETOVERSTRIKEMODE:
-		return Key_GetOverstrikeMode( );
 
 	// shared syscalls
 	case CG_MEMSET:
