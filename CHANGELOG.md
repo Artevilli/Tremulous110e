@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/26/2026--**
 
+* code:<br />drop qvm code
+
 * readme:<br />rename repository (`z-tremded-enhanced` -> `Tremulous11e`) and update readme
 
 **--02/25/2026--**
