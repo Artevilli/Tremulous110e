@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/27/2026--**
 
+* qcommon:<br />fix separator replacement
+
 * qcommon:<br />fix pure checksums
 
 **--02/26/2026--**

@@ -562,25 +562,12 @@ static void
 FS_ReplaceSeparators(qchar *path)
 {
   qchar *s;
-  qbool lastCharWasSep = qfalse;
 
   for(s = path;*s;s++)
   {
     if (*s == PATH_SEP_FOREIGN)
     {
-      if (!lastCharWasSep)
-      {
-        *s = PATH_SEP;
-        lastCharWasSep = qtrue;
-      }
-      else
-      {
-        memmove(s, s + 1, strlen(s));
-      }
-    }
-    else
-    {
-      lastCharWasSep = qfalse;
+      *s = PATH_SEP;
     }
   }
 }
