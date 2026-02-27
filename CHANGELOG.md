@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--02/27/2026--**
+
+* qcommon:<br />fix pure checksums
+
 **--02/26/2026--**
 
 * client:<br />fix syscalls

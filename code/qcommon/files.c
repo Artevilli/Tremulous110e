@@ -5875,10 +5875,15 @@ FS_ReferencedPakPureChecksums(qint maxlen)
   qchar *max;
   const searchpath_t *search;
   qint nFlags;
+  qint numPaks;
+  qint checksum;
 
   max = info + maxlen; //maxlen is always smaller than MAX_STRING_CHARS so we can overflow a bit
   s = info;
-  *s = 0;
+  *s = '\0';
+
+  checksum = fs_checksumFeed;
+  numPaks = 0;
 
   for(nFlags = FS_CGAME_REF;nFlags;nFlags = nFlags >> 1)
   {
@@ -5910,9 +5915,16 @@ FS_ReferencedPakPureChecksums(qint maxlen)
         {
           break;
         }
+
+        checksum ^= search->pack->pure_checksum;
+        numPaks++;
       }
     }
   }
+
+  //last checksum is the encoded number of referenced pk3s
+  checksum ^= numPaks;
+  s = Q_stradd(s, va("%i ", checksum));
 
   if (s > max)
   {
