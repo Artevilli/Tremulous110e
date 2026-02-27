@@ -519,6 +519,47 @@ Com_Split(qchar *in, qchar **out, qint outsz, qint delim)
   return c;
 }
 
+/* 
+==================
+crc32_buffer
+==================
+*/
+unsigned
+crc32_buffer(const byte *buf, unsigned len)
+{
+  static unsigned crc32_table[256];
+  static qbool crc32_inited = qfalse;
+  unsigned crc = 0xFFFFFFFFUL;
+
+  if (!crc32_inited)  
+  {
+    unsigned int c;
+    qint i;
+    qint j;
+
+    for(i = 0;i < 256;i++)
+    {
+      c = i;
+
+      for(j = 0;j < 8;j++)
+      {
+        c = c & 1 ? (c >> 1) ^ 0xEDB88320UL : c >> 1;
+      }
+
+      crc32_table[i] = c;
+    }
+
+    crc32_inited = qtrue;
+  }
+
+  while(len--) 
+  {
+    crc = crc32_table[(crc ^ *buf++) & 0xFF] ^ (crc >> 8);
+  }
+
+  return crc ^ 0xFFFFFFFFUL;
+}
+
 /*
 ============================================================================
 
@@ -1658,7 +1699,7 @@ qbool Q_isintegral( float f )
 	return (qint)f == f;
 }
 
-#if defined(_MSC_VER)
+#if defined(_WIN32)
 /*
 =============
 Q_vsnprintf

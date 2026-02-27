@@ -70,6 +70,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define CLIENT_WINDOW_TITLE       PRODUCT_VERSION
 #define CLIENT_WINDOW_MIN_TITLE   PRODUCT_NAME_LOWER
+#define CONSOLE_WINDOW_TITLE "Tremulous 1.1.0 Console"
 
 #define GAMENAME_FOR_MASTER PRODUCT_NAME_UPPPER //must NOT contain whitespaces
 

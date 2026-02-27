@@ -806,7 +806,7 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_TESTPRINTINT:
-      return sprintf(VMA(1), "%li", args[2]);
+      return sprintf(VMA(1), "%i", (qint)args[2]);
 
     case
     G_TESTPRINTFLOAT:
@@ -830,7 +830,7 @@ SV_GameSystemCalls(intptr_t *args)
       return 0;
 
     default:
-      Com_Error(ERR_DROP, "Bad game system trap: %ld", (long qint) args[0]);
+      Com_Error(ERR_DROP, "Bad game system trap: %ld", (long qint)args[0]);
   }
 
   return -1;
