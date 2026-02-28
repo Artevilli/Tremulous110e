@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/28/2026--**
 
+* renderer:<br />dont use merged lightmaps without `GL_ARB_texture_border_clamp`
+
 * qcommon:<br />fix defines
 
 **--02/27/2026--**
