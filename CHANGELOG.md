@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--02/28/2026--**
+
+* qcommon:<br />fix defines
+
 **--02/27/2026--**
 
 * qcommon:<br />fix variables

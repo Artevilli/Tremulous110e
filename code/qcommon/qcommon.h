@@ -209,7 +209,6 @@ typedef struct {
 
 void		NET_Init( void );
 void		NET_Shutdown( void );
-void		NET_Config( qbool enableNetworking );
 void		NET_FlushPacketQueue(qint time_diff);
 void
 NET_QueuePacket(netsrc_t sock, qint length, const void *data, const netadr_t *to, qint offset);
