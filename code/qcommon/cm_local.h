@@ -206,7 +206,7 @@ typedef struct {
 
 extern	clipMap_t	cm;
 extern	qint			c_pointcontents;
-extern	uint64_t			c_traces, c_brush_traces, c_patch_traces;
+extern	qint			c_traces, c_brush_traces, c_patch_traces;
 extern	cvar_t		*cm_noAreas;
 extern	cvar_t		*cm_noCurves;
 extern	cvar_t		*cm_playerCurveClip;

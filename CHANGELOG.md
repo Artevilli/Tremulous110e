@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/27/2026--**
 
+* qcommon:<br />fix variables
+
 * qcommon/client:<br />cleanup
 
 * qcommon/sys:<br />add an icon, tiny code cleanup

@@ -61,9 +61,9 @@ SetPlaneSignbits(cplane_t *out)
 
 clipMap_t cm;
 qint c_pointcontents;
-uint64_t c_traces;
-uint64_t c_brush_traces;
-uint64_t c_patch_traces;
+qint c_traces;
+qint c_brush_traces;
+qint c_patch_traces;
 
 
 byte *cmod_base;
