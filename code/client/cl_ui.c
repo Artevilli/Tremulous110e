@@ -131,6 +131,7 @@ static void LAN_ResetPings(qint source) {
 	}
 }
 
+
 /*
 ====================
 LAN_AddServer
@@ -205,7 +206,7 @@ static void LAN_RemoveServer(qint source, const qchar *addr) {
 	}
 	if (servers) {
 		netadr_t comp;
-		NET_StringToAdr( addr, &comp, NA_IP );
+		NET_StringToAdr( addr, &comp, NA_UNSPEC );
 		for (i = 0; i < *count; i++) {
 			if (NET_CompareAdr( &comp, &servers[i].adr)) {
 				qint j = i;
@@ -313,7 +314,10 @@ static void LAN_GetServerInfo( qint source, qint n, qchar *buf, qint buflen ) {
 		Info_SetValueForKey( info, "game", server->game);
 		Info_SetValueForKey( info, "gametype", va("%i",server->gameType));
 		Info_SetValueForKey( info, "nettype", va("%i",server->netType));
-		Info_SetValueForKey( info, "addr", NET_AdrToString(&server->adr));
+		Info_SetValueForKey( info, "addr", NET_AdrToStringwPort(&server->adr));
+		Info_SetValueForKey( info, "punkbuster", va("%i", server->punkbuster));
+		Info_SetValueForKey( info, "g_needpass", va("%i", server->g_needpass));
+		Info_SetValueForKey( info, "g_humanplayers", va("%i", server->g_humanplayers));
 		Q_strncpyz(buf, info, buflen);
 	} else {
 		if (buf) {
@@ -354,7 +358,6 @@ static qint LAN_GetServerPing( qint source, qint n ) {
 	return -1;
 }
 
-
 /*
 ====================
 LAN_GetServerPtr
@@ -388,7 +391,7 @@ static serverInfo_t *LAN_GetServerPtr( qint source, qint n ) {
 LAN_CompareServers
 ====================
 */
-static qint LAN_CompareServers( qint source, qint sortKey, int sortDir, int s1, int s2 ) {
+static qint LAN_CompareServers( qint source, qint sortKey, qint sortDir, qint s1, qint s2 ) {
 	qint res;
 	serverInfo_t *server1, *server2;
 
@@ -401,26 +404,7 @@ static qint LAN_CompareServers( qint source, qint sortKey, int sortDir, int s1, 
 	res = 0;
 	switch( sortKey ) {
 		case SORT_HOST:
-			qchar	hostName1[ MAX_HOSTNAME_LENGTH ];
-			qchar	hostName2[ MAX_HOSTNAME_LENGTH ];
-			qchar	*p;
-			qint		i;
-
-			for( p = server1->hostName, i = 0; *p != '\0'; p++ )
-			{
-				if( Q_isalpha( *p ) )
-					hostName1[ i++ ] = *p;
-			}
-			hostName1[ i ] = '\0';
-
-			for( p = server2->hostName, i = 0; *p != '\0'; p++ )
-			{
-				if( Q_isalpha( *p ) )
-					hostName2[ i++ ] = *p;
-			}
-			hostName2[ i ] = '\0';
-
-			res = Q_stricmp( hostName1, hostName2 );
+			res = Q_stricmp( server1->hostName, server2->hostName );
 			break;
 
 		case SORT_MAP:
@@ -595,7 +579,7 @@ static qbool LAN_UpdateVisiblePings(qint source ) {
 LAN_GetServerStatus
 ====================
 */
-static qint LAN_GetServerStatus( qchar *serverAddress, qchar *serverStatus, qint maxLen ) {
+static qint LAN_GetServerStatus( const qchar *serverAddress, qchar *serverStatus, qint maxLen ) {
 	return CL_ServerStatus( serverAddress, serverStatus, maxLen );
 }
 
@@ -652,7 +636,7 @@ static qint GetConfigString(qint index, qchar *buf, qint size)
 	}
 
 	Q_strncpyz( buf, cl.gameState.stringData+offset, size);
- 
+
 	return qtrue;
 }
 
@@ -1133,7 +1117,7 @@ CL_ShutdownUI
 ====================
 */
 void CL_ShutdownUI( void ) {
-	Key_SetCatcher( Key_GetCatcher( ) & ~KEYCATCH_UI );
+	Key_SetCatcher( Key_GetCatcher() & ~KEYCATCH_UI );
 	cls.uiStarted = qfalse;
 	if ( !uivm ) {
 		return;
@@ -1141,8 +1125,9 @@ void CL_ShutdownUI( void ) {
 	VM_Call( uivm, 0, UI_SHUTDOWN );
 	VM_Free( uivm );
 	uivm = NULL;
-	FS_VM_CloseFiles(H_UI);
+	FS_VM_CloseFiles( H_UI );
 }
+
 
 /*
 ====================
@@ -1205,6 +1190,7 @@ void CL_InitUI( void ) {
 		VM_Call( uivm, 1, UI_INIT, (cls.state >= CA_AUTHORIZING && cls.state < CA_ACTIVE) );
 	}
 }
+
 
 /*
 ====================

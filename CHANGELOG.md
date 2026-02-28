@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/27/2026--**
 
+* qcommon/client:<br />cleanup
+
 * qcommon/sys:<br />add an icon, tiny code cleanup
 
 * qcommon:<br />fix separator replacement
