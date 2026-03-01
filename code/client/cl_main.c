@@ -2616,7 +2616,7 @@ static qbool CL_ConnectionlessPacket( const netadr_t *from, msg_t *msg ) {
 						// we support new protocol features by default
 						cl_proto = NEW_PROTOCOL_VERSION;
 					}
-					Com_Printf( S_COLOR_YELLOW "Warning: Server reports protocol version %d, "
+					Com_DPrintf( S_COLOR_YELLOW "Warning: Server reports protocol version %d, "
 						"we have %d. Trying legacy protocol %d.\n",
 						sv_proto, cl_proto, OLD_PROTOCOL_VERSION );
 				}

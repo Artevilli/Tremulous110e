@@ -1098,9 +1098,7 @@ main(qint argc, const qchar *argv[])
 #endif
 
   //merge the command line, this is kinda silly
-  len = 1;
-
-  for(i = 1;i < argc;i++)
+  for(len = 1, i = 1;i < argc;i++)
   {
     len += strlen(argv[i]) + 1;
   }

@@ -773,7 +773,7 @@ handleOwner_t;
 
 #if defined(DEDICATED)
 #define Q3CONFIG_CFG "autogen_server.cfg"
-#define CONSOLE_HISTORY_FILE "autogen_server_history.cfg"
+#define CONSOLE_HISTORY_FILE "autogen_server_history"
 #else
 #define Q3CONFIG_CFG "autogen.cfg"
 #define CONSOLE_HISTORY_FILE "autogen_history"
@@ -1289,10 +1289,6 @@ CLIENT / SERVER SYSTEMS
 //
 // client interface
 //
-void CL_InitKeyCommands( void );
-// the keyboard binding interface must be setup before execing
-// config files, but the rest of client startup will happen later
-
 void CL_Init( void );
 qbool CL_Disconnect( qbool showMainMenu );
 void
