@@ -5589,20 +5589,6 @@ FS_Startup(void)
     FS_AddGameDirectory(fs_homepath->string, fs_basegame->string);
   }
 
-  //check for additional base game so mods can be based upon other mods
-  if (fs_basegame->string[0] && Q_stricmp(fs_basegame->string, fs_basegame->string))
-  {
-    if (fs_basepath->string[0])
-    {
-      FS_AddGameDirectory(fs_basepath->string, fs_basegame->string);
-    }
-
-    if (fs_homepath->string[0] && Q_stricmp(fs_homepath->string,fs_basepath->string))
-    {
-      FS_AddGameDirectory(fs_homepath->string, fs_basegame->string);
-    }
-  }
-
   //reorder search paths to minimize further changes
   FS_ReorderSearchPaths();
 

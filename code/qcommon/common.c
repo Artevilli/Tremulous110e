@@ -693,30 +693,35 @@ before the filesystem is started, but all other sets should
 be after execing the config and default.
 ===============
 */
-void Com_StartupVariable( const qchar *match ) {
-	qint		i;
-	const qchar	*s;
+void
+Com_StartupVariable(const qchar *match)
+{
+  qint i;
+  const qchar *name;
 
-	for (i=0 ; i < com_numConsoleLines ; i++) {
-		Cmd_TokenizeString( com_consoleLines[i] );
-		if ( strcmp( Cmd_Argv(0), "set" ) ) {
-			continue;
-		}
+  for(i = 0;i < com_numConsoleLines;i++)
+  {
+    Cmd_TokenizeString(com_consoleLines[i]);
 
-		s = Cmd_Argv(1);
+    if (Q_stricmp(Cmd_Argv(0), "set"))
+    {
+      continue;
+    }
 
-		if (!match || !strcmp(s, match))
-		{
-                  if (Cvar_Flags(s) == CVAR_NONEXISTENT)
-                  {
-                    Cvar_Get(s, Cmd_Argv(2), CVAR_USER_CREATED);
-                  }
-                  else
-                  {
-                    Cvar_Set(s, Cmd_Argv(2));
-                  }
-		}
-	}
+    name = Cmd_Argv(1);
+
+    if (!match || Q_stricmp(name, match) == 0)
+    {
+      if (Cvar_Flags(name) == CVAR_NONEXISTENT)
+      {
+        Cvar_Get(name, Cmd_ArgsFrom(2), CVAR_USER_CREATED);
+      }
+      else
+      {
+        Cvar_Set2(name, Cmd_ArgsFrom(2), qfalse);
+      }
+    }
+  }
 }
 
 /*
@@ -3890,28 +3895,6 @@ Com_SetAffinityMask(const qchar *str)
 
 /*
 =================
-Com_InitRand
-
-Seed the random numbr generator, if possible with an OS supplied random seed.
-=================
-*/
-static void
-Com_InitRand(void)
-{
-  unsigned seed;
-
-  if (Sys_RandomBytes((byte *)&seed, sizeof(seed)))
-  {
-    srand(seed);
-  }
-  else
-  {
-    srand(time(NULL));
-  }
-}
-
-/*
-=================
 Com_Init
 =================
 */
@@ -3924,15 +3907,12 @@ Com_Init(qchar *commandLine)
   //get the initial time base
   Sys_Milliseconds();
 
-  Com_Printf("%s %s %s\n", Q3_VERSION, PLATFORM_STRING, __DATE__);
+  Com_Printf("%s %s %s\n", SVN_VERSION, PLATFORM_STRING, __DATE__);
 
   if (Q_setjmp (abortframe))
   {
     Sys_Error("Error during initialization");
   }
-
-  //initialize the weak pseudo-random number generator for use later
-  Com_InitRand();
 
   //do this before anything else decides to push events
   Com_InitPushEvent();
@@ -3942,6 +3922,10 @@ Com_Init(qchar *commandLine)
 
 #if defined(_WIN32) && defined(_DEBUG)
   com_noErrorInterrupt = Cvar_Get("com_noErrorInterrupt", "0", 0);
+#endif
+
+#if defined(DEFAULT_GAME)
+  Cvar_Set("fs_game", DEFAULT_GAME);
 #endif
 
   //prepare enough of the subsystems to handle
@@ -3958,7 +3942,9 @@ Com_Init(qchar *commandLine)
   Cmd_Init();
 
   //get the developer cvar set as early as possible
+  Com_StartupVariable("developer");
   com_developer = Cvar_Get("developer", "0", CVAR_TEMP);
+  Cvar_CheckRange(com_developer, NULL, NULL, CV_INTEGER);
 
   Com_StartupVariable("vm_rtChecks");
   vm_rtChecks = Cvar_GetAndDescribe("vm_rtChecks", "15", CVAR_INIT | CVAR_PROTECTED | CVAR_SERVERINFO, "Runtime checks in compiled vm code, bitmask:\n1 - program stack overflow\n2 - opcode stack overflow\n4 - jump target range\n8 - data read/write range");
@@ -3968,7 +3954,7 @@ Com_Init(qchar *commandLine)
   Cvar_CheckRange(com_journal, "0", "2", CV_INTEGER);
 
   Com_StartupVariable("sv_master1");
-  Cvar_Get("sv_master1", MASTER_SERVER_NAME, CVAR_ARCHIVE_ND | CVAR_PROTECTED);
+  Cvar_Get("sv_master1", MASTER_SERVER_NAME, CVAR_INIT | CVAR_PROTECTED);
 
   com_protocol = Cvar_GetAndDescribe("protocol", XSTRING(DEFAULT_PROTOCOL_VERSION), 0, "Specify network protocol version number, use -compat suffix for OpenArena compaitiblity.");
 
@@ -4012,7 +3998,7 @@ Com_Init(qchar *commandLine)
 
   // get dedicated here for proper hunk megs initialization
 #if defined(DEDICATED)
-  com_dedicated = Cvar_GetAndDescribe("dedicated", "1", CVAR_INIT, "Enables dedicated server mode.\n 1: Unlisted dedicated server\n 2: Listed dedicated server");
+  com_dedicated = Cvar_GetAndDescribe("dedicated", "1", CVAR_LATCH /*CVAR_INIT*/, "Enables dedicated server mode.\n 1: Unlisted dedicated server\n 2: Listed dedicated server");
   Cvar_CheckRange(com_dedicated, "1", "2", CV_INTEGER);
 #else
   com_dedicated = Cvar_GetAndDescribe("dedicated", "0", CVAR_LATCH, "Enables dedicated server mode.\n 0: Listen server\n 1: Unlisted dedicated server\n 2: Listed dedicated server");
@@ -4084,7 +4070,7 @@ Com_Init(qchar *commandLine)
     gw_minimized = qfalse;
   }
 
-  if (com_developer && com_developer->integer)
+  if (com_developer->integer)
   {
     Cmd_AddCommand("error", Com_Error_f);
     Cmd_AddCommand("crash", Com_Crash_f);

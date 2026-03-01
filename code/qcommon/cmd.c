@@ -477,13 +477,13 @@ Cmd_Exec_f(void)
 
   if (f.v == NULL)
   {
-    Com_Printf("couldn't exec %s\n", Cmd_Argv(1));
+    Com_Printf("couldn't exec %s\n", filename);
     return;
   }
 
   if (!quiet)
   {
-    Com_Printf("ececing %s\n", Cmd_Argv(1));
+    Com_Printf("ececing %s\n", filename);
   }
 
   Cbuf_InsertText(f.c);
@@ -517,7 +517,7 @@ Cmd_Vstr_f(void)
   }
 
   v = Cvar_VariableString(Cmd_Argv(1));
-  Cbuf_InsertText(va("%s\n", v));
+  Cbuf_InsertText(v);
 }
 
 /*

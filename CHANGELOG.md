@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--02/28/2026--**
 
+* qcommon:<br />various fixes
+
 * renderer:<br />use `GL_ARB_texture_border_clamp` unconditionally if available
 
 * renderer:<br />dont use vbo or ppl without arb shaders

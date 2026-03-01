@@ -26,41 +26,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // q_shared.h -- included first by ALL program modules.
 // A user mod should never modify this file
 
-#define PRODUCT_NAME            "XreaL" //case, spaces allowed
-#define PRODUCT_NAME_UPPPER     "XreaL" //case, no spaces
-#define PRODUCT_NAME_LOWER      "xreal" //no case, no spaces
-
-#define PRODUCT_VERSION          "0.8.1"
-
-#define ENGINE_NAME             "XreaL Engine"
-#define ENGINE_VERSION          "0.9.7"
-
-#if 0
-#if !defined(COMPAT_Q3A)
-#define COMPAT_Q3A 1
+#define Q3_VERSION "tremulous 1.1.0"
+#ifndef SVN_VERSION
+#define SVN_VERSION Q3_VERSION
 #endif
-#endif
+#define CLIENT_WINDOW_TITLE   "Tremulous 1.1.0e"
+#define CONSOLE_WINDOW_TITLE  "Tremulous 1.1.0e Console"
+//1.32 released 7-10-2002
 
-#if 0
-#if !defined(USE_JAVA)
-#define USE_JAVA 1
-#endif
-#endif
-
-#if 0
-#if !defined(USE_MONO)
-#define USE_MONO 1
-#endif
-#endif
-
-#if defined(SVN_VERSION)
-#define Q3_VERSION PRODUCT_NAME " " SVN_VERSION
-#else
-#define Q3_VERSION PRODUCT_NAME " " PRODUCT_VERSION
-#endif
-
-#define Q3_ENGINE ENGINE_NAME " " ENGINE_VERSION
-#define Q3_ENGINE_DATE          __DATE__
+//#define DEFAULT_GAME "edawn"
 
 #define BASEGAME "base"
 #define BASEDEMO "demo"
@@ -68,16 +42,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define STEAMPATH_NAME "Tremulous"
 #define STEAMPATH_APPID "2200"
 
-#define CLIENT_WINDOW_TITLE       PRODUCT_VERSION
-#define CLIENT_WINDOW_MIN_TITLE   PRODUCT_NAME_LOWER
-#define CONSOLE_WINDOW_TITLE "Tremulous 1.1.0 Console"
-
-#define GAMENAME_FOR_MASTER PRODUCT_NAME_UPPPER //must NOT contain whitespaces
-
 #define MAX_TEAMNAME 32
 #define MAX_MASTER_SERVERS 5 //number of supported master servers
 
-#define DEMOEXT "dm_" //standard demo extension
+#define GAMENAME_FOR_MASTER "Tremulous"
+#define HEARTBEAT_FOR_MASTER "Tremulous"
+
+#define DEMOEXT	"dm_" //standard demo extension
 
 #define VALIDSTRING(a) ((a != NULL) && (a[0] != '\0'))
 

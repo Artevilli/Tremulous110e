@@ -956,14 +956,18 @@ const qchar *COM_ParseExt( const qchar **data_p, qbool allowLineBreaks )
 			}
 		}
 		// skip /* */ comments
-		else if ( c=='/' && data[1] == '*' ) 
+		else if ( c == '/' && data[1] == '*' )
 		{
 			data += 2;
-			while ( *data && ( *data != '*' || data[1] != '/' ) ) 
+			while ( *data && ( *data != '*' || data[1] != '/' ) )
 			{
+				if ( *data == '\n' )
+				{
+					com_lines++;
+				}
 				data++;
 			}
-			if ( *data ) 
+			if ( *data )
 			{
 				data += 2;
 			}
@@ -974,25 +978,32 @@ const qchar *COM_ParseExt( const qchar **data_p, qbool allowLineBreaks )
 		}
 	}
 
-        //token starts on this line
-        com_tokenline = com_lines;
+	// token starts on this line
+	com_tokenline = com_lines;
 
 	// handle quoted strings
-	if (c == '\"')
+	if ( c == '"' )
 	{
 		data++;
-		while (1)
+		while ( 1 )
 		{
-			c = *data++;
-			if (c=='\"' || !c)
+			c = *data;
+			if ( c == '"' || c == '\0' )
 			{
-				com_token[len] = 0;
+				if ( c == '"' )
+					data++;
+				com_token[ len ] = '\0';
 				*data_p = data;
 				return com_token;
 			}
-			if (len < MAX_TOKEN_CHARS - 1)
+			data++;
+			if ( c == '\n' )
 			{
-				com_token[len] = c;
+				com_lines++;
+			}
+			if ( len < ARRAY_LEN( com_token )-1 )
+			{
+				com_token[ len ] = c;
 				len++;
 			}
 		}
@@ -1001,18 +1012,16 @@ const qchar *COM_ParseExt( const qchar **data_p, qbool allowLineBreaks )
 	// parse a regular word
 	do
 	{
-		if (len < MAX_TOKEN_CHARS - 1)
+		if ( len < ARRAY_LEN( com_token )-1 )
 		{
-			com_token[len] = c;
+			com_token[ len ] = c;
 			len++;
 		}
 		data++;
 		c = *data;
-		if ( c == '\n' )
-			com_lines++;
-	} while (c>32);
+	} while ( c > ' ' );
 
-	com_token[len] = 0;
+	com_token[ len ] = '\0';
 
 	*data_p = data;
 	return com_token;
