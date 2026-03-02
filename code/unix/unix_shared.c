@@ -246,7 +246,7 @@ Sys_ListExtFiles(const qchar *directory, const qchar *subdir, const qchar *exten
     {
       if (hasPatterns)
       {
-        x = Q_strrchr(d->d_name, '.');
+        x = strrchr(d->d_name, '.');
 
         if (x == NULL || !Com_FilterExt(extension, x + 1))
         {

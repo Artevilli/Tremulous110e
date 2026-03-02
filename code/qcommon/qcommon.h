@@ -746,6 +746,15 @@ issues.
 #define FS_UI_REF		0x02
 #define FS_CGAME_REF	0x04
 
+typedef enum
+{
+  H_SYSTEM,
+  H_GAME,
+  H_CGAME,
+  H_UI
+}
+handleOwner_t;
+
 #define FS_MATCH_EXTERN BIT(0)
 #define FS_MATCH_PURE BIT(1)
 #define FS_MATCH_UNPURE BIT(2)
@@ -756,16 +765,7 @@ issues.
 
 #define FS_MAX_SUBDIRS 8 //should be enough for practical use with FS_MATCH_SUBDIRS
 
-typedef enum
-{
-  H_SYSTEM,
-  H_GAME,
-  H_CGAME,
-  H_UI
-}
-handleOwner_t;
-
-#define	MAX_FILE_HANDLES	64
+#define	MAX_FILE_HANDLES 64
 
 #define FS_INVALID_HANDLE 0
 
@@ -779,8 +779,12 @@ handleOwner_t;
 #define CONSOLE_HISTORY_FILE "autogen_history"
 #endif
 
-typedef time_t fileTime_t;
-typedef off_t fileOffset_t;
+typedef	time_t fileTime_t;
+#if defined(_MSC_VER) && defined(__clang__)
+typedef	_off_t fileOffset_t;
+#else
+typedef	off_t fileOffset_t;
+#endif
 
 qbool FS_Initialized( void );
 
@@ -794,8 +798,6 @@ void	FS_Restart( qint checksumFeed );
 void
 FS_Reload(void);
 
-void FS_AddGameDirectory( const qchar *path, const qchar *dir );
-
 qchar	**FS_ListFiles( const qchar *directory, const qchar *extension, qint *numfiles );
 // directory should not have either a leading or trailing /
 // if extension is "/", only subdirectories will be returned
@@ -804,12 +806,6 @@ qchar	**FS_ListFiles( const qchar *directory, const qchar *extension, qint *numf
 void	FS_FreeFileList( qchar **list );
 
 qbool FS_FileExists( const qchar *file );
-
-qbool
-FS_CreatePath(const qchar *OSPath);
-
-qchar *
-FS_FindDll(const qchar *filename);
 
 qchar   *FS_BuildOSPath( const qchar *base, const qchar *game, const qchar *qpath );
 qbool
@@ -821,16 +817,16 @@ qint		FS_LoadStack( void );
 
 qint		FS_GetFileList(  const qchar *path, const qchar *extension, qchar *listbuf, qint bufsize );
 
-qint
-FS_GetModList(qchar *listbuf, qint bufsize);
-
 fileHandle_t	FS_FOpenFileWrite( const qchar *qpath );
-qbool
-FS_ResetReadOnlyAttribute(const qchar *filename);
-qbool
-FS_SV_FileExists(const qchar *file);
+
 fileHandle_t	FS_FOpenFileAppend( const qchar *filename );
 // will properly create any needed paths and deal with seperater character issues
+
+qbool
+FS_ResetReadOnlyAttribute(const qchar *filename);
+
+qbool
+FS_SV_FileExists(const qchar *file);
 
 fileHandle_t FS_SV_FOpenFileWrite( const qchar *filename );
 qint		FS_SV_FOpenFileRead( const qchar *filename, fileHandle_t *fp );
@@ -858,9 +854,10 @@ qbool		FS_FileIsInPAK(const qchar *filename, qint *pChecksum, qchar *pakName );
 
 qint
 FS_PakIndexForHandle(fileHandle_t f);
-//returns pak index or -1 if file is not in pak
 
+//returns pak index or -1 if file is not in pak
 extern qint fs_lastPakIndex;
+
 extern qbool fs_reordered;
 
 qint		FS_Write( const void *buffer, qint len, fileHandle_t f );
@@ -947,17 +944,26 @@ void FS_HomeRemove( const qchar *homePath );
 void
 FS_FilenameCompletion(const qchar *dir, const qchar *ext, qbool stripExt, void(*callback)(const qchar *s), qint flags);
 
+qint
+FS_VM_OpenFile(const qchar *qpath, fileHandle_t *f, fsMode_t mode, handleOwner_t owner);
+qint
+FS_VM_ReadFile(void *buffer, qint len, fileHandle_t f, handleOwner_t owner);
+void
+FS_VM_WriteFile(void *buffer, const qint len, fileHandle_t f, handleOwner_t owner);
+qint
+FS_VM_SeekFile(fileHandle_t f, long offset, fsOrigin_t origin, handleOwner_t owner);
+void
+FS_VM_CloseFile(fileHandle_t f, handleOwner_t owner);
+void
+FS_VM_CloseFiles(handleOwner_t owner);
+
 const qchar *
 FS_GetCurrentGameDir(void);
 const qchar *
 FS_GetBaseGameDir(void);
 
 const qchar *
-FS_GetBasePath(void);
-const qchar *
 FS_GetHomePath(void);
-const qchar *
-FS_GetGamePath(void);
 
 qbool
 FS_StripExt(qchar *filename, const qchar *ext);
@@ -981,19 +987,6 @@ FS_PipeOpenWrite(const qchar *cmd, const qchar *filename);
 void
 FS_PipeClose(fileHandle_t f);
 
-qint
-FS_VM_OpenFile(const qchar *qpath, fileHandle_t *f, fsMode_t mode, handleOwner_t owner);
-qint
-FS_VM_ReadFile(void *buffer, qint len, fileHandle_t f, handleOwner_t owner);
-void
-FS_VM_WriteFile(void *buffer, const qint len, fileHandle_t f, handleOwner_t owner);
-qint
-FS_VM_SeekFile(fileHandle_t f, long offset, fsOrigin_t origin, handleOwner_t owner);
-void
-FS_VM_CloseFile(fileHandle_t f, handleOwner_t owner);
-void
-FS_VM_CloseFiles(handleOwner_t owner);
-
 const qbool
 FS_VerifyPak(const qchar *pak);
 
@@ -1005,7 +998,10 @@ Edit fields and command line history/completion
 ==============================================================
 */
 
-#define	MAX_EDIT_LINE	256
+#define	MAX_EDIT_LINE 512
+#if MAX_EDIT_LINE > MAX_CMD_LINE
+#error "MAX_EDIT_LINE > MAX_CMD_LINE"
+#endif
 typedef struct {
 	qint		cursor;
 	qint		scroll;
@@ -1061,8 +1057,9 @@ extern qint CPU_Flags;
 #define CPU_IDIVA 0x02
 #define CPU_VFPv3 0x04
 
-// centralized and cleaned, that's the max string you can send to a Com_Printf / Com_DPrintf (above gets truncated)
-#define	MAXPRINTMSG	8192
+//centralized and cleaned, that's the max string you can send to a Com_Printf / Com_DPrintf (above gets truncated)
+//bump to 8192 as 4096 may be not enough to print some data like gl extensions - CE
+#define	MAXPRINTMSG 8192
 
 qchar *
 CopyString(const qchar *in);

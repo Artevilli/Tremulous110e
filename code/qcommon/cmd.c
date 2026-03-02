@@ -218,8 +218,10 @@ Adds a \n to the text
 void
 Cbuf_InsertText(const qchar *text)
 {
-  const qint len = (qint)(strlen(text) + 1);
+  qint len;
   qint i;
+
+  len = strlen(text) + 1;
 
   if (len + cmd_text.cursize > cmd_text.maxsize)
   {
@@ -1060,7 +1062,7 @@ Cmd_CommandCompletion
 void
 Cmd_CommandCompletion(void (*callback)(const qchar *s))
 {
-  cmd_function_t *cmd;
+  const cmd_function_t *cmd;
 	
   for(cmd = cmd_functions;cmd;cmd = cmd->next)
   {

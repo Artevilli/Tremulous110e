@@ -379,6 +379,11 @@ qint fs_lastPakIndex;
 static FILE *missingFiles = NULL;
 #endif
 
+static qint
+FS_GetModList(qchar *listbuf, qint bufsize);
+void
+FS_Reload(void);
+
 /*
 ==============
 FS_Initialized
@@ -777,7 +782,7 @@ FS_AllowedExtension(const qchar *fileName, qbool allowPk3s, const qchar **ext)
   qint i;
   qint n;
 
-  e = Q_strrchr(fileName, '.');
+  e = strrchr(fileName, '.');
 
   //check for unix '.so.[0-9]' pattern
   if (e >= (fileName + 3) && *(e + 1) >= '0' && *(e + 1) <= '9' && *(e + 2) == '\0') 
@@ -1591,7 +1596,7 @@ FS_HasExt(const qchar *fileName, const qchar **extList, qint extCount)
   const qchar *e;
   qint i;
 
-  e = Q_strrchr(fileName, '.');
+  e = strrchr(fileName, '.');
 
   if (!e)
   {
@@ -1838,7 +1843,7 @@ FS_FOpenFileRead(const qchar *filename, fileHandle_t *file, qbool uniqueFILE)
           if (!FS_FilenameCompare(pakFile->name, filename))
           {
             //found it!
-            return pakFile->size;
+            return pakFile->size ? pakFile->size:qtrue;
           }
 
           pakFile = pakFile->next;
@@ -2078,7 +2083,7 @@ FS_Read(void *buffer, qint len, fileHandle_t f)
   qint remaining;
   qint read;
   byte *buf;
-  qbool tried;
+  qint tries;
 
   if (!fs_searchpaths)
   {
@@ -2096,7 +2101,7 @@ FS_Read(void *buffer, qint len, fileHandle_t f)
   if (!fsh[f].zipFile)
   {
     remaining = len;
-    tried = qfalse;
+    tries = 0;
 
     while(remaining)
     {
@@ -2107,9 +2112,9 @@ FS_Read(void *buffer, qint len, fileHandle_t f)
       {
         //we might have been trying to read from a CD, which
         //sometimes returns a 0 read on windows
-        if (!tried)
+        if (!tries)
         {
-          tried = qtrue;
+          tries = 1;
         }
         else
         {
@@ -2148,7 +2153,7 @@ FS_Write(const void *buffer, qint len, fileHandle_t h)
   qint remaining;
   qint written;
   byte *buf;
-  qbool tried;
+  qint tries;
   FILE *f;
 
   if (!fs_searchpaths)
@@ -2165,7 +2170,7 @@ FS_Write(const void *buffer, qint len, fileHandle_t h)
   buf = (byte *)buffer;
 
   remaining = len;
-  tried = qfalse;
+  tries = 0;
 
   while(remaining)
   {
@@ -2174,9 +2179,9 @@ FS_Write(const void *buffer, qint len, fileHandle_t h)
 
     if (written == 0)
     {
-      if (!tried)
+      if (!tries)
       {
-        tried = qtrue;
+        tries = 1;
       }
       else
       {
@@ -2225,9 +2230,12 @@ FS_Seek
 qint
 FS_Seek(fileHandle_t f, long offset, fsOrigin_t origin)
 {
+  qint _origin;
+
   if (!fs_searchpaths)
   {
-    Com_Error(ERR_FATAL, "Filesystem call made without initialization");
+    Com_Error( ERR_FATAL, "Filesystem call made without initialization" );
+    return -1;
   }
 
   if (fsh[f].zipFile == qtrue)
@@ -2235,7 +2243,7 @@ FS_Seek(fileHandle_t f, long offset, fsOrigin_t origin)
     //FIXME: this is really, really crappy
     //(but better than what was here before)
     byte buffer[PK3_SEEK_BUFFER_SIZE];
-    qint remainder = offset;
+    qint remainder;
     qint currentPosition = FS_FTell(f);
 
     //change negative offsets into FS_SEEK_SET
@@ -2304,7 +2312,7 @@ FS_Seek(fileHandle_t f, long offset, fsOrigin_t origin)
           remainder -= PK3_SEEK_BUFFER_SIZE;
         }
 
-        FS_Read(buffer, remainder, f);
+        FS_Read( buffer, remainder, f );
         return offset;
 
       default:
@@ -2315,27 +2323,31 @@ FS_Seek(fileHandle_t f, long offset, fsOrigin_t origin)
   else
   {
     FILE *file;
-
     file = FS_FileForHandle(f);
 
     switch(origin)
     {
       case
       FS_SEEK_CUR:
-        return fseek(file, offset, SEEK_CUR);
+        _origin = SEEK_CUR;
+        break;
 
       case
       FS_SEEK_END:
-        return fseek(file, offset, SEEK_END);
+        _origin = SEEK_END;
+        break;
 
       case
       FS_SEEK_SET:
-        return fseek(file, offset, SEEK_SET);
+        _origin = SEEK_SET;
+        break;
 
       default:
         Com_Error(ERR_FATAL, "Bad origin in FS_Seek");
         return -1;
     }
+
+    return fseek(file, offset, _origin);
   }
 }
 
@@ -3162,7 +3174,7 @@ FS_LoadPakFromFile(FILE *f)
   }
 
   //extract basename from zip path
-  basename = Q_strrchr(pakName, PATH_SEP);
+  basename = strrchr(pakName, PATH_SEP);
 
   if (basename == NULL)
   {
@@ -3478,7 +3490,7 @@ FS_LoadZipFile(const qchar *zipfile)
 #endif
 
   //extract basename from zip path
-  basename = Q_strrchr(zipfile, PATH_SEP);
+  basename = strrchr(zipfile, PATH_SEP);
 
   if (basename == NULL)
   {
@@ -4001,7 +4013,7 @@ FS_ListFilteredFiles(const qchar *path, const qchar *extension, const qchar *fil
             {
               if (hasPatterns)
               {
-                x = Q_strrchr(name, '.');
+                x = strrchr(name, '.');
 
                 if (!x || !Com_FilterExt(extension, x + 1))
                 {
@@ -5044,7 +5056,7 @@ FS_AddGameDirectory(const qchar *path, const qchar *dir)
       search->policy = DIR_ALLOW;
 
       strcpy(search->dir->path, curpath); //c:\quake3\baseq3
-      strcpy(search->dir->gamedir, pakdirs[pakdirsi]); // mypak.pk3dir
+      strcpy(search->dir->gamedir, pakdirs[pakdirsi]); //mypak.pk3dir
 
       search->next = fs_searchpaths;
       fs_searchpaths = search;
@@ -5343,10 +5355,7 @@ FS_ReorderSearchPaths(void)
 
   list[cnt-1]->next = NULL;
 
-  if (list)
-  {
-    Z_Free(list);
-  }
+  Z_Free(list);
 }
 
 /*
@@ -5570,8 +5579,6 @@ FS_Startup(void)
     FS_AddGameDirectory(fs_basepath->string, fs_basegame->string);
   }
 
-  //fs_homepath is somewhat particular to *nix systems, only add if relevant
-
 #if defined(__APPLE__)
   fs_apppath = Cvar_Get("fs_apppath", Sys_DefaultAppPath(), CVAR_INIT | CVAR_PROTECTED);
 
@@ -5581,18 +5588,18 @@ FS_Startup(void)
     FS_AddGameDirectory(fs_apppath->string, fs_basegame->string);
   }
 #endif
-	
+
+  //fs_homepath is somewhat particular to *nix systems, only add if relevant
   //NOTE: same filtering below for mods and basegame
-  if (fs_homepath->string[0] && Q_stricmp(fs_homepath->string,fs_basepath->string))
+  if (fs_homepath->string[0] && Q_stricmp(fs_homepath->string, fs_basepath->string))
   {
     FS_CreatePath(fs_homepath->string);
     FS_AddGameDirectory(fs_homepath->string, fs_basegame->string);
   }
 
-  //reorder search paths to minimize further changes
+#if defined(DEDICATED)
   FS_ReorderSearchPaths();
-
-  end = Sys_Milliseconds();
+#endif
 
   //check for additional game folder for mods
   if (fs_gamedirvar->string[0] && Q_stricmp(fs_gamedirvar->string, fs_basegame->string))
@@ -5613,6 +5620,20 @@ FS_Startup(void)
     }
   }
 
+#if !defined(DEDICATED)
+  //reorder search paths to minimize further changes
+  FS_ReorderSearchPaths();
+
+  //https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=506
+  //reorder the pure pk3 files according to server order
+  FS_ReorderPurePaks();
+
+  //get the pure checksums of the pk3 files loaded by the server
+  FS_LoadedPakPureChecksums();
+
+  end = Sys_Milliseconds();
+#endif
+
   //add our commands
   Cmd_AddCommand("path", FS_Path_f);
   Cmd_AddCommand("dir", FS_Dir_f);
@@ -5623,12 +5644,16 @@ FS_Startup(void)
   Cmd_SetCommandCompletionFunc("which", FS_CompleteFileName);
   Cmd_AddCommand("fs_restart", FS_Reload);
 
+#if defined(DEDICATED)
   //https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=506
   //reorder the pure pk3 files according to server order
   FS_ReorderPurePaks();
 
   //get the pure checksums of the pk3 files loaded by the server
   FS_LoadedPakPureChecksums();
+
+  end = Sys_Milliseconds();
+#endif
 
   //print the current search paths
   //FS_Path_f();

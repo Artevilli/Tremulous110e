@@ -284,7 +284,7 @@ Sys_Pwd(void)
 
   Q_strncpyz(pwd, WtoA(buffer), sizeof(pwd));
 
-  s = Q_strrchr(pwd, PATH_SEP);
+  s = strrchr(pwd, PATH_SEP);
 
   if (s) 
   {
@@ -438,7 +438,7 @@ Sys_ListExtFiles(const qchar *directory, const qchar *subdir, const qchar *exten
       {
         if (hasPatterns)
         {
-          x = Q_strrchr(findinfo.name, '.');
+          x = strrchr(findinfo.name, '.');
 
           if (x == NULL || !Com_FilterExt(extension, x + 1))
           {
@@ -907,7 +907,7 @@ ExceptionFilter(struct _EXCEPTION_POINTERS *ExceptionInfo)
           if (GetModuleFileNameA(hModule, name, ARRAY_LEN(name) - 1) != 0)
           {
             name[ARRAY_LEN(name) - 1] = '\0';
-            basename = Q_strrchr(name, '\\');
+            basename = strrchr(name, '\\');
 
             if (basename)
             {
@@ -915,7 +915,7 @@ ExceptionFilter(struct _EXCEPTION_POINTERS *ExceptionInfo)
             }
             else
             {
-              basename = Q_strrchr(name, '/');
+              basename = strrchr(name, '/');
 
               if (basename)
               {

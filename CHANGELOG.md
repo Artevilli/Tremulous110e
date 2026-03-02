@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--03/02/2026--**
+
+* qcommon/sys:<br />code cleanup
+
 **--03/01/2026--**
 
 * client/qcommon/sys:<br />code cleanup
