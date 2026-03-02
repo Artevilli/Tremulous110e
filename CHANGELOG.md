@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--03/02/2026--**
 
+* qcommon:<br />fix parsing issues
+
 * qcommon/sys:<br />code cleanup
 
 **--03/01/2026--**

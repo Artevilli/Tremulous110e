@@ -127,7 +127,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 //punctuation
 typedef struct punctuation_s
 {
-  qchar *p;                    //punctuation character(s)
+  const qchar *p;                    //punctuation character(s)
   qint n;                      //punctuation indication
   struct punctuation_s *next; //next punctuation
 } punctuation_t;
@@ -257,7 +257,7 @@ punctuation_t default_punctuations[] =
   {"<=",P_LOGIC_LEQ, NULL},
   {"==",P_LOGIC_EQ, NULL},
   {"!=",P_LOGIC_UNEQ, NULL},
-  //arithmatic operators
+  //arithmetic operators
   {"*=",P_MUL_ASSIGN, NULL},
   {"/=",P_DIV_ASSIGN, NULL},
   {"%=",P_MOD_ASSIGN, NULL},
@@ -276,7 +276,7 @@ punctuation_t default_punctuations[] =
   //C++
   {"::",P_CPP1, NULL},
   {".*",P_CPP2, NULL},
-  //arithmatic operators
+  //arithmetic operators
   {"*",P_MUL, NULL},
   {"/",P_DIV, NULL},
   {"%",P_MOD, NULL},
@@ -294,7 +294,7 @@ punctuation_t default_punctuations[] =
   {"<",P_LOGIC_LESS, NULL},
   //reference operator
   {".",P_REF, NULL},
-  //seperators
+  //separators
   {",",P_COMMA, NULL},
   {";",P_SEMICOLON, NULL},
   //label indication
@@ -363,15 +363,15 @@ static void Parse_CreatePunctuationTable(script_t *script, punctuation_t *punctu
 Parse_ScriptError
 ===============
 */
-static void QDECL Parse_ScriptError(script_t *script, qchar *str, ...)
+static void QDECL Parse_ScriptError(script_t *script, const qchar *fmt, ...)
 {
   qchar text[1024];
   va_list ap;
 
   if (script->flags & SCFL_NOERRORS) return;
 
-  va_start(ap, str);
-  vsprintf(text, str, ap);
+  va_start(ap, fmt);
+  Q_vsnprintf(text, sizeof(text), fmt, ap);
   va_end(ap);
   Com_Printf( "file %s, line %d: %s\n", script->filename, script->line, text);
 }
@@ -381,15 +381,15 @@ static void QDECL Parse_ScriptError(script_t *script, qchar *str, ...)
 Parse_ScriptWarning
 ===============
 */
-static void QDECL Parse_ScriptWarning(script_t *script, qchar *str, ...)
+static void QDECL Parse_ScriptWarning(script_t *script, const qchar *fmt, ...)
 {
   qchar text[1024];
   va_list ap;
 
   if (script->flags & SCFL_NOWARNINGS) return;
 
-  va_start(ap, str);
-  vsprintf(text, str, ap);
+  va_start(ap, fmt);
+  Q_vsnprintf(text, sizeof(text), fmt, ap);
   va_end(ap);
   Com_Printf( "file %s, line %d: %s\n", script->filename, script->line, text);
 }
@@ -588,7 +588,7 @@ static qint Parse_ReadString(script_t *script, token_t *token, qint quote)
       //
       tmpscript_p = script->script_p;
       tmpline = script->line;
-      //read unusefull stuff between possible two following strings
+      //read unuseful stuff between possible two following strings
       if (!Parse_ReadWhiteSpace(script))
       {
         script->script_p = tmpscript_p;
@@ -847,7 +847,7 @@ Parse_ReadPunctuation
 static qint Parse_ReadPunctuation(script_t *script, token_t *token)
 {
   qint len;
-  qchar *p;
+  const qchar *p;
   punctuation_t *punc;
 
   for (punc = script->punctuationtable[(unsigned qint)*script->script_p]; punc; punc = punc->next)
@@ -860,7 +860,7 @@ static qint Parse_ReadPunctuation(script_t *script, token_t *token)
       //if the script contains the punctuation
       if (!strncmp(script->script_p, p, len))
       {
-        Q_strncpyz(token->string, p, MAX_TOKEN_CHARS);
+        Q_strncpyz(token->string, p, sizeof(token->string));
         script->script_p += len;
         token->type = TT_PUNCTUATION;
         //sub type is the number of the punctuation
@@ -884,7 +884,7 @@ static qint Parse_ReadPrimitive(script_t *script, token_t *token)
   len = 0;
   while(*script->script_p > ' ' && *script->script_p != ';')
   {
-    if (len >= MAX_TOKEN_CHARS)
+    if (len >= MAX_TOKEN_CHARS - 1)
     {
       Parse_ScriptError(script, "primitive token longer than MAX_TOKEN_CHARS = %d", MAX_TOKEN_CHARS);
       return 0;
@@ -894,7 +894,7 @@ static qint Parse_ReadPrimitive(script_t *script, token_t *token)
   token->string[len] = 0;
   //copy the token into the script structure
   Com_Memcpy(&script->token, token, sizeof(token_t));
-  //primitive reading successfull
+  //primitive reading successful
   return 1;
 }
 
@@ -921,7 +921,7 @@ static qint Parse_ReadScriptToken(script_t *script, token_t *token)
   //start of the white space
   script->whitespace_p = script->script_p;
   token->whitespace_p = script->script_p;
-  //read unusefull stuff
+  //read unuseful stuff
   if (!Parse_ReadWhiteSpace(script)) return 0;
 
   script->endwhitespace_p = script->script_p;
@@ -981,7 +981,7 @@ static void Parse_StripDoubleQuotes(qchar *string)
 {
   if (*string == '\"')
   {
-    memmove(string, string + 1, strlen(string) + 1);
+    memmove(string, string + 1, strlen(string));
   }
   if (string[strlen(string)-1] == '\"')
   {
@@ -1024,7 +1024,7 @@ static script_t *Parse_LoadScriptFile(const qchar *filename)
 
   script = (script_t *) buffer;
   Com_Memset(script, 0, sizeof(script_t));
-  strcpy(script->filename, filename);
+  Q_strncpyz(script->filename, filename, sizeof(script->filename));
   script->buffer = (qchar *) buffer + sizeof(script_t);
   script->buffer[length] = 0;
   script->length = length;
@@ -1054,7 +1054,7 @@ static script_t *Parse_LoadScriptFile(const qchar *filename)
 Parse_LoadScriptMemory
 ===============
 */
-static script_t *Parse_LoadScriptMemory(qchar *ptr, qint length, qchar *name)
+static script_t *Parse_LoadScriptMemory(const qchar *ptr, qint length, const qchar *name)
 {
   void *buffer;
   script_t *script;
@@ -1064,7 +1064,7 @@ static script_t *Parse_LoadScriptMemory(qchar *ptr, qint length, qchar *name)
 
   script = (script_t *) buffer;
   Com_Memset(script, 0, sizeof(script_t));
-  strcpy(script->filename, name);
+  Q_strncpyz(script->filename, name, sizeof(script->filename));
   script->buffer = (qchar *) buffer + sizeof(script_t);
   script->buffer[length] = 0;
   script->length = length;
@@ -1103,7 +1103,7 @@ static void Parse_FreeScript(script_t *script)
 Parse_SetBaseFolder
 ===============
 */
-static void Parse_SetBaseFolder(qchar *path)
+static void Parse_SetBaseFolder(const qchar *path)
 {
   Com_sprintf(basefolder, sizeof(basefolder), "%s", path);
 }
@@ -1113,13 +1113,13 @@ static void Parse_SetBaseFolder(qchar *path)
 Parse_SourceError
 ===============
 */
-static void QDECL Parse_SourceError(source_t *source, qchar *str, ...)
+static void QDECL Parse_SourceError(source_t *source, const qchar *fmt, ...)
 {
   qchar text[1024];
   va_list ap;
 
-  va_start(ap, str);
-  vsprintf(text, str, ap);
+  va_start(ap, fmt);
+  Q_vsnprintf(text, sizeof(text), fmt, ap);
   va_end(ap);
   Com_Printf( "file %s, line %d: %s\n", source->scriptstack->filename, source->scriptstack->line, text);
 }
@@ -1129,13 +1129,13 @@ static void QDECL Parse_SourceError(source_t *source, qchar *str, ...)
 Parse_SourceWarning
 ===============
 */
-static void QDECL Parse_SourceWarning(source_t *source, qchar *str, ...)
+static void QDECL Parse_SourceWarning(source_t *source, const qchar *fmt, ...)
 {
   qchar text[1024];
   va_list ap;
 
-  va_start(ap, str);
-  vsprintf(text, str, ap);
+  va_start(ap, fmt);
+  Q_vsnprintf(text, sizeof(text), fmt, ap);
   va_end(ap);
   Com_Printf( "file %s, line %d: %s\n", source->scriptstack->filename, source->scriptstack->line, text);
 }
@@ -1149,7 +1149,7 @@ static void Parse_PushIndent(source_t *source, qint type, qint skip)
 {
   indent_t *indent;
 
-  indent = (indent_t *) Z_Malloc(sizeof(indent_t));
+  indent = (indent_t *)Z_Malloc(sizeof(indent_t));
   indent->type = type;
   indent->script = source->scriptstack;
   indent->skip = (skip != 0);
@@ -1219,7 +1219,7 @@ static token_t *Parse_CopyToken(token_t *token)
 //  t = freetokens;
   if (!t)
   {
-    Com_Error(ERR_FATAL, "out of token space\n");
+    Com_Error(ERR_FATAL, "out of token space");
     return NULL;
   }
 //  freetokens = freetokens->next;
@@ -1361,7 +1361,6 @@ static qint Parse_ReadDefineParms(source_t *source, define_t *define, token_t **
         if (indent <= 0)
         {
           if (lastcomma) Parse_SourceWarning(source, "too many comma's");
-          lastcomma = 1;
           break;
         }
       }
@@ -1405,20 +1404,33 @@ static qint Parse_ReadDefineParms(source_t *source, define_t *define, token_t **
 Parse_StringizeTokens
 ===============
 */
-static qint Parse_StringizeTokens(token_t *tokens, token_t *token)
+static qint Parse_StringizeTokens(const token_t *tokens, token_t *token)
 {
-  token_t *t;
+  const token_t *t;
+  qint len;
+  qint total;
 
   token->type = TT_STRING;
   token->whitespace_p = NULL;
   token->endwhitespace_p = NULL;
-  token->string[0] = '\0';
-  strcat(token->string, "\"");
+  token->string[0] = '"';
+  total = 1;
+
   for (t = tokens; t; t = t->next)
   {
-    strncat(token->string, t->string, MAX_TOKEN_CHARS - strlen(token->string));
+    len = (qint)strlen(t->string);
+
+    if (len + total >= sizeof(token->string) - 1) //reserve space for '"' and '\0'
+    {
+      return qfalse;
+    }
+
+    strcpy(token->string + total, t->string);
+    total += len;
   }
-  strncat(token->string, "\"", MAX_TOKEN_CHARS - strlen(token->string));
+
+  strcpy(token->string + total, "\"");
+
   return qtrue;
 }
 
@@ -1432,14 +1444,27 @@ static qint Parse_MergeTokens(token_t *t1, token_t *t2)
   //merging of a name with a name or number
   if (t1->type == TT_NAME && (t2->type == TT_NAME || t2->type == TT_NUMBER))
   {
+    if (strlen(t1->string) + strlen(t2->string) >= sizeof(t1->string))
+    {
+      return qfalse;
+    }
+
     strcat(t1->string, t2->string);
     return qtrue;
   }
+
   //merging of two strings
   if (t1->type == TT_STRING && t2->type == TT_STRING)
   {
+    qint len1 = (qint)strlen( t1->string );
+
+    if (strlen(t1->string) + strlen(t2->string) - 2 >= sizeof(t1->string))
+    {
+      return qfalse;
+    }
+
     //remove trailing double quote
-    t1->string[strlen(t1->string)-1] = '\0';
+    t1->string[len1 - 1] = '\0';
     //concat without leading double quote
     strcat(t1->string, &t2->string[1]);
     return qtrue;
@@ -1456,7 +1481,7 @@ Parse_NameHash
 //qchar primes[16] = {1, 3, 5, 7, 11, 13, 17, 19, 23, 27, 29, 31, 37, 41, 43, 47};
 static qint Parse_NameHash(qchar *name)
 {
-  qint register hash, i;
+  qint hash, i;
 
   hash = 0;
   for (i = 0; name[i] != '\0'; i++)
@@ -1506,7 +1531,7 @@ static define_t *Parse_FindHashedDefine(define_t **definehash, qchar *name)
 Parse_FindDefineParm
 ===============
 */
-static qint Parse_FindDefineParm(define_t *define, qchar *name)
+static qint Parse_FindDefineParm(define_t *define, const qchar *name)
 {
   token_t *p;
   qint i;
@@ -1584,12 +1609,11 @@ static qint Parse_ExpandBuiltinDefine(source_t *source, token_t *deftoken, defin
     case BUILTIN_DATE:
     {
       t = time(NULL);
-      curtime = ctime(&t);
+      curtime = ctime((const time_t *)&t);
       strcpy(token->string, "\"");
       strncat(token->string, curtime+4, 7);
       strncat(token->string+7, curtime+20, 4);
       strcat(token->string, "\"");
-      free(curtime);
       token->type = TT_NAME;
       token->subtype = strlen(token->string);
       *firsttoken = token;
@@ -1599,11 +1623,10 @@ static qint Parse_ExpandBuiltinDefine(source_t *source, token_t *deftoken, defin
     case BUILTIN_TIME:
     {
       t = time(NULL);
-      curtime = ctime(&t);
+      curtime = ctime((const time_t *)&t);
       strcpy(token->string, "\"");
       strncat(token->string, curtime+11, 8);
       strcat(token->string, "\"");
-      free(curtime);
       token->type = TT_NAME;
       token->subtype = strlen(token->string);
       *firsttoken = token;
@@ -1629,7 +1652,7 @@ Parse_ExpandDefine
 static qint Parse_ExpandDefine(source_t *source, token_t *deftoken, define_t *define,
                     token_t **firsttoken, token_t **lasttoken)
 {
-  token_t *parms[MAX_DEFINEPARMS], *dt, *pt, *t;
+  token_t *parms[MAX_DEFINEPARMS] = {NULL}, *dt, *pt, *t;
   token_t *t1, *t2, *first, *last, *nextpt, token;
   qint parmnum, i;
 
@@ -1778,7 +1801,7 @@ static void Parse_ConvertPath(qchar *path)
 {
   qchar *ptr;
 
-  //remove double path seperators
+  //remove double path separators
   for (ptr = path; *ptr;)
   {
     if ((*ptr == '\\' || *ptr == '/') &&
@@ -1791,10 +1814,10 @@ static void Parse_ConvertPath(qchar *path)
       ptr++;
     }
   }
-  //set OS dependent path seperators
+  //set OS dependent path separators
   for (ptr = path; *ptr;)
   {
-    if (*ptr == '/' || *ptr == '\\') *ptr = PATH_SEP;
+    if (*ptr == '/' || *ptr == '\\') *ptr = PATHSEPERATOR_CHAR;
     ptr++;
   }
 }
@@ -1896,7 +1919,7 @@ static qint Parse_OperatorPriority(qint op)
 //
 #define AllocOperator(op)               \
   if (numoperators >= MAX_OPERATORS) {        \
-    Parse_SourceError(source, "out of operator space\n"); \
+    Parse_SourceError(source, "out of operator space"); \
     error = 1;                    \
     break;                      \
   }                         \
@@ -1909,8 +1932,7 @@ static qint Parse_OperatorPriority(qint op)
 Parse_EvaluateTokens
 ===============
 */
-static qint Parse_EvaluateTokens(source_t *source, token_t *tokens, signed long qint *intvalue,
-                                  double *floatvalue, qint integer)
+static qint Parse_EvaluateTokens(source_t *source, token_t *tokens, qint *intvalue, float *floatvalue, qint integer)
 {
   operator_t *o, *firstoperator, *lastoperator;
   value_t *v, *firstvalue, *lastvalue, *v1, *v2;
@@ -2059,7 +2081,7 @@ static qint Parse_EvaluateTokens(source_t *source, token_t *tokens, signed long 
             t->subtype == P_BIN_AND || t->subtype == P_BIN_OR ||
             t->subtype == P_BIN_XOR)
           {
-            Parse_SourceError(source, "illigal operator %s on floating point operands\n", t->string);
+            Parse_SourceError(source, "illigal operator %s on floating point operands", t->string);
             error = 1;
             break;
           }
@@ -2214,7 +2236,7 @@ static qint Parse_EvaluateTokens(source_t *source, token_t *tokens, signed long 
                   v1->floatvalue *= v2->floatvalue; break;
       case P_DIV:       if (!v2->intvalue || !v2->floatvalue)
                   {
-                    Parse_SourceError(source, "divide by zero in #if/#elif\n");
+                    Parse_SourceError(source, "divide by zero in #if/#elif");
                     error = 1;
                     break;
                   }
@@ -2222,7 +2244,7 @@ static qint Parse_EvaluateTokens(source_t *source, token_t *tokens, signed long 
                   v1->floatvalue /= v2->floatvalue; break;
       case P_MOD:       if (!v2->intvalue)
                   {
-                    Parse_SourceError(source, "divide by zero in #if/#elif\n");
+                    Parse_SourceError(source, "divide by zero in #if/#elif");
                     error = 1;
                     break;
                   }
@@ -2298,10 +2320,12 @@ static qint Parse_EvaluateTokens(source_t *source, token_t *tokens, signed long 
       //remove the second value if not question mark operator
       if (o->operator != P_QUESTIONMARK) v = v->next;
       //
-      if (v->prev) v->prev->next = v->next;
-      else firstvalue = v->next;
-      if (v->next) v->next->prev = v->prev;
-      else lastvalue = v->prev;
+      if (v)
+      {
+        if (v->prev) v->prev->next = v->next;
+        else firstvalue = v->next;
+        if (v->next) v->next->prev = v->prev;
+      }
       //Z_Free(v);
       FreeValue(v);
     }
@@ -2309,7 +2333,6 @@ static qint Parse_EvaluateTokens(source_t *source, token_t *tokens, signed long 
     if (o->prev) o->prev->next = o->next;
     else firstoperator = o->next;
     if (o->next) o->next->prev = o->prev;
-    else lastoperator = o->prev;
     //Z_Free(o);
     FreeOperator(o);
   }
@@ -2341,8 +2364,7 @@ static qint Parse_EvaluateTokens(source_t *source, token_t *tokens, signed long 
 Parse_Evaluate
 ===============
 */
-static qint Parse_Evaluate(source_t *source, signed long qint *intvalue,
-                        double *floatvalue, qint integer)
+static qint Parse_Evaluate(source_t *source, qint *intvalue, float *floatvalue, qint integer)
 {
   token_t token, *firsttoken, *lasttoken;
   token_t *t, *nexttoken;
@@ -2426,8 +2448,7 @@ static qint Parse_Evaluate(source_t *source, signed long qint *intvalue,
 Parse_DollarEvaluate
 ===============
 */
-static qint Parse_DollarEvaluate(source_t *source, signed long qint *intvalue,
-                        double *floatvalue, qint integer)
+static qint Parse_DollarEvaluate(source_t *source, qint *intvalue, float *floatvalue, qint integer)
 {
   qint indent, defined = qfalse;
   token_t token, *firsttoken, *lasttoken;
@@ -2547,14 +2568,14 @@ static qint Parse_Directive_include(source_t *source)
     script = Parse_LoadScriptFile(token.string);
     if (!script)
     {
-      strcpy(path, source->includepath);
-      strcat(path, token.string);
+      Q_strncpyz(path, source->includepath, sizeof(path));
+      Q_strcat(path, sizeof(path), token.string);
       script = Parse_LoadScriptFile(path);
     }
   }
   else if (token.type == TT_PUNCTUATION && *token.string == '<')
   {
-    strcpy(path, source->includepath);
+    Q_strncpyz(path, source->includepath, sizeof(path));
 
     while(Parse_ReadSourceToken(source, &token))
     {
@@ -2684,7 +2705,7 @@ Parse_Directive_elif
 */
 static qint Parse_Directive_elif(source_t *source)
 {
-  signed long qint value;
+  qint value;
   qint type, skip;
 
   Parse_PopIndent(source, &type, &skip);
@@ -2706,7 +2727,7 @@ Parse_Directive_if
 */
 static qint Parse_Directive_if(source_t *source)
 {
-  signed long qint value;
+  qint value;
   qint skip;
 
   if (!Parse_Evaluate(source, &value, NULL, qtrue)) return qfalse;
@@ -2781,7 +2802,7 @@ Parse_Directive_eval
 */
 static qint Parse_Directive_eval(source_t *source)
 {
-  signed long qint value;
+  qint value;
   token_t token;
 
   if (!Parse_Evaluate(source, &value, NULL, qtrue)) return qfalse;
@@ -2805,7 +2826,7 @@ Parse_Directive_evalfloat
 */
 static qint Parse_Directive_evalfloat(source_t *source)
 {
-  double value;
+  float value;
   token_t token;
 
   if (!Parse_Evaluate(source, NULL, &value, qfalse)) return qfalse;
@@ -2828,7 +2849,7 @@ Parse_DollarDirective_evalint
 */
 static qint Parse_DollarDirective_evalint(source_t *source)
 {
-  signed long qint value;
+  qint value;
   token_t token;
 
   if (!Parse_DollarEvaluate(source, &value, NULL, qtrue)) return qfalse;
@@ -2854,7 +2875,7 @@ Parse_DollarDirective_evalfloat
 */
 static qint Parse_DollarDirective_evalfloat(source_t *source)
 {
-  double value;
+  float value;
   token_t token;
 
   if (!Parse_DollarEvaluate(source, NULL, &value, qfalse)) return qfalse;
@@ -3014,7 +3035,7 @@ static qint Parse_Directive_endif(source_t *source)
 Parse_CheckTokenString
 ===============
 */
-static qint Parse_CheckTokenString(source_t *source, qchar *string)
+static qint Parse_CheckTokenString(source_t *source, const qchar *string)
 {
   token_t tok;
 
@@ -3062,13 +3083,11 @@ static qint Parse_Directive_define(source_t *source)
     //unread the define name before executing the #undef directive
     Parse_UnreadSourceToken(source, &token);
     if (!Parse_Directive_undef(source)) return qfalse;
-    //if the define was not removed (define->flags & DEFINE_FIXED)
-    define = Parse_FindHashedDefine(source->definehash, token.string);
   }
   //allocate define
-  define = (define_t *) Z_Malloc(sizeof(define_t) + strlen(token.string) + 1);
+  define = (define_t *)Z_Malloc(sizeof(define_t));
   Com_Memset(define, 0, sizeof(define_t));
-  define->name = (qchar *) define + sizeof(define_t);
+  define->name = (qchar *)Z_Malloc(strlen(token.string) + 1);
   strcpy(define->name, token.string);
   //add the define to the source
   Parse_AddDefineToHash(define, source->definehash);
@@ -3264,7 +3283,7 @@ static qint Parse_ReadToken(source_t *source, token_t *token)
           token->string[strlen(token->string)-1] = '\0';
           if (strlen(token->string) + strlen(newtoken.string+1) + 1 >= MAX_TOKEN_CHARS)
           {
-            Parse_SourceError(source, "string longer than MAX_TOKEN_CHARS %d\n", MAX_TOKEN_CHARS);
+            Parse_SourceError(source, "string longer than MAX_TOKEN_CHARS %d", MAX_TOKEN_CHARS);
             return qfalse;
           }
           strcat(token->string, newtoken.string + 1);
@@ -3302,7 +3321,7 @@ static qint Parse_ReadToken(source_t *source, token_t *token)
 Parse_DefineFromString
 ===============
 */
-static define_t *Parse_DefineFromString(qchar *string)
+static define_t *Parse_DefineFromString(const qchar *string)
 {
   script_t *script;
   source_t src;
@@ -3313,7 +3332,7 @@ static define_t *Parse_DefineFromString(qchar *string)
   script = Parse_LoadScriptMemory(string, strlen(string), "*extern");
   //create a new source
   Com_Memset(&src, 0, sizeof(source_t));
-  strncpy(src.filename, "*extern", MAX_QPATH);
+  Q_strncpyz(src.filename, "*extern", sizeof(src.filename));
   src.scriptstack = script;
   src.definehash = Z_Malloc(DEFINEHASHSIZE * sizeof(define_t *));
   Com_Memset( src.definehash, 0, DEFINEHASHSIZE * sizeof(define_t *));
@@ -3338,9 +3357,9 @@ static define_t *Parse_DefineFromString(qchar *string)
   Z_Free(src.definehash);
   //
   Parse_FreeScript(script);
-  //if the define was created succesfully
+  //if the define was created successfully
   if (res > 0) return def;
-  //free the define is created
+  //free the define if created
   if (src.defines) Parse_FreeDefine(def);
   //
   return NULL;
@@ -3353,7 +3372,7 @@ Parse_AddGlobalDefine
 add a globals define that will be added to all opened sources
 ===============
 */
-qint Parse_AddGlobalDefine(qchar *string)
+qint Parse_AddGlobalDefine(const qchar *string)
 {
   define_t *define;
 
@@ -3369,12 +3388,12 @@ qint Parse_AddGlobalDefine(qchar *string)
 Parse_CopyDefine
 ===============
 */
-static define_t *Parse_CopyDefine(source_t *source, define_t *define)
+static define_t *Parse_CopyDefine(source_t *source, const define_t *define)
 {
   define_t *newdefine;
   token_t *token, *newtoken, *lasttoken;
 
-  newdefine = (define_t *) Z_Malloc(sizeof(define_t) + strlen(define->name) + 1);
+  newdefine = (define_t *)Z_Malloc(sizeof(define_t));
   //copy the define name
   newdefine->name = (qchar *) newdefine + sizeof(define_t);
   strcpy(newdefine->name, define->name);
@@ -3414,7 +3433,8 @@ Parse_AddGlobalDefinesToSource
 */
 static void Parse_AddGlobalDefinesToSource(source_t *source)
 {
-  define_t *define, *newdefine;
+  const define_t *define;
+  define_t *newdefine;
 
   for (define = globaldefines; define; define = define->next)
   {
@@ -3438,10 +3458,10 @@ static source_t *Parse_LoadSourceFile(const qchar *filename)
 
   script->next = NULL;
 
-  source = (source_t *) Z_Malloc(sizeof(source_t));
-  Com_Memset(source, 0, sizeof(source_t));
+  source = (source_t *) Z_Malloc(sizeof(*source));
+  Com_Memset(source, 0, sizeof(*source));
 
-  strncpy(source->filename, filename, MAX_QPATH - 1);
+  Q_strncpyz(source->filename, filename, sizeof(source->filename));
   source->scriptstack = script;
   source->tokens = NULL;
   source->defines = NULL;

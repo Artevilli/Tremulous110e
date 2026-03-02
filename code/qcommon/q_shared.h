@@ -308,6 +308,22 @@ typedef qint		clipHandle_t;
 
 #define	MAX_SAY_TEXT	800
 
+#if !defined(PATH_SEPERATORSTR)
+#if defined(WIN32) | defined(_WIN32) | defined(__NT__) | defined(__WINDOWS__) | defined(__WINDOWS_386__)
+#define PATH_SEPERATORSTR "\\"
+#else
+#define PATH_SEPERATORSTR "/"
+#endif
+#endif
+
+#if !defined(PATH_SEPERATORCHAR)
+#if defined(WIN32) | defined(_WIN32) | defined(__NT__) | defined(__WINDOWS__) | defined(__WINDOWS_386__)
+#define PATHSEPERATOR_CHAR '\\'
+#else
+#define PATHSEPERATOR_CHAR '/'
+#endif
+#endif
+
 // parameters for command buffer stuffing
 typedef enum {
 	EXEC_NOW,			// don't return until completed, a VM should NEVER use this,

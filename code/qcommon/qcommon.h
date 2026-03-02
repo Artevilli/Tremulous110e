@@ -1567,7 +1567,7 @@ qint
 HuffmanGetSymbol(unsigned *symbol, const byte* buffer, qint bitIndex);
 
 qint
-Parse_AddGlobalDefine(qchar *string);
+Parse_AddGlobalDefine(const qchar *string);
 qint
 Parse_LoadSourceHandle(const qchar *filename);
 qint
