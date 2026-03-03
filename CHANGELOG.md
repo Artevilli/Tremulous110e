@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--03/02/2026--**
 
+* client:<br />workaround fix to Get New List
+
 * qcommon:<br />fix parsing issues
 
 * qcommon/sys:<br />code cleanup

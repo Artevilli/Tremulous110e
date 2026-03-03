@@ -4535,7 +4535,7 @@ static void CL_GlobalServers_f( void ) {
 	else if ( i == 2 )
 		to.port = BigShort( PORT_MASTER );
 
-	Com_Printf( "Requesting servers from %s (%s)...\n", masteraddress, NET_AdrToStringwPort( &to ) );
+	Com_DPrintf( "Requesting servers from %s (%s)...\n", masteraddress, NET_AdrToStringwPort( &to ) );
 
 	cls.numglobalservers = -1;
 	cls.pingUpdateSource = AS_GLOBAL;
