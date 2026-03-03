@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--03/02/2026--**
 
+* qcommon:<br />avoid memory leak in parse
+
 * client:<br />workaround fix to Get New List
 
 * qcommon:<br />fix parsing issues
