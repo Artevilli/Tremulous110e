@@ -5597,9 +5597,7 @@ FS_Startup(void)
     FS_AddGameDirectory(fs_homepath->string, fs_basegame->string);
   }
 
-#if defined(DEDICATED)
   FS_ReorderSearchPaths();
-#endif
 
   //check for additional game folder for mods
   if (fs_gamedirvar->string[0] && Q_stricmp(fs_gamedirvar->string, fs_basegame->string))
@@ -5620,20 +5618,6 @@ FS_Startup(void)
     }
   }
 
-#if !defined(DEDICATED)
-  //reorder search paths to minimize further changes
-  FS_ReorderSearchPaths();
-
-  //https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=506
-  //reorder the pure pk3 files according to server order
-  FS_ReorderPurePaks();
-
-  //get the pure checksums of the pk3 files loaded by the server
-  FS_LoadedPakPureChecksums();
-
-  end = Sys_Milliseconds();
-#endif
-
   //add our commands
   Cmd_AddCommand("path", FS_Path_f);
   Cmd_AddCommand("dir", FS_Dir_f);
@@ -5644,7 +5628,6 @@ FS_Startup(void)
   Cmd_SetCommandCompletionFunc("which", FS_CompleteFileName);
   Cmd_AddCommand("fs_restart", FS_Reload);
 
-#if defined(DEDICATED)
   //https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=506
   //reorder the pure pk3 files according to server order
   FS_ReorderPurePaks();
@@ -5653,7 +5636,6 @@ FS_Startup(void)
   FS_LoadedPakPureChecksums();
 
   end = Sys_Milliseconds();
-#endif
 
   //print the current search paths
   //FS_Path_f();

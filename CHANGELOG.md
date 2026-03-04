@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--03/03/2026--**
+
+makefile/qcommon:<br />remove version specific flags to run on more systems and fix fs_homepath
+
 **--03/02/2026--**
 
 * qcommon:<br />avoid memory leak in parse
