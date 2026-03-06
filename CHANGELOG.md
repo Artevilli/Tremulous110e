@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--03/06/2026--**
+
+* server:<br />wrap attack log calls in a dedicated define to avoid crashes
+
 **--03/05/2026--**
 
 * client:<br />following server logic, move cgvm and uivm to clientStatic_t

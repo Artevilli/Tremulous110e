@@ -24,7 +24,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "server.h"
 
 //attack log file starts when server is init, log attacks when server waits for rcon
+#if defined(DEDICATED)
 qint attHandle = 0; //attack log handle
+#endif
 
 /*
 ===============
@@ -917,6 +919,7 @@ SV_SpawnServer(const qchar *server, qbool killBots)
   }
 }
 
+#if defined(DEDICATED)
 /*
 ===============
 SV_WriteAttackLog
@@ -1023,6 +1026,8 @@ SV_CloseAttackLog(void)
   FS_FCloseFile(attHandle);
   attHandle = 0; //local
 }
+#endif
+
 /*
 ===============
 SV_Init
@@ -1044,8 +1049,10 @@ SV_Init(void)
 
   //initialize cvars
   SV_InitCvars();
+#if defined(DEDICATED)
   //init attack log with tremded
   SV_InitAttackLog();
+#endif
 #if defined(USE_WEBCONSOLE)
   //attempt to connect to webconsole
   sv_webconsoleConnected = sv_webconsole_connect(&sv_webconsoleSocket);
@@ -1130,8 +1137,10 @@ SV_Shutdown(const qchar *finalmsg)
 {
   qint index;
 
+#if defined(DEDICATED)
   //close attack log
   SV_CloseAttackLog();
+#endif
 
   if (!com_sv_running || !com_sv_running->integer)
   {

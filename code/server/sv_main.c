@@ -724,7 +724,9 @@ SVC_BucketForAddress(const netadr_t *address, qint burst, qint period, qint now)
   }
 
   //could not allocate a bucket for this address so write to attack log since it is relevant info
+#if defined(DEDICATED)
   SV_WriteAttackLogD(va("%s: Could not allocate a bucket for client from %s\n", __func__, NET_AdrToString(address)));
+#endif
   return NULL;
 }
 
@@ -759,7 +761,9 @@ SVC_RateLimit(rateLimit_t *bucket, qint burst, qint period, qint now)
     return qfalse;
   }
 
+#if defined(DEDICATED)
   SV_WriteAttackLogD(va("%s: burst limit exceeded for bucket: %i limit: %i\n", __func__, bucket->burst, burst));
+#endif
   return qtrue;
 }
 
@@ -1054,14 +1058,18 @@ SVC_Status(const netadr_t *from)
   //Chey: bugtraq 12534
   if (!SVC_VerifyChallenge(Cmd_Argv(1)))
   {
+#if defined(DEDICATED)
     SV_WriteAttackLog(va("%s: Invalid challenge from %s, dropping request.\n", __func__, NET_AdrToString(from)));
+#endif
     return;
   }
 
   //max challenge of 128
   if (strlen(Cmd_Argv(1)) > 128)
   {
+#if defined(DEDICATED)
     SV_WriteAttackLog(va("%s: Challenge length exceeded from %s, dropping request.\n", __func__, NET_AdrToString(from)));
+#endif
     return;
   }
 
@@ -1120,7 +1128,9 @@ SVC_Info(const netadr_t *from)
   //Chey: bugtraq 12534
   if (!SVC_VerifyChallenge(Cmd_Argv(1)))
   {
+#if defined(DEDICATED)
     SV_WriteAttackLog(va("%s: Invalid challenge from %s, dropping request.\n", __func__, NET_AdrToString(from)));
+#endif
     return;
   }
 
@@ -1132,7 +1142,9 @@ SVC_Info(const netadr_t *from)
   //a maximum challenge length of 128 should be more than plenty
   if (strlen(Cmd_Argv(1)) > 128)
   {
+#if defined(DEDICATED)
     SV_WriteAttackLog(va("%s: Challenge length exceeded from %s, dropping request.\n", __func__, NET_AdrToString(from)));
+#endif
     return;
   }
 
@@ -1346,7 +1358,9 @@ SVC_CheckDRDoS(const netadr_t *from)
 
       if (!ban->flood && ((svs.time - ban->time) >= 3000) && ban->count <= 5)
       {
+#if defined(DEDICATED)
         SV_WriteAttackLog(va("%s: Unban info flood protect for address %s, they're not flooding.\n", __func__, NET_AdrToString(from)));
+#endif
         Com_Memset(ban, 0, sizeof(floodBan_t));
         oldestBan = i;
         break;
@@ -1354,7 +1368,9 @@ SVC_CheckDRDoS(const netadr_t *from)
 
       if (ban->count >= 180)
       {
+#if defined(DEDICATED)
         SV_WriteAttackLog(va("%s: Renewing info flood ban for address %s, received %i getinfo/getstatus requests in %i milliseconds.\n", __func__, NET_AdrToString(from), ban->count, svs.time - ban->time));
+#endif
         ban->time = svs.time;
         ban->count = 0;
         ban->flood = qtrue;
@@ -1403,7 +1419,9 @@ SVC_CheckDRDoS(const netadr_t *from)
 
   if (specificCount >= 3) //sent three to ip in last two seconds
   {
+#if defined(DEDICATED)
     SV_WriteAttackLog(va("%s: Possible DRDoS attack to address %s, putting into temporary getinfo/getstatus ban list.\n", __func__, NET_AdrToString(from)));
+#endif
     ban = &svs.infoFloodBans[oldestBan];
     ban->adr = modifiedFrom;
     ban->time = svs.time;
@@ -1423,7 +1441,9 @@ SVC_CheckDRDoS(const netadr_t *from)
 
     if (lastGlobalLogTime + 1000 <= svs.time) //one log per second
     {
+#if defined(DEDICATED)
       SV_WriteAttackLog("%s: Detected flood of arbitrary getinfo/getstatus connectionless packets.\n");
+#endif
       lastGlobalLogTime = svs.time;
     }
 
@@ -1693,14 +1713,18 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
     //this will print every 5 'period' msecs
     if (dropped[cmd] > 0 && lastMsg[cmd] + 5000 < now)
     {
+#if defined(DEDICATED)
       SV_WriteAttackLog(va("%s: \"%s\" rate limit exceeded, dropped %d request%s.\n", __func__, commands[cmd], dropped[cmd], dropped[cmd] == 1 ? "":"s"));
+#endif
       dropped[cmd] = 0;
       lastMsg[cmd] = now;
     }
 
     if (droppedAdr > 0 && lastMsgAdr + 5000 < now)
     {
+#if defined(DEDICATED)
       SV_WriteAttackLog(va("%s: IP rate limit exceeded, dropped %d request%s.\n", __func__, droppedAdr, droppedAdr == 1 ? "":"s"));
+#endif
       droppedAdr = 0;
       lastMsgAdr = now;
     }
@@ -1775,7 +1799,9 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
       break;
 
     default:
+#if defined(DEDICATED)
       SV_WriteAttackLog(va("Bad connectionless packet from %s:\n%s\n", NET_AdrToString(from), s)); //changed from com dprintf to print in attack log and do com printf if attack log not set
+#endif
       break;
   }
 }
@@ -2169,7 +2195,9 @@ SV_UpdateQueue(void)
   {
     if (svs.time - lastQueue[i] > 4000)
     {
+#if defined(DEDICATED)
       SV_WriteAttackLog(va("Queue position %d for %s has timed out! - %d ms\n", i, NET_AdrToString(&queue[i]), svs.time - lastQueue[i]));
+#endif
       continue;
     }
 

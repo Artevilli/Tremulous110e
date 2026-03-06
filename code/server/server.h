@@ -615,6 +615,7 @@ const void
 SV_GetUserinfo(const qint index, qchar *buffer, const qint bufferSize);
 const void
 SV_SpawnServer(const qchar *server, qbool killBots);
+#if defined(DEDICATED)
 const void
 SV_WriteAttackLog(const qchar *log);
 const void
@@ -626,6 +627,7 @@ SV_WriteAttackLogUnrestricted(const qchar *log);
 #else
 #define SV_WriteAttackLogD(x) SV_WriteAttackLog(x)
 #define SV_WriteAttackLogUnrestrictedD(x) SV_WriteAttackLogUnrestricted(x)
+#endif
 #endif
 
 #if defined(STATELESS_CHALLENGES_VERSION_ONE)
