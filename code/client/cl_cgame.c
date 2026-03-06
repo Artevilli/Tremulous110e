@@ -498,6 +498,7 @@ static intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 		Cmd_ArgsBuffer( VMA(1), args[2] );
 		return 0;
 	case CG_LITERAL_ARGS:
+		VM_CHECKBOUNDS( cgvm, args[1], args[2] );
 		Cmd_LiteralArgsBuffer( VMA(1), args[2] );
 		return 0;
 

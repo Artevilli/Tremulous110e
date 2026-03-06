@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--03/05/2026--**
+
+* client:<br />add bounds checks to literal args
+
 **--03/03/2026--**
 
 makefile/qcommon:<br />remove version specific flags to run on more systems and fix fs_homepath
