@@ -22,8 +22,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "client.h"
 
-vm_t *uivm = NULL;
-
 /*
 ====================
 GetClientState
@@ -660,13 +658,13 @@ VM_ArgPtr
 */
 static void *VM_ArgPtr( intptr_t intValue ) {
 
-	if ( !intValue || uivm == NULL )
+	if ( !intValue || cls.uivm == NULL )
 	  return NULL;
 
-	if ( uivm->entryPoint )
+	if ( cls.uivm->entryPoint )
 		return (void *)(intValue);
 	else
-		return (void *)(uivm->dataBase + (intValue & uivm->dataMask));
+		return (void *)(cls.uivm->dataBase + (intValue & cls.uivm->dataMask));
 }
 
 
@@ -712,11 +710,11 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return Sys_Milliseconds();
 
 	case UI_CVAR_REGISTER:
-		Cvar_Register( VMA(1), VMA(2), VMA(3), args[4], uivm->privateFlag ); 
+		Cvar_Register( VMA(1), VMA(2), VMA(3), args[4], cls.uivm->privateFlag ); 
 		return 0;
 
 	case UI_CVAR_UPDATE:
-		Cvar_Update( VMA(1), uivm->privateFlag );
+		Cvar_Update( VMA(1), cls.uivm->privateFlag );
 		return 0;
 
 	case UI_CVAR_SET:
@@ -727,7 +725,7 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return FloatAsInt( Cvar_VariableValue( VMA(1) ) );
 
 	case UI_CVAR_VARIABLESTRINGBUFFER:
-		VM_CHECKBOUNDS( uivm, args[2], args[3] );
+		VM_CHECKBOUNDS( cls.uivm, args[2], args[3] );
 		Cvar_VariableStringBufferSafe( VMA(1), VMA(2), args[3], CVAR_PRIVATE );
 		return 0;
 
@@ -740,11 +738,11 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return 0;
 
 	case UI_CVAR_CREATE:
-		Cvar_Register( NULL, VMA(1), VMA(2), args[3], uivm->privateFlag );
+		Cvar_Register( NULL, VMA(1), VMA(2), args[3], cls.uivm->privateFlag );
 		return 0;
 
 	case UI_CVAR_INFOSTRINGBUFFER:
-		VM_CHECKBOUNDS( uivm, args[2], args[3] );
+		VM_CHECKBOUNDS( cls.uivm, args[2], args[3] );
 		Cvar_InfoStringBuffer( args[1], VMA(2), args[3] );
 		return 0;
 
@@ -752,7 +750,7 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return Cmd_Argc();
 
 	case UI_ARGV:
-		VM_CHECKBOUNDS( uivm, args[2], args[3] );
+		VM_CHECKBOUNDS( cls.uivm, args[2], args[3] );
 		Cmd_ArgvBuffer( args[1], VMA(2), args[3] );
 		return 0;
 
@@ -772,12 +770,12 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return FS_VM_OpenFile( VMA(1), VMA(2), args[3], H_UI );
 
 	case UI_FS_READ:
-		VM_CHECKBOUNDS( uivm, args[1], args[2] );
+		VM_CHECKBOUNDS( cls.uivm, args[1], args[2] );
 		FS_VM_ReadFile( VMA(1), args[2], args[3], H_UI );
 		return 0;
 
 	case UI_FS_WRITE:
-		VM_CHECKBOUNDS( uivm, args[1], args[2] );
+		VM_CHECKBOUNDS( cls.uivm, args[1], args[2] );
 		FS_VM_WriteFile( VMA(1), args[2], args[3], H_UI );
 		return 0;
 
@@ -786,7 +784,7 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return 0;
 
 	case UI_FS_GETFILELIST:
-		VM_CHECKBOUNDS( uivm, args[3], args[4] );
+		VM_CHECKBOUNDS( cls.uivm, args[3], args[4] );
 		return FS_GetFileList( VMA(1), VMA(2), VMA(3), args[4] );
 
 	case UI_FS_SEEK:
@@ -849,12 +847,12 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return 0;
 
 	case UI_KEY_KEYNUMTOSTRINGBUF:
-		VM_CHECKBOUNDS( uivm, args[2], args[3] );
+		VM_CHECKBOUNDS( cls.uivm, args[2], args[3] );
 		Key_KeynumToStringBuf( args[1], VMA(2), args[3] );
 		return 0;
 
 	case UI_KEY_GETBINDINGBUF:
-		VM_CHECKBOUNDS( uivm, args[2], args[3] );
+		VM_CHECKBOUNDS( cls.uivm, args[2], args[3] );
 		Key_GetBindingBuf( args[1], VMA(2), args[3] );
 		return 0;
 
@@ -885,22 +883,22 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return 0;
 
 	case UI_GETCLIPBOARDDATA:
-		VM_CHECKBOUNDS( uivm, args[1], args[2] );
+		VM_CHECKBOUNDS( cls.uivm, args[1], args[2] );
 		CL_GetClipboardData( VMA(1), args[2] );
 		return 0;
 
 	case UI_GETCLIENTSTATE:
-		VM_CHECKBOUNDS( uivm, args[1], sizeof( uiClientState_t ) );
+		VM_CHECKBOUNDS( cls.uivm, args[1], sizeof( uiClientState_t ) );
 		GetClientState( VMA(1) );
 		return 0;		
 
 	case UI_GETGLCONFIG:
-		VM_CHECKBOUNDS( uivm, args[1], sizeof( glconfig_t ) );
+		VM_CHECKBOUNDS( cls.uivm, args[1], sizeof( glconfig_t ) );
 		CL_GetGlconfig( VMA(1) );
 		return 0;
 
 	case UI_GETCONFIGSTRING:
-		VM_CHECKBOUNDS( uivm, args[2], args[3] );
+		VM_CHECKBOUNDS( cls.uivm, args[2], args[3] );
 		return GetConfigString( args[1], VMA(2), args[3] );
 
 	case UI_LAN_LOADCACHEDSERVERS:
@@ -926,12 +924,12 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return 0;
 
 	case UI_LAN_GETPING:
-		VM_CHECKBOUNDS( uivm, args[2], args[3] );
+		VM_CHECKBOUNDS( cls.uivm, args[2], args[3] );
 		LAN_GetPing( args[1], VMA(2), args[3], VMA(4) );
 		return 0;
 
 	case UI_LAN_GETPINGINFO:
-		VM_CHECKBOUNDS( uivm, args[2], args[3] );
+		VM_CHECKBOUNDS( cls.uivm, args[2], args[3] );
 		LAN_GetPingInfo( args[1], VMA(2), args[3] );
 		return 0;
 
@@ -939,12 +937,12 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return LAN_GetServerCount(args[1]);
 
 	case UI_LAN_GETSERVERADDRESSSTRING:
-		VM_CHECKBOUNDS( uivm, args[3], args[4] );
+		VM_CHECKBOUNDS( cls.uivm, args[3], args[4] );
 		LAN_GetServerAddressString( args[1], args[2], VMA(3), args[4] );
 		return 0;
 
 	case UI_LAN_GETSERVERINFO:
-		VM_CHECKBOUNDS( uivm, args[3], args[4] );
+		VM_CHECKBOUNDS( cls.uivm, args[3], args[4] );
 		LAN_GetServerInfo( args[1], args[2], VMA(3), args[4] );
 		return 0;
 
@@ -966,7 +964,7 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return 0;
 
 	case UI_LAN_SERVERSTATUS:
-		VM_CHECKBOUNDS( uivm, args[2], args[3] );
+		VM_CHECKBOUNDS( cls.uivm, args[2], args[3] );
 		return LAN_GetServerStatus( VMA(1), VMA(2), args[3] );
 
 	case UI_LAN_COMPARESERVERS:
@@ -985,17 +983,17 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 	// shared syscalls
 
 	case TRAP_MEMSET:
-		VM_CHECKBOUNDS( uivm, args[1], args[3] );
+		VM_CHECKBOUNDS( cls.uivm, args[1], args[3] );
 		Com_Memset( VMA(1), args[2], args[3] );
 		return args[1];
 
 	case TRAP_MEMCPY:
-		VM_CHECKBOUNDS2( uivm, args[1], args[2], args[3] );
+		VM_CHECKBOUNDS2( cls.uivm, args[1], args[2], args[3] );
 		Com_Memcpy( VMA(1), VMA(2), args[3] );
 		return args[1];
 
 	case TRAP_STRNCPY:
-		VM_CHECKBOUNDS( uivm, args[1], args[3] );
+		VM_CHECKBOUNDS( cls.uivm, args[1], args[3] );
 		Q_strncpy( VMA(1), VMA(2), args[3] );
 		return args[1];
 
@@ -1075,7 +1073,7 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return 0;
 
 	case UI_TRAP_GETVALUE:
-		VM_CHECKBOUNDS( uivm, args[1], args[2] );
+		VM_CHECKBOUNDS( cls.uivm, args[1], args[2] );
 		return UI_GetValue( VMA(1), args[2], VMA(3) );
 
 	default:
@@ -1119,12 +1117,12 @@ CL_ShutdownUI
 void CL_ShutdownUI( void ) {
 	Key_SetCatcher( Key_GetCatcher() & ~KEYCATCH_UI );
 	cls.uiStarted = qfalse;
-	if ( !uivm ) {
+	if ( !cls.uivm ) {
 		return;
 	}
-	VM_Call( uivm, 0, UI_SHUTDOWN );
-	VM_Free( uivm );
-	uivm = NULL;
+	VM_Call( cls.uivm, 0, UI_SHUTDOWN );
+	VM_Free( cls.uivm );
+	cls.uivm = NULL;
 	FS_VM_CloseFiles( H_UI );
 }
 
@@ -1152,8 +1150,8 @@ void CL_InitUI( void ) {
 			interpret = VMI_COMPILED;
 	}
 
-	uivm = VM_Create( VM_UI, CL_UISystemCalls, UI_DllSyscall, interpret );
-	if ( !uivm ) {
+	cls.uivm = VM_Create( VM_UI, CL_UISystemCalls, UI_DllSyscall, interpret );
+	if ( !cls.uivm ) {
 		if ( cl_connectedToPureServer && CL_GameSwitch() ) {
 			// server-side modification may require and reference only single custom ui.qvm
 			// so allow referencing everything until we download all files
@@ -1161,8 +1159,8 @@ void CL_InitUI( void ) {
 			// which will correct filesystem permissions
 			fs_reordered = qfalse;
 			FS_PureServerSetLoadedPaks( "", "" );
-			uivm = VM_Create( VM_UI, CL_UISystemCalls, UI_DllSyscall, interpret );
-			if ( !uivm ) {
+			cls.uivm = VM_Create( VM_UI, CL_UISystemCalls, UI_DllSyscall, interpret );
+			if ( !cls.uivm ) {
 				Com_Error( ERR_DROP, "VM_Create on UI failed" );
 			}
 		} else {
@@ -1171,23 +1169,23 @@ void CL_InitUI( void ) {
 	}
 
 	// sanity check
-	v = VM_Call( uivm, 0, UI_GETAPIVERSION );
+	v = VM_Call( cls.uivm, 0, UI_GETAPIVERSION );
 	if (v == UI_OLD_API_VERSION) {
 //		Com_Printf(S_COLOR_YELLOW "WARNING: loading old Quake III Arena User Interface version %d\n", v );
 		// init for this gamestate
-		VM_Call( uivm, 1, UI_INIT, (cls.state >= CA_AUTHORIZING && cls.state < CA_ACTIVE) );
+		VM_Call( cls.uivm, 1, UI_INIT, (cls.state >= CA_AUTHORIZING && cls.state < CA_ACTIVE) );
 	}
 	else if (v != UI_API_VERSION) {
-		// Free uivm now, so UI_SHUTDOWN doesn't get called later.
-		VM_Free( uivm );
-		uivm = NULL;
+		// Free cls.uivm now, so UI_SHUTDOWN doesn't get called later.
+		VM_Free( cls.uivm );
+		cls.uivm = NULL;
 
 		Com_Error( ERR_DROP, "User Interface is version %d, expected %d", v, UI_API_VERSION );
 		cls.uiStarted = qfalse;
 	}
 	else {
 		// init for this gamestate
-		VM_Call( uivm, 1, UI_INIT, (cls.state >= CA_AUTHORIZING && cls.state < CA_ACTIVE) );
+		VM_Call( cls.uivm, 1, UI_INIT, (cls.state >= CA_AUTHORIZING && cls.state < CA_ACTIVE) );
 	}
 }
 
@@ -1200,9 +1198,9 @@ See if the current console command is claimed by the ui
 ====================
 */
 qbool UI_GameCommand( void ) {
-	if ( !uivm ) {
+	if ( !cls.uivm ) {
 		return qfalse;
 	}
 
-	return VM_Call( uivm, 1, UI_CONSOLE_COMMAND, cls.realtime );
+	return VM_Call( cls.uivm, 1, UI_CONSOLE_COMMAND, cls.realtime );
 }

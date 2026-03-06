@@ -609,13 +609,13 @@ static void CL_KeyDownEvent( qint key, unsigned time )
 		// escape always gets out of CGAME stuff
 		if (Key_GetCatcher( ) & KEYCATCH_CGAME) {
 			Key_SetCatcher( Key_GetCatcher( ) & ~KEYCATCH_CGAME );
-			VM_Call( cgvm, 1, CG_EVENT_HANDLING, CGAME_EVENT_NONE );
+			VM_Call( cls.cgvm, 1, CG_EVENT_HANDLING, CGAME_EVENT_NONE );
 			return;
 		}
 
 		if ( !( Key_GetCatcher( ) & KEYCATCH_UI ) ) {
 			if ( cls.state == CA_ACTIVE && !clc.demoplaying ) {
-				VM_Call( uivm, 1, UI_SET_ACTIVE_MENU, UIMENU_INGAME );
+				VM_Call( cls.uivm, 1, UI_SET_ACTIVE_MENU, UIMENU_INGAME );
 			}
 			else if ( cls.state != CA_DISCONNECTED ) {
 #if 0
@@ -630,12 +630,12 @@ static void CL_KeyDownEvent( qint key, unsigned time )
 					CL_FlushMemory();
 				}
 #endif
-				VM_Call( uivm, 1, UI_SET_ACTIVE_MENU, UIMENU_MAIN );
+				VM_Call( cls.uivm, 1, UI_SET_ACTIVE_MENU, UIMENU_MAIN );
 			}
 			return;
 		}
 
-		VM_Call( uivm, 2, UI_KEY_EVENT, key, qtrue );
+		VM_Call( cls.uivm, 2, UI_KEY_EVENT, key, qtrue );
 		return;
 	}
 
@@ -643,12 +643,12 @@ static void CL_KeyDownEvent( qint key, unsigned time )
 	if ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) {
 		Console_Key( key );
 	} else if ( Key_GetCatcher( ) & KEYCATCH_UI ) {
-		if ( uivm ) {
-			VM_Call( uivm, 2, UI_KEY_EVENT, key, qtrue );
+		if ( cls.uivm ) {
+			VM_Call( cls.uivm, 2, UI_KEY_EVENT, key, qtrue );
 		}
 	} else if ( Key_GetCatcher( ) & KEYCATCH_CGAME ) {
-		if ( cgvm ) {
-			VM_Call( cgvm, 2, CG_KEY_EVENT, key, qtrue );
+		if ( cls.cgvm ) {
+			VM_Call( cls.cgvm, 2, CG_KEY_EVENT, key, qtrue );
 		}
 	} else if ( Key_GetCatcher( ) & KEYCATCH_MESSAGE ) {
 		Message_Key( key );
@@ -703,12 +703,12 @@ static void CL_KeyUpEvent( qint key, unsigned time )
 	}
 
 	if ( Key_GetCatcher() & KEYCATCH_UI ) {
-		if ( uivm ) {
-			VM_Call( uivm, 2, UI_KEY_EVENT, key, qfalse );
+		if ( cls.uivm ) {
+			VM_Call( cls.uivm, 2, UI_KEY_EVENT, key, qfalse );
 		}
 	} else if ( Key_GetCatcher() & KEYCATCH_CGAME ) {
-		if ( cgvm ) {
-			VM_Call( cgvm, 2, CG_KEY_EVENT, key, qfalse );
+		if ( cls.cgvm ) {
+			VM_Call( cls.cgvm, 2, CG_KEY_EVENT, key, qfalse );
 		}
 	}
 }
@@ -751,7 +751,7 @@ void CL_CharEvent( qint key )
 	}
 	else if ( Key_GetCatcher( ) & KEYCATCH_UI )
 	{
-		VM_Call( uivm, 2, UI_KEY_EVENT, key | K_CHAR_FLAG, qtrue );
+		VM_Call( cls.uivm, 2, UI_KEY_EVENT, key | K_CHAR_FLAG, qtrue );
 	}
 	else if ( Key_GetCatcher( ) & KEYCATCH_MESSAGE )
 	{

@@ -1477,8 +1477,8 @@ qint CIN_PlayCinematic( const qchar *arg, qint x, qint y, qint w, qint h, qint s
 
 	if (cinTable[currentHandle].alterGameState) {
 		// close the menu
-		if ( uivm ) {
-			VM_Call( uivm, 1, UI_SET_ACTIVE_MENU, UIMENU_NONE );
+		if ( cls.uivm ) {
+			VM_Call( cls.uivm, 1, UI_SET_ACTIVE_MENU, UIMENU_NONE );
 		}
 	} else {
 		cinTable[currentHandle].playonwalls = cl_inGameVideo->integer;

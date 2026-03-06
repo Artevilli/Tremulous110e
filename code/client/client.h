@@ -342,6 +342,9 @@ typedef struct {
 
 	qbool	startCgame;
 
+	vm_t			*cgvm;	// interface to cgame dll or vm
+	vm_t			*uivm;	// interface to ui dll or vm
+
 	qint			captureWidth;
 	qint			captureHeight;
 

@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--03/05/2026--**
 
+* client:<br />following server logic, move cgvm and uivm to clientStatic_t
+
 * client:<br />add bounds checks to literal args
 
 **--03/03/2026--**

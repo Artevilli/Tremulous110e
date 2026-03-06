@@ -369,9 +369,9 @@ CL_MouseEvent
 */
 void CL_MouseEvent( qint dx, qint dy /*, qint time*/ ) {
 	if ( Key_GetCatcher() & KEYCATCH_UI ) {
-		VM_Call( uivm, 2, UI_MOUSE_EVENT, dx, dy );
+		VM_Call( cls.uivm, 2, UI_MOUSE_EVENT, dx, dy );
 	} else if ( Key_GetCatcher() & KEYCATCH_CGAME ) {
-		VM_Call( cgvm, 2, CG_MOUSE_EVENT, dx, dy );
+		VM_Call( cls.cgvm, 2, CG_MOUSE_EVENT, dx, dy );
 	} else {
 		cl.mouseDx[cl.mouseIndex] += dx;
 		cl.mouseDy[cl.mouseIndex] += dy;
