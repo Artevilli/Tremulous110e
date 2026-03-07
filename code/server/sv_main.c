@@ -466,41 +466,45 @@ SV_MasterGameStat(const qchar *data)
     return;
   }
 
+  const qint netenabled = Cvar_VariableIntegerValue("net_enabled");
+
   //send to group masters (IPv4)
   for(i = 0;i < MAX_MASTER_SERVERS;i++)
   {
-    if (!sv_master[i] || !sv_master[i]->string[0])
+    if (netenabled & NET_ENABLEV4)
     {
-      continue;
+      if (!sv_master[i] || !sv_master[i]->string[0])
+      {
+        continue;
+      }
+
+      if (masterAddr[i][0].type == NA_BAD)
+      {
+        continue;
+      }
+
+      Com_Printf("Sending gamestat to %s\n", sv_master[i]->string);
+      NET_OutOfBandPrint(NS_SERVER, &masterAddr[i][0], "gamestat %s", data);
     }
-
-    if (masterAddr[i][0].type == NA_BAD)
-    {
-      continue;
-    }
-
-    Com_Printf("Sending gamestat to %s\n", sv_master[i]->string);
-    NET_OutOfBandPrint(NS_SERVER, &masterAddr[i][0], "gamestat %s", data);
-  }
-
 #if defined(USE_IPV6)
-  //send to group masters (IPv6)
-  for(i = 0;i < MAX_MASTER_SERVERS;i++)
-  {
-    if (!sv_master[i] || !sv_master[i]->string[0])
+    //send to group masters (IPv6)
+    if (netenabled & NET_ENABLEV6)
     {
-      continue;
-    }
+      if (!sv_master[i] || !sv_master[i]->string[0])
+      {
+        continue;
+      }
 
-    if (masterAddr[i][1].type == NA_BAD)
-    {
-      continue;
-    }
+      if (masterAddr[i][1].type == NA_BAD)
+      {
+        continue;
+      }
 
-    Com_Printf("Sending gamestat to %s\n", sv_master[i]->string);
-    NET_OutOfBandPrint(NS_SERVER, &masterAddr[i][1], "gamestat %s", data);
-  }
+      Com_Printf("Sending gamestat to %s\n", sv_master[i]->string);
+      NET_OutOfBandPrint(NS_SERVER, &masterAddr[i][1], "gamestat %s", data);
+    }
 #endif
+  }
 }
 
 // This is deliberately quite large to make it more of an effort to DoS

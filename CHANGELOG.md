@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--03/07/2026--**
+
+* server:<br />properly handle ipv4/ipv6 settings when sending gamestat
+
 **--03/06/2026--**
 
 * server:<br />wrap attack log calls in a dedicated define to avoid crashes
