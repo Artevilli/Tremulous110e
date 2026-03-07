@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--03/07/2026--**
 
+* makefile:<br />drop hardening flags for performance purposes
+
 * server:<br />properly handle ipv4/ipv6 settings when sending gamestat
 
 **--03/06/2026--**

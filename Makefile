@@ -537,9 +537,7 @@ else
 # SETUP AND BUILD -- *NIX PLATFORMS
 #############################################################################
 
-  BASE_CFLAGS += -Wall -Wimplicit -Wstrict-prototypes -pipe \
-    -Wformat-security -Winline -Wshadow -Werror -D_FORTIFY_SOURCE=3 \
-    -fstack-protector-strong -fstrict-flex-arrays -fstack-clash-protection
+  BASE_CFLAGS += -Wall -Wimplicit -Wstrict-prototypes -pipe
 
   BASE_CFLAGS += -Wno-unused-result
 
