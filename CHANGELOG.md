@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--03/09/2026--**
+
+* qcommon:<br />reduce huffman buffer sizes
+
 **--03/07/2026--**
 
 * makefile:<br />drop hardening flags for performance purposes
