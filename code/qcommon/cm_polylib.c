@@ -29,17 +29,19 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 // counters are only bumped when running single threaded,
 // because they are an awful coherence problem
-qint	c_active_windings;
-qint	c_peak_windings;
-qint	c_winding_allocs;
-qint	c_winding_points;
+static qint c_active_windings;
+static qint c_peak_windings;
+static qint c_winding_allocs;
+static qint c_winding_points;
 
-void pw(winding_t *w)
+#if 0
+static void pw(winding_t *w)
 {
 	qint		i;
 	for (i=0 ; i<w->numpoints ; i++)
 		Com_Printf("%f, %f, %f\n", w->p[i][0], w->p[i][1], w->p[i][2]);
 }
+#endif
 
 
 /*
@@ -47,7 +49,7 @@ void pw(winding_t *w)
 AllocWinding
 =============
 */
-winding_t	*AllocWinding (qint points)
+static winding_t	*AllocWinding (qint points)
 {
 	winding_t	*w;
 	size_t			s;
@@ -79,7 +81,7 @@ void FreeWinding (winding_t *w)
 RemoveColinearPoints
 ============
 */
-qint	c_removed;
+//static qint c_removed;
 
 void	RemoveColinearPoints (winding_t *w)
 {
@@ -97,7 +99,7 @@ void	RemoveColinearPoints (winding_t *w)
 		VectorSubtract (w->p[i], w->p[k], v2);
 		VectorNormalize2(v1,v1);
 		VectorNormalize2(v2,v2);
-		if (DotProduct(v1, v2) < 0.999f)
+		if (DotProduct(v1, v2) < 0.999)
 		{
 			VectorCopy (w->p[i], p[nump]);
 			nump++;
@@ -107,7 +109,7 @@ void	RemoveColinearPoints (winding_t *w)
 	if (nump == w->numpoints)
 		return;
 
-	c_removed += w->numpoints - nump;
+	//c_removed += w->numpoints - nump;
 	w->numpoints = nump;
 	Com_Memcpy (w->p, p, nump*sizeof(p[0]));
 }
@@ -134,7 +136,7 @@ void WindingPlane (winding_t *w, vec3_t normal, vec_t *dist)
 WindingArea
 =============
 */
-vec_t	WindingArea (winding_t *w)
+static vec_t	WindingArea (winding_t *w)
 {
 	qint		i;
 	vec3_t	d1, d2, cross;
@@ -146,7 +148,7 @@ vec_t	WindingArea (winding_t *w)
 		VectorSubtract (w->p[i-1], w->p[0], d1);
 		VectorSubtract (w->p[i], w->p[0], d2);
 		CrossProduct (d1, d2, cross);
-		total += 0.5f * VectorLength ( cross );
+		total += 0.5 * VectorLength ( cross );
 	}
 	return total;
 }
@@ -309,7 +311,7 @@ winding_t	*ReverseWinding (winding_t *w)
 ClipWindingEpsilon
 =============
 */
-void	ClipWindingEpsilon (winding_t *in, vec3_t normal, vec_t dist, 
+static void	ClipWindingEpsilon (winding_t *in, vec3_t normal, vec_t dist, 
 				vec_t epsilon, winding_t **front, winding_t **back)
 {
 	vec_t	dists[MAX_POINTS_ON_WINDING+4];

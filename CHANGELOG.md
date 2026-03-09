@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--03/09/2026--**
 
+* qcommon:<br />more cmod fixes
+
 * qcommon:<br />reduce huffman buffer sizes
 
 **--03/07/2026--**

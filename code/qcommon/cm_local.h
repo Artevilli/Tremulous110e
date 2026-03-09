@@ -202,7 +202,7 @@ typedef struct {
 
 // keep 1/8 unit away to keep the position valid before network snapping
 // and to avoid various numeric issues
-#define	SURFACE_CLIP_EPSILON	0.125f
+#define	SURFACE_CLIP_EPSILON	(0.125)
 
 extern	clipMap_t	cm;
 extern	qint			c_pointcontents;

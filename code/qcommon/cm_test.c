@@ -29,7 +29,7 @@ CM_PointLeafnum_r
 
 ==================
 */
-qint CM_PointLeafnum_r( const vec3_t p, qint num ) {
+static qint CM_PointLeafnum_r( const vec3_t p, qint num ) {
 	float		d;
 	cNode_t		*node;
 	cplane_t	*plane;
@@ -277,7 +277,7 @@ qint CM_PointContents( const vec3_t p, clipHandle_t model ) {
 ==================
 CM_TransformedPointContents
 
-Handles offseting and rotation of the end points for moving and
+Handles offsetting and rotation of the end points for moving and
 rotating entities
 ==================
 */
@@ -332,7 +332,7 @@ AREAPORTALS
 ===============================================================================
 */
 
-void CM_FloodArea_r( qint areaNum, qint floodnum) {
+static void CM_FloodArea_r( qint areaNum, qint floodnum) {
 	qint		i;
 	cArea_t *area;
 	qint		*con;
@@ -481,6 +481,8 @@ qint CM_WriteAreaBits (byte *buffer, qint area)
 	return bytes;
 }
 
+#define BOUNDS_CLIP_EPSILON 0.25f //assume single precision and slightly increase to compensate potential SIMD precision loss in 64-bit environment
+
 /*
 ====================
 CM_BoundsIntersect
@@ -488,12 +490,12 @@ CM_BoundsIntersect
 */
 qbool CM_BoundsIntersect( const vec3_t mins, const vec3_t maxs, const vec3_t mins2, const vec3_t maxs2 )
 {
-	if (maxs[0] < mins2[0] - SURFACE_CLIP_EPSILON ||
-		maxs[1] < mins2[1] - SURFACE_CLIP_EPSILON ||
-		maxs[2] < mins2[2] - SURFACE_CLIP_EPSILON ||
-		mins[0] > maxs2[0] + SURFACE_CLIP_EPSILON ||
-		mins[1] > maxs2[1] + SURFACE_CLIP_EPSILON ||
-		mins[2] > maxs2[2] + SURFACE_CLIP_EPSILON)
+	if (maxs[0] < mins2[0] - BOUNDS_CLIP_EPSILON ||
+		maxs[1] < mins2[1] - BOUNDS_CLIP_EPSILON ||
+		maxs[2] < mins2[2] - BOUNDS_CLIP_EPSILON ||
+		mins[0] > maxs2[0] + BOUNDS_CLIP_EPSILON ||
+		mins[1] > maxs2[1] + BOUNDS_CLIP_EPSILON ||
+		mins[2] > maxs2[2] + BOUNDS_CLIP_EPSILON)
 	{
 		return qfalse;
 	}
@@ -508,12 +510,12 @@ CM_BoundsIntersectPoint
 */
 qbool CM_BoundsIntersectPoint( const vec3_t mins, const vec3_t maxs, const vec3_t point )
 {
-	if (maxs[0] < point[0] - SURFACE_CLIP_EPSILON ||
-		maxs[1] < point[1] - SURFACE_CLIP_EPSILON ||
-		maxs[2] < point[2] - SURFACE_CLIP_EPSILON ||
-		mins[0] > point[0] + SURFACE_CLIP_EPSILON ||
-		mins[1] > point[1] + SURFACE_CLIP_EPSILON ||
-		mins[2] > point[2] + SURFACE_CLIP_EPSILON)
+	if (maxs[0] < point[0] - BOUNDS_CLIP_EPSILON ||
+		maxs[1] < point[1] - BOUNDS_CLIP_EPSILON ||
+		maxs[2] < point[2] - BOUNDS_CLIP_EPSILON ||
+		mins[0] > point[0] + BOUNDS_CLIP_EPSILON ||
+		mins[1] > point[1] + BOUNDS_CLIP_EPSILON ||
+		mins[2] > point[2] + BOUNDS_CLIP_EPSILON)
 	{
 		return qfalse;
 	}
