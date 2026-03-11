@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--03/11/2026--**
+
+* qcommon/server:<br />revert `MAX_INFO_STRING`
+
 **--03/09/2026--**
 
 * qcommon:<br />more cmod fixes

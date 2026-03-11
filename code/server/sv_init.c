@@ -36,31 +36,28 @@ Creates and sends the server command necessary to update the CS index for the
 given client
 ===============
 */
-const void
-SV_SendConfigstring(client_t *client, const qint index)
+static const void
+SV_SendConfigstring(client_t *client, qint index)
 {
-  qint maxChunkSize;
+  qint maxChunkSize = MAX_STRING_CHARS - 24;
   qint len;
-  qint sent;
-  qint remaining;
-  const qchar *cmd;
-  qchar buf[MAX_STRING_CHARS];
 
-  maxChunkSize = MAX_STRING_CHARS - 24;
   len = strlen(sv.configstrings[index]);
 
   if (len >= maxChunkSize)
   {
-    sent = 0;
-    remaining = len;
+    qint sent = 0;
+    qint remaining = len;
+    const qchar *cmd;
+    qchar buf[MAX_STRING_CHARS];
 
     while(remaining > 0)
     {
-      if (!sent)
+      if (sent == 0)
       {
         cmd = "bcs0";
       }
-      else if(remaining < maxChunkSize)
+      else if (remaining < maxChunkSize)
       {
         cmd = "bcs2";
       }
@@ -70,7 +67,7 @@ SV_SendConfigstring(client_t *client, const qint index)
       }
 
       Q_strncpyz(buf, &sv.configstrings[index][sent], maxChunkSize);
-      SV_SendServerCommand(client, "%s %i \"%s\"\n", cmd, index, buf);
+      SV_SendServerCommand(client, "%s %i \"%s\"", cmd, index, buf);
       sent += (maxChunkSize - 1);
       remaining -= (maxChunkSize - 1);
     }
@@ -1087,7 +1084,7 @@ to totally exit after returning from this function.
 ==================
 */
 static const void
-SV_FinalMessage(const qchar *message, qbool disconnect)
+SV_FinalMessage(const qchar *message)
 {
   qint i;
   qint j;
@@ -1160,7 +1157,7 @@ SV_Shutdown(const qchar *finalmsg)
 
   if (svs.clients && !com_errorEntered)
   {
-    SV_FinalMessage(finalmsg, qtrue);
+    SV_FinalMessage(finalmsg);
   }
 
   //Chey: XXX: should this go here?
