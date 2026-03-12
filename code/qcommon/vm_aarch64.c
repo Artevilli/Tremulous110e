@@ -695,8 +695,8 @@ encode_logic_imm(const uint64_t v, uint32_t reg_size, uint32_t *res)
       break;
     }
 
-    size  >> = 1;
-    mask  >> = size;
+    size >>= 1;
+    mask >>= size;
   }
 
   imm = v & mask;
@@ -952,7 +952,7 @@ clone_rx(uint32_t reg)
 
 
 static uint32_t
-clone_sx(uint32_t reg);
+clone_sx(uint32_t reg)
 {
   const uint32_t sx = alloc_sx(S2);
 
@@ -1351,7 +1351,7 @@ emit_CheckProc(vm_t *vm, instruction_t *ins)
     }
     else
     {
-      emit_rx_imm32(rx, n); //r2 = max.opStack
+      mov_rx_imm32(rx, n); //r2 = max.opStack
       emit(ADD64(rx, rOPSTACK, rx)); //r2 = opStack + r2
     }
 
@@ -2210,6 +2210,7 @@ __recompile:
 
         case
         OP_GEU:
+        {
           uint32_t comp = get_comp(ci->op);
 
           rx[0] = load_rx_opstack(R0 | RCONST); dec_opstack(); //r0 = *opstack; opstack -= 4
@@ -2219,6 +2220,7 @@ __recompile:
           emit(CMP32(rx[1], rx[0]));
           emit(Bcond(comp, vm->instructionPointers[ci->value] - compiledOfs));
           break;
+        }
 
         case
         OP_EQF:
@@ -2237,6 +2239,7 @@ __recompile:
 
         case
         OP_GEF:
+        {
           uint32_t comp = get_comp(ci->op);
 
           sx[0] = load_sx_opstack(S0 | RCONST); dec_opstack(); //s0 = *opstack; opstack -= 4
@@ -2246,6 +2249,7 @@ __recompile:
           emit(FCMP(sx[1], sx[0]));
           emit(Bcond(comp, vm->instructionPointers[ci->value] - compiledOfs));
           break;
+        }
 
         case
         OP_LOAD1:

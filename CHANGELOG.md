@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--03/12/2026--**
 
+* scripts/qcommon:<br />fix up vm_aarch64.c and add osx scripts
+
 * makefile/qcommon:<br />move opstack/reg optimizations to header file
 
 **--03/11/2026--**
