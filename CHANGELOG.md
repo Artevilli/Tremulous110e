@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--03/12/2026--**
+
+* makefile/qcommon:<br />move opstack/reg optimizations to header file
+
 **--03/11/2026--**
 
 * qcommon:<br />change `MAX_INFO_STRING` back to 4096, allow specifying multiple basegames

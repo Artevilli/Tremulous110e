@@ -3678,6 +3678,9 @@ static void
 Sys_GetProcessorId(qchar *vendor)
 {
   Com_sprintf(vendor, 100, "%s", ARCH_STRING);
+#if defined(_WIN32)
+  CPU_Flags |= CPU_ARMv7 | CPU_IDIVA | CPU_VFPv3;
+#endif
 }
 
 #else //__linux__
@@ -3815,7 +3818,7 @@ Sys_SnapVector(float *vector)
 }
 #endif //id386
 
-#if arm64
+#if arm64 || arm32
 void
 Sys_SnapVector(float *vector)
 {
