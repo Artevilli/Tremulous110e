@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--03/11/2026--**
 
+* qcommon:<br />change `MAX_INFO_STRING` back to 4096, allow specifying multiple basegames
+
 * qcommon/server:<br />revert `MAX_INFO_STRING`
 
 **--03/09/2026--**
