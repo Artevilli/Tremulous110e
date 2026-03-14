@@ -6063,7 +6063,7 @@ FS_ReferencedPakNames(void)
         continue;
       }
 
-      if (search->pack->referenced || Q_stricmp(search->pack->pakGamename, fs_basegame->string)) 
+      if (search->pack->referenced || !FS_IsBaseGame(search->pack->pakGamename)) 
       {
         pakName = va("%s/%s", search->pack->pakGamename, search->pack->pakBasename);
 
