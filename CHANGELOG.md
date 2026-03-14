@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--03/13/2026--**
+
+* makefile:<br />temporarily stop using internal vorbis
+
 **--03/12/2026--**
 
 * scripts/qcommon:<br />fix up vm_aarch64.c and add osx scripts
