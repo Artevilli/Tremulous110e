@@ -3927,9 +3927,6 @@ __compile:
                     //var.size = 3;
                     //wipe_reg_range(rx_regs + rx[0], &var);
                     reduce_map_size(reg, 1);
-                    //modify constant
-                    reg->cnst.value &= 0xFF;
-                    reg->ext = Z_EXT8;
                   }
 
                   break;
@@ -3944,9 +3941,6 @@ __compile:
                     //var.size = 2;
                     //wipe_reg_range(rx_regs + rx[0], &var);
                     reduce_map_size(reg, 2);
-                    //modify constant
-                    reg->cnst.value &= 0xFFFF;
-                    reg->ext = Z_EXT16;
                   }
 
                   break;
@@ -4448,12 +4442,12 @@ __compile:
           //ecx = *opstack; opstack -= 4
           rx[0] = load_rx_opstack(R_ECX | RCONST | XMASK);
           dec_opstack();
-
+#if defined(DYN_ALLOC_RX)
           if (rx[0] == rx[2] || rx[1] == rx[2])
           {
             DROP("incorrect register setup, rx_mask=%04x", build_rx_mask());
           }
-
+#endif
           if (ci->op == OP_DIVI || ci->op == OP_MODI)
           {
             emit_cdq(); //cdq

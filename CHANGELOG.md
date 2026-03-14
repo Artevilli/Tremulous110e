@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--03/14/2026--**
 
+* qcommon:<br />use shared optimization framework in vm_powerpc.c
+
 * qcommon:<br />replaced missed FS_IsBaseGame check
 
 **--03/13/2026--**

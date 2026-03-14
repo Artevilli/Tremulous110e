@@ -124,45 +124,52 @@ static reg_t sx_regs[NUM_SX_REGS];
 
 //functions that must be implemented on per-platform basis:
 
-//mov gp.reg, gp.reg
+//gp.dst = gp.src
 static void
 mov_rx(uint32_t dst, uint32_t src);
-//mov fp.reg, fp.reg
+//fp.dst = fp.src
 static void
 mov_sx(uint32_t dst, uint32_t src);
-//alloc new.gp.reg; mov new.gp.reg, gp.reg 
+//alloc new.gp.reg; new.gp.reg = gp.reg
 static uint32_t
 clone_rx(uint32_t reg);
-//alloc new.fp.reg; mov new.fp.reg, fp.reg 
+//alloc new.fp.reg; new.fp.reg = fp.reg
 static uint32_t
 clone_sx(uint32_t reg);
-//mov gp.reg, fp.reg
+//gp.rx = fp.sx
 static void
 mov_rx_sx(uint32_t rx, uint32_t sx);
-//mov fp.reg, gp.reg
+//fp.sx = gp.rx
 static void
 mov_sx_rx(uint32_t sx, uint32_t rx);
-//mov gp.reg, imm32
+//gp.reg = imm32
 static void
 mov_rx_imm32(uint32_t reg, uint32_t imm32);
-//mov fp.reg, imm32
+//fp.reg = imm32
 static void
 mov_sx_imm32(uint32_t reg, uint32_t imm32);
-//mov gp.reg, 
+//gp.reg = programStack + addr
 static void
 mov_rx_local(uint32_t reg, const uint32_t addr);
+//fp.reg = programStack + addr
 static void
 mov_sx_local(uint32_t reg, const uint32_t addr);
+//gp.reg = opStack[offset]
 static void
 load4_rx(uint32_t reg, uint32_t offset);
+//fp.reg = opStack[offset]
 static void
 load4_sx(uint32_t reg, uint32_t offset);
+//opStack[offset] = gp.rx
 static void
 store4_rx(uint32_t rx, uint32_t offset);
+//opStack[offset] = fp.sx
 static void
 store4_sx(uint32_t sx, uint32_t offset);
+//opStack[offset] = const
 static void
 store4_const(uint32_t value, uint32_t offset);
+//opStack[offset] = pStack + addr
 static void
 store4_local(uint32_t value, uint32_t offset);
 
@@ -182,6 +189,7 @@ static uint32_t
 alloc_rx_local(uint32_t pref, uint32_t imm);
 
 
+#if defined(LOAD_OPTIMIZE)
 static void
 wipe_reg_range(reg_t* reg, const var_addr_t* v)
 {
@@ -222,6 +230,7 @@ wipe_reg_range(reg_t* reg, const var_addr_t* v)
     }
   }
 }
+#endif
 
 
 static void
@@ -249,6 +258,7 @@ wipe_var_range(const var_addr_t *v)
 }
 
 
+#if defined(LOAD_OPTIMIZE)
 static void
 set_var_map(reg_t *r, const var_addr_t *v)
 {
@@ -267,9 +277,10 @@ set_var_map(reg_t *r, const var_addr_t *v)
   r->vars.map[r->vars.idx] = *v;
   r->vars.idx = (r->vars.idx + 1) % ARRAY_LEN(r->vars.map);
 }
+#endif
 
 
-static void
+void
 set_rx_var(uint32_t reg, const var_addr_t *v)
 {
 #if defined(LOAD_OPTIMIZE)
@@ -289,7 +300,7 @@ set_rx_var(uint32_t reg, const var_addr_t *v)
 }
 
 
-static void
+void
 set_rx_ext(uint32_t reg, ext_t ext)
 {
 #if defined(LOAD_OPTIMIZE)
@@ -305,7 +316,7 @@ set_rx_ext(uint32_t reg, ext_t ext)
 }
 
 
-static void
+void
 set_sx_var(uint32_t reg, const var_addr_t *v)
 {
 #if defined(LOAD_OPTIMIZE)
@@ -325,7 +336,7 @@ set_sx_var(uint32_t reg, const var_addr_t *v)
 }
 
 
-static reg_t *
+reg_t *
 find_rx_var(uint32_t *reg, const var_addr_t *v)
 {
 #if defined(LOAD_OPTIMIZE)
@@ -356,7 +367,7 @@ find_rx_var(uint32_t *reg, const var_addr_t *v)
 }
 
 
-static qbool
+qbool
 find_sx_var(uint32_t *reg, const var_addr_t *v)
 {
 #if defined(LOAD_OPTIMIZE)
@@ -387,7 +398,7 @@ find_sx_var(uint32_t *reg, const var_addr_t *v)
 }
 
 
-static void
+void
 reduce_map_size(reg_t *reg, uint32_t size)
 {
   qint i;
@@ -399,10 +410,22 @@ reduce_map_size(reg_t *reg, uint32_t size)
       reg->vars.map[i].size = size;
     }
   }
+
+  //modify constant
+  if (size == 1)
+  {
+    reg->cnst.value &= 0xFF;
+    reg->ext = Z_EXT8;
+  }
+  else
+  {
+    reg->cnst.value &= 0xFFFF;
+    reg->ext = Z_EXT16;
+  }
 }
 
 
-static reg_t *
+reg_t *
 rx_on_top(void)
 {
   opstack_t *it = &opstackv[opstack];
@@ -599,7 +622,7 @@ init_opstack(void)
 }
 
 
-static qbool
+qbool
 scalar_on_top(void)
 {
 #if defined(DEBUG_VM)
@@ -618,7 +641,7 @@ scalar_on_top(void)
 }
 
 
-static qbool
+qbool
 addr_on_top(var_addr_t *addr, uint32_t dataBase, uint32_t procBase)
 {
 #if defined(DEBUG_VM)
@@ -648,7 +671,7 @@ addr_on_top(var_addr_t *addr, uint32_t dataBase, uint32_t procBase)
 }
 
 
-static void
+void
 discard_top(void)
 {
   opstack_t *it = &opstackv[opstack];
@@ -658,7 +681,7 @@ discard_top(void)
 }
 
 
-static qint
+qint
 is_safe_arg(void)
 {
 #if defined(DEBUG_VM)
@@ -740,6 +763,7 @@ dec_opstack_discard(void)
 
 
 //returns bitmask of registers present on opstack
+#if defined(DYN_ALLOC_RX) || defined(DYN_ALLOC_SX)
 static uint32_t
 build_opstack_mask(opstack_value_t reg_type)
 {
@@ -758,8 +782,10 @@ build_opstack_mask(opstack_value_t reg_type)
 
   return mask;
 }
+#endif
 
 
+#if defined(DYN_ALLOC_RX)
 static uint32_t
 build_rx_mask(void)
 {
@@ -776,8 +802,10 @@ build_rx_mask(void)
 
   return mask;
 }
+#endif
 
 
+#if defined(DYN_ALLOC_SX)
 static uint32_t
 build_sx_mask(void)
 {
@@ -794,6 +822,7 @@ build_sx_mask(void)
 
   return mask;
 }
+#endif
 
 //allocate register with local address value
 static uint32_t
@@ -947,7 +976,7 @@ alloc_rx_const(uint32_t pref, uint32_t imm)
       r->refcnt = 1;
       r->ip = ip;
       r->ext = Z_NONE;
-      mov_rx_imm32(idx, imm); //<-- platform
+      mov_rx_imm32(idx, imm);
       mask_rx(idx);
       return idx;
     }
@@ -1395,7 +1424,7 @@ store_rx_opstack(uint32_t reg)
 }
 
 
-static void
+void
 store_syscall_opstack(uint32_t reg)
 {
   opstack_t *it = opstackv + opstack;
