@@ -732,6 +732,7 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_PARSE_READ_TOKEN:
+      VM_CHECKBOUNDS(sv.gvm, args[2], sizeof(pc_token_t));
       return Parse_ReadTokenHandle(args[1], VMA(2));
 
     case

@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--03/16/2026--**
 
+* server:<br />missed bounds check
+
 * qcommon:<br />proper version string
 
 **--03/14/2026--**
