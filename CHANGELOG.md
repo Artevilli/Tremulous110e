@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--03/16/2026--**
+
+* qcommon:<br />proper version string
+
 **--03/14/2026--**
 
 * qcommon:<br />use shared optimization framework in vm_powerpc.c
