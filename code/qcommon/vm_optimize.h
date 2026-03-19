@@ -401,6 +401,7 @@ find_sx_var(uint32_t *reg, const var_addr_t *v)
 void
 reduce_map_size(reg_t *reg, uint32_t size)
 {
+#if defined(Q3_LITTLE_ENDIAN)
   qint i;
 
   for(i = 0;i < ARRAY_LEN(reg->vars.map);i++)
@@ -410,7 +411,11 @@ reduce_map_size(reg_t *reg, uint32_t size)
       reg->vars.map[i].size = size;
     }
   }
-
+#else
+  //zero/sign extension shifts memory mappings on BE systems
+  reg->type_mask &= ~RTYPE_VAR;
+  Com_Memset(reg->vars.map, 0x0, sizeof(reg->vars.map));
+#endif
   //modify constant
   if (size == 1)
   {

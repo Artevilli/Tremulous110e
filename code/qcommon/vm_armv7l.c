@@ -4,7 +4,7 @@ Copyright (C) 2000-2006 Tim Angus
 Copyright (C) 2009 David S. Miller <davem@davemloft.net>
 Copyright (C) 2013,2014 SUSE Linux Products GmbH
 Copyright (C) 2006 Cheyenne Spring Barnes
-Copyright (C) 2020-2021 Quake3e project
+Copyright (C) 2020-2026 Quake3e project
 
 This file is part of Tremulous.
 

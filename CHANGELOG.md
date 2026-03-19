@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--03/18/2026--**
+
+* qcommon:<br /> basic powerpc const optimizations
+
 **--03/16/2026--**
 
 * server:<br />missed bounds check

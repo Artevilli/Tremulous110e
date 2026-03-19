@@ -3,7 +3,7 @@
 Copyright (C) 1999-2005 Id Software, Inc.
 Copyright (C) 2000-2006 Tim Angus
 Copyright (C) 2006 Cheyenne Spring Barnes
-Copyright (C) 2011-2021 Quake3e project
+Copyright (C) 2011-2026 Quake3e project
 
 This file is part of Tremulous.
 
