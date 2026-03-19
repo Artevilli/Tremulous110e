@@ -1880,8 +1880,8 @@ static qbool ParseCondition( const qchar **text, resultType *res )
 			}
 		} else {
 			// integer comparison
-			qint lval = atoi( lval_str );
-			qint rval = atoi( rval_str );
+			qint lval = Q_atoi( lval_str );
+			qint rval = Q_atoi( rval_str );
 			switch ( op ) {
 				case TK_EQ:  r0 = ( lval == rval ); break;
 				case TK_NEQ: r0 = ( lval != rval ); break;

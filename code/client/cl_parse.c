@@ -350,7 +350,7 @@ void CL_SystemInfoChanged( qbool onlyGame ) {
 	// when the serverId changes, any further messages we send to the server will use this new serverId
 	// https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=475
 	// in some cases, outdated cp commands might get sent with this news serverId
-	cl.serverId = atoi( Info_ValueForKey( systemInfo, "sv_serverid" ) );
+	cl.serverId = Q_atoi( Info_ValueForKey( systemInfo, "sv_serverid" ) );
 
 	// don't set any vars when playing a demo
 	if ( clc.demoplaying ) {
@@ -358,7 +358,7 @@ void CL_SystemInfoChanged( qbool onlyGame ) {
 	}
 
 	s = Info_ValueForKey( systemInfo, "sv_pure" );
-	cl_connectedToPureServer = atoi( s );
+	cl_connectedToPureServer = Q_atoi( s );
 
 	// parse/update fs_game in first place
 	s = Info_ValueForKey( systemInfo, "fs_game" );
@@ -387,7 +387,7 @@ void CL_SystemInfoChanged( qbool onlyGame ) {
 	}
 
 	s = Info_ValueForKey( systemInfo, "sv_cheats" );
-	cl_connectedToCheatServer = atoi( s );
+	cl_connectedToCheatServer = Q_atoi( s );
 	if ( !cl_connectedToCheatServer ) {
 		Cvar_SetCheatState();
 	}
@@ -479,7 +479,7 @@ static void CL_ParseServerInfo( void )
 	serverInfo = cl.gameState.stringData
 		+ cl.gameState.stringOffsets[ CS_SERVERINFO ];
 
-	clc.sv_allowDownload = atoi(Info_ValueForKey(serverInfo,
+	clc.sv_allowDownload = Q_atoi(Info_ValueForKey(serverInfo,
 		"sv_allowDownload"));
 	Q_strncpyz(clc.sv_dlURL,
 		Info_ValueForKey(serverInfo, "sv_dlURL"),

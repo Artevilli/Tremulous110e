@@ -627,7 +627,7 @@ void GLimp_Init( glconfig_t *config )
 			return;
 		}
 
-		if ( r_mode->integer != 3 || ( r_fullscreen->integer && atoi( r_modeFullscreen->string ) != 3 ) )
+		if ( r_mode->integer != 3 || ( r_fullscreen->integer && Q_atoi( r_modeFullscreen->string ) != 3 ) )
 		{
 			Com_Printf( "Setting \\r_mode %d failed, falling back on \\r_mode %d\n", r_mode->integer, 3 );
 			if ( GLimp_StartDriverAndSetMode( 3, "", r_fullscreen->integer, qfalse ) != RSERR_OK )

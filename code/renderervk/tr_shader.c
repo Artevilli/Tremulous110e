@@ -625,7 +625,7 @@ static qbool ParseStage( shaderStage_t *stage, const qchar **text )
 			}
 			else if ( Q_stricmpn( token, "*lightmap", 9 ) == 0 && token[9] >= '0' && token[9] <= '9' )
 			{
-				const qint lightmapIndex = atoi( token + 9 );
+				const qint lightmapIndex = Q_atoi( token + 9 );
 				if ( lightmapIndex < 0 || tr.lightmaps == NULL ) {
 					stage->bundle[0].image[0] = tr.whiteImage;
 				} else {
@@ -1651,8 +1651,8 @@ static qbool ParseCondition( const qchar **text, resultType *res )
 			}
 		} else {
 			// integer comparison
-			qint lval = atoi( lval_str );
-			qint rval = atoi( rval_str );
+			qint lval = Q_atoi( lval_str );
+			qint rval = Q_atoi( rval_str );
 			switch ( op ) {
 				case TK_EQ:  r0 = ( lval == rval ); break;
 				case TK_NEQ: r0 = ( lval != rval ); break;

@@ -807,7 +807,7 @@ static qbool CL_DemoNameCallback_f( const qchar *filename, qint length )
 	if ( length <= ext_len + num_len || Q_stricmpn( filename + length - (ext_len + num_len), "." DEMOEXT, ext_len ) != 0 )
 		return qfalse;
 
-	version = atoi( filename + length - num_len );
+	version = Q_atoi( filename + length - num_len );
 	if ( version == com_protocol->integer )
 		return qtrue;
 
@@ -863,7 +863,7 @@ static void CL_PlayDemo_f( void ) {
 	ext_test = strrchr(arg, '.');
 	if ( ext_test && !Q_stricmpn(ext_test + 1, DEMOEXT, ARRAY_LEN(DEMOEXT) - 1) )
 	{
-		protocol = atoi(ext_test + ARRAY_LEN(DEMOEXT));
+		protocol = Q_atoi(ext_test + ARRAY_LEN(DEMOEXT));
 
 		for( i = 0; demo_protocols[ i ]; i++ )
 		{
@@ -2600,12 +2600,12 @@ static qbool CL_ConnectionlessPacket( const netadr_t *from, msg_t *msg ) {
 
 		c = Cmd_Argv( 2 );
 		if ( *c != '\0' )
-			challenge = atoi( c );
+			challenge = Q_atoi( c );
 
 		clc.compat = qtrue;
 		s = Cmd_Argv( 3 ); // analyze server protocol version
 		if ( *s != '\0' ) {
-			qint sv_proto = atoi( s );
+			qint sv_proto = Q_atoi( s );
 			if ( sv_proto > OLD_PROTOCOL_VERSION ) {
 				if ( sv_proto == NEW_PROTOCOL_VERSION || sv_proto == com_protocol->integer ) {
 					clc.compat = qfalse;
@@ -2646,7 +2646,7 @@ static qbool CL_ConnectionlessPacket( const netadr_t *from, msg_t *msg ) {
 		}
 
 		// start sending connect instead of challenge request packets
-		clc.challenge = atoi(Cmd_Argv(1));
+		clc.challenge = Q_atoi(Cmd_Argv(1));
 		cls.state = CA_CHALLENGING;
 		clc.connectPacketCount = 0;
 		clc.connectTime = -99999;
@@ -2677,7 +2677,7 @@ static qbool CL_ConnectionlessPacket( const netadr_t *from, msg_t *msg ) {
 			// first argument: challenge response
 			c = Cmd_Argv( 1 );
 			if ( *c != '\0' ) {
-				challenge = atoi( c );
+				challenge = Q_atoi( c );
 			} else {
 				Com_Printf( "Bad connectResponse received. Ignored.\n" );
 				return qfalse;
@@ -2696,7 +2696,7 @@ static qbool CL_ConnectionlessPacket( const netadr_t *from, msg_t *msg ) {
 			// second (optional) argument: actual protocol version used on server-side
 			c = Cmd_Argv( 2 );
 			if ( *c != '\0' ) {
-				qint protocol = atoi( c );
+				qint protocol = Q_atoi( c );
 				if ( protocol > 0 ) {
 					if ( protocol <= OLD_PROTOCOL_VERSION ) {
 						clc.compat = qtrue;
@@ -3661,7 +3661,7 @@ qbool CL_GetModeInfo( qint *width, qint *height, float *windowAspect, qint mode,
 
 	// set dedicated fullscreen mode
 	if ( fullscreen && *modeFS )
-		mode = atoi( modeFS );
+		mode = Q_atoi( modeFS );
 
 	if ( mode < -2 )
 		return qfalse;
@@ -4085,18 +4085,18 @@ void CL_Shutdown( const qchar *finalmsg, qbool quit ) {
 static void CL_SetServerInfo(serverInfo_t *server, const qchar *info, qint ping) {
 	if (server) {
 		if (info) {
-			server->clients = atoi(Info_ValueForKey(info, "clients"));
+			server->clients = Q_atoi(Info_ValueForKey(info, "clients"));
 			Q_strncpyz(server->hostName,Info_ValueForKey(info, "hostname"), MAX_NAME_LENGTH);
 			Q_strncpyz(server->mapName, Info_ValueForKey(info, "mapname"), MAX_NAME_LENGTH);
-			server->maxClients = atoi(Info_ValueForKey(info, "sv_maxclients"));
+			server->maxClients = Q_atoi(Info_ValueForKey(info, "sv_maxclients"));
 			Q_strncpyz(server->game,Info_ValueForKey(info, "game"), MAX_NAME_LENGTH);
-			server->gameType = atoi(Info_ValueForKey(info, "gametype"));
-			server->netType = atoi(Info_ValueForKey(info, "nettype"));
-			server->minPing = atoi(Info_ValueForKey(info, "minping"));
-			server->maxPing = atoi(Info_ValueForKey(info, "maxping"));
-			server->punkbuster = atoi(Info_ValueForKey(info, "punkbuster"));
-			server->g_humanplayers = atoi(Info_ValueForKey(info, "g_humanplayers"));
-			server->g_needpass = atoi(Info_ValueForKey(info, "g_needpass"));
+			server->gameType = Q_atoi(Info_ValueForKey(info, "gametype"));
+			server->netType = Q_atoi(Info_ValueForKey(info, "nettype"));
+			server->minPing = Q_atoi(Info_ValueForKey(info, "minping"));
+			server->maxPing = Q_atoi(Info_ValueForKey(info, "maxping"));
+			server->punkbuster = Q_atoi(Info_ValueForKey(info, "punkbuster"));
+			server->g_humanplayers = Q_atoi(Info_ValueForKey(info, "g_humanplayers"));
+			server->g_needpass = Q_atoi(Info_ValueForKey(info, "g_needpass"));
 		}
 		server->ping = ping;
 	}
@@ -4140,7 +4140,7 @@ static void CL_ServerInfoPacket( const netadr_t *from, msg_t *msg ) {
 	infoString = MSG_ReadString( msg );
 
 	// if this isn't the correct protocol version, ignore it
-	prot = atoi( Info_ValueForKey( infoString, "protocol" ) );
+	prot = Q_atoi( Info_ValueForKey( infoString, "protocol" ) );
 	if ( prot != OLD_PROTOCOL_VERSION && prot != NEW_PROTOCOL_VERSION && prot != com_protocol->integer ) {
 		Com_DPrintf( "Different protocol info packet: %s\n", infoString );
 		return;
@@ -4396,8 +4396,8 @@ static void CL_ServerStatusResponse( const netadr_t *from, msg_t *msg ) {
 			//sscanf(s, "%d %d", &score, &ping);
 			Q_strncpyz( buf, s, sizeof (buf) );
 			Com_Split( buf, v, 2, ' ' );
-			score = atoi( v[0] );
-			ping = atoi( v[1] );
+			score = Q_atoi( v[0] );
+			ping = Q_atoi( v[1] );
 			s = strchr(s, ' ');
 			if (s)
 				s = strchr(s+1, ' ');
@@ -4483,7 +4483,7 @@ static void CL_GlobalServers_f( void ) {
 	qchar		command[1024];
 	const qchar	*masteraddress;
 
-	if ( (count = Cmd_Argc()) < 3 || (masterNum = atoi(Cmd_Argv(1))) < 0 || masterNum > MAX_MASTER_SERVERS )
+	if ( (count = Cmd_Argc()) < 3 || (masterNum = Q_atoi(Cmd_Argv(1))) < 0 || masterNum > MAX_MASTER_SERVERS )
 	{
 		Com_Printf( "usage: globalservers <master# 0-%d> <protocol> [keywords]\n", MAX_MASTER_SERVERS );
 		return;
