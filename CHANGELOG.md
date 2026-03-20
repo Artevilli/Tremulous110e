@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--03/20/2026--**
 
+* qcommon:<br />more ppc optimizations
+
 * qcommon/server:<br />attempt at fixing server status
 
 **--03/19/2026--**
