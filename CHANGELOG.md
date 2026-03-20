@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--03/20/2026--**
+
+* qcommon/server:<br />attempt at fixing server status
+
 **--03/19/2026--**
 
 * client/renderer:<br />more atoi refactoring

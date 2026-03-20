@@ -4065,7 +4065,7 @@ Com_Init(qchar *commandLine)
   Cvar_CheckRange(com_developer, NULL, NULL, CV_INTEGER);
 
   Com_StartupVariable("vm_rtChecks");
-  vm_rtChecks = Cvar_GetAndDescribe("vm_rtChecks", "15", CVAR_INIT | CVAR_PROTECTED | CVAR_SERVERINFO, "Runtime checks in compiled vm code, bitmask:\n1 - program stack overflow\n2 - opcode stack overflow\n4 - jump target range\n8 - data read/write range");
+  vm_rtChecks = Cvar_GetAndDescribe("vm_rtChecks", "15", CVAR_INIT | CVAR_PROTECTED, "Runtime checks in compiled vm code, bitmask:\n1 - program stack overflow\n2 - opcode stack overflow\n4 - jump target range\n8 - data read/write range");
   Cvar_CheckRange(vm_rtChecks, "0", "15", CV_INTEGER);
 
   Com_StartupVariable("journal");
@@ -4143,7 +4143,7 @@ Com_Init(qchar *commandLine)
 #endif
 
 #if defined(USE_AFFINITY_MASK)
-  com_affinityMask = Cvar_GetAndDescribe("com_affinityMask", "", CVAR_ARCHIVE | CVAR_SERVERINFO, "Bind game process to bitmask-specified CPU core(s), special characters:\n A or a - all default cores\n P or p - performance cores\n E or e - efficiency cores\n 0x<value> - use hexadecimal notation\n + or - can be used to add or exclude particular cores");
+  com_affinityMask = Cvar_GetAndDescribe("com_affinityMask", "", CVAR_ARCHIVE, "Bind game process to bitmask-specified CPU core(s), special characters:\n A or a - all default cores\n P or p - performance cores\n E or e - efficiency cores\n 0x<value> - use hexadecimal notation\n + or - can be used to add or exclude particular cores");
   com_affinityMask->modified = qfalse;
 #endif
 
