@@ -62,7 +62,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define PASS_INIT 0
 #define PASS_COMPRESS 1
 #define PASS_EXPAND_ONLY 2
-#define NUM_COMPRESSIONS 2
+#define NUM_COMPRESSIONS 1
+#define NUM_PROC_COMPRESSIONS 3
 #define FJUMP_THRESHOLD 48
 #else
 #define NUM_PASSES 1
@@ -81,6 +82,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define CONST_OPTIMIZE
 //#define RET_OPTIMIZE //increases code size
 //#define MACRO_OPTIMIZE //slows down a bit?
+
+#define USE_LITERAL_POOL //allocate data for FP immediates at the end of the code
 
 //allow sharing both variables and constants in registers
 #define REG_TYPE_MASK
@@ -214,6 +217,64 @@ static qint jumpSizeChanged;
 #endif
 
 static qint funcOffset[FUNC_LAST];
+
+//literal pool
+#if defined(USE_LITERAL_POOL)
+#define MAX_LITERALS 1024 /* usually ~160 for Tremulous mods, ~270 for q3ut4 */
+#define LIT_HASH_SIZE 256
+#define LIT_HASH_FUNC(v) ((v * 157) & (LIT_HASH_SIZE - 1))
+
+typedef struct
+literal_s
+{
+  struct literal_s *next;
+  uint32_t value;
+}
+literal_t;
+
+static uint32_t numLiterals;
+static literal_t *litHash[LIT_HASH_SIZE];
+static literal_t litList[MAX_LITERALS];
+static intptr_t litBase;
+
+static void
+VM_InitLiterals(void)
+{
+  Com_Memset(litHash, 0x0, sizeof(litHash));
+  Com_Memset(litList, 0x0, sizeof(litList));
+  numLiterals = 0;
+  litBase = 0;
+}
+
+static qint
+VM_SearchLiteral(const uint32_t value)
+{
+  uint32_t h = LIT_HASH_FUNC(value);
+  literal_t *lt = litHash[h];
+
+  while(lt != NULL)
+  {
+    if (lt->value == value)
+    {
+      return (lt - &litList[0]);
+    }
+
+    lt = lt->next;
+  }
+
+  if (numLiterals >= ARRAY_LEN(litList))
+  {
+    return -1;
+  }
+
+  lt = &litList[numLiterals];
+  lt->next = litHash[h];
+  lt->value = value;
+  litHash[h] = lt;
+
+  return numLiterals++;
+}
+#endif //USE_LITERAL_POOL
 
 
 static void *
@@ -1430,6 +1491,13 @@ emit_load_sx(uint32_t xmmreg, uint32_t base, int32_t offset)
 }
 
 static void
+emit_load_sx_mem(uint32_t xmmreg, uint32_t offset)
+{
+  Emit1(0xF3);
+  emit_op_reg_offset(0x0F, 0x10, xmmreg, offset);
+}
+
+static void
 emit_load_sx_index(uint32_t xmmreg, uint32_t base, uint32_t index)
 {
   Emit1(0xF3);
@@ -1772,8 +1840,22 @@ mov_sx_imm32(uint32_t reg, uint32_t imm32)
   }
   else
   {
-    uint32_t rx = alloc_rx_const(R_ECX | TEMP, imm32);
+    uint32_t rx;
+#if defined(USE_LITERAL_POOL)
+    const qint v = VM_SearchLiteral(imm32);
 
+    if (v >= 0)
+    {
+#if idx64
+      emit_load_sx_mem(reg, litBase + v * sizeof(uint32_t) - compiledOfs  - 8);
+#else
+      emit_load_sx_mem(reg, litBase + v * sizeof(uint32_t));
+#endif
+      return;
+    }
+#endif
+
+    rx = alloc_rx_const(R_ECX | TEMP, imm32);
     mov_sx_rx(reg, rx);
     unmask_rx(rx);
   }
@@ -3400,6 +3482,9 @@ VM_Compile(vm_t *vm, vmHeader_t *header)
   reg_t *reg;
 #if JUMP_OPTIMIZE
   qint num_compress;
+#if defined(NUM_PROC_COMPRESSIONS)
+  qint proc_compressions;
+#endif
 #endif
 
   inst = (instruction_t *)Z_Malloc((header->instructionCount + 8) * sizeof(instruction_t));
@@ -3418,6 +3503,10 @@ VM_Compile(vm_t *vm, vmHeader_t *header)
     Com_Printf("VM_CompileX86 error: %s\n", errMsg);
     return qfalse;
   }
+
+#if defined(USE_LITERAL_POOL)
+  VM_InitLiterals();
+#endif
 
   VM_ReplaceInstructions(vm, inst);
 
@@ -3460,6 +3549,9 @@ __compile:
     compiledOfs = 0;
 #if JUMP_OPTIMIZE
     jumpSizeChanged = 0;
+#if defined(NUM_PROC_COMPRESSIONS)
+    proc_compressions = 0;
+#endif
 #endif
 
     proc_base = -1;
@@ -3618,6 +3710,9 @@ __compile:
           emit_lea_base_index(R_PROCBASE | R_REX, R_DATABASE, R_PSTACK); //procBase = dataBase + programStack
 
           emit_CheckProc(vm, ci);
+#if defined(NUM_PROC_COMPRESSIONS)
+          proc_compressions = 0;
+#endif
           break;
 
         case
@@ -3679,6 +3774,19 @@ __compile:
 
           if ((ci + 1)->op == OP_LEAVE)
           {
+#if defined(NUM_PROC_COMPRESSIONS)
+            if (jumpSizeChanged != 0 && pass == PASS_COMPRESS)
+            {
+              if (proc_base >= 0 && proc_compressions++ < NUM_PROC_COMPRESSIONS)
+              {
+                jumpSizeChanged = 0;
+                compiledOfs = instructionOffsets[proc_base];
+                ip = proc_base;
+                init_opstack();
+                break;
+              }
+            }
+#endif
             proc_base = -1;
           }
 
@@ -4725,6 +4833,31 @@ __compile:
 
   if (code == NULL)
   {
+#if defined(USE_LITERAL_POOL)
+    code = (byte *)VM_Alloc_Compiled(vm, PAD(compiledOfs, 8) + PAD(numLiterals * 4, 8), n);
+
+    if (code == NULL)
+    {
+      return qfalse;
+    }
+
+    instructionPointers = (intptr_t*)(byte*)(code + PAD(compiledOfs, 8) + PAD(numLiterals * 4, 8));
+
+    if (numLiterals)
+    {
+      uint32_t *litPtr = (uint32_t *)(code + PAD(compiledOfs, 8));
+
+      for(i = 0;i < numLiterals;i++)
+      {
+        litPtr[i] = litList[i].value;
+      }
+    }
+#if idx64
+    litBase = PAD(compiledOfs, 8); //RIP-relative
+#else
+    litBase = (intptr_t)(code + PAD(compiledOfs, 8)); //absolute
+#endif
+#else //!USE_LITERAL_POOL
     code = (byte *)VM_Alloc_Compiled(vm, PAD(compiledOfs, 8), n);
 
     if (code == NULL)
@@ -4733,6 +4866,7 @@ __compile:
     }
 
     instructionPointers = (intptr_t *)(byte *)(code + PAD(compiledOfs, 8));
+#endif
     //vm->instructionPointers = instructionPointers; //for debug purposes?
     pass = NUM_PASSES - 1; //repeat last pass
     goto __compile;

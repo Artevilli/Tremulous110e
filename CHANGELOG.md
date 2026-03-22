@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--03/22/2026--**
+
+* qcommon:<br />literal pool for fp immediates
+
 **--03/20/2026--**
 
 * qcommon:<br />more ppc optimizations
