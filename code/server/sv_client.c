@@ -777,12 +777,12 @@ SV_DirectConnect(const netadr_t *from)
 
   if (*password && !strcmp(password, sv_privatePassword->string))
   {
-    startIndex = sv_democlients->integer;
+    startIndex = 0;
   }
   else
   {
     //skip past the reserved slots
-    startIndex = sv_privateClients->integer + sv_democlients->integer;
+    startIndex = sv_privateClients->integer;
   }
 
   if (newcl && newcl >= svs.clients + startIndex && newcl->state == CS_FREE)

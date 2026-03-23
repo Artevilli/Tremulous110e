@@ -44,7 +44,6 @@ cvar_t *sv_cl_allowDownload;
 cvar_t *sv_maxclients;
 cvar_t *sv_maxclientsPerIP;
 cvar_t *sv_clientTLD;
-cvar_t *sv_democlients; //number of slots reserved for playing a demo
 cvar_t *sv_collectClientJunkInfo;
 cvar_t *sv_cheats;
 cvar_t *sv_privateClients; //number of clients reserved for password
@@ -84,8 +83,6 @@ cvar_t *sv_protectLog; //name
 cvar_t *sv_protectLogInterval; //frequency of writing logs
 cvar_t *sv_owolfAffectsLan;
 cvar_t *sv_dequeuePeriod;
-cvar_t *sv_demoState;
-cvar_t *sv_autoDemo;
 cvar_t *sv_levelTimeReset;
 cvar_t *sv_filter;
 cvar_t *sv_antiWallhack;
@@ -121,7 +118,6 @@ SV_InitCvars(void)
   Cvar_CheckRange(sv_maxclientsPerIP, "1", NULL, CV_INTEGER);
   sv_clientTLD = Cvar_GetAndDescribe("sv_clientTLD", "0", CVAR_ARCHIVE_ND, "Client country detection code.");
   Cvar_CheckRange(sv_clientTLD, NULL, NULL, CV_INTEGER);
-  sv_democlients = Cvar_GetAndDescribe("sv_democlients", "0", CVAR_SERVERINFO | CVAR_LATCH, "Maximum number of people allowed to view serverside demos.");
   sv_minRate = Cvar_GetAndDescribe("sv_minRate", "0", CVAR_ARCHIVE_ND | CVAR_SERVERINFO, "Minimum server bandwidth (in bit per second) a client can use.");
   Cvar_CheckRange(sv_minRate, "0", "100000", CV_INTEGER);
   sv_maxRate = Cvar_GetAndDescribe("sv_maxRate", "0", CVAR_ARCHIVE_ND | CVAR_SERVERINFO, "Maximum server bandwidth (in bit per second) a client can use.");
@@ -220,8 +216,6 @@ SV_InitCvars(void)
   sv_protectLog = Cvar_GetAndDescribe("sv_protectLog", "sv_protect.log", CVAR_ARCHIVE, "Sets the desired name of the sv_protect log file. To disable for developer print output, set to \"\".");
   sv_protectLogInterval = Cvar_GetAndDescribe("sv_protectLogInterval", "1000", CVAR_ARCHIVE, "Sets the desired time in milliseconds until the next write to sv_protectLog is allowed to happen.");
   sv_owolfAffectsLan = Cvar_GetAndDescribe("sv_owolfAffectsLan", "0", CVAR_ARCHIVE, "Toggle whether or not sv_protect & SVP_OWOLF applies to lan clients.");
-  sv_demoState = Cvar_Get("sv_demoState", "0", CVAR_ROM);
-  sv_autoDemo = Cvar_Get("sv_autoDemo", "0", CVAR_ARCHIVE);
   sv_levelTimeReset = Cvar_GetAndDescribe("sv_levelTimeReset", "0", CVAR_ARCHIVE_ND, "Toggle whether or not to reset leveltime after a new map loads.");
   sv_filter = Cvar_GetAndDescribe("sv_filter", "filter.txt", CVAR_ARCHIVE, "Cvar that point on filter file, if it is \"\" then filtering will be disabled.");
   sv_antiWallhack = Cvar_GetAndDescribe("sv_antiWallhack", "0", CVAR_ARCHIVE, "Enables serverside wallhack protection\n0 - disabled\n1: players only\n2: items/structures only\n3: all");

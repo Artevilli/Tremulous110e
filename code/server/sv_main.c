@@ -239,12 +239,6 @@ SV_SendServerCommand(client_t *cl, const qchar *fmt, ...)
     Com_Printf("broadcast: %s\n", SV_ExpandNewlines(message));
   }
 
-  //save broadcasts to demo
-  if (sv.demoState == DS_RECORDING)
-  {
-    SV_DemoWriteServerCommand(message);
-  }
-
   //send the data to all relevent clients
   for(j = 0;j < sv.maxclients;j++)
   {
@@ -1182,7 +1176,7 @@ SVC_Info(const netadr_t *from)
 
   Info_SetValueForKey(infostring, "mapname", sv_mapname->string);
   Info_SetValueForKey(infostring, "clients", va("%i", count));
-  Info_SetValueForKey(infostring, "sv_maxclients", va("%i", sv.maxclients - sv_privateClients->integer - sv_democlients->integer));
+  Info_SetValueForKey(infostring, "sv_maxclients", va("%i", sv.maxclients - sv_privateClients->integer));
   Info_SetValueForKey(infostring, "pure", va("%i", sv.pure));
   Info_SetValueForKey(infostring, "gamename", GAMENAME_FOR_MASTER);
 
@@ -2508,15 +2502,6 @@ SV_Frame(const qint msec)
 #else
     VM_Call(sv.gvm, 1, GAME_RUN_FRAME, sv.time);
 #endif
-
-    if (sv.demoState == DS_RECORDING)
-    {
-      SV_DemoWriteFrame();
-    }
-    else if (sv.demoState == DS_PLAYBACK)
-    {
-      SV_DemoReadFrame();
-    }
   }
 
   if (com_speeds->integer)

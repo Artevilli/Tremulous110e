@@ -148,15 +148,6 @@ typedef struct
   qint gentitySize;
 #endif
   qint num_entities; //current number, <= MAX_GENTITIES
-  
-  //demo recording
-  fileHandle_t demoFile;
-  demoState_t demoState;
-  qchar demoName[MAX_QPATH];
-  
-  //previous frame for delta compression
-  sharedEntity_t demoEntities[MAX_GENTITIES];
-  playerState_t demoPlayerStates[MAX_CLIENTS];
 
 #if !defined(USE_JAVA)
   playerState_t	*gameClients;
@@ -731,26 +722,6 @@ void
 SV_IssueNewSnapshot(void);
 qint
 SV_RemainingGameState(void);
-
-//
-// sv_demo.c
-//
-void
-SV_DemoStartRecord(void);
-void
-SV_DemoStopRecord(void);
-void
-SV_DemoStartPlayback(void);
-void
-SV_DemoStopPlayback(void);
-void
-SV_DemoReadFrame(void);
-void
-SV_DemoWriteFrame(void);
-void
-SV_DemoWriteServerCommand(const qchar *str);
-void
-SV_DemoWriteGameCommand(qint cmd, const qchar *str);
 
 //
 // sv_filter.c

@@ -225,7 +225,6 @@ typedef enum {
   G_PARSE_SOURCE_FILE_AND_LINE,
 
   G_SEND_GAMESTAT,
-  G_DEMO_COMMAND,
 
   //webconsole
   G_WEBCONSOLE_SEND,
@@ -279,7 +278,6 @@ typedef enum
 // that is not recognized as a builtin function.
 // The game can issue trap_argc() / trap_argv() commands to get the command
 // and parameters.  Return qfalse if the game doesn't recognize it as a command.
-  GAME_DEMO_COMMAND,         // ( int cmd, const char *string );
 
   BOTAI_START_FRAME,			// ( int time );
 

@@ -393,105 +393,68 @@ SV_ChangeMaxClients
 static const void
 SV_ChangeMaxClients(void)
 {
-  qint i;
-  qint j;
-  qint maxclients;
   client_t *oldClients;
-  qint count = 0;
-  qbool firstTime = svs.clients == NULL;
+  qint maxclients;
+  qint count;
+  qint i;
 
   //get the highest client number in use
-  if (!firstTime)
-  {
-    count = 0;
+  count = 0;
 
-    for(i = 0;i < sv.maxclients;i++)
+  for(i = 0;i < sv.maxclients;i++)
+  {
+    if (svs.clients[i].state >= CS_CONNECTED)
     {
-      if (svs.clients[i].state >= CS_CONNECTED)
+      if (i > count)
       {
-          if (i > count)
-          {
-            count = i;
-          }
+        count = i;
       }
     }
-    count++;
   }
+
+  count++;
 
   //never go below the highest client number in use
   maxclients = SV_BoundMaxClients(count);
 
-  //update
-  Cvar_Get("sv_democlients", "0", 0);
-  
-  //make sure theres enough room for clients
-  if (sv_democlients->integer + count > MAX_CLIENTS)
+  //if still the same
+  if (maxclients == sv.maxclients)
   {
-    Cvar_SetValue("sv_democlients", MAX_CLIENTS - count);
-  }
-
-  if (sv.maxclients < sv_democlients->integer + count)
-  {
-    Cvar_SetValue("sv_maxclients", sv_democlients->integer + count);
-  }
-
-  sv_maxclients->modified = qfalse;
-  sv_democlients->modified = qfalse;
-
-  //if same
-  if (!firstTime && maxclients == sv.maxclients)
-  {
-    //move anyone below sv_democlients upwards
-    for(i = 0;i < sv_democlients->integer;i++)
-    {
-      if (svs.clients[i].state >= CS_CONNECTED)
-      {
-        for(j = sv_democlients->integer;j < sv.maxclients;j++)
-        {
-          if (svs.clients[j].state < CS_CONNECTED)
-          {
-            svs.clients[j] = svs.clients[i];
-            break;
-          }
-        }
-
-        Com_Memset(svs.clients + i, 0, sizeof(client_t));
-      }
-    }
     return;
   }
 
-  if (!firstTime)
+  oldClients = Hunk_AllocateTempMemory(count * sizeof(client_t));
+
+  //copy the clients to hunk memory
+  for(i = 0;i < count;i++)
   {
-    oldClients = Hunk_AllocateTempMemory(count * sizeof(client_t));
-
-    //copy the clients to hunk memory
-    for(i = 0;i < count;i++)
+    if (svs.clients[i].state >= CS_CONNECTED)
     {
-      if (svs.clients[i].state >= CS_CONNECTED)
-      {
-        oldClients[i] = svs.clients[i];
-      }
-      else
-      {
-        Com_Memset(&oldClients[i], 0, sizeof(client_t));
-      }
+      oldClients[i] = svs.clients[i];
     }
-
-    //free old clients arrays
-    Z_Free(svs.clients);
+    else
+    {
+      Com_Memset(&oldClients[i], 0, sizeof(client_t));
+    }
   }
+
+  //free old clients arrays
+  Z_Free(svs.clients);
 
   //allocate new clients
   SV_AllocClients(maxclients);
 
-  if (!firstTime)
+  //copy the clients over
+  for(i = 0;i < count;i++)
   {
-    //copy the clients over
-    Com_Memcpy(svs.clients + sv_democlients->integer, oldClients, count * sizeof(client_t));
-    // free the old clients on the hunk
-    Hunk_FreeTempMemory(oldClients);
+    if (oldClients[i].state >= CS_CONNECTED)
+    {
+      svs.clients[i] = oldClients[i];
+    }
   }
+
+  //free the old clients on the hunk
+  Hunk_FreeTempMemory(oldClients);
 }
 
 /*
@@ -571,13 +534,11 @@ This is NOT called for map_restart
 ================
 */
 const void
-SV_SpawnServer(const qchar *server, qbool killBots)
+SV_SpawnServer(const qchar *mapname, qbool killBots)
 {
-  client_t *client;
   qint i;
   qint checksum;
   const qchar *p;
-  qtime_t now;
   const qchar *denied;
   qbool isBot;
 
@@ -585,7 +546,10 @@ SV_SpawnServer(const qchar *server, qbool killBots)
   SV_ShutdownGameProgs();
 
   Com_Printf("------ Server Initialization ------\n");
-  Com_Printf("Server: %s\n", server);
+  Com_Printf("Server: %s\n", mapname);
+
+  Sys_SetStatus("Initializing server...");
+
 #if !defined(DEDICATED)
   //if not running a dedicated server CL_MapLoading will connect the client to the server
   //also print some status stuff
@@ -613,8 +577,8 @@ SV_SpawnServer(const qchar *server, qbool killBots)
   }
   else
   {
-    //check for maxclients or democlients change
-    if (sv_maxclients->modified || sv_democlients->modified)
+    //check for maxclients change
+    if (sv_maxclients->modified)
     {
       SV_ChangeMaxClients();
     }
@@ -701,13 +665,14 @@ SV_SpawnServer(const qchar *server, qbool killBots)
 
   //get a new checksum feed and restart the file system
   srand(Com_Milliseconds());
-  Com_RandomBytes((byte*)&sv.checksumFeed, sizeof(sv.checksumFeed));
+  Com_RandomBytes((byte *)&sv.checksumFeed, sizeof(sv.checksumFeed));
   FS_Restart(sv.checksumFeed);
 
-  CM_LoadMap(va("maps/%s.bsp", server), qfalse, &checksum);
+  Sys_SetStatus("Loading map %s", mapname);
+  CM_LoadMap(va("maps/%s.bsp", mapname), qfalse, &checksum);
 
   //set serverinfo visible name
-  Cvar_Set("mapname", server);
+  Cvar_Set("mapname", mapname);
 
   Cvar_SetIntegerValue("sv_mapChecksum", checksum);
 
@@ -894,26 +859,12 @@ SV_SpawnServer(const qchar *server, qbool killBots)
 
   Hunk_SetMark();
 
-  for(client = svs.clients;ARRAY_INDEX(svs.clients, client) < sv.maxclients;client++)
-  {
-    //bots do not request gamestate so this must be manually set
-    if (client->netchan.remoteAddress.type == NA_BOT) // || (client->gentity->r.svFlags & SVF_BOT)) //Chey: FIXME: what is this?
-    {
-      SV_SendClientGameState(client);
-    }
-  }
-
   Com_Printf("-----------------------------------\n");
+
+  Sys_SetStatus("Running map %s", mapname);
 
   //suppress hitch warning
   Com_FrameInit();
-  
-  //start recording demo
-  if (sv_autoDemo->integer)
-  {
-    Com_RealTime(&now);
-    Cbuf_AddText(va("demo_record %04d%02d%02d%02d%02d%02d-%s\n", 1900 + now.tm_year, 1 + now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec, server));
-  }
 }
 
 #if defined(DEDICATED)
@@ -1173,16 +1124,6 @@ SV_Shutdown(const qchar *finalmsg)
   SV_InitChallenger();
 #endif
 
-  if (sv.demoState == DS_RECORDING)
-  {
-    SV_DemoStopRecord();
-  }
-
-  if (sv.demoState == DS_PLAYBACK)
-  {
-    SV_DemoStopPlayback();
-  }
-
   //free current level
   SV_ClearServer();
 
@@ -1227,4 +1168,6 @@ SV_Shutdown(const qchar *finalmsg)
   Cvar_Set("sv_referencedPakNames", "");
   Cvar_Set("sv_mapChecksum", "");
   Cvar_Set("sv_serverid", "0");
+
+  Sys_SetStatus("Server is not running");
 }

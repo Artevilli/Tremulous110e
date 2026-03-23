@@ -70,7 +70,6 @@ extern cvar_t *sv_cl_allowDownload;
 extern cvar_t *sv_maxclients;
 extern cvar_t *sv_maxclientsPerIP;
 extern cvar_t *sv_clientTLD;
-extern cvar_t *sv_democlients; //number of slots reserved for playing a demo
 extern cvar_t *sv_collectClientJunkInfo;
 extern cvar_t *sv_cheats;
 extern cvar_t *sv_privateClients; //number of clients reserved for password
@@ -111,8 +110,6 @@ extern cvar_t *sv_protectLog; //name
 extern cvar_t *sv_protectLogInterval; //frequency of writing logs
 extern cvar_t *sv_owolfAffectsLan;
 extern cvar_t *sv_dequeuePeriod;
-extern cvar_t *sv_demoState;
-extern cvar_t *sv_autoDemo;
 extern cvar_t *sv_levelTimeReset;
 extern cvar_t *sv_filter;
 extern cvar_t *sv_antiWallhack;

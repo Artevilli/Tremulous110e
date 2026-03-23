@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--03/23/2026--**
+
+* server:<br />drop server demos
+
 **--03/22/2026--**
 
 * qcommon:<br />literal pool for fp immediates

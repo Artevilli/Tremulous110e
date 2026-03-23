@@ -172,23 +172,6 @@ SV_GetPlayerByNum(void)
 //=========================================================
 
 /*
-====================
-SV_CompleteDemoName
-====================
-*/
-static void
-SV_CompleteDemoName(const qchar *args, qint argNum)
-{
-  qchar demoExt[16];
-
-  if (argNum == 2)
-  {
-    Com_sprintf(demoExt, sizeof(demoExt), ".svdm_%d", com_protocol->integer);
-    Field_CompleteFilename("svdemos", demoExt, qtrue, FS_MATCH_PK3s | FS_MATCH_STICK);
-  }
-}
-
-/*
 ==================
 SV_Map_f
 
@@ -245,17 +228,6 @@ SV_Map_f(void)
     cheat = qfalse;
     killBots = qfalse;
   }
-
-  //stop demos
-  if (sv.demoState == DS_RECORDING)
-  {
-    SV_DemoStopRecord();
-  }
-
-  if (sv.demoState == DS_PLAYBACK)
-  {
-    SV_DemoStopPlayback();
-  }
   
   //save the map name here cause on a map restart we reload the autogen.cfg and thus nuke the arguments of the map command
   Q_strncpyz(mapname, map, sizeof(mapname));
@@ -293,7 +265,6 @@ SV_MapRestart_f(void)
   const qchar *denied;
   qchar mapname[MAX_QPATH];
   qbool isBot;
-  qtime_t now;
   qint delay;
   qbool isDownloading = qfalse;
 
@@ -349,8 +320,8 @@ SV_MapRestart_f(void)
   }
 
   //check for changes in variables that can't just be restarted
-  //check for maxclients and democlients change
-  if (sv_maxclients->modified || sv_democlients->modified || sv_pure->modified || isDownloading)
+  //check for maxclients change
+  if (sv_maxclients->modified || sv_pure->modified || isDownloading)
   {
     Com_Printf("variable change and/or client downloading -- restarting.\n");
 
@@ -358,17 +329,6 @@ SV_MapRestart_f(void)
     Q_strncpyz(mapname, Cvar_VariableString("mapname"), sizeof(mapname));
     SV_SpawnServer(mapname, qfalse);
     return;
-  }
-
-  //stop demos
-  if (sv.demoState == DS_RECORDING)
-  {
-    SV_DemoStopRecord();
-  }
-
-  if (sv.demoState == DS_PLAYBACK)
-  {
-    SV_DemoStopPlayback();
   }
 
   //toggle the server bit so clients can detect that a map_restart has happened
@@ -480,13 +440,6 @@ SV_MapRestart_f(void)
   }
 
   //lastRestartFrame = com_frameTime;
-  
-  //start recording demo
-  if (sv_autoDemo->integer)
-  {
-    Com_RealTime(&now);
-    Cbuf_AddText(va("demo_record %04d%02d%02d%02d%02d%02d-%s\n", 1900 + now.tm_year, 1 + now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec, Cvar_VariableString("mapname")));
-  }
 }
 
 //===============================================================
@@ -1090,152 +1043,6 @@ SV_Locations_f(void)
 }
 
 /*
-=================
-SV_Demo_Record_f
-=================
-*/
-static void
-SV_Demo_Record_f(void)
-{
-  qint number;
-
-  //make sure server is running
-  if (!com_sv_running->integer)
-  {
-    Com_Printf("server not running\n");
-    return;
-  }
-
-  if (Cmd_Argc() > 2)
-  {
-    Com_Printf("use demo_record demoname\n");
-    return;
-  }
-
-  if (sv.demoState != DS_NONE)
-  {
-    Com_Printf("demo is already being recorded or played\n");
-    return;
-  }
-
-  if (sv.maxclients == MAX_CLIENTS)
-  {
-    Com_Printf("reduce sv_maxclients\n");
-    return;
-  }
-
-  if (Cmd_Argc() == 2)
-  {
-    sprintf(sv.demoName, "svdemos/%s.svdm_%d", Cmd_Argv(1), com_protocol->integer);
-  }
-  else
-  {
-    //scan for free demo name
-    for(number = 0;number >= 0;number++)
-    {
-      Com_sprintf(sv.demoName, sizeof(sv.demoName), "svdemos/%d.svdm_%d", number, com_protocol->integer);
-
-      if (!FS_FileExists(sv.demoName))
-      {
-        break; //no file
-      }
-    }
-
-    if (number < 0)
-    {
-      Com_Printf("cant make filename for demo, delete old\n");
-      return;
-    }
-  }
-
-  sv.demoFile = FS_FOpenFileWrite(sv.demoName);
-
-  if (!sv.demoFile)
-  {
-    Com_Printf("could not open %s", sv.demoName);
-    return;
-  }
-
-  SV_DemoStartRecord();
-}
-
-/*
-=================
-SV_Demo_Play_f
-=================
-*/
-static void
-SV_Demo_Play_f(void)
-{
-  const qchar *arg;
-
-  if (Cmd_Argc() != 2)
-  {
-    Com_Printf("use demo_play demoname\n");
-    return;
-  }
-
-  if (sv.demoState != DS_NONE)
-  {
-    Com_Printf("demo is already being recorded or played\n");
-    return;
-  }
-
-  if (sv_democlients->integer <= 0)
-  {
-    Com_Printf("set sv_democlients greater than 0\n");
-    return;
-  }
-
-  //check for extension and protocol
-  arg = Cmd_Argv(1);
-
-  if (!strcmp(arg + strlen(arg) - 6, va(".svdm_%d", com_protocol->integer)))
-  {
-    Com_sprintf(sv.demoName, sizeof(sv.demoName), "svdemos/%s", arg);
-  }
-  else
-  {
-    Com_sprintf(sv.demoName, sizeof(sv.demoName), "svdemos/%s.svdm_%d", arg, com_protocol->integer);
-  }
-
-  FS_FOpenFileRead(sv.demoName, &sv.demoFile, qtrue);
-
-  if (!sv.demoFile)
-  {
-    Com_Printf("cannot open file %s\n", sv.demoName);
-    return;
-  }
-
-  SV_DemoStartPlayback();
-}
-
-/*
-=================
-SV_Demo_Stop_f
-=================
-*/
-static void
-SV_Demo_Stop_f(void)
-{
-  if (sv.demoState == DS_NONE)
-  {
-    Com_Printf("no active demo\n");
-    return;
-  }
-
-  //close demo file
-  if (sv.demoState == DS_PLAYBACK)
-  {
-    SV_DemoStopPlayback();
-  }
-  else
-  {
-    SV_DemoStopRecord();
-  }
-}
-
-/*
 ==================
 SV_ListQueue_f
 ==================
@@ -1466,10 +1273,6 @@ SV_AddOperatorCommands(void)
   Cmd_AddCommand("uptime", SV_Uptime_f);
   Cmd_AddCommand("filter", SV_AddFilter_f);
   Cmd_AddCommand("filtercmd", SV_AddFilterCmd_f);
-  Cmd_AddCommand("demo_record", SV_Demo_Record_f);
-  Cmd_AddCommand("demo_play", SV_Demo_Play_f);
-  Cmd_SetCommandCompletionFunc("demo_play", SV_CompleteDemoName);
-  Cmd_AddCommand("demo_stop", SV_Demo_Stop_f);
   Cmd_AddCommand("listqueue", SV_ListQueue_f);
 #if defined(INCLUDE_REMOTE_COMMANDS)
   Cmd_AddCommand("rconwhitelistrehash", SV_RconWhitelistRehash_f);
