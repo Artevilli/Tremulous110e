@@ -1133,6 +1133,11 @@ SV_CheckInvalidUserInfoValues(client_t *cl)
     return;
   }
 
+  if ((cl->netchan.remoteAddress.type == NA_LOOPBACK || cl->netchan.isLANAddress) && sv_lanForceRate->integer)
+  {
+    return; //don't warn lans
+  }
+
   if (cl->invalidValues & BIT((qint)CHECKEDTYPE_RATE))
   {
     warning = ("^1Your 'rate' value is invalid. Please check it and set a proper value.");

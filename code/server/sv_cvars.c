@@ -135,7 +135,7 @@ SV_InitCvars(void)
 #if defined(USE_JAVA) || defined(USE_BULLET)
   sv_minSnaps = Cvar_GetAndDescribe("sv_minSnaps", "60", CVAR_ARCHIVE | CVAR_SERVERINFO, "Minimum snaps the client is allowed to have.");
 #else
-  sv_minSnaps = Cvar_GetAndDescribe("sv_minSnaps", "40", CVAR_ARCHIVE | CVAR_SERVERINFO, "Minimum snaps the client is allowed to have.");
+  sv_minSnaps = Cvar_GetAndDescribe("sv_minSnaps", "10", CVAR_ARCHIVE | CVAR_SERVERINFO, "Minimum snaps the client is allowed to have.");
 #endif
   Cvar_CheckRange(sv_minSnaps, "10", "125", CV_INTEGER);
   sv_novis = Cvar_GetAndDescribe("sv_novis", "0", CVAR_ARCHIVE, "Toggle whether or not to skip the pvs check when transmitting entities.");
@@ -173,13 +173,13 @@ SV_InitCvars(void)
 #if defined(USE_JAVA) || defined(USE_BULLET)
   sv_fps = Cvar_GetAndDescribe("sv_fps", "60", CVAR_SERVERINFO | CVAR_SYSTEMINFO, "1000 divided by this value is the time until the next server frame is processed.");
 #else
-  sv_fps = Cvar_GetAndDescribe("sv_fps", "40", CVAR_SERVERINFO | CVAR_SYSTEMINFO, "1000 divided by this value is the time until the next server frame is processed.");
+  sv_fps = Cvar_GetAndDescribe("sv_fps", "20", CVAR_SERVERINFO | CVAR_SYSTEMINFO, "1000 divided by this value is the time until the next server frame is processed.");
 #endif
   Cvar_CheckRange(sv_fps, "10", "125", CV_INTEGER);
 #if defined(USE_JAVA) || defined(USE_BULLET)
   sv_cl_fps = Cvar_GetAndDescribe("sv_cl_fps", "60", CVAR_SYSTEMINFO, "This cvar is purely for cgame, do not touch.");
 #else
-  sv_cl_fps = Cvar_GetAndDescribe("sv_cl_fps", "40", CVAR_SYSTEMINFO, "This cvar is purely for cgame, do not touch.");
+  sv_cl_fps = Cvar_GetAndDescribe("sv_cl_fps", "20", CVAR_SYSTEMINFO, "This cvar is purely for cgame, do not touch.");
 #endif
   sv_timeout = Cvar_GetAndDescribe("sv_timeout", "200", CVAR_TEMP, "Seconds without any message before automatic client disconnect.");
   Cvar_CheckRange(sv_timeout, "4", NULL, CV_INTEGER);
