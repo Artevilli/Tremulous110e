@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--03/24/2026--**
 
+* qcommon:<br />specific -> generic qvm optimization
+
 * server:<br />fix up client rates
 
 **--03/23/2026--**
