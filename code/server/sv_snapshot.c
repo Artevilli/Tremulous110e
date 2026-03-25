@@ -1138,12 +1138,7 @@ SV_CheckInvalidUserInfoValues(client_t *cl)
     return; //don't warn if rate is forced
   }
 
-  if (cl->rate == 0)
-  {
-    return; //zeroed out rate is not a low value
-  }
-
-  if (cl->invalidValues & BIT((qint)CHECKEDTYPE_RATE))
+  if ((cl->invalidValues & BIT((qint)CHECKEDTYPE_RATE)) && cl->rate != 0)
   {
     warning = ("^1Your 'rate' value is invalid. Please check it and set a proper value.");
     critical = qtrue;
@@ -1153,7 +1148,7 @@ SV_CheckInvalidUserInfoValues(client_t *cl)
     warning = ("^1Your 'snaps' value is invalid. Please check it and set a proper value.");
     critical = qtrue;
   }
-  else if (cl->rate < 5000)
+  else if (cl->rate != 0 && cl->rate < 5000)
   {
     warning = va("^3Your 'rate' value is extremely low (%d). Please consider a higher value.", cl->rate);
     timeout = 1200000; //(60000 * 20) every 20 minutes

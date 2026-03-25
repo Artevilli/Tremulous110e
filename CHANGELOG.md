@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--03/25/2026--**
 
+* server:<br />redo no zero rate warnings
+
 * server:<br />do not warn if rate is zero
 
 * server:<br />mirror forced rate qualifications before sending warnings
