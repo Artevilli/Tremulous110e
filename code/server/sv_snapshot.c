@@ -1138,6 +1138,11 @@ SV_CheckInvalidUserInfoValues(client_t *cl)
     return; //don't warn if rate is forced
   }
 
+  if (cl->rate == 0)
+  {
+    return; //zeroed out rate is not a low value
+  }
+
   if (cl->invalidValues & BIT((qint)CHECKEDTYPE_RATE))
   {
     warning = ("^1Your 'rate' value is invalid. Please check it and set a proper value.");

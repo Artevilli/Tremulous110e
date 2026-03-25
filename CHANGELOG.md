@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--03/25/2026--**
 
+* server:<br />do not warn if rate is zero
+
 * server:<br />mirror forced rate qualifications before sending warnings
 
 **--03/24/2026--**
