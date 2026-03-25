@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--03/25/2026--**
+
+* server:<br />mirror forced rate qualifications before sending warnings
+
 **--03/24/2026--**
 
 * qcommon:<br />specific -> generic qvm optimization
