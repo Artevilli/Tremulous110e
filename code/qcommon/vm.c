@@ -281,7 +281,7 @@ VM_CheckBounds3
 void
 VM_CheckBounds3(const vm_t *vm, unsigned address, unsigned count, unsigned size)
 {
-  //if (!vm->entrypoint)
+  if (!vm->entryPoint)
   {
     if ((uint64_t)address + (uint64_t)count * size > vm->dataMask)
     {
