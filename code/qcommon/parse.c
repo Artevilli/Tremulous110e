@@ -1037,7 +1037,12 @@ static script_t *Parse_LoadScriptFile(const qchar *filename)
   //
   Parse_SetScriptPunctuations(script, NULL);
   //
-  FS_Read(script->buffer, length, fp);
+  if (FS_Read(script->buffer, length, fp) != length)
+  {
+    Z_Free(buffer);
+    script = NULL;
+  }
+
   FS_FCloseFile(fp);
   //
 

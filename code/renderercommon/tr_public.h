@@ -143,15 +143,15 @@ typedef struct {
 	// stack based memory allocation for per-level things that
 	// won't be freed
 #ifdef HUNK_DEBUG
-	void	*(*Hunk_AllocDebug)( qint size, ha_pref pref, qchar *label, qchar *file, qint line );
+	void	*(*Hunk_AllocDebug)( size_t size, ha_pref pref, const qchar *label, const qchar *file, qint line );
 #else
-	void	*(*Hunk_Alloc)( qint size, ha_pref pref );
+	void	*(*Hunk_Alloc)( size_t size, ha_pref pref );
 #endif
-	void	*(*Hunk_AllocateTempMemory)( qint size );
+	void	*(*Hunk_AllocateTempMemory)( size_t size );
 	void	(*Hunk_FreeTempMemory)( void *block );
 
 	// dynamic memory allocator for things that need to be freed
-	void	*(*Malloc)( qint bytes );
+	void	*(*Malloc)( size_t bytes );
 	void	(*Free)( void *buf );
 	void	(*FreeAll)( void );
 

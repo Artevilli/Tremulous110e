@@ -780,13 +780,13 @@ Sys_ANSIColorify(const qchar *msg, qchar *buffer, qint bufferSize)
     if (msg[i] == '\n')
     {
       Com_sprintf(tempBuffer, sizeof(tempBuffer), "%c[0m\n", 0x1B);
-      strncat(buffer, tempBuffer, bufferSize - 1);
+      Q_strcat(buffer, bufferSize, tempBuffer);
       i += 1;
     }
     else if (msg[i] == Q_COLOR_ESCAPE && (ANSIcolor = getANSIcolor(msg[i + 1])) != NULL)
     {
       Com_sprintf(tempBuffer, sizeof(tempBuffer), "%c[%sm", 0x1B, ANSIcolor);
-      strncat(buffer, tempBuffer, bufferSize - 1);
+      Q_strcat(buffer, bufferSize, tempBuffer);
       i += 2;
     }
     else
@@ -794,7 +794,7 @@ Sys_ANSIColorify(const qchar *msg, qchar *buffer, qint bufferSize)
       if (printableChar(msg[i]))
       {
         Com_sprintf(tempBuffer, sizeof(tempBuffer), "%c", msg[i]);
-        strncat(buffer, tempBuffer, bufferSize - 1);
+        Q_strcat(buffer, bufferSize, tempBuffer);
       }
 
       i += 1;

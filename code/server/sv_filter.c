@@ -325,7 +325,7 @@ dump_nodes(const filter_node_t *node, qint level, qint skip_tagged, FILE *f)
           s = "";
         }
 
-        n = sprintf(buf, "date %s\"%s\"", s, node->p2.string);
+        n = Com_sprintf(buf, sizeof(buf), "date %s\"%s\"", s, node->p2.string);
       }
       else
       {
@@ -339,16 +339,16 @@ dump_nodes(const filter_node_t *node, qint level, qint skip_tagged, FILE *f)
         {
           if (node->is_quoted)
           {
-            n = sprintf(buf, "%s %s\"%s\"", node->p1, s, node->p2.string);
+            n = Com_sprintf(buf, sizeof(buf), "%s %s\"%s\"", node->p1, s, node->p2.string);
           }
           else
           {
-            n = sprintf(buf, "%s %s%s", node->p1, s, node->p2.string);
+            n = Com_sprintf(buf, sizeof(buf), "%s %s%s", node->p1, s, node->p2.string);
           }
         }
         else
         {
-          n = sprintf(buf, "%s %s%i", node->p1, s, node->p2.integer);
+          n = Com_sprintf(buf, sizeof(buf), "%s %s%i", node->p1, s, node->p2.integer);
         }
       }
 
@@ -907,6 +907,12 @@ parse_file(const qchar *filename)
   fseek(f, 0, SEEK_END);
   size = ftell(f);
   fseek(f, 0, SEEK_SET);
+
+  if (size < 0 || size >= INT_MAX)
+  {
+    fclose(f);
+    return qfalse;
+  }
 
   data = (qchar *)Z_Malloc(size + 1);
 

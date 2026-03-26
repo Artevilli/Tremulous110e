@@ -27,13 +27,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // This file must be identical in the quake and utils directories
 //
 
-//Ignore __attribute__ on non-gcc platforms
-#if !defined(__GNUC__)
-#if !defined(__attribute__)
-#define __attribute__(x)
-#endif
-#endif
-
 // surface geometry should not exceed these limits
 #define	SHADER_MAX_VERTEXES	1000
 #define	SHADER_MAX_INDEXES	(6*SHADER_MAX_VERTEXES)
@@ -53,20 +46,20 @@ QVM files
 #define	VM_MAGIC			0x12721444
 #define	VM_MAGIC_VER2	0x12721445
 typedef struct {
-	qint		vmMagic;
+	uint32_t vmMagic;
 
-	qint		instructionCount;
+	uint32_t instructionCount;
 
-	qint		codeOffset;
-	qint		codeLength;
+	uint32_t codeOffset;
+	uint32_t codeLength;
 
-	qint		dataOffset;
-	qint		dataLength;
-	qint		litLength;			// ( dataLength - litLength ) should be byteswapped on load
-	qint		bssLength;			// zero filled memory appended to datalength
+	uint32_t dataOffset;
+	uint32_t dataLength;
+	uint32_t litLength;			// ( dataLength - litLength ) should be byteswapped on load
+	uint32_t bssLength;			// zero filled memory appended to datalength
 
 	//!!! below here is VM_MAGIC_VER2 !!!
-	qint		jtrgLength;			// number of jump table targets
+	uint32_t jtrgLength;			// number of jump table targets
 } vmHeader_t;
 
 /*
@@ -90,7 +83,7 @@ typedef struct {
 #define MD3_MAX_TAGS		16		// per frame
 
 // vertex scales
-#define	MD3_XYZ_SCALE		(1.0f/64)
+#define	MD3_XYZ_SCALE		(1.0/64)
 
 typedef struct md3Frame_s {
 	vec3_t		bounds[2];
@@ -116,24 +109,24 @@ typedef struct md3Tag_s {
 ** XyzNormals		sizeof( md3XyzNormal_t ) * numVerts * numFrames
 */
 typedef struct {
-	qint		ident;				// 
+	int32_t ident;				//
 
 	qchar	name[MAX_QPATH];	// polyset name
 
-	qint		flags;
-	qint		numFrames;			// all surfaces in a model should have the same
+	int32_t flags;
+	int32_t numFrames;			// all surfaces in a model should have the same
 
-	qint		numShaders;			// all surfaces in a model should have the same
-	qint		numVerts;
+	int32_t numShaders;			// all surfaces in a model should have the same
+	int32_t numVerts;
 
-	qint		numTriangles;
-	qint		ofsTriangles;
+	int32_t numTriangles;
+	uint32_t ofsTriangles;
 
-	qint		ofsShaders;			// offset from start of md3Surface_t
-	qint		ofsSt;				// texture coords are common for all frames
-	qint		ofsXyzNormals;		// numVerts * numFrames
+	uint32_t ofsShaders;			// offset from start of md3Surface_t
+	uint32_t ofsSt;				// texture coords are common for all frames
+	uint32_t ofsXyzNormals;		// numVerts * numFrames
 
-	qint		ofsEnd;				// next surface follows
+	uint32_t ofsEnd;				// next surface follows
 } md3Surface_t;
 
 typedef struct {
@@ -142,7 +135,7 @@ typedef struct {
 } md3Shader_t;
 
 typedef struct {
-	qint			indexes[3];
+	uint32_t	indexes[3];
 } md3Triangle_t;
 
 typedef struct {
@@ -155,116 +148,33 @@ typedef struct {
 } md3XyzNormal_t;
 
 typedef struct {
-	qint			ident;
-	qint			version;
+	int32_t		ident;
+	int32_t		version;
 
 	qchar		name[MAX_QPATH];	// model name
 
-	qint			flags;
+	uint32_t	flags;
 
-	qint			numFrames;
-	qint			numTags;			
-	qint			numSurfaces;
+	int32_t		numFrames;
+	int32_t		numTags;
+	int32_t		numSurfaces;
 
-	qint			numSkins;
+	int32_t		numSkins;
 
-	qint			ofsFrames;			// offset for first frame
-	qint			ofsTags;			// numFrames * numTags
-	qint			ofsSurfaces;		// first surface, others follow
+	uint32_t	ofsFrames;			// offset for first frame
+	uint32_t	ofsTags;			// numFrames * numTags
+	uint32_t	ofsSurfaces;		// first surface, others follow
 
-	qint			ofsEnd;				// end of file
+	uint32_t	ofsEnd;				// end of file
 } md3Header_t;
 
 /*
 ==============================================================================
 
-MD4 file format
+MDR file format
 
 ==============================================================================
 */
-
-#define MD4_IDENT			(('4'<<24)+('P'<<16)+('D'<<8)+'I')
-#define MD4_VERSION			1
-#define	MD4_MAX_BONES		128
-
-typedef struct {
-	qint			boneIndex;		// these are indexes into the boneReferences,
-	float		   boneWeight;		// not the global per-frame bone list
-	vec3_t		offset;
-} md4Weight_t;
-
-typedef struct {
-	vec3_t		normal;
-	vec2_t		texCoords;
-	qint			numWeights;
-	md4Weight_t	weights[1];		// variable sized
-} md4Vertex_t;
-
-typedef struct {
-	qint			indexes[3];
-} md4Triangle_t;
-
-typedef struct {
-	qint			ident;
-
-	qchar		name[MAX_QPATH];	// polyset name
-	qchar		shader[MAX_QPATH];
-	qint			shaderIndex;		// for in-game use
-
-	qint			ofsHeader;			// this will be a negative number
-
-	qint			numVerts;
-	qint			ofsVerts;
-
-	qint			numTriangles;
-	qint			ofsTriangles;
-
-	// Bone references are a set of ints representing all the bones
-	// present in any vertex weights for this surface.  This is
-	// needed because a model may have surfaces that need to be
-	// drawn at different sort times, and we don't want to have
-	// to re-interpolate all the bones for each surface.
-	qint			numBoneReferences;
-	qint			ofsBoneReferences;
-
-	qint			ofsEnd;				// next surface follows
-} md4Surface_t;
-
-typedef struct {
-	float		matrix[3][4];
-} md4Bone_t;
-
-typedef struct {
-	vec3_t		bounds[2];			// bounds of all surfaces of all LOD's for this frame
-	vec3_t		localOrigin;		// midpoint of bounds, used for sphere cull
-	float		radius;				// dist from localOrigin to corner
-	md4Bone_t	bones[1];			// [numBones]
-} md4Frame_t;
-
-typedef struct {
-	qint			numSurfaces;
-	qint			ofsSurfaces;		// first surface, others follow
-	qint			ofsEnd;				// next lod follows
-} md4LOD_t;
-
-typedef struct {
-	qint			ident;
-	qint			version;
-
-	qchar		name[MAX_QPATH];	// model name
-
-	// frames and bones are shared by all levels of detail
-	qint			numFrames;
-	qint			numBones;
-	qint			ofsBoneNames;		// qchar	name[ MAX_QPATH ]
-	qint			ofsFrames;			// md4Frame_t[numFrames]
-
-	// each level of detail has completely separate sets of surfaces
-	qint			numLODs;
-	qint			ofsLODs;
-
-	qint			ofsEnd;				// end of file
-} md4Header_t;
 
 /*
  * Here are the definitions for Ravensoft's model format of md4. Raven stores their
@@ -280,12 +190,6 @@ typedef struct {
  *
  * - Thilo Schulz (arny@ats.s.bawue.de)
  */
-
-// If you want to enable support for Raven's .mdr / md4 format, uncomment the next
-// line.
-#define RAVENMD4
-
-#if defined(RAVENMD4)
 
 #define MDR_IDENT	(('5'<<24)+('M'<<16)+('D'<<8)+'R')
 #define MDR_VERSION	2
@@ -389,7 +293,6 @@ typedef struct {
 	qint			ofsEnd;				// end of file
 } mdrHeader_t;
 
-#endif
 
 /*
 ==============================================================================
@@ -447,15 +350,15 @@ typedef struct {
 #define MIN_WORLD_COORD		( -128*1024 )
 #define WORLD_SIZE			( MAX_WORLD_COORD - MIN_WORLD_COORD )
 
+#define VIS_HEADER			8
+
 //=============================================================================
 
 
-typedef struct
-{
-  int32_t fileofs;
-  int32_t filelen;
-}
-lump_t;
+typedef struct {
+	uint32_t fileofs;
+	uint32_t filelen;
+} lump_t;
 
 #define	LUMP_ENTITIES		0
 #define	LUMP_SHADERS		1
@@ -495,7 +398,7 @@ typedef struct {
 	qint			contentFlags;
 } dshader_t;
 
-// planes x^1 is allways the opposite of plane x
+// planes x^1 is always the opposite of plane x
 
 typedef struct {
 	float		normal[3];
@@ -540,17 +443,13 @@ typedef struct {
 	qint			visibleSide;	// the brush side that ray tests need to clip against (-1 == none)
 } dfog_t;
 
-typedef struct
-{
-  vec3_t xyz;
-  float st[2];
-  float lightmap[2];
-  vec3_t normal;
-  color4ub_t color;
-}
-drawVert_t;
-
-#define drawVert_t_cleared(x) drawVert_t (x) = {{0, 0, 0}, {0, 0}, {0, 0}, {0, 0, 0}, {0, 0, 0, 0}}
+typedef struct {
+	vec3_t		xyz;
+	float		st[2];
+	float		lightmap[2];
+	vec3_t		normal;
+	color4ub_t	color;
+} drawVert_t;
 
 typedef enum {
 	MST_BAD,
@@ -581,3 +480,6 @@ typedef struct {
 	qint			patchWidth;
 	qint			patchHeight;
 } dsurface_t;
+
+
+

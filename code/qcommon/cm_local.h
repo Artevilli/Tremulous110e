@@ -182,7 +182,7 @@ typedef struct {
 	qint			numClusters;
 	qint			clusterBytes;
 	byte		*visibility;
-	qbool	vised;			// if false, visibility is just a single cluster of ffs
+	byte		*novis;		// clusterBytes of 0xff
 
 	qint			numEntityChars;
 	qchar		*entityString;

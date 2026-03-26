@@ -2097,6 +2097,11 @@ FS_Read(void *buffer, qint len, fileHandle_t f)
     Com_Error(ERR_FATAL, "Filesystem call made without initialization");
   }
 
+  if (len < 0)
+  {
+    Com_Error(ERR_FATAL, "FS_Read: len < 0");
+  }
+
   if (f <= 0 || f >= MAX_FILE_HANDLES)
   {
     return 0;
@@ -2166,6 +2171,11 @@ FS_Write(const void *buffer, qint len, fileHandle_t h)
   if (!fs_searchpaths)
   {
     Com_Error(ERR_FATAL, "Filesystem call made without initialization");
+  }
+
+  if (len < 0)
+  {
+    Com_Error(ERR_FATAL, "FS_Write: len < 0");
   }
 
   //if (h <= 0 || h >= MAX_FILE_HANDLES)
@@ -2581,9 +2591,15 @@ FS_ReadFile(const qchar *qpath, void **buffer)
   }
 
   buf = Hunk_AllocateTempMemory(len + 1);
-  *buffer = buf;
 
-  FS_Read(buf, len, h);
+  if (FS_Read(buf, len, h) != len)
+  {
+    Hunk_FreeTempMemory(buf);
+    FS_FCloseFile(h);
+    return -1;
+  }
+
+  *buffer = buf;
 
   fs_loadCount++;
   fs_loadStack++;

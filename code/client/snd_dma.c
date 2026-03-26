@@ -694,6 +694,9 @@ continuous looping sounds are added each frame
 */
 
 void S_Base_StopLoopingSound(qint entityNum) {
+	if ( entityNum < 0 || entityNum >= MAX_GENTITIES ) {
+		Com_Error( ERR_DROP, "S_StopLoopingSound: bad entitynum %i", entityNum );
+	}
 	loopSounds[entityNum].active = qfalse;
 //	loopSounds[entityNum].sfx = 0;
 	loopSounds[entityNum].kill = qfalse;
@@ -729,6 +732,10 @@ void S_Base_AddLoopingSound( qint entityNum, const vec3_t origin, const vec3_t v
 
 	if ( !s_soundStarted || s_soundMuted ) {
 		return;
+	}
+
+	if ( entityNum < 0 || entityNum >= MAX_GENTITIES ) {
+		Com_Error( ERR_DROP, "S_AddLoopingSound: bad entitynum %i", entityNum );
 	}
 
 	if ( sfxHandle < 0 || sfxHandle >= s_numSfx ) {
@@ -793,6 +800,10 @@ void S_Base_AddRealLoopingSound( qint entityNum, const vec3_t origin, const vec3
 
 	if ( !s_soundStarted || s_soundMuted ) {
 		return;
+	}
+
+	if ( entityNum < 0 || entityNum >= MAX_GENTITIES ) {
+		Com_Error( ERR_DROP, "S_AddRealLoopingSound: bad entitynum %i", entityNum );
 	}
 
 	if ( sfxHandle < 0 || sfxHandle >= s_numSfx ) {
@@ -1040,6 +1051,10 @@ void S_Base_Respatialize( qint entityNum, const vec3_t head, vec3_t axis[3], qin
 
 	if ( !s_soundStarted || s_soundMuted ) {
 		return;
+	}
+
+	if ( entityNum < 0 || entityNum >= MAX_GENTITIES ) {
+		Com_Error( ERR_DROP, "S_Respatialize: bad entitynum %i", entityNum );
 	}
 
 	listener_number = entityNum;

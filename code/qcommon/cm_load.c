@@ -150,6 +150,10 @@ CMod_LoadSubmodels(const lump_t *l)
   qint j;
   qint count;
   qint *indexes;
+  unsigned firstBrush;
+  unsigned numBrushes;
+  unsigned firstSurface;
+  unsigned numSurfaces;
 
   in = (void *)(cmod_base + l->fileofs);
 
@@ -165,13 +169,13 @@ CMod_LoadSubmodels(const lump_t *l)
     Com_Error(ERR_DROP, "%s: map with no models", __func__);
   }
 
-  cm.cmodels = Hunk_Alloc(count * sizeof(*cm.cmodels), h_high);
-  cm.numSubModels = count;
-
   if (count > MAX_SUBMODELS)
   {
     Com_Error(ERR_DROP, "%s: MAX_SUBMODELS exceeded", __func__);
   }
+
+  cm.cmodels = Hunk_Alloc(count * sizeof(*cm.cmodels), h_high);
+  cm.numSubModels = count;
 
   for(i = 0;i < count;i++, in++)
   {
@@ -188,23 +192,39 @@ CMod_LoadSubmodels(const lump_t *l)
       continue; //world model doesn't need other info
     }
 
-    //make a "leaf" just to hold the model's brushes and surfaces
-    out->leaf.numLeafBrushes = LittleLong(in->numBrushes);
-    indexes = Hunk_Alloc(out->leaf.numLeafBrushes * 4, h_high);
-    out->leaf.firstLeafBrush = indexes - cm.leafbrushes;
+    firstBrush = LittleLong(in->firstBrush);
+    numBrushes = LittleLong(in->numBrushes);
 
-    for(j = 0;j < out->leaf.numLeafBrushes;j++)
+    if ((uint64_t)firstBrush + numBrushes > cm.numBrushes)
     {
-      indexes[j] = LittleLong(in->firstBrush) + j;
+      Com_Error(ERR_DROP, "%s: bad brushes", __func__);
     }
 
-    out->leaf.numLeafSurfaces = LittleLong(in->numSurfaces);
-    indexes = Hunk_Alloc(out->leaf.numLeafSurfaces * 4, h_high);
+    //make a "leaf" just to hold the model's brushes and surfaces
+    out->leaf.numLeafBrushes = numBrushes;
+    indexes = Hunk_Alloc(numBrushes * sizeof(*indexes), h_high);
+    out->leaf.firstLeafBrush = indexes - cm.leafbrushes;
+
+    for(j = 0;j < numBrushes;j++)
+    {
+      indexes[j] = firstBrush + j;
+    }
+
+    firstSurface = LittleLong(in->firstSurface);
+    numSurfaces = LittleLong(in->numSurfaces);
+
+    if ((uint64_t)firstSurface + numSurfaces > cm.numSurfaces)
+    {
+      Com_Error(ERR_DROP, "%s: bad surfaces", __func__);
+    }
+
+    out->leaf.numLeafSurfaces = numSurfaces;
+    indexes = Hunk_Alloc(numSurfaces * sizeof(*indexes), h_high);
     out->leaf.firstLeafSurface = indexes - cm.leafsurfaces;
 
-    for(j = 0;j < out->leaf.numLeafSurfaces;j++)
+    for(j = 0;j < numSurfaces;j++)
     {
-      indexes[j] = LittleLong(in->firstSurface) + j;
+      indexes[j] = firstSurface + j;
     }
   }
 }
@@ -219,11 +239,12 @@ static void
 CMod_LoadNodes(const lump_t *l)
 {
   dnode_t *in;
-  qint child;
   cNode_t *out;
   qint i;
   qint j;
   qint count;
+  unsigned child;
+  unsigned num;
 
   in = (dnode_t *)(cmod_base + l->fileofs);
 
@@ -246,11 +267,34 @@ CMod_LoadNodes(const lump_t *l)
 
   for(i = 0;i < count;i++, out++, in++)
   {
-    out->plane = cm.planes + LittleLong(in->planeNum);
+    num = LittleLong(in->planeNum);
+
+    if (num >= cm.numPlanes)
+    {
+      Com_Error(ERR_DROP, "%s: bad planeNum", __func__);
+    }
+
+    out->plane = cm.planes + num;
 
     for(j = 0;j < 2;j++)
     {
       child = LittleLong(in->children[j]);
+
+      if (child & 0x80000000)
+      {
+        if (~child >= cm.numLeafs)
+        {
+          Com_Error(ERR_DROP, "%s: bad leaf", __func__);
+        }
+      }
+      else
+      {
+        if (child >= count)
+        {
+          Com_Error(ERR_DROP, "%s: bad node", __func__);
+        }
+      }
+
       out->children[j] = child;
     }
   }
@@ -287,6 +331,8 @@ CMod_LoadBrushes(const lump_t *l)
   cbrush_t *out;
   qint i;
   qint count;
+  unsigned firstSide;
+  unsigned numSides;
 
   in = (void *)(cmod_base + l->fileofs);
 
@@ -304,8 +350,16 @@ CMod_LoadBrushes(const lump_t *l)
 
   for(i = 0;i < count;i++, out++, in++)
   {
-    out->sides = cm.brushsides + LittleLong(in->firstSide);
-    out->numsides = LittleLong(in->numSides);
+    firstSide = LittleLong(in->firstSide);
+    numSides = LittleLong(in->numSides);
+
+    if ((uint64_t)firstSide + numSides > cm.numBrushSides)
+    {
+      Com_Error(ERR_DROP, "%s: bad brushsides", __func__);
+    }
+
+    out->sides = cm.brushsides + firstSide;
+    out->numsides = numSides;
 
     out->shaderNum = LittleLong(in->shaderNum);
 
@@ -332,6 +386,10 @@ CMod_LoadLeafs(const lump_t *l)
   cLeaf_t *out;
   dleaf_t *in;
   qint count;
+  unsigned firstLeafBrush;
+  unsigned numLeafBrushes;
+  unsigned firstLeafSurface;
+  unsigned numLeafSurfaces;
 
   in = (void *)(cmod_base + l->fileofs);
 
@@ -355,11 +413,40 @@ CMod_LoadLeafs(const lump_t *l)
   for(i = 0;i < count;i++, in++, out++)
   {
     out->cluster = LittleLong(in->cluster);
+
+    if (out->cluster + 1U > INT_MAX - 63U)
+    {
+      Com_Error(ERR_DROP, "%s: bad cluster", __func__);
+    }
+
     out->area = LittleLong(in->area);
-    out->firstLeafBrush = LittleLong(in->firstLeafBrush);
-    out->numLeafBrushes = LittleLong(in->numLeafBrushes);
-    out->firstLeafSurface = LittleLong(in->firstLeafSurface);
-    out->numLeafSurfaces = LittleLong(in->numLeafSurfaces);
+
+    if (out->area + 1U > MAX_MAP_AREAS)
+    {
+      Com_Error(ERR_DROP, "%s: bad area", __func__);
+    }
+
+    firstLeafBrush = LittleLong(in->firstLeafBrush);
+    numLeafBrushes = LittleLong(in->numLeafBrushes);
+
+    if ((uint64_t)firstLeafBrush + numLeafBrushes > cm.numLeafBrushes)
+    {
+      Com_Error(ERR_DROP, "%s: bad leafbrushes", __func__);
+    }
+
+    out->firstLeafBrush = firstLeafBrush;
+    out->numLeafBrushes = numLeafBrushes;
+
+    firstLeafSurface = LittleLong(in->firstLeafSurface);
+    numLeafSurfaces = LittleLong(in->numLeafSurfaces);
+
+    if ((uint64_t)firstLeafSurface + numLeafSurfaces > cm.numLeafSurfaces)
+    {
+      Com_Error(ERR_DROP, "%s: bad leafsurfaces", __func__);
+    }
+
+    out->firstLeafSurface = firstLeafSurface;
+    out->numLeafSurfaces = numLeafSurfaces;
 
     if (out->cluster >= cm.numClusters)
     {
@@ -459,7 +546,14 @@ CMod_LoadLeafBrushes(const lump_t *l)
 
   for(i = 0;i < count;i++, in++, out++)
   {
-    *out = LittleLong (*in);
+    unsigned j = LittleLong(*in);
+
+    if (j >= cm.numBrushes)
+    {
+      Com_Error(ERR_DROP, "%s: bad brush", __func__);
+    }
+
+    *out = j;
   }
 }
 
@@ -492,27 +586,14 @@ CMod_LoadLeafSurfaces(const lump_t *l)
 
   for(i = 0;i < count;i++, in++, out++)
   {
-    *out = LittleLong(*in);
-  }
-}
+    unsigned j = LittleLong(*in);
 
-/*
-=================
-CMod_CheckLeafBrushes
-=================
-*/
-static void
-CMod_CheckLeafBrushes(void)
-{
-  qint i;
-
-  for(i = 0;i < cm.numLeafBrushes;i++)
-  {
-    if (cm.leafbrushes[i] < 0 || cm.leafbrushes[i] >= cm.numBrushes)
+    if (j >= cm.numSurfaces)
     {
-      Com_DPrintf(S_COLOR_YELLOW "[%i] invalid leaf brush %08x\n", i, cm.leafbrushes[i]);
-      cm.leafbrushes[i] = 0;
+      Com_Error(ERR_DROP, "%s: bad surface", __func__);
     }
+
+    *out = j;
   }
 }
 
@@ -528,7 +609,7 @@ CMod_LoadBrushSides(const lump_t *l)
   cbrushside_t *out;
   dbrushside_t *in;
   qint count;
-  qint num;
+  unsigned num;
 
   in = (dbrushside_t *)(cmod_base + l->fileofs);
 
@@ -547,6 +628,12 @@ CMod_LoadBrushSides(const lump_t *l)
   for(i = 0;i < count;i++, in++, out++)
   {
     num = LittleLong(in->planeNum);
+
+    if (num >= cm.numPlanes)
+    {
+      Com_Error(ERR_DROP, "%s: bad planeNum", __func__);
+    }
+
     out->planeNum = num;
     out->plane = &cm.planes[num];
     out->shaderNum = LittleLong(in->shaderNum);
@@ -728,9 +815,10 @@ CMod_LoadEntityString
 static void
 CMod_LoadEntityString(const lump_t *l)
 {
-  cm.entityString = Hunk_Alloc(l->filelen, h_high);
+  cm.entityString = Hunk_Alloc(l->filelen + 1, h_high);
   cm.numEntityChars = l->filelen;
   Com_Memcpy(cm.entityString, cmod_base + l->fileofs, l->filelen);
+  cm.entityString[l->filelen] = 0;
 }
 
 /*
@@ -742,27 +830,53 @@ CMod_LoadVisibility
 static void
 CMod_LoadVisibility(const lump_t *l)
 {
-  qint len;
+  unsigned numClusters;
+  unsigned clusterBytes;
+  unsigned len;
   byte *buf;
+
+  len = PAD(cm.numClusters, 64) >> 3;
+  cm.novis = Hunk_Alloc(len, h_high);
+  Com_Memset(cm.novis, 0xff, len);
 
   len = l->filelen;
 
   if (!len)
   {
-    cm.clusterBytes = (cm.numClusters + 31) & ~31;
-    cm.visibility = Hunk_Alloc(cm.clusterBytes, h_high);
-    Com_Memset(cm.visibility, 255, cm.clusterBytes);
-
     return;
   }
 
-  buf = cmod_base + l->fileofs;
+  if (len < VIS_HEADER)
+  {
+    Com_Error(ERR_DROP, "%s: lump too short", __func__);
+  }
 
-  cm.vised = qtrue;
+  buf = cmod_base + l->fileofs;
+  numClusters = LittleLong(((qint *)buf)[0]);
+  clusterBytes = LittleLong(((qint *)buf)[1]);
+
+  buf += VIS_HEADER;
+  len -= VIS_HEADER;
+
+  if ((uint64_t)numClusters * clusterBytes > len)
+  {
+    Com_Error(ERR_DROP, "%s: lump too short", __func__);
+  }
+
+  if (numClusters < cm.numClusters)
+  {
+    Com_Error(ERR_DROP, "%s: bad numClusters", __func__);
+  }
+
+  if (clusterBytes < (numClusters + 7) >> 3)
+  {
+    Com_Error(ERR_DROP, "%s: bad clusterBytes", __func__);
+  }
+
   cm.visibility = Hunk_Alloc(len, h_high);
-  cm.numClusters = LittleLong(((qint *)buf)[0]);
-  cm.clusterBytes = LittleLong(((qint *)buf)[1]);
-  Com_Memcpy(cm.visibility, buf + VIS_HEADER, len - VIS_HEADER);
+  cm.numClusters = numClusters;
+  cm.clusterBytes = clusterBytes;
+  Com_Memcpy(cm.visibility, buf, len);
 }
 
 //==================================================================
@@ -783,12 +897,14 @@ CMod_LoadPatches(const lump_t *surfs, const lump_t *verts)
   qint count;
   qint i;
   qint j;
-  qint c;
+  unsigned firstVert;
+  unsigned numVerts;
+  unsigned totalVerts;
   cPatch_t *patch;
   vec3_t points[MAX_PATCH_VERTS];
-  qint width;
-  qint height;
-  qint shaderNum;
+  unsigned width;
+  unsigned height;
+  unsigned shaderNum;
 
   in = (void *)(cmod_base + surfs->fileofs);
 
@@ -807,6 +923,8 @@ CMod_LoadPatches(const lump_t *surfs, const lump_t *verts)
     Com_Error(ERR_DROP, "%s: funny lump size", __func__);
   }
 
+  totalVerts = verts->filelen / sizeof(*dv);
+
   //scan through all the surfaces, but only load patches,
   //not planar faces
   for(i = 0;i < count;i++, in++)
@@ -823,16 +941,23 @@ CMod_LoadPatches(const lump_t *surfs, const lump_t *verts)
     //load the full drawverts onto the stack
     width = LittleLong(in->patchWidth);
     height = LittleLong(in->patchHeight);
-    c = width * height;
 
-    if (c > MAX_PATCH_VERTS)
+    if ((uint64_t)width * height > MAX_PATCH_VERTS)
     {
       Com_Error(ERR_DROP, "%s: MAX_PATCH_VERTS", __func__);
     }
 
-    dv_p = dv + LittleLong(in->firstVert);
+    firstVert = LittleLong(in->firstVert);
+    numVerts = width * height;
 
-    for(j = 0;j < c;j++, dv_p++)
+    if ((uint64_t)firstVert + numVerts > totalVerts)
+    {
+      Com_Error(ERR_DROP, "%s: bad firstVert", __func__);
+    }
+
+    dv_p = dv + firstVert;
+
+    for(j = 0;j < numVerts;j++, dv_p++)
     {
       points[j][0] = LittleFloat(dv_p->xyz[0]);
       points[j][1] = LittleFloat(dv_p->xyz[1]);
@@ -840,6 +965,12 @@ CMod_LoadPatches(const lump_t *surfs, const lump_t *verts)
     }
 
     shaderNum = LittleLong(in->shaderNum);
+
+    if (shaderNum >= cm.numShaders)
+    {
+      Com_Error(ERR_DROP, "%s: bad shaderNum", __func__);
+    }
+
     patch->contents = cm.shaders[shaderNum].contentFlags;
     patch->surfaceFlags = cm.shaders[shaderNum].surfaceFlags;
 
@@ -876,6 +1007,32 @@ CM_Checksum(const dheader_t *header)
   return LittleLong(Com_BlockChecksum(checksums, ARRAY_LEN(checksums) * 4));
 }
 #endif
+
+static void
+CM_ValidateTree_r(byte *visited, qint node)
+{
+  while(node >= 0)
+  {
+    if (visited[node])
+    {
+      Com_Error(ERR_DROP, "%s: cycle encountered", __func__);
+    }
+
+    visited[node] = 1;
+    CM_ValidateTree_r(visited, cm.nodes[node].children[0]);
+    node = cm.nodes[node].children[1];
+  }
+}
+
+static void
+CM_ValidateTree(void)
+{
+  byte *visited = Hunk_AllocateTempMemory(cm.numNodes);
+
+  Com_Memset(visited, 0, cm.numNodes);
+  CM_ValidateTree_r(visited, 0);
+  Hunk_FreeTempMemory(visited);
+}
 
 /*
 ==================
@@ -960,10 +1117,10 @@ CM_LoadMap(const qchar *name, qbool clientload, qint *checksum)
 
   for(i = 0;i < HEADER_LUMPS;i++)
   {
-    int32_t ofs = header.lumps[i].fileofs;
-    int32_t len = header.lumps[i].filelen;
+    uint32_t ofs = header.lumps[i].fileofs;
+    uint32_t len = header.lumps[i].filelen;
 
-    if ((uint32_t)ofs > MAX_QINT || (uint32_t)len > MAX_QINT || ofs + len > length || ofs + len < 0)
+    if ((uint64_t)ofs + len > length)
     {
       Com_Error(ERR_DROP, "%s: %s has wrong lump[%i] size/offset", __func__, name, i);
     }
@@ -971,15 +1128,19 @@ CM_LoadMap(const qchar *name, qbool clientload, qint *checksum)
 
   cmod_base = (byte *)buf;
 
+  //pre-calculate some stuff
+  cm.numBrushes = header.lumps[LUMP_BRUSHES].filelen / sizeof(dbrush_t);
+  cm.numSurfaces = header.lumps[LUMP_SURFACES].filelen / sizeof(dsurface_t);
+
   //load into heap
   CMod_LoadShaders(&header.lumps[LUMP_SHADERS]);
-  CMod_LoadLeafs(&header.lumps[LUMP_LEAFS]);
   CMod_LoadLeafBrushes(&header.lumps[LUMP_LEAFBRUSHES]);
   CMod_LoadLeafSurfaces(&header.lumps[LUMP_LEAFSURFACES]);
   CMod_LoadPlanes(&header.lumps[LUMP_PLANES]);
   CMod_LoadBrushSides(&header.lumps[LUMP_BRUSHSIDES]);
   CMod_LoadBrushes(&header.lumps[LUMP_BRUSHES]);
   CMod_LoadSubmodels(&header.lumps[LUMP_MODELS]);
+  CMod_LoadLeafs(&header.lumps[LUMP_LEAFS]);
   CMod_LoadNodes(&header.lumps[LUMP_NODES]);
   CMod_LoadEntityString(&header.lumps[LUMP_ENTITIES]);
   CMod_LoadVisibility(&header.lumps[LUMP_VISIBILITY]);
@@ -987,10 +1148,11 @@ CM_LoadMap(const qchar *name, qbool clientload, qint *checksum)
 
   CMod_CreateBrushSideWindings();
 
-  CMod_CheckLeafBrushes();
-
   //we are NOT freeing the file, because it is cached for the ref
   FS_FreeFile(buf);
+
+  //check for cycles so we don't overflow stack
+  CM_ValidateTree();
 
   CM_InitBoxHull();
 

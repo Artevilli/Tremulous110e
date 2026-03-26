@@ -813,8 +813,8 @@ InputLineWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
           s++;
         }
 
-        strncat(s_wcd.consoleText, s, sizeof(s_wcd.consoleText) - strlen(s_wcd.consoleText) - 2);
-        strcat(s_wcd.consoleText, "\n");
+        Q_strcat(s_wcd.consoleText, sizeof(s_wcd.consoleText), s);
+        Q_strcat(s_wcd.consoleText, sizeof(s_wcd.consoleText), "\n");
 
         SetWindowText(s_wcd.hwndInputLine, T(""));
         Field_Clear(&console);

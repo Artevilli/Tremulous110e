@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--03/26/2026--**
+
+* client/qcommon/server/sys:<br />big validity and stability patch
+
 **--03/25/2026--**
 
 * server:<br />redo no zero rate warnings

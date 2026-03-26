@@ -275,6 +275,24 @@ VM_CheckBounds2(const vm_t *vm, unsigned addr1, unsigned addr2, unsigned length)
 
 /*
 ==============
+VM_CheckBounds3
+==============
+*/
+void
+VM_CheckBounds3(const vm_t *vm, unsigned address, unsigned count, unsigned size)
+{
+  //if (!vm->entrypoint)
+  {
+    if ((uint64_t)address + (uint64_t)count * size > vm->dataMask)
+    {
+      Com_Error(ERR_DROP, "program tried to bypass data segment bounds");
+    }
+  }
+}
+
+
+/*
+==============
 VM_Init
 ==============
 */
@@ -742,7 +760,17 @@ Load_JTS(vm_t *vm, uint32_t crc32, void *data, qint vmPakIndex)
     return length;
   }
 
-  FS_Read(data, length, fh);
+  if (FS_Read(data, length, fh) != length)
+  {
+    if (data)
+    {
+      Com_Printf(" error reading %s.\n", filename);
+    }
+
+    FS_FCloseFile(fh);
+    return -1;
+  }
+
   FS_FCloseFile(fh);
 
   //byte swap the data
@@ -758,13 +786,13 @@ VM_ValidateHeader
 =================
 */
 static qchar *
-VM_ValidateHeader(vmHeader_t *header, qint fileSize)
+VM_ValidateHeader(vmHeader_t *header, uint32_t fileSize)
 {
   static qchar errMsg[128];
-  qint n;
+  uint32_t n;
 
   //truncated
-  if (fileSize < (sizeof(vmHeader_t) - sizeof(int32_t)))
+  if (fileSize < (sizeof(vmHeader_t) - sizeof(uint32_t)))
   {
     sprintf(errMsg, "truncated image header (%i bytes long)", fileSize);
     return errMsg;
@@ -790,53 +818,69 @@ VM_ValidateHeader(vmHeader_t *header, qint fileSize)
   }
   else
   {
-    n = (sizeof(vmHeader_t) - sizeof(int32_t));
+    n = (sizeof(vmHeader_t) - sizeof(uint32_t));
   }
 
   //byte swap the header
   VM_SwapLongs(header, n);
 
+  //can't have more instructions than bytes of code
+  if (header->instructionCount > header->codeLength)
+  {
+    sprintf(errMsg, "bad instruction count %u", header->instructionCount);
+    return errMsg;
+  }
+
   //bad code offset
   if (header->codeOffset >= fileSize)
   {
-    sprintf(errMsg, "bad code segment offset %i", header->codeOffset);
+    sprintf(errMsg, "bad code segment offset %u", header->codeOffset);
     return errMsg;
   }
 
   //bad code length
-  if (header->codeLength <= 0 || header->codeOffset + header->codeLength > fileSize)
+  if (header->codeLength > fileSize - header->codeOffset)
   {
-    sprintf(errMsg, "bad code segment length %i", header->codeLength);
+    sprintf(errMsg, "bad code segment length %u", header->codeLength);
     return errMsg;
   }
 
   //bad data offset
   if (header->dataOffset >= fileSize || header->dataOffset != header->codeOffset + header->codeLength)
   {
-    sprintf(errMsg, "bad data segment offset %i", header->dataOffset);
+    sprintf(errMsg, "bad data segment offset %u", header->dataOffset);
     return errMsg;
   }
 
   //bad data length
-  if (header->dataOffset + header->dataLength > fileSize)
+  if (header->dataLength > fileSize - header->dataOffset)
   {
-    sprintf(errMsg, "bad data segment length %i", header->dataLength);
+    sprintf(errMsg, "bad data segment length %u", header->dataLength);
     return errMsg;
   }
+
+  n = fileSize - (header->dataOffset + header->dataLength);
 
   if (header->vmMagic == VM_MAGIC_VER2)
   {
     //bad lit/jtrg length
-    if (header->dataOffset + header->dataLength + header->litLength + header->jtrgLength != fileSize)
+    if ((uint64_t)header->litLength + header->jtrgLength != n)
     {
       sprintf(errMsg, "bad lit/jtrg segment length");
       return errMsg;
     }
   }
   //bad lit length
-  else if (header->dataOffset + header->dataLength + header->litLength != fileSize)
+  else if (header->litLength != n)
   {
-    sprintf(errMsg, "bad lit segment length %i", header->litLength);
+    sprintf(errMsg, "bad lit segment length %u", header->litLength);
+    return errMsg;
+  }
+
+  //size of data should not exceed 2^30-1 before padding
+  if ((uint64_t)header->bssLength + header->dataLength + header->litLength >= UBIT(30))
+  {
+    sprintf(errMsg, "bad bss segment length %u", header->bssLength);
     return errMsg;
   }
 

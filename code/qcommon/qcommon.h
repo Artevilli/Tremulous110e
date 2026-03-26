@@ -436,13 +436,17 @@ void
 VM_CheckBounds(const vm_t *vm, unsigned address, unsigned length);
 void
 VM_CheckBounds2(const vm_t *vm, unsigned addr1, unsigned addr2, unsigned length);
+void
+VM_CheckBounds3(const vm_t *vm, unsigned address, unsigned count, unsigned size);
 
 #if 1
 #define VM_CHECKBOUNDS VM_CheckBounds
 #define VM_CHECKBOUNDS2 VM_CheckBounds2
+#define VM_CHECKBOUNDS3 VM_CheckBounds3
 #else //for performance evaluation purposes
 #define VM_CHECKBOUNDS(vm, a, b)
 #define VM_CHECKBOUNDS2(vm, a, b, c)
+#define VM_CHECKBOUNDS3(vm, a, b, c)
 #endif
 
 void *
@@ -1239,13 +1243,13 @@ temp file loading
 #define Z_TagMalloc(size, tag) Z_TagMallocDebug(size, tag, #size, __FILE__, __LINE__)
 #define Z_Malloc(size) Z_MallocDebug(size, #size, __FILE__, __LINE__)
 #define S_Malloc(size) S_MallocDebug(size, #size, __FILE__, __LINE__)
-void *Z_TagMallocDebug( qint size, memtag_t tag, qchar *label, qchar *file, qint line );	// NOT 0 filled memory
-void *Z_MallocDebug( qint size, qchar *label, qchar *file, qint line );			// returns 0 filled memory
-void *S_MallocDebug( qint size, qchar *label, qchar *file, qint line );			// returns 0 filled memory
+void *Z_TagMallocDebug( size_t size, memtag_t tag, const qchar *label, const qchar *file, qint line );	// NOT 0 filled memory
+void *Z_MallocDebug( size_t size, const qchar *label, const qchar *file, qint line );			// returns 0 filled memory
+void *S_MallocDebug( size_t size, const qchar *label, const qchar *file, qint line );			// returns 0 filled memory
 #else
-void *Z_TagMalloc( qint size, memtag_t tag );	// NOT 0 filled memory
-void *Z_Malloc( qint size );			// returns 0 filled memory
-void *S_Malloc( qint size );			// NOT 0 filled memory only for small allocations
+void *Z_TagMalloc( size_t size, memtag_t tag );	// NOT 0 filled memory
+void *Z_Malloc( size_t size );			// returns 0 filled memory
+void *S_Malloc( size_t size );			// NOT 0 filled memory only for small allocations
 #endif
 void Z_Free( void *ptr );
 qint Z_FreeTags( memtag_t tag );
@@ -1257,7 +1261,7 @@ void Hunk_ClearToMark( void );
 void Hunk_SetMark( void );
 qbool Hunk_CheckMark( void );
 void Hunk_ClearTempMemory( void );
-void *Hunk_AllocateTempMemory( qint size );
+void *Hunk_AllocateTempMemory( size_t size );
 void Hunk_FreeTempMemory( void *buf );
 qint	Hunk_MemoryRemaining( void );
 void Hunk_Log( void);

@@ -396,9 +396,9 @@ typedef enum {
 
 #if defined(HUNK_DEBUG)
 #define Hunk_Alloc( size, preference )				Hunk_AllocDebug(size, preference, #size, __FILE__, __LINE__)
-void *Hunk_AllocDebug( qint size, ha_pref preference, qchar *label, qchar *file, qint line );
+void *Hunk_AllocDebug( size_t size, ha_pref preference, const qchar *label, const qchar *file, qint line );
 #else
-void *Hunk_Alloc( qint size, ha_pref preference );
+void *Hunk_Alloc( size_t size, ha_pref preference );
 #endif
 
 #if defined(__GNUC__) && !defined(__MINGW32__) && !defined(MACOS_X)
