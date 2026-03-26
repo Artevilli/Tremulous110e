@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--03/26/2026--**
 
+* qcommon:<br />adapt RotatePointAroundVector() from Mesa 3D
+
 * client/qcommon/server/sys:<br />big validity and stability patch
 
 **--03/25/2026--**

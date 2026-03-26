@@ -351,57 +351,69 @@ qbool PlaneFromPoints( vec4_t plane, const vec3_t a, const vec3_t b, const vec3_
 }
 
 /*
+==================
+SetupRotationMatrix
+
+Setup rotation matrix given the normalized direction vector and angle to rotate
+around this vector. Adapted from Mesa 3D.
+==================
+*/
+void
+SetupRotationMatrix(vec3_t matrix[3], const vec3_t dir, float degrees)
+{
+  vec_t angle;
+  vec_t s;
+  vec_t c;
+  vec_t one_c;
+  vec_t xx;
+  vec_t yy;
+  vec_t zz;
+  vec_t xy;
+  vec_t yz;
+  vec_t zx;
+  vec_t xs;
+  vec_t ys;
+  vec_t zs;
+
+  angle = DEG2RAD(degrees);
+  s = sin(angle);
+  c = cos(angle);
+  one_c = 1.0F - c;
+
+  xx = dir[0] * dir[0];
+  yy = dir[1] * dir[1];
+  zz = dir[2] * dir[2];
+  xy = dir[0] * dir[1];
+  yz = dir[1] * dir[2];
+  zx = dir[2] * dir[0];
+  xs = dir[0] * s;
+  ys = dir[1] * s;
+  zs = dir[2] * s;
+
+  matrix[0][0] = (one_c * xx) + c;
+  matrix[0][1] = (one_c * xy) - zs;
+  matrix[0][2] = (one_c * zx) + ys;
+
+  matrix[1][0] = (one_c * xy) + zs;
+  matrix[1][1] = (one_c * yy) + c;
+  matrix[1][2] = (one_c * yz) - xs;
+
+  matrix[2][0] = (one_c * zx) - ys;
+  matrix[2][1] = (one_c * yz) + xs;
+  matrix[2][2] = (one_c * zz) + c;
+}
+
+/*
 ===============
 RotatePointAroundVector
-
-This is not implemented very well...
 ===============
 */
 void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point,
 							 float degrees ) {
-	float sin_a;
-	float cos_a;
-	float cos_ia;
-	float i_i_ia;
-	float j_j_ia;
-	float k_k_ia;
-	float i_j_ia;
-	float i_k_ia;
-	float j_k_ia;
-	float a_sin;
-	float b_sin;
-	float c_sin;
-	float rot[3][3];
+  vec3_t matrix[3];
 
-	cos_ia = DEG2RAD(degrees);
-	sin_a = sin(cos_ia);
-	cos_a = cos(cos_ia);
-	cos_ia = 1.0F - cos_a;
-
-	i_i_ia = dir[0] * dir[0] * cos_ia;
-	j_j_ia = dir[1] * dir[1] * cos_ia;
-	k_k_ia = dir[2] * dir[2] * cos_ia;
-	i_j_ia = dir[0] * dir[1] * cos_ia;
-	i_k_ia = dir[0] * dir[2] * cos_ia;
-	j_k_ia = dir[1] * dir[2] * cos_ia;
-
-	a_sin = dir[0] * sin_a;
-	b_sin = dir[1] * sin_a;
-	c_sin = dir[2] * sin_a;
-
-	rot[0][0] = i_i_ia + cos_a;
-	rot[0][1] = i_j_ia - c_sin;
-	rot[0][2] = i_k_ia + b_sin;
-	rot[1][0] = i_j_ia + c_sin;
-	rot[1][1] = j_j_ia + cos_a;
-	rot[1][2] = j_k_ia - a_sin;
-	rot[2][0] = i_k_ia - b_sin;
-	rot[2][1] = j_k_ia + a_sin;
-	rot[2][2] = k_k_ia + cos_a;
-
-	dst[0] = point[0] * rot[0][0] + point[1] * rot[0][1] + point[2] * rot[0][2];
-	dst[1] = point[0] * rot[1][0] + point[1] * rot[1][1] + point[2] * rot[1][2];
-	dst[2] = point[0] * rot[2][0] + point[1] * rot[2][1] + point[2] * rot[2][2];
+  SetupRotationMatrix(matrix, dir, degrees);
+  VectorRotate(point, matrix, dst);
 }
 
 /*
