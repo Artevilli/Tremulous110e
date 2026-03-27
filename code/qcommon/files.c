@@ -6790,7 +6790,7 @@ FS_LoadLibrary(const qchar *name)
 
     if (sp)
     {
-      const qchar *fn = FS_BuildOSPath(sp->dir->path, name, NULL);
+      const qchar *fn = FS_BuildOSPath(sp->dir->path, sp->dir->gamedir, name);
       libHandle = Sys_LoadLibrary(fn);
       sp = sp->next;
     }

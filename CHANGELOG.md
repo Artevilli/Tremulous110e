@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--03/27/2026--**
+
+* qcommon:<br />fix and allow library loading
+
 **--03/26/2026--**
 
 * qcommon:<br />avoid array bounds check for DLLs
