@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--03/27/2026--**
 
+* qcommon:<br />unsigned shifting
+
 * qcommon:<br />fix and allow library loading
 
 **--03/26/2026--**

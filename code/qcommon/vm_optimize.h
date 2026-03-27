@@ -1050,7 +1050,7 @@ alloc_sx_const(uint32_t pref, uint32_t imm)
     {
       n = sx_list_cache[i];
 
-      if (mask & (BIT(n)))
+      if (mask & (UBIT(n)))
       {
         //target register must be unmasked and not present on the opStack
         continue;
@@ -1253,7 +1253,7 @@ dyn_alloc_sx(void)
   {
     n = sx_list_alloc[i];
 
-    if (mask & (BIT(n)))
+    if (mask & (UBIT(n)))
     {
       continue;
     }
