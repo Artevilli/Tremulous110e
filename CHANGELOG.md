@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--03/28/2026--**
+
+* server:<br />fix trace entity num
+
 **--03/27/2026--**
 
 * client/qcommon:<br />pull darklegion's hostname length patch

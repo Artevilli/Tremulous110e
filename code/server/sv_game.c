@@ -54,7 +54,7 @@ SV_GentityNum(qint num)
 {
   sharedEntity_t *ent;
 
-  if (num < -1 || num >= MAX_GENTITIES)
+  if (num < 0 || num >= MAX_GENTITIES)
   {
     Com_Error(ERR_DROP, "%s: bad num %d", __func__, num);
   }
