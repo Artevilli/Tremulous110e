@@ -305,6 +305,7 @@ typedef qint		clipHandle_t;
 #endif
 
 #define	MAX_NAME_LENGTH		32		// max length of a client name
+#define	MAX_HOSTNAME_LENGTH	80		// max length of a host name
 
 #define	MAX_SAY_TEXT	800
 

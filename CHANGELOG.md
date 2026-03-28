@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--03/27/2026--**
 
+* client/qcommon:<br />pull darklegion's hostname length patch
+
 * qcommon:<br />unsigned shifting
 
 * qcommon:<br />fix and allow library loading
