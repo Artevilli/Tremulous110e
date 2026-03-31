@@ -4,6 +4,12 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--03/31/2026--**
+
+* qcommon/server:<br />rework free block search
+
+* client:<br />fix and use internal ogg vorbis
+
 **--03/28/2026--**
 
 * server:<br />fix trace entity num

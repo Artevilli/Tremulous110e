@@ -2392,12 +2392,12 @@ SV_Frame(const qint msec)
     Cvar_Set("sv_fps", "10");
   }
 
-  frameMsec = 1000 / sv_fps->integer * com_timescale->value;
+  frameMsec = (1000 / sv_fps->integer) * com_timescale->value;
 
   //don't let it scale below 1ms
   if (frameMsec < 1)
   {
-    Cvar_Set("timescale", va("%f", sv_fps->integer / 1000.0f));
+    Cvar_SetValue("timescale", sv_fps->value / 1000.0f);
     frameMsec = 1;
   }
 

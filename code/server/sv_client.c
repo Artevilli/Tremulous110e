@@ -53,7 +53,7 @@ SV_CreateChallenge(qint timestamp, const netadr_t *from)
   //The most-significant bit stores whether the timestamp is odd or even. This lets later verification code handle the
   //case where the engine timestamp is incremented between the time this challenge is sent and the client replies.
   challenge = Com_MD5Addr(from, timestamp);
-  challenge &= 0x7FFFFFFF;
+  challenge &= (1U << 31) - 1;
   challenge |= (unsigned)(timestamp & 0x1) << 31;
 
   return challenge;
@@ -3758,7 +3758,7 @@ SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
       //send initial gamestate, client may not acknowledge it in next command but start downloading after SV_ClientCommand()
       if (sv_protect->integer & SVP_XREAL)
       {
-        if (!SVC_RateLimit(&cl->gamestate_rate, 1, 1000, now))
+        if (cl->netchan.remoteAddress.type == NA_LOOPBACK || !SVC_RateLimit(&cl->gamestate_rate, 1, 1000, now))
         {
           Com_DPrintf("%s: sending gamestate\n", cl->name);
           SV_SendClientGameState(cl);
