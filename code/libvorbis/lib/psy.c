@@ -235,14 +235,14 @@ static float ***setup_tone_curves(float curveatt_dB[P_BANDS],float binHz,int n,
 
 
       for(j=0;j<EHMER_MAX;j++){
-        int bin1=fromOC(j*.125+i*.5-2.)/binHz;
-        if(bin1<0){
+        int bin=fromOC(j*.125+i*.5-2.)/binHz;
+        if(bin<0){
           ret[i][m][j+2]=-999.;
         }else{
-          if(bin1>=n){
+          if(bin>=n){
             ret[i][m][j+2]=-999.;
           }else{
-            ret[i][m][j+2]=brute_buffer[bin1];
+            ret[i][m][j+2]=brute_buffer[bin];
           }
         }
       }
@@ -705,8 +705,6 @@ void _vp_noisemask(vorbis_look_psy *p,
 
   int i,n=p->n;
   float *work=alloca(n*sizeof(*work));
-
-  work[0] = 0.0f;
 
   bark_noise_hybridmp(n,p->bark,logmdct,logmask,
                       140.,-1);

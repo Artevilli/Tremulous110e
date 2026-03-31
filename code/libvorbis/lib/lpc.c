@@ -64,8 +64,6 @@ float vorbis_lpc_from_data(float *data,float *lpci,int n,int m){
   double epsilon;
   int i,j;
 
-  aut[0] = 0.0;
-
   /* autocorrelation, p+1 lag coefficients */
   j=m+1;
   while(j--){

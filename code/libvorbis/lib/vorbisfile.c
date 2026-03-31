@@ -1110,10 +1110,10 @@ long ov_bitrate(OggVorbis_File *vf,int i){
   if(!vf->seekable && i!=0)return(ov_bitrate(vf,0));
   if(i<0){
     ogg_int64_t bits=0;
-    int j;
+    int i;
     float br;
-    for(j=0;j<vf->links;j++)
-      bits+=(vf->offsets[j+1]-vf->dataoffsets[j])*8;
+    for(i=0;i<vf->links;i++)
+      bits+=(vf->offsets[i+1]-vf->dataoffsets[i])*8;
     /* This once read: return(rint(bits/ov_time_total(vf,-1)));
      * gcc 3.x on x86 miscompiled this at optimisation level 2 and above,
      * so this is slightly transformed to make it work.
@@ -1178,9 +1178,9 @@ ogg_int64_t ov_raw_total(OggVorbis_File *vf,int i){
   if(!vf->seekable || i>=vf->links)return(OV_EINVAL);
   if(i<0){
     ogg_int64_t acc=0;
-    int j;
-    for(j=0;j<vf->links;j++)
-      acc+=ov_raw_total(vf,j);
+    int i;
+    for(i=0;i<vf->links;i++)
+      acc+=ov_raw_total(vf,i);
     return(acc);
   }else{
     return(vf->offsets[i+1]-vf->offsets[i]);
@@ -1197,9 +1197,9 @@ ogg_int64_t ov_pcm_total(OggVorbis_File *vf,int i){
   if(!vf->seekable || i>=vf->links)return(OV_EINVAL);
   if(i<0){
     ogg_int64_t acc=0;
-    int j;
-    for(j=0;j<vf->links;j++)
-      acc+=ov_pcm_total(vf,j);
+    int i;
+    for(i=0;i<vf->links;i++)
+      acc+=ov_pcm_total(vf,i);
     return(acc);
   }else{
     return(vf->pcmlengths[i*2+1]);
@@ -1216,9 +1216,9 @@ double ov_time_total(OggVorbis_File *vf,int i){
   if(!vf->seekable || i>=vf->links)return(OV_EINVAL);
   if(i<0){
     double acc=0;
-    int j;
-    for(j=0;j<vf->links;j++)
-      acc+=ov_time_total(vf,j);
+    int i;
+    for(i=0;i<vf->links;i++)
+      acc+=ov_time_total(vf,i);
     return(acc);
   }else{
     return((double)(vf->pcmlengths[i*2+1])/vf->vi[i].rate);
@@ -1592,14 +1592,14 @@ int ov_pcm_seek_page(OggVorbis_File *vf,ogg_int64_t pos){
       /* Bisection found our page. seek to it, update pcm offset. Easier case than
          raw_seek, don't keep packets preceding granulepos. */
 
-      ogg_page og2;
+      ogg_page og;
       ogg_packet op;
 
       /* seek */
       result=_seek_helper(vf,best);
       vf->pcm_offset=-1;
       if(result) goto seek_error;
-      result=_get_next_page(vf,&og2,-1);
+      result=_get_next_page(vf,&og,-1);
       if(result<0) goto seek_error;
 
       if(link!=vf->current_link){
@@ -1615,7 +1615,7 @@ int ov_pcm_seek_page(OggVorbis_File *vf,ogg_int64_t pos){
       }
 
       ogg_stream_reset_serialno(&vf->os,vf->current_serialno);
-      ogg_stream_pagein(&vf->os,&og2);
+      ogg_stream_pagein(&vf->os,&og);
 
       /* pull out all but last packet; the one with granulepos */
       while(1){
@@ -1631,11 +1631,11 @@ int ov_pcm_seek_page(OggVorbis_File *vf,ogg_int64_t pos){
              it's either a bug or a broken stream */
           result=best;
           while(result>vf->dataoffsets[link]){
-            result=_get_prev_page(vf,result,&og2);
+            result=_get_prev_page(vf,result,&og);
             if(result<0) goto seek_error;
-            if(ogg_page_serialno(&og2)==vf->current_serialno &&
-               (ogg_page_granulepos(&og2)>-1 ||
-                !ogg_page_continued(&og2))){
+            if(ogg_page_serialno(&og)==vf->current_serialno &&
+               (ogg_page_granulepos(&og)>-1 ||
+                !ogg_page_continued(&og))){
               return ov_raw_seek(vf,result);
             }
           }
@@ -1687,8 +1687,8 @@ int ov_pcm_seek(OggVorbis_File *vf,ogg_int64_t pos){
     ogg_packet op;
     ogg_page og;
 
-    int ret2=ogg_stream_packetpeek(&vf->os,&op);
-    if(ret2>0){
+    int ret=ogg_stream_packetpeek(&vf->os,&op);
+    if(ret>0){
       thisblock=vorbis_packet_blocksize(vf->vi+vf->current_link,&op);
       if(thisblock<0){
         ogg_stream_packetout(&vf->os,NULL);
@@ -2067,16 +2067,16 @@ long ov_read_filter(OggVorbis_File *vf,char *buffer,int length,
           vorbis_fpu_restore(fpu);
 
         }else{
-          int val2;
+          int val;
           vorbis_fpu_setround(&fpu);
           for(j=0;j<samples;j++)
             for(i=0;i<channels;i++){
-              val2=vorbis_ftoi(pcm[i][j]*32768.f);
-              if(val2>32767)val2=32767;
-              else if(val2<-32768)val2=-32768;
-              val2+=off;
-              *buffer++=(val2&0xff);
-              *buffer++=(val2>>8);
+              val=vorbis_ftoi(pcm[i][j]*32768.f);
+              if(val>32767)val=32767;
+              else if(val<-32768)val=-32768;
+              val+=off;
+              *buffer++=(val&0xff);
+              *buffer++=(val>>8);
                   }
           vorbis_fpu_restore(fpu);
 
