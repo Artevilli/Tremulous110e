@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--03/31/2026--**
 
+* qcommon:<br />optimize scalar loads
+
 * qcommon/server:<br />rework free block search
 
 * client:<br />fix and use internal ogg vorbis

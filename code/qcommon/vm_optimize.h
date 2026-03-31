@@ -54,7 +54,7 @@ typedef struct
 opstack_s
 {
   uint32_t value;
-  qint offset;
+  qint offset; //negative value means it is already on the opStack
   opstack_value_t type;
   qint safe_arg; //local/global address validated to be in the sane range
 }
@@ -86,6 +86,10 @@ typedef enum
   S_EXT16,
 }
 ext_t;
+
+#if !defined(REG_MAP_COUNT)
+#define REG_MAP_COUNT 4
+#endif
 
 typedef struct
 reg_s
@@ -1447,7 +1451,7 @@ store_syscall_opstack(uint32_t reg)
 #endif
 
   it->type = TYPE_RX;
-  it->offset = -1; //< 0 means it is already on the opStack, no need to flush
+  it->offset = -(opstack + 1) * sizeof(int32_t); //< 0 means it is already on the opStack, no need to flush
   it->value = reg;
   it->safe_arg = 0;
 
@@ -1742,7 +1746,18 @@ load_sx_opstack(uint32_t pref)
     //move from general-purpose to scalar register
     //should never happen with FPU type promotion, except syscalls
     reg = alloc_sx(pref);
-    mov_sx_rx(reg, it->value);
+
+    if (it->offset < 0)
+    {
+      //syscall return
+      it->offset = -it->offset + sizeof(int32_t);
+      load4_sx(reg, it->offset);
+    }
+    else
+    {
+      mov_sx_rx(reg, it->value);
+    }
+
     it->type = TYPE_RAW;
     return reg;
   }
