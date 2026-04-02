@@ -3698,6 +3698,7 @@ __compile:
           {
             //empty function, just return
             emit_ret();
+            proc_base = -1;
             ip += 2; //OP_PUSH + OP_LEAVE
             break;
           }
@@ -4872,7 +4873,7 @@ __compile:
   if (mprotect(vm->codeBase.ptr, vm->codeSize, PROT_READ|PROT_EXEC))
   {
     VM_Destroy_Compiled(vm);
-    Com_Printf(S_COLOR_YELLOW "VM_CompileX86: mprotect failed\n");
+    Com_Printf(S_COLOR_WARNING "VM_CompileX86: mprotect failed\n");
     return qfalse;
   }
 #elif _WIN32
@@ -4883,7 +4884,7 @@ __compile:
     if (!VirtualProtect(vm->codeBase.ptr, vm->codeSize, PAGE_EXECUTE_READ, &oldProtect))
     {
       VM_Destroy_Compiled(vm);
-      Com_Printf(S_COLOR_YELLOW "%s(%s): VirtualProtect failed\n", __func__, vm->name);
+      Com_Printf(S_COLOR_WARNING "%s(%s): VirtualProtect failed\n", __func__, vm->name);
       return qfalse;
     }
   }

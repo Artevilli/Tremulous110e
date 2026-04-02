@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--04/02-2026--**
+
+* qcommon:<br />qvm improvements
+
 **--04/01/2026--**
 
 * renderer:<br />correct shader time

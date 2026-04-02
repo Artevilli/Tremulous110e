@@ -1122,7 +1122,7 @@ alloc_sx_const(uint32_t pref, uint32_t imm)
   return sx;
 }
 
-#if defined(DYN_ALLOC_SX)
+#if defined(DYN_ALLOC_RX)
 static uint32_t
 dyn_alloc_rx(void)
 {

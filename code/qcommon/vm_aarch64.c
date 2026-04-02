@@ -269,7 +269,7 @@ VM_Destroy_Compiled(vm_t *vm)
 #else
     if (munmap(vm->codeBase.ptr, vm->codeLength))
     {
-      Com_Printf(S_COLOR_RED "%s(): memory unmap failed, possible memory leak!\n", __func__);
+      Com_Printf(S_COLOR_ERROR "%s(): memory unmap failed, possible memory leak!\n", __func__);
     }
 #endif
   }
@@ -1913,7 +1913,7 @@ VM_Compile(vm_t *vm, vmHeader_t *header)
   if (errMsg)
   {
     VM_FreeBuffers();
-    Com_Printf(S_COLOR_YELLOW "%s(%s) error: %s\n", __func__, vm->name, errMsg);
+    Com_Printf(S_COLOR_WARNING "%s(%s) error: %s\n", __func__, vm->name, errMsg);
     return qfalse;
   }
 
@@ -2052,6 +2052,7 @@ __recompile:
           {
             //empty function, just return
             emit(RET(LR));
+            proc_base = -1;
             ip += 2; //OP_PUSH + OP_LEAVE
             break;
           }
@@ -3104,7 +3105,7 @@ __recompile:
     if (!vm->codeBase.ptr)
     {
       VM_FreeBuffers();
-      Com_Printf(S_COLOR_YELLOW "%s(%s): VirtualAlloc failed\n", __func__, vm->name);
+      Com_Printf(S_COLOR_WARNING "%s(%s): VirtualAlloc failed\n", __func__, vm->name);
       return qfalse;
     }
 #else
@@ -3113,7 +3114,7 @@ __recompile:
     if (vm->codeBase.ptr == MAP_FAILED)
     {
       VM_FreeBuffers();
-      Com_Printf(S_COLOR_YELLOW "%s(%s): mmap failed\n", __func__, vm->name);
+      Com_Printf(S_COLOR_WARNING "%s(%s): mmap failed\n", __func__, vm->name);
       return qfalse;
     }
 #endif
@@ -3164,7 +3165,7 @@ __recompile:
     if (!VirtualProtect(vm->codeBase.ptr, vm->codeLength, PAGE_EXECUTE_READ, &oldProtect))
     {
       VM_Destroy_Compiled(vm);
-      Com_Printf(S_COLOR_YELLOW "%s(%s): VirtualProtect failed\n", __func__, vm->name);
+      Com_Printf(S_COLOR_WARNING "%s(%s): VirtualProtect failed\n", __func__, vm->name);
       return qfalse;
     }
   }
@@ -3172,7 +3173,7 @@ __recompile:
   if (mprotect(vm->codeBase.ptr, vm->codeLength, PROT_READ | PROT_EXEC))
   {
     VM_Destroy_Compiled(vm);
-    Com_Printf(S_COLOR_YELLOW "%s(%s): mprotect failed\n", __func__, vm->name);
+    Com_Printf(S_COLOR_WARNING "%s(%s): mprotect failed\n", __func__, vm->name);
     return qfalse;
   }
 
