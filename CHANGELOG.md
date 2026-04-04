@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--04/04/2026--**
+
+* qcommon:<br />added missing json file
+
 **--04/02-2026--**
 
 * qcommon:<br />qvm improvements
