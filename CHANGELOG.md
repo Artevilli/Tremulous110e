@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--04/04/2026--**
 
+* qcommon:<br />ppc fpu load/store and var mapping optimizations
+
 * qcommon:<br />added missing json file
 
 **--04/02-2026--**
