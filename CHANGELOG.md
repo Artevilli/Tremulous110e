@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--04/04/2026--**
 
+* cmake:<br />added cmake support
+
 * qcommon:<br />ppc fpu load/store and var mapping optimizations
 
 * qcommon:<br />added missing json file
