@@ -2417,7 +2417,7 @@ Cvar_CheckRange(cvar_t *var, const char *minVal, const char *maxVal, cvarValidat
 Cvar_SetDescription
 =====================
 */
-const void
+void
 Cvar_SetDescription(cvar_t *var, const qchar *var_description)
 {
   if (var_description && var_description[0] != '\0')

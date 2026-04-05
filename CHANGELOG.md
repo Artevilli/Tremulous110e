@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--04/05/2026--**
 
+* qcommon:<br />drop redundant const void
+
 * client:<br />add brackets around CG_SENDCONSOLECOMMAND syscall
 
 * qcommon:<br />fix emit typo for x86

@@ -704,7 +704,7 @@ void
 Cvar_InfoStringBuffer(qint bit, qchar *buff, qint buffsize);
 void
 Cvar_CheckRange(cvar_t *cv, const qchar *minVal, const qchar *maxVal, cvarValidator_t type);
-const void
+void
 Cvar_SetDescription(cvar_t *var, const qchar *var_description);
 void
 Cvar_SetDescription2(const qchar *var_name, const qchar *var_description);
