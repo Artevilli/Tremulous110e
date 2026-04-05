@@ -1,19 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{be926348-85ad-4cf1-a1e8-b80f1444cb3d}</UniqueIdentifier>
-      <Extensions>cpp;c;def;bat</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{eaf2312c-5ab0-465b-a07f-7dcfe858524c}</UniqueIdentifier>
-      <Extensions>h;hpp;inc</Extensions>
-    </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{a13894a6-5b09-4a36-a4b9-a9abf1a488e6}</UniqueIdentifier>
-      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;cnt;rtf;gif;jpg;jpeg;jpe</Extensions>
-    </Filter>
-  </ItemGroup>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="..\..\qcommon\cm_load.c">
       <Filter>Source Files</Filter>
@@ -90,6 +76,9 @@
     <ClCompile Include="..\..\server\sv_cvars.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\server\sv_filter.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\server\sv_game.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -112,6 +101,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\qcommon\vm.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\qcommon\vm_aarch64.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\qcommon\vm_interpreted.c">
@@ -161,9 +153,6 @@
     <ClInclude Include="..\..\client\keys.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\qcommon\md5.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\qcommon\q_platform.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -176,6 +165,9 @@
     <ClInclude Include="..\..\qcommon\qfiles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\qcommon\md5.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -183,12 +175,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\server\server.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\client\snd_local.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\client\snd_public.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\qcommon\surfaceflags.h">
@@ -208,6 +194,17 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{c461f4e6-671d-4a7b-af33-10c266a5c657}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{274bfc42-6c07-400f-b481-8f11124955b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{eb4da30c-1ee1-4bb5-8907-f4e6b395b2f8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
     <Image Include="..\tremulous.ico">
       <Filter>Resource Files</Filter>
     </Image>
@@ -216,5 +213,10 @@
     <ResourceCompile Include="..\win_resource.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="..\..\asm\common_x64.asm">
+      <Filter>Source Files</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>
