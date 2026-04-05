@@ -3766,6 +3766,7 @@ Sys_SnapVector(float *vector)
   __m128 vf0;
   __m128 vf1;
   __m128 vf2;
+  __m128i vi;
   DWORD mxcsr;
 
   mxcsr = _mm_getcsr();

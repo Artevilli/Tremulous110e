@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--04/05/2026--**
 
+* qcommon:<br />forgot to include vi variable define in common.c Sys_SnapVector()
+
 * sys:<br />add some included files to vcproj
 
 * qcommon:<br />fix some defines in qcommon header
