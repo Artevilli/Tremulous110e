@@ -276,6 +276,7 @@
     <ClCompile Include="..\..\qcommon\msg.c" />
     <ClCompile Include="..\..\qcommon\net_chan.c" />
     <ClCompile Include="..\..\qcommon\net_ip.c" />
+    <ClCompile Include="..\..\qcommon\parse.c" />
     <ClCompile Include="..\..\qcommon\q_math.c" />
     <ClCompile Include="..\..\qcommon\q_shared.c" />
     <ClCompile Include="..\..\qcommon\unzip.c" />
@@ -298,10 +299,12 @@
     <ClCompile Include="..\..\server\sv_cvars.c" />
     <ClCompile Include="..\..\server\sv_filter.c" />
     <ClCompile Include="..\..\server\sv_game.c" />
+    <ClCompile Include="..\..\server\sv_game_java.c" />
     <ClCompile Include="..\..\server\sv_init.c" />
     <ClCompile Include="..\..\server\sv_main.c" />
     <ClCompile Include="..\..\server\sv_net_chan.c" />
     <ClCompile Include="..\..\server\sv_snapshot.c" />
+    <ClCompile Include="..\..\server\sv_webconsole.c" />
     <ClCompile Include="..\..\server\sv_world.c" />
     <ClCompile Include="..\win_main.c" />
     <ClCompile Include="..\win_shared.c" />

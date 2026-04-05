@@ -524,6 +524,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\qcommon\parse.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\qcommon\puff.c"
 				>
 			</File>
@@ -629,6 +633,10 @@
 			</File>
 			<File
 				RelativePath="..\..\server\sv_snapshot.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\server\sv_webconsole.c"
 				>
 			</File>
 			<File
@@ -762,6 +770,10 @@
 			</File>
 			<File
 				RelativePath="..\..\client\qal.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\qcommon\md5.h"
 				>
 			</File>
 			<File

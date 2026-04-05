@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--04/05/2026--**
 
+* sys:<br />add some included files to vcproj
+
 * qcommon:<br />fix some defines in qcommon header
 
 * sys:<br />initial msvc files
