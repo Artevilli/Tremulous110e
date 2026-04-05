@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--04/05/2026--**
+
+* github: github actions
+
 **--04/04/2026--**
 
 * cmake:<br />added cmake support
