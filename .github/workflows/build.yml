@@ -131,65 +131,65 @@ jobs:
         if-no-files-found: error
         retention-days: 5
 
-  windows-msvc:
-    name: ${{ matrix.btype }} Windows-MSVC ${{ matrix.arch }}
-    runs-on: windows-2022
-    strategy:
-      fail-fast: false
-      matrix:
-        arch: [arm64, x86, x64]
-        btype: [Release, Debug]
-        include:
-          - arch: arm64
-            platform: ARM64
-            suffix: .arm64
-            pkg_suffix: arm64
+# windows-msvc:
+#   name: ${{ matrix.btype }} Windows-MSVC ${{ matrix.arch }}
+#   runs-on: windows-2022
+#   strategy:
+#     fail-fast: false
+#     matrix:
+#       arch: [arm64, x86, x64]
+#       btype: [Release, Debug]
+#       include:
+#         - arch: arm64
+#           platform: ARM64
+#           suffix: .arm64
+#           pkg_suffix: arm64
 
-          - arch: x86
-            platform: Win32
-            pkg_suffix: x86
+#         - arch: x86
+#           platform: Win32
+#           pkg_suffix: x86
 
-          - arch: x64
-            platform: x64
-            suffix: .x64
-            pkg_suffix: x86_64
+#         - arch: x64
+#           platform: x64
+#           suffix: .x64
+#           pkg_suffix: x86_64
 
-    steps:
+#   steps:
 
-    - uses: microsoft/setup-msbuild@v3
+#   - uses: microsoft/setup-msbuild@v3
 
-    - uses: actions/checkout@v6
-      with:
-        submodules: recursive
+#   - uses: actions/checkout@v6
+#     with:
+#       submodules: recursive
 
-    - name: Build
-      if: ${{ github.event_name != 'release' || matrix.btype != 'Debug' }} # skip Debug configuration in Release build
-      run: |
-        mkdir bin
+#   - name: Build
+#     if: ${{ github.event_name != 'release' || matrix.btype != 'Debug' }} # skip Debug configuration in Release build
+#     run: |
+#       mkdir bin
 
-        msbuild code\win32\msvc2017\tremded.vcxproj -p:TargetName=tremded,Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }} /p:PlatformToolset=v143
-        copy code\win32\msvc2017\output\tremded.exe bin\tremded${{ matrix.suffix }}.exe
-        msbuild code\win32\msvc2017\tremded.vcxproj -p:TargetName=tremded,Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }} -t:Clean
+#       msbuild code\win32\msvc2017\tremded.vcxproj -p:TargetName=tremded,Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }} /p:PlatformToolset=v143
+#       copy code\win32\msvc2017\output\tremded.exe bin\tremded${{ matrix.suffix }}.exe
+#       msbuild code\win32\msvc2017\tremded.vcxproj -p:TargetName=tremded,Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }} -t:Clean
 
-        msbuild code\win32\msvc2017\renderer.vcxproj -p:Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }} /p:PlatformToolset=v143
-        msbuild code\win32\msvc2017\tremulous.vcxproj -p:TargetName=tremulous,Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0 /p:PlatformToolset=v143
-        copy code\win32\msvc2017\output\tremulous.exe bin\tremulous${{ matrix.suffix }}.exe
-        msbuild code\win32\msvc2017\renderer.vcxproj -p:Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }} -t:Clean
-        msbuild code\win32\msvc2017\tremulous.vcxproj -p:TargetName=tremulous,Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0 -t:Clean
+#       msbuild code\win32\msvc2017\renderer.vcxproj -p:Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }} /p:PlatformToolset=v143
+#       msbuild code\win32\msvc2017\tremulous.vcxproj -p:TargetName=tremulous,Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0 /p:PlatformToolset=v143
+#       copy code\win32\msvc2017\output\tremulous.exe bin\tremulous${{ matrix.suffix }}.exe
+#       msbuild code\win32\msvc2017\renderer.vcxproj -p:Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }} -t:Clean
+#       msbuild code\win32\msvc2017\tremulous.vcxproj -p:TargetName=tremulous,Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0 -t:Clean
 
-        msbuild code\win32\msvc2017\renderervk.vcxproj -p:Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }} /p:PlatformToolset=v143
-        msbuild code\win32\msvc2017\tremulous.vcxproj -p:TargetName=tremulous,Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0 /p:PlatformToolset=v143
-        copy code\win32\msvc2017\output\tremulous.exe bin\tremulous-vulkan${{ matrix.suffix }}.exe
-        msbuild code\win32\msvc2017\renderervk.vcxproj -p:Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }} -t:Clean
-        msbuild code\win32\msvc2017\tremulous.vcxproj -p:TargetName=tremulous,Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0 -t:Clean
+#       msbuild code\win32\msvc2017\renderervk.vcxproj -p:Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }} /p:PlatformToolset=v143
+#       msbuild code\win32\msvc2017\tremulous.vcxproj -p:TargetName=tremulous,Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0 /p:PlatformToolset=v143
+#       copy code\win32\msvc2017\output\tremulous.exe bin\tremulous-vulkan${{ matrix.suffix }}.exe
+#       msbuild code\win32\msvc2017\renderervk.vcxproj -p:Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }} -t:Clean
+#       msbuild code\win32\msvc2017\tremulous.vcxproj -p:TargetName=tremulous,Configuration=${{ matrix.btype }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0 -t:Clean
 
-    - uses: actions/upload-artifact@v7
-      if: ${{ matrix.btype == 'Release' }}
-      with:
-        name: windows-msvc-${{ matrix.pkg_suffix }}
-        path: bin
-        if-no-files-found: error
-        retention-days: 5
+#   - uses: actions/upload-artifact@v7
+#     if: ${{ matrix.btype == 'Release' }}
+#     with:
+#       name: windows-msvc-${{ matrix.pkg_suffix }}
+#       path: bin
+#       if-no-files-found: error
+#       retention-days: 5
         
   ubuntu-x86:
     name: ${{ matrix.btype }} Ubuntu ${{ matrix.arch }}
@@ -381,7 +381,8 @@ jobs:
 
   create-testing:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    needs: [windows-msys32, windows-msvc, ubuntu-x86, ubuntu-arm64, macos-x86]
+#   needs: [windows-msys32, windows-msvc, ubuntu-x86, ubuntu-arm64, macos-x86]
+    needs: [windows-msys32, ubuntu-x86, ubuntu-arm64, macos-x86]
     runs-on: ubuntu-latest
     steps:
       - name: Download Artifacts
@@ -394,7 +395,7 @@ jobs:
           7z a -r tremulous-linux-arm64.zip          ./linux-arm64/*
           7z a -r tremulous-windows-mingw-x86.zip    ./windows-mingw-x86/*
           7z a -r tremulous-windows-mingw-x86_64.zip ./windows-mingw-x86_64/*
-          7z a -r tremulous-windows-msvc-arm64.zip   ./windows-msvc-arm64/*
+#         7z a -r tremulous-windows-msvc-arm64.zip   ./windows-msvc-arm64/*
           7z a -r tremulous-macos-x86_64.zip         ./macos-x86_64/*
           7z a -r tremulous-macos-aarch64.zip        ./macos-aarch64/*
 #         7z a -r tremulous-linux-aarch64.zip        ./linux-aarch64/*
@@ -414,7 +415,8 @@ jobs:
 
   update-release:
     if: ${{ github.event_name == 'release' }}
-    needs: [windows-msys32, windows-msvc, ubuntu-x86, ubuntu-arm, macos-x86]
+#   needs: [windows-msys32, windows-msvc, ubuntu-x86, ubuntu-arm, macos-x86]
+    needs: [windows-msys32, ubuntu-x86, ubuntu-arm, macos-x86]
     runs-on: ubuntu-latest
 
     strategy:
@@ -441,8 +443,8 @@ jobs:
           - artifact_dir: windows-mingw-x86_64
             artifact_name: tremulous-windows-x86_64.zip
 
-          - artifact_dir: windows-msvc-arm64
-            artifact_name: tremulous-windows-arm64.zip
+#         - artifact_dir: windows-msvc-arm64
+#           artifact_name: tremulous-windows-arm64.zip
 
           - artifact_dir: macos-x86_64
             artifact_name: tremulous-macos-x86_64.zip

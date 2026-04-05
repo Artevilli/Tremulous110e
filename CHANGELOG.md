@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--04/05/2026--**
 
+* github: temporarily disable msvc
+
 * sys:<br />initial msvc files
 
 * qcommon/server:<br />fixes for github actions
