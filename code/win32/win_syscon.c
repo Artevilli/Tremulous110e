@@ -289,6 +289,7 @@ ConWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
     case
     WM_SIZE:
+    {
       RECT rect;
       qint sth;
 
@@ -328,9 +329,11 @@ ConWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       GetWindowRect(hWnd, &g_wv.conRect);
 
       return 0;
+    }
 
     case
     WM_SIZING:
+    {
       qint w;
       qint h;
       RECT *r;
@@ -366,6 +369,7 @@ ConWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
 
       return TRUE;
+    }
 
     case
     WM_SYSCOMMAND:
@@ -484,6 +488,7 @@ BufferWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 #if 0 //this is actually redundant except setting focus to s_wcd.hwndInputLine
     case
     WM_COPY:
+    {
       DWORD selStart;
       DWORD selEnd;
 
@@ -539,6 +544,7 @@ BufferWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       }
 
       break;
+    }
 #endif
 
     case

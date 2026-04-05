@@ -1069,6 +1069,7 @@ MainWndProc(HWND hWnd, UINT uMsg, WPARAM  wParam, LPARAM lParam)
 
     case
     WM_WINDOWPOSCHANGING:
+    {
       WINDOWPLACEMENT wp;
 
       //set minimized flag as early as possible
@@ -1125,6 +1126,7 @@ MainWndProc(HWND hWnd, UINT uMsg, WPARAM  wParam, LPARAM lParam)
       }
 
       break;
+    }
 
     //this is complicated because Win32 seems to pack multiple mouse events into
     //one update sometimes, so we always check all states and look for events
@@ -1251,6 +1253,7 @@ MainWndProc(HWND hWnd, UINT uMsg, WPARAM  wParam, LPARAM lParam)
 
     case
     WM_CHAR:
+    {
       byte scancode = ((lParam >> 16) & 0xFF);
 
       if (wParam != VK_NUMPAD0 && scancode != 0x29)
@@ -1259,6 +1262,7 @@ MainWndProc(HWND hWnd, UINT uMsg, WPARAM  wParam, LPARAM lParam)
       }
 
       return 0;
+    }
 
     case
     WM_NCHITTEST:

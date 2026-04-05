@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--04/05/2026--**
 
+* sys:<br />initial msvc files
+
 * qcommon/server:<br />fixes for github actions
 
 * qcommon:<br />drop redundant const void
