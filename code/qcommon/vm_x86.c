@@ -2642,7 +2642,7 @@ EmitCallFunc(vm_t *vm)
   store4_rx(R_EAX, 4); //*opstack[4] = eax
 
   //function epilogue
-  emit_rx(R_ESP, R_EBP); //mov esp, ebp
+  mov_rx(R_ESP, R_EBP); //mov esp, ebp
   emit_pop(R_EBP); //pop ebp
   emit_ret(); //ret
 #endif

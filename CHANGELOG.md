@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--04/05/2026--**
 
+* qcommon:<br />fix emit typo for x86
+
 * github: github actions
 
 **--04/04/2026--**
