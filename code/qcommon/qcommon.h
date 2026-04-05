@@ -23,10 +23,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 // qcommon.h -- definitions common between client and server, but not game.or ref modules
 #pragma once
 
+#include <sys/types.h>
 #include "../qcommon/cm_public.h"
 
 //Ignore __attribute__ on non-gcc platforms
-#if !defined(__GNUC__)
+#if !defined(__GNUC__) && !defined(__clang__)
 #if !defined(__attribute__)
 #define __attribute__(x)
 #endif

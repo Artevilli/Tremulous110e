@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--04/05/2026--**
 
+* qcommon:<br />fix some defines in qcommon header
+
 * sys:<br />initial msvc files
 
 * qcommon/server:<br />fixes for github actions
