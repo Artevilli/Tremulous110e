@@ -48,7 +48,7 @@ void
 MD5Update(struct MD5Context *ctx, unsigned qchar const *buf, unsigned len);
 void
 MD5Final(struct MD5Context *ctx, unsigned qchar *digest);
-const void
+void
 Com_MD5Init(void);
 const qint
 Com_MD5Addr(const netadr_t *addr, qint timestamp);

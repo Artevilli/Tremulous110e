@@ -703,6 +703,7 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_GET_ENTITY_TOKEN:
+    {
       qchar *s;
 
       s = (qchar *)COM_Parse(&sv.entityParsePoint);
@@ -727,6 +728,7 @@ SV_GameSystemCalls(intptr_t *args)
       }
 
       return qtrue;
+    }
 
     case
     G_REAL_TIME:

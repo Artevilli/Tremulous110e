@@ -552,11 +552,11 @@ extern server_t sv; //cleared each map
 //
 const qbool
 SVC_RateLimit(rateLimit_t *bucket, qint burst, qint period, qint now);
-const void
+void
 SVC_RateRestoreBurstAddress(const netadr_t *from, qint burst, qint period, qint now);
-const void
+void
 SVC_RateRestoreToxicAddress(const netadr_t *from, qint burst, qint period, qint now);
-const void
+void
 SVC_RateDropAddress(const netadr_t *from, qint burst, qint period, qint now);
 #if defined(SUPPORT_STATUS_SCORES_OVERRIDE)
 void
@@ -576,7 +576,7 @@ void
 SV_MasterShutdown(void);
 void
 SV_MasterGameStat(const qchar *data);
-qint
+const qint
 SV_RateMsec(const client_t *client);
 
 //sv_webconsole.c
@@ -594,22 +594,22 @@ sv_webconsole_read(qint *sockfd, qbool *connected);
 //
 //sv_init.c
 //
-const void
+void
 SV_SetConfigstring(const qint index, const qchar *val);
-const void
+void
 SV_GetConfigstring(const qint index, qchar *buffer, const qint bufferSize);
-const void
+void
 SV_UpdateConfigstrings(client_t *client);
-const void
+void
 SV_SetUserinfo(const qint index, const qchar *val);
-const void
+void
 SV_GetUserinfo(const qint index, qchar *buffer, const qint bufferSize);
-const void
+void
 SV_SpawnServer(const qchar *server, qbool killBots);
 #if defined(DEDICATED)
-const void
+void
 SV_WriteAttackLog(const qchar *log);
-const void
+void
 SV_WriteAttackLogUnrestricted(const qchar *log);
 
 #if defined(NDEBUG)
@@ -625,9 +625,9 @@ SV_WriteAttackLogUnrestricted(const qchar *log);
 //
 //sv_challenge.c
 //
-const void
+void
 SV_ChallengeInit(void);
-const void
+void
 SV_ChallengeShutdown(void);
 const qint
 SV_CreateChallenge(const netadr_t *from);
@@ -640,7 +640,7 @@ SV_VerifyChallenge(const qint receivedChallenge, const netadr_t *from);
 //
 void
 SV_GetChallenge(const netadr_t *from);
-const void
+void
 SV_InitChallenger(void);
 void
 SV_DirectConnect(const netadr_t *from);
@@ -654,13 +654,13 @@ void
 SV_UpdateUserinfo_f(client_t *cl);
 void
 SV_ClientEnterWorld(client_t *client);
-const void
+void
 SV_FreeClient(client_t *client);
 void
 SV_DropClient(client_t *drop, const qchar *reason);
 void
 SV_SendClientGameState(client_t *client);
-qbool
+const qbool
 SV_ExecuteClientCommand(client_t *cl, const qchar *s);
 void
 SV_ClientThink(client_t *cl, const usercmd_t *cmd);
@@ -682,7 +682,7 @@ SV_WriteVoipToClient(client_t *cl, msg_t *msg);
 //
 //sv_cvars.c
 //
-const void
+void
 SV_InitCvars(void);
 
 //
@@ -696,7 +696,7 @@ void
 SV_Heartbeat_f(void);
 client_t *
 SV_GetPlayerByHandle(void);
-const void
+void
 SV_UptimeReset(void);
 
 //
@@ -720,7 +720,7 @@ void
 SV_InitSnapshotStorage(void);
 void
 SV_IssueNewSnapshot(void);
-qint
+const qint
 SV_RemainingGameState(void);
 
 //

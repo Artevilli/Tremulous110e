@@ -751,7 +751,7 @@ list_process(packetQueue_t *head, const qint time_diff)
   return head;
 }
 
-const void
+void
 NET_QueuePacket(netsrc_t sock, qint length, const void *data, const netadr_t *to, qint offset)
 {
 	packetQueue_t *new;

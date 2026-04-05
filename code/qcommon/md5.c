@@ -46,7 +46,7 @@
  * Start MD5 accumulation.  Set bit count to 0 and buffer to mysterious
  * initialization constants.
  */
-const void MD5Init(struct MD5Context *ctx)
+void MD5Init(struct MD5Context *ctx)
 {
     ctx->buf[0] = 0x67452301;
     ctx->buf[1] = 0xefcdab89;
@@ -57,7 +57,7 @@ const void MD5Init(struct MD5Context *ctx)
     ctx->bits[1] = 0;
 }
 
-static const void
+static void
 MD5Copy(struct MD5Context *to, const struct MD5Context *from)
 {
   memcpy(to, from, sizeof(*to));
@@ -80,7 +80,7 @@ MD5Copy(struct MD5Context *to, const struct MD5Context *from)
  * reflect the addition of 16 longwords of new data.  MD5Update blocks
  * the data and converts bytes into longwords for this routine.
  */
-static const void
+static void
 MD5Transform(uint32_t buf[4], uint32_t const in[16])
 {
   register uint32_t a;
@@ -171,7 +171,7 @@ MD5Transform(uint32_t buf[4], uint32_t const in[16])
  * Update context to reflect the concatenation of another buffer full
  * of bytes.
  */
-const void MD5Update(struct MD5Context *ctx, unsigned qchar const *buf,
+void MD5Update(struct MD5Context *ctx, unsigned qchar const *buf,
 	unsigned len)
 {
     uint32_t t;
@@ -221,7 +221,7 @@ const void MD5Update(struct MD5Context *ctx, unsigned qchar const *buf,
  * Final wrapup - pad to 64-byte boundary with the bit pattern 
  * 1 0* (64-bit count of bits processed, MSB-first)
  */
-const void
+void
 MD5Final(struct MD5Context *ctx, byte *digest)
 {
   unsigned count;
@@ -358,7 +358,7 @@ static struct MD5Context hmac_ctx_out;
  * Chey: the following code implements HMAC-MD5 using the public domain MD5 implementation above.
  * This code (originally for OpenJK) is also released into the public domain.
  */
-const void
+void
 HMAC_MD5_Init(hmacMD5Context_t *ctx, unsigned const qchar *key, unsigned qint keylen)
 {
   unsigned qchar shortenedKey[MD5_DIGEST_SIZE];
@@ -386,13 +386,13 @@ HMAC_MD5_Init(hmacMD5Context_t *ctx, unsigned const qchar *key, unsigned qint ke
   MD5Update(&ctx->md5Context, ctx->iKeyPad, sizeof(ctx->iKeyPad));
 }
 
-const void
+void
 HMAC_MD5_Update(hmacMD5Context_t *ctx, unsigned const qchar *buf, unsigned qint len)
 {
   MD5Update(&ctx->md5Context, buf, len);
 }
 
-const void
+void
 HMAC_MD5_Final(hmacMD5Context_t *ctx, unsigned qchar *digest)
 {
   unsigned qchar hashSum1[MD5_DIGEST_SIZE];
@@ -404,14 +404,14 @@ HMAC_MD5_Final(hmacMD5Context_t *ctx, unsigned qchar *digest)
   MD5Final(&ctx->md5Context, digest);
 }
 
-const void
+void
 HMAC_MD5_Reset(hmacMD5Context_t *ctx)
 {
   MD5Init(&ctx->md5Context);
   MD5Update(&ctx->md5Context, ctx->iKeyPad, sizeof(ctx->iKeyPad));
 }
 
-const void
+void
 Com_MD5Init(void)
 {
   struct

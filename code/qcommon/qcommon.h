@@ -1364,7 +1364,7 @@ CL_GameSwitch(void);
 //
 void
 SV_Init(void);
-const void
+void
 SV_Shutdown(const qchar *finalmsg);
 void
 SV_Frame(qint msec);
@@ -1372,11 +1372,11 @@ void
 SV_TrackCvarChanges(void);
 void
 SV_ReadPackets(const netadr_t *from, msg_t *msg);
-qint
+const qint
 SV_FrameMsec(void);
 qbool
 SV_GameCommand( void );
-qint
+const qint
 SV_SendQueuedPackets(void);
 
 void

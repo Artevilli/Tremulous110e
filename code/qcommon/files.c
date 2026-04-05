@@ -6407,7 +6407,7 @@ FS_ConditionalRestart
 restart if necessary
 =================
 */
-const qbool
+qbool
 FS_ConditionalRestart(qint checksumFeed, qbool clientRestart)
 {
   if (fs_gamedirvar->modified)

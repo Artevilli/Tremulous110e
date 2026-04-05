@@ -1784,6 +1784,7 @@ ConstOptimize(vm_t *vm, instruction_t *ci, instruction_t *ni)
 
     case
     OP_LTI:
+    {
       uint32_t comp = get_comp(ni->op);
 
       rx[0] = load_rx_opstack(R0 | RCONST); dec_opstack(); //r0 = *opstack; opstack -= 4
@@ -1819,6 +1820,7 @@ ConstOptimize(vm_t *vm, instruction_t *ci, instruction_t *ni)
       unmask_rx(rx[0]);
       ip += 1; //OP_cond
       return qtrue;
+    }
 
     case
     OP_EQF:

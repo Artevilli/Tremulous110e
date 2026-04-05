@@ -98,7 +98,7 @@ cvar_t *sv_voip;
 cvar_t  *sv_debugChallenges;
 #endif
 
-const void
+void
 SV_InitCvars(void)
 {
   qint index;

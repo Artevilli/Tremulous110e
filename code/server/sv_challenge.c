@@ -75,7 +75,7 @@ SV_ChallengeInit
 Initialize the HMAC context for generating challenges.
 ====================
 */
-const void
+void
 SV_ChallengeInit(void)
 {
   if (challengerInitialized)
@@ -109,7 +109,7 @@ SV_ChallengeShutdown
 Clear the HMAC context used to generate challenges.
 ====================
 */
-const void
+void
 SV_ChallengeShutdown(void)
 {
   if (challengerInitialized)

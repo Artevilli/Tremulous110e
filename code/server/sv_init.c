@@ -36,7 +36,7 @@ Creates and sends the server command necessary to update the CS index for the
 given client
 ===============
 */
-static const void
+static void
 SV_SendConfigstring(client_t *client, qint index)
 {
   qint maxChunkSize = MAX_STRING_CHARS - 24;
@@ -87,7 +87,7 @@ Called when a client goes from CS_PRIMED to CS_ACTIVE.  Updates all
 Configstring indexes that have changed while the client was in CS_PRIMED
 ===============
 */
-const void
+void
 SV_UpdateConfigstrings(client_t *client)
 {
   qint index;
@@ -121,7 +121,7 @@ SV_UpdateConfigstrings(client_t *client)
 SV_SetConfigstring
 ===============
 */
-const void
+void
 SV_SetConfigstring(const qint index, const qchar *val)
 {
   qint i;
@@ -192,7 +192,7 @@ SV_SetConfigstring(const qint index, const qchar *val)
 SV_GetConfigstring
 ===============
 */
-const void
+void
 SV_GetConfigstring(const qint index, qchar *buffer, const qint bufferSize)
 {
   if (bufferSize < 1)
@@ -220,7 +220,7 @@ SV_GetConfigstring(const qint index, qchar *buffer, const qint bufferSize)
 SV_SetUserinfo
 ===============
 */
-const void
+void
 SV_SetUserinfo(const qint index, const qchar *val)
 {
   if (index < 0 || index >= sv.maxclients)
@@ -244,7 +244,7 @@ SV_SetUserinfo(const qint index, const qchar *val)
 SV_GetUserinfo
 ===============
 */
-const void
+void
 SV_GetUserinfo(const qint index, qchar *buffer, const qint bufferSize)
 {
   if (bufferSize < 1)
@@ -270,7 +270,7 @@ to the clients -- only the fields that differ from the
 baseline will be transmitted
 ================
 */
-static const void
+static void
 SV_CreateBaseline(void)
 {
   sharedEntity_t *ent;
@@ -324,7 +324,7 @@ SV_BoundMaxClients(const qint minimum)
 SV_SetSnapshotParams
 ===============
 */
-static const void
+static void
 SV_SetSnapshotParams(void)
 {
   //PACKET_BACKUP frames is just about 6.67MB so use that even on listen servers
@@ -336,7 +336,7 @@ SV_SetSnapshotParams(void)
 SV_AllocClients
 ===============
 */
-static const void
+static void
 SV_AllocClients(const qint count)
 {
   svs.clients = Z_TagMalloc(count * sizeof(client_t), TAG_CLIENTS);
@@ -355,7 +355,7 @@ NOT cause this to be called, unless the game is exited to
 the menu system first.
 ===============
 */
-static const void
+static void
 SV_Startup(void)
 {
   if (svs.initialized)
@@ -390,7 +390,7 @@ SV_Startup(void)
 SV_ChangeMaxClients
 ==================
 */
-static const void
+static void
 SV_ChangeMaxClients(void)
 {
   client_t *oldClients;
@@ -462,7 +462,7 @@ SV_ChangeMaxClients(void)
 SV_ClearServer
 ================
 */
-static const void
+static void
 SV_ClearServer(void)
 {
   qint i;
@@ -511,7 +511,7 @@ SV_TouchCGame(void)
 #endif
 }
 
-static const void
+static void
 SV_TouchCGame(const qchar *filename)
 {
   fileHandle_t f;
@@ -533,7 +533,7 @@ clients along with it.
 This is NOT called for map_restart
 ================
 */
-const void
+void
 SV_SpawnServer(const qchar *mapname, qbool killBots)
 {
   qint i;
@@ -873,7 +873,7 @@ SV_SpawnServer(const qchar *mapname, qbool killBots)
 SV_WriteAttackLog
 ===============
 */
-const void
+void
 SV_WriteAttackLog(const qchar *log)
 {
   static qint lastAttackLogTime;
@@ -905,7 +905,7 @@ SV_WriteAttackLogUnrestricted
 Same as SV_WriteAttackLog, but bypasses the sv_protectLogInterval->integer setting
 ===============
 */
-const void
+void
 SV_WriteAttackLogUnrestricted(const qchar *log)
 {
   qchar string[512];
@@ -929,7 +929,7 @@ SV_WriteAttackLogUnrestricted(const qchar *log)
 SV_InitAttackLog
 ===============
 */
-const void
+void
 SV_InitAttackLog(void)
 {
   if (sv_protectLog->string[0] == '\0')
@@ -960,7 +960,7 @@ SV_InitAttackLog(void)
 SV_CloseAttackLog
 ===============
 */
-const void
+void
 SV_CloseAttackLog(void)
 {
   if (attHandle > 0)
@@ -983,7 +983,7 @@ SV_Init
 Only called at main exe startup, not for each game
 ===============
 */
-const void
+void
 SV_Init(void)
 {
   SV_UptimeReset();
@@ -1034,7 +1034,7 @@ not just stuck on the outgoing message list, because the server is going
 to totally exit after returning from this function.
 ==================
 */
-static const void
+static void
 SV_FinalMessage(const qchar *message)
 {
   qint i;
@@ -1080,7 +1080,7 @@ Called when each game quits,
 before Sys_Quit or Sys_Error
 ================
 */
-const void
+void
 SV_Shutdown(const qchar *finalmsg)
 {
   qint index;

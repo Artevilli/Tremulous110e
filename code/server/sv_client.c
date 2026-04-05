@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "server.h"
 
 //Chey: putting these here so gcc knows what it is
-static const void
+static void
 SV_CloseDownload(client_t *cl);
 
 #if !defined(STATELESS_CHALLENGES_VERSION_ONE)
@@ -113,7 +113,7 @@ When an authorizeip is returned, a challenge response will be
 sent to that ip.
 =================
 */
-const void
+void
 SV_GetChallenge(const netadr_t *from)
 {
   qint challenge;
@@ -491,7 +491,7 @@ SV_GetStateName(const clientState_t state)
 SV_SetClientState
 ==================
 */
-const void
+void
 SV_SetClientState(client_t *cl, const clientState_t newState)
 {
   if (cl->state == newState)
@@ -528,7 +528,7 @@ SV_DirectConnect
 A "connect" OOB command has been received
 ==================
 */
-const void
+void
 SV_DirectConnect(const netadr_t *from)
 {
   const qint now = Sys_Milliseconds();
@@ -971,7 +971,7 @@ SV_FreeClient
 Destructor for data allocated in a client structure
 =====================
 */
-const void
+void
 SV_FreeClient(client_t *client)
 {
   SV_Netchan_FreeQueue(client);
@@ -987,7 +987,7 @@ or unwillingly.  This is NOT called if the entire server is quiting
 or crashing -- SV_FinalMessage() will handle that
 =====================
 */
-const void
+void
 SV_DropClient(client_t *drop, const qchar *reason)
 {
   qchar name[sizeof(drop->name)];
@@ -1171,7 +1171,7 @@ It will be resent if the client acknowledges a later message but has
 the wrong gamestate.
 ================
 */
-const void
+void
 SV_SendClientGameState(client_t *client)
 {
   qint start;
@@ -1343,7 +1343,7 @@ SV_SendClientGameState(client_t *client)
 SV_ClientEnterWorld
 ==================
 */
-const void
+void
 SV_ClientEnterWorld(client_t *client)
 {
   sharedEntity_t *ent;
@@ -1427,7 +1427,7 @@ SV_CloseDownload
 clear/free any download vars
 ==================
 */
-static const ID_INLINE void
+static ID_INLINE void
 SV_CloseDownload(client_t *cl)
 {
   unsigned i;
@@ -1467,7 +1467,7 @@ SV_StopDownload_f
 Abort a download if in progress
 ==================
 */
-static const ID_INLINE void
+static ID_INLINE void
 SV_StopDownload_f(client_t *cl)
 {
   if (cl->state == CS_ACTIVE)
@@ -1490,7 +1490,7 @@ SV_DoneDownload_f
 Downloads are finished
 ==================
 */
-static const ID_INLINE void
+static ID_INLINE void
 SV_DoneDownload_f(client_t *cl)
 {
   if (cl->state == CS_ACTIVE)
@@ -1530,7 +1530,7 @@ The argument will be the last acknowledged block from the client, it should be
 the same as cl->downloadClientBlock
 ==================
 */
-static const ID_INLINE void
+static ID_INLINE void
 SV_NextDownload_f(client_t *cl)
 {
   const qint block = Q_atoi(Cmd_Argv(1));
@@ -1595,7 +1595,7 @@ SV_NextDownload_f(client_t *cl)
 SV_BeginDownload_f
 ==================
 */
-static const ID_INLINE void
+static ID_INLINE void
 SV_BeginDownload_f(client_t *cl)
 {
   if (cl->state == CS_ACTIVE)
@@ -1741,7 +1741,7 @@ SV_ReadDownloadBlock(client_t *cl, qchar **dataOut, qint *sizeOut)
 SV_DownloadRetransmit
 ==================
 */
-static const ID_INLINE void
+static ID_INLINE void
 SV_DownloadRetransmit(client_t *cl)
 {
   cl->downloadXmitBlock = cl->downloadClientBlock;
@@ -2413,7 +2413,7 @@ SV_WriteVoipToClient
 Check to see if there is any VoIP queued for a client, and send if there is.
 ==================
 */
-const void
+void
 SV_WriteVoipToClient(client_t *cl, msg_t *msg)
 {
   voipServerPacket_t *packet = &cl->voipPacket[0];
@@ -2490,7 +2490,7 @@ This routine would be a bit simpler with a goto but i abstained
 
 =================
 */
-static const void
+static void
 SV_VerifyPaks_f(client_t *cl)
 {
   qint nChkSum1;
@@ -2676,7 +2676,7 @@ SV_VerifyPaks_f(client_t *cl)
 SV_ResetPureClient_f
 =================
 */
-static const void
+static void
 SV_ResetPureClient_f(client_t *cl)
 {
   cl->pureAuthentic = qfalse;
@@ -2756,7 +2756,7 @@ Pull specific info from a newly changed userinfo string
 into a more C friendly form.
 =================
 */
-const void
+void
 SV_UserinfoChanged(client_t *cl, const qbool updateUserinfo, const qbool runFilter)
 {
   qchar buf[MAX_NAME_LENGTH];
@@ -2922,7 +2922,7 @@ SV_UserinfoChanged(client_t *cl, const qbool updateUserinfo, const qbool runFilt
 SV_UpdateUserinfo_f
 ==================
 */
-const void
+void
 SV_UpdateUserinfo_f(client_t *cl)
 {
   const qchar *info;
@@ -3312,7 +3312,7 @@ SV_ClientThink
 Also called by bot code
 ==================
 */
-const void
+void
 SV_ClientThink(client_t *cl, const usercmd_t *cmd)
 {
   cl->lastUsercmd = *cmd;
@@ -3341,7 +3341,7 @@ On very fast clients, there may be multiple usercmd packed into
 each of the backup packets.
 ==================
 */
-static const void
+static void
 SV_UserMove(client_t *cl, msg_t *msg, qbool delta)
 {
   const qint now = Sys_Milliseconds();
@@ -3489,7 +3489,7 @@ SV_ShouldIgnoreVoipSender(const client_t *cl)
   return qfalse; //don't ignore.
 }
 
-static const void
+static void
 SV_UserVoip(client_t *cl, msg_t *msg)
 {
   const qint sender = ARRAY_INDEX(svs.clients, cl);
@@ -3676,7 +3676,7 @@ SV_ExecuteClientMessage
 Parse a client packet
 ===================
 */
-const void
+void
 SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
 {
   const qint now = Sys_Milliseconds();

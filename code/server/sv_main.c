@@ -136,7 +136,7 @@ The given command will be transmitted to the client, and is guaranteed to
 not have future snapshot_t executed before it is executed
 ======================
 */
-const void
+void
 SV_AddServerCommand(client_t *client, const qchar *cmd)
 {
   qint index;
@@ -208,7 +208,7 @@ the client game module: "cp", "print", "chat", etc
 A NULL client will broadcast to all clients
 =================
 */
-const void QDECL
+void QDECL
 SV_SendServerCommand(client_t *cl, const qchar *fmt, ...)
 {
   va_list argptr;
@@ -306,7 +306,7 @@ but not on every player enter or exit.
 #define HEARTBEAT_MSEC  (300 * 1000)
 #define HEARTBEAT_GAME  "XreaL-1"
 #define HEARTBEAT_DEAD  "XreaL-FlatLine-1"
-static const void
+static void
 SV_MasterHeartbeat(const qchar *message)
 {
   unsigned i;
@@ -424,7 +424,7 @@ SV_MasterShutdown
 Informs all masters that this server is going down
 =================
 */
-const void
+void
 SV_MasterShutdown(void)
 {
   //send a hearbeat right now
@@ -444,7 +444,7 @@ SV_MasterShutdown(void)
 SV_MasterGameStat
 =================
 */
-const void
+void
 SV_MasterGameStat(const qchar *data)
 {
   qint i;
@@ -563,7 +563,7 @@ SVC_HashForAddress(const netadr_t *address)
 SVC_RelinkToHead
 ================
 */
-static const void
+static void
 SVC_RelinkToHead(leakyBucket_t *bucket, qint hash)
 {
   if (bucket->prev != NULL)
@@ -770,7 +770,7 @@ SVC_RateLimit(rateLimit_t *bucket, qint burst, qint period, qint now)
 SVC_RateDrop
 ================
 */
-static const void
+static void
 SVC_RateDrop(leakyBucket_t *bucket, qint burst, qint now)
 {
   if (bucket != NULL)
@@ -790,7 +790,7 @@ SVC_RateDrop(leakyBucket_t *bucket, qint burst, qint now)
 SVC_RateRestoreBurst
 ================
 */
-static const void
+static void
 SVC_RateRestoreBurst(leakyBucket_t *bucket)
 {
   if (bucket != NULL)
@@ -807,7 +807,7 @@ SVC_RateRestoreBurst(leakyBucket_t *bucket)
 SVC_RateRestoreToxic
 ================
 */
-static const void
+static void
 SVC_RateRestoreToxic(leakyBucket_t *bucket)
 {
   if (bucket != NULL)
@@ -841,7 +841,7 @@ SVC_RateRestoreAddress
 Decrease burst rate
 ================
 */
-const void
+void
 SVC_RateRestoreBurstAddress(const netadr_t *from, qint burst, qint period, qint now)
 {
   leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period, now);
@@ -856,7 +856,7 @@ SVC_RateRestoreToxicAddress
 Decrease toxicity
 ================
 */
-const void
+void
 SVC_RateRestoreToxicAddress(const netadr_t *from, qint burst, qint period, qint now)
 {
   leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period, now);
@@ -869,7 +869,7 @@ SVC_RateRestoreToxicAddress(const netadr_t *from, qint burst, qint period, qint 
 SVC_RateDropAddress
 ================
 */
-const void
+void
 SVC_RateDropAddress(const netadr_t *from, qint burst, qint period, qint now)
 {
   leakyBucket_t *bucket = SVC_BucketForAddress(from, burst, period, now);
@@ -1040,7 +1040,7 @@ and all connected players.  Used for getting detailed information after
 the simple info query.
 ================
 */
-static const void
+static void
 SVC_Status(const netadr_t *from)
 {
   qchar player[MAX_NAME_LENGTH + 32]; //score + ping + name
@@ -1115,7 +1115,7 @@ Responds with a short info message that should be enough to determine
 if a user is interested in a server to do a full status
 ================
 */
-static const void
+static void
 SVC_Info(const netadr_t *from)
 {
   qint i;
@@ -1228,7 +1228,7 @@ SV_IsRconWhitelisted(const netadr_t *from)
 SV_DropClientsByAddress
 ================
 */
-static const ID_INLINE void
+static ID_INLINE void
 SV_DropClientsByAddress(const netadr_t *drop, const qchar *reason)
 {
   unsigned i;
@@ -1261,7 +1261,7 @@ SV_DropClientsByAddress(const netadr_t *drop, const qchar *reason)
 SVC_FlushRedirect
 ================
 */
-static const void
+static void
 SVC_FlushRedirect(const qchar *outputbuf)
 {
   if (*outputbuf)
@@ -1278,7 +1278,7 @@ SVC_Ping
 Simple server ping, used to check online status.
 ================
 */
-static const ID_INLINE void
+static ID_INLINE void
 SVC_Ping(const netadr_t *from)
 {
   NET_OutOfBandPrint(NS_SERVER, from, "print\nacknowledged\n");
@@ -1464,7 +1464,7 @@ Shift down the remaining args
 Redirect all printfs
 ===============
 */
-static const void
+static void
 SVC_RemoteCommand(const netadr_t *from, msg_t *msg)
 {
   qbool valid;
@@ -1604,7 +1604,7 @@ Clients that are in the game can still send
 connectionless packets.
 =================
 */
-static const void
+static void
 SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
 {
   const qchar *s;
@@ -1849,7 +1849,7 @@ SV_IsValidNetwork(const netadr_t *from)
 SV_ReadPackets
 =================
 */
-const void
+void
 SV_ReadPackets(const netadr_t *from, msg_t *msg)
 {
   qint i;
@@ -1934,7 +1934,7 @@ SV_CalcPings
 Updates the cl->ping variables
 ===================
 */
-static const void
+static void
 SV_CalcPings(void)
 {
   qint i;
@@ -2061,7 +2061,7 @@ for a few seconds to make sure any final reliable message gets resent
 if necessary
 ==================
 */
-static const ID_INLINE void
+static ID_INLINE void
 SV_CheckTimeouts(void)
 {
   const qint now = Sys_Milliseconds();
@@ -2179,7 +2179,7 @@ SV_CheckPaused(void)
 SV_UpdateQueue
 ==================
 */
-static const ID_INLINE void
+static ID_INLINE void
 SV_UpdateQueue(void)
 {
   netadr_t temp[MAX_QUEUE];
@@ -2291,7 +2291,7 @@ SV_TrackCvarChanges(void)
 SV_Restart
 ==================
 */
-static const ID_INLINE void
+static ID_INLINE void
 SV_Restart(const qchar *reason)
 {
   qbool sv_shutdown = qfalse;
@@ -2333,7 +2333,7 @@ Player movement occurs as a result of packet events, which
 happen before SV_Frame is called
 ==================
 */
-const void
+void
 SV_Frame(const qint msec)
 {
   unsigned frameMsec;

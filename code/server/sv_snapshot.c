@@ -384,7 +384,7 @@ SV_SortEntityNumbers
 Insertion sort is about 10 times faster than quicksort for our task
 =======================
 */
-static const void
+static void
 SV_SortEntityNumbers(entityNum_t *num, const qint size)
 {
   entityNum_t tmp;
@@ -657,7 +657,7 @@ SV_AddEntitiesVisibleFromPoint(const vec3_t origin, clientSnapshot_t *frame, sna
           corners[1] = ent->r.currentOrigin[1] + shift[1] + (vectors & 2 ? ent->r.maxs[1]:ent->r.mins[1]);
           corners[2] = ent->r.currentOrigin[2] + shift[2] + (vectors & 4 ? ent->r.maxs[2]:ent->r.mins[2]);
 
-          SV_Trace(&trace, viewpoint, NULL, NULL, corners, frame->ps.clientNum, CONTENTS_SOLID, qfalse);
+          SV_Trace(&trace, viewpoint, NULL, NULL, corners, frame->ps.clientNum, CONTENTS_SOLID, TT_NONE);
 
           if (trace.fraction == 1.0f || trace.entityNum == ent->s.number || (trace.contents & CONTENTS_TRANSLUCENT))
           {

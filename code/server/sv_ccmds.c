@@ -1089,7 +1089,7 @@ SV_CompleteMapName(const qchar *args, qint argNum)
 SV_UptimeReset
 ==================
 */
-const void
+void
 SV_UptimeReset(void)
 {
   uptimeSince = time(NULL);
@@ -1102,7 +1102,7 @@ SV_Uptime_f
 Prints the server uptime.
 ==================
 */
-static const void
+static void
 SV_Uptime_f(void)
 {
   const unsigned long uptime = (unsigned long)(difftime(time(NULL), uptimeSince));
@@ -1232,7 +1232,7 @@ SV_RconWhitelistRehash_f
 Load rcon whitelist from file
 ==================
 */
-static const void
+static void
 SV_RconWhitelistRehash_f(void)
 {
   rconWhitelistCount = SV_RconFileRehash(MAXIMUM_RCON_WHITELIST, rconWhitelist);
