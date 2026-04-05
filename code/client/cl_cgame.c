@@ -521,9 +521,10 @@ static intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_FS_GETFILELIST:
 		VM_CHECKBOUNDS( cls.cgvm, args[3], args[4] );
 		return FS_GetFileList( VMA(1), VMA(2), VMA(3), args[4] );
-	case CG_SENDCONSOLECOMMAND:
+	case CG_SENDCONSOLECOMMAND: {
 		const qchar *cmd = VMA(1);
 		Cbuf_NestedAdd( cmd );
+	}
 		return 0;
 	case CG_ADDCOMMAND:
 		CL_AddCgameCommand( VMA(1) );

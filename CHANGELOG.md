@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--04/05/2026--**
 
+* client:<br />add brackets around CG_SENDCONSOLECOMMAND syscall
+
 * qcommon:<br />fix emit typo for x86
 
 * github: github actions
