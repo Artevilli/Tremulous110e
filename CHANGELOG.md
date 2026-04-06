@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--04/06/2026--**
+
+* readme/build:<br />add build instructions
+
 **--04/05/2026--**
 
 * qcommon:<br />forgot to include vi variable define in common.c Sys_SnapVector()
