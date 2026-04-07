@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--04/06/2026--**
 
+* client:<br />fix bracket placement
+
 * readme/build:<br />add build instructions
 
 **--04/05/2026--**

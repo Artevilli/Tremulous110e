@@ -524,8 +524,8 @@ static intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_SENDCONSOLECOMMAND: {
 		const qchar *cmd = VMA(1);
 		Cbuf_NestedAdd( cmd );
-	}
 		return 0;
+	}
 	case CG_ADDCOMMAND:
 		CL_AddCgameCommand( VMA(1) );
 		return 0;
