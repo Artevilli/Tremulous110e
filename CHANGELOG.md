@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--04/07/2026--**
+
+* qcommon:<br />reduce default com_hunkMegs and separate default value between client and tremded
+
 **--04/06/2026--**
 
 * client:<br />fix bracket placement

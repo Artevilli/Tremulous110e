@@ -50,8 +50,14 @@ const qint demo_protocols[] =
 
 #define USE_MULTI_SEGMENT //allocate additional zone segments on demand
 
-#define MIN_COMHUNKMEGS 96
-#define DEF_COMHUNKMEGS 256
+#if defined(DEDICATED)
+#define MIN_COMHUNKMEGS 48
+#define DEF_COMHUNKMEGS 56
+#else
+#define MIN_COMHUNKMEGS 64
+#define DEF_COMHUNKMEGS 128
+#endif
+
 #if defined(USE_MULTI_SEGMENT)
 #define DEF_COMZONEMEGS 12
 #else
