@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--04/07/2026--**
 
+* docs/client:<br />add documentation and point url to `tremulous:/`
+
 * qcommon:<br />reduce default com_hunkMegs and separate default value between client and tremded
 
 **--04/06/2026--**

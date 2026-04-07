@@ -1536,9 +1536,9 @@ static void CL_Connect_f( void ) {
 	Q_strncpyz( buffer, server, sizeof( buffer ) );
 	server = buffer;
 
-	// skip leading "q3a:/" in connection string
-	if ( !Q_stricmpn( server, "q3a:/", 5 ) ) {
-		server += 5;
+	// skip leading "tremulous:/" in connection string
+	if ( !Q_stricmpn( server, "tremulous:/", 11 ) ) {
+		server += 11;
 	}
 
 	// skip all slash prefixes
