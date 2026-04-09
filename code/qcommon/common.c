@@ -52,7 +52,7 @@ const qint demo_protocols[] =
 
 #if defined(DEDICATED)
 #define MIN_COMHUNKMEGS 48
-#define DEF_COMHUNKMEGS 56
+#define DEF_COMHUNKMEGS 64
 #else
 #define MIN_COMHUNKMEGS 64
 #define DEF_COMHUNKMEGS 128
