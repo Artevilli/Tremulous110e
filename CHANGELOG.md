@@ -6,7 +6,10 @@ Changes
 -----------------------
 **--04/09/2026--**
 
+* qcommon:<br />fix autogen message
+
 * qcommon:<br />raise dedicated hunkmegs
+
 **--04/07/2026--**
 
 * docs/client:<br />add documentation and point url to `tremulous:/`
