@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--04/11/2026--**
+
+* qcommon/sys:<br />qvm optimizations
+
 **--04/09/2026--**
 
 * qcommon:<br />fix autogen message

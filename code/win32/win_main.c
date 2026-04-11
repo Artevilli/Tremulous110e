@@ -841,6 +841,10 @@ GetExceptionName(DWORD code)
     EXCEPTION_INVALID_HANDLE:
       return "INVALID_HANDLE";
 
+    case
+    EXCEPTION_INT_DIVIDE_BY_ZERO:
+      return "INTEGER_DIVIDE_BY_ZERO";
+
     default:
       break;
   }
