@@ -106,7 +106,7 @@ static	uint32_t	ip;
 static	uint32_t	pass;
 static	uint32_t	savedOffset[ OFFSET_T_LAST ];
 
-
+static	qbool	forceDataMask;
 
 #define R0	0  // scratch
 #define R1	1  // scratch
@@ -190,7 +190,7 @@ static void VM_Destroy_Compiled( vm_t *vm )
 		VirtualFree( vm->codeBase.ptr, 0, MEM_RELEASE );
 #else
 		if ( munmap( vm->codeBase.ptr, vm->codeLength ) )
-			Com_Printf( S_COLOR_WARNING "%s(): memory unmap failed, possible memory leak!\n", __func__ );
+			Com_Printf( S_COLOR_ERROR "%s(): memory unmap failed, possible memory leak!\n", __func__ );
 #endif
 	}
 
@@ -766,8 +766,8 @@ static void emitFuncOffset( uint32_t comp, vm_t *vm, offset_t func )
 
 static void emit_CheckReg( vm_t *vm, uint32_t reg, offset_t func )
 {
-	if ( vm->forceDataMask || !( vm_rtChecks->integer & VM_RTCHECK_DATA ) ) {
-		emit(AND(reg, rDATAMASK, reg));    // rN = rN & rDATAMASK
+	if ( forceDataMask ) {
+		emit( AND( reg, rDATAMASK, reg ) );    // rN = rN & rDATAMASK
 		return;
 	}
 
@@ -1226,6 +1226,12 @@ qbool VM_Compile( vm_t *vm, vmHeader_t *header )
 	code = NULL;
 	vm->codeBase.ptr = NULL;
 
+	if ( vm->forceDataMask || (vm_rtChecks->integer & VM_RTCHECK_DATA) == 0 ) {
+		forceDataMask = qtrue;
+	} else {
+		forceDataMask = qfalse;
+	}
+
 	for ( pass = 0; pass < NUM_PASSES; pass++ ) {
 __recompile:
 
@@ -1664,7 +1670,8 @@ __recompile:
 						set_rx_var( rx[0], &var ); // update metadata
 					} else {
 						// address specified by register
-						rx[1] = load_rx_opstack( R1 | RCONST ); dec_opstack(); // r1 = *opstack; opstack -= 4
+						rx[1] = load_rx_opstack( forceDataMask ? R1 : R1 | RCONST );
+						dec_opstack(); // r1 = *opStack; opStack -= 4
 						emit_CheckReg( vm, rx[1], FUNC_BADW );
 						switch ( ci->op ) {
 							case OP_STORE1: emit( STRBa( rx[0], rDATABASE, rx[1] ) ); break; // (byte*)database[r1] = r0

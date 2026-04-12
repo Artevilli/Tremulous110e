@@ -1964,7 +1964,7 @@ void R_LoadPNG(const qchar *name, byte **pic, qint *width, qint *height)
 	if(!ThePNG)
 	{
 		return;
-	}           
+	}
 
 	/*
 	 *  Read the signature of the file.

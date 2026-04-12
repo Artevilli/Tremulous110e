@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--04/12/2026--**
+
+* qcommon:<br />fix rconst with forced data mask
+
 **--04/11/2026--**
 
 * qcommon/sys:<br />qvm optimizations

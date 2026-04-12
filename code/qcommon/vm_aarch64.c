@@ -164,6 +164,7 @@ static uint32_t ip;
 static uint32_t pass;
 static uint32_t savedOffset[OFFSET_T_LAST];
 
+static qbool forceDataMask;
 
 //literal pool
 #if defined(USE_LITERAL_POOL)
@@ -1260,7 +1261,7 @@ emitFuncOffset(vm_t *vm, offset_t func)
 
 static void emit_CheckReg(vm_t *vm, uint32_t reg, offset_t func)
 {
-  if (vm->forceDataMask || !(vm_rtChecks->integer & VM_RTCHECK_DATA))
+  if (forceDataMask)
   {
     emit(AND32(reg, rDATAMASK, reg)); //rN = rN & rDATAMASK
     return;
@@ -1936,6 +1937,15 @@ VM_Compile(vm_t *vm, vmHeader_t *header)
   code = NULL;
   vm->codeBase.ptr = NULL;
 
+  if (vm->forceDataMask || (vm_rtChecks->integer & VM_RTCHECK_DATA) == 0)
+  {
+    forceDataMask = qtrue;
+  }
+  else
+  {
+    forceDataMask = qfalse;
+  }
+
   for(pass = 0;pass < NUM_PASSES;pass++)
   {
 __recompile:
@@ -2530,8 +2540,14 @@ __recompile:
                 break;
             }
 
-            load_rx_opstack2(&rx[0], R1, &rx[1], R0);
-            //rx[0] = rx[1] = load_rx_opstack(R0); //target, address = *opstack
+            if (forceDataMask)
+            {
+              rx[0] = rx[1] = load_rx_opstack(R0); //target = address = *opStack
+            }
+            else
+            {
+              load_rx_opstack2(&rx[0], R1, &rx[1], R0); //target, address(const) = *opStack
+            }
 
             emit_CheckReg(vm, rx[1], FUNC_BADR);
 
@@ -2628,9 +2644,10 @@ __recompile:
             }
             else
             {
-              rx[1] = load_rx_opstack(R1 | RCONST); dec_opstack(); //r1 = *opstack; opstack -= 4
-              emit_CheckReg(vm, rx[1], FUNC_BADW);
-              emit(VSTR(sx[0], rDATABASE, rx[1]));  //database[r1] = s0
+              rx[1] = load_rx_opstack(forceDataMask ? R1:R1 | RCONST);
+              dec_opstack(); //r1 = *opStack; opStack -= 4
+              emit_CheckReg(vm, rx[1], FUNC_BADW); //check for (r1 < dataMask) or r1 = r1 & dataMask
+              emit(VSTR(sx[0], rDATABASE, rx[1])); //database[r1] = s0
               unmask_rx(rx[1]);
               wipe_vars(); //unknown/dynamic address, wipe all register mappings
             }
@@ -2721,9 +2738,8 @@ __recompile:
             else
             {
               //address specified by register
-              //r1 = *opstack; opstack -= 4
-              rx[1] = load_rx_opstack(R1 | RCONST);
-              dec_opstack();
+              rx[1] = load_rx_opstack(forceDataMask ? R1:R1 | RCONST);
+              dec_opstack(); //r1 = *opStack; opStack -= 4
 
               emit_CheckReg(vm, rx[1], FUNC_BADW);
 
