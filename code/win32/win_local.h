@@ -105,7 +105,7 @@ WtoA(const LPWSTR s);
 qbool
 IN_MouseActive(void);
 void
-IN_Win32MouseEvent(qint x, qint y, qint mstate);
+IN_Win32MouseEvent(qint mstate);
 void
 IN_RawMouseEvent(LPARAM lParam);
 
@@ -165,11 +165,6 @@ typedef struct
   //when we get a windows message, we store the time off so keyboard processing
   //can know the exact time of an event
   unsigned sysMsgTime;
-
-  qint raw_mx;
-  qint raw_my;
-
-  POINT mouse;
 #endif
 }
 WinVars_t;

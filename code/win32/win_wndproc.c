@@ -1154,7 +1154,7 @@ MainWndProc(HWND hWnd, UINT uMsg, WPARAM  wParam, LPARAM lParam)
       {
         qint mstate = (wParam & (MK_LBUTTON|MK_RBUTTON)) + ((wParam & (MK_MBUTTON|MK_XBUTTON1|MK_XBUTTON2)) >> 2);
 
-        IN_Win32MouseEvent(LOWORD(lParam), HIWORD(lParam), mstate);
+        IN_Win32MouseEvent(mstate);
         return 0;
       }
 
@@ -1295,9 +1295,9 @@ HandleEvents(void)
   MSG msg;
 
   //pump the message loop
-  while(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
+  while(PeekMessage(&msg, g_wv.hWnd, 0, 0, PM_NOREMOVE))
   {
-    if (GetMessage(&msg, NULL, 0, 0) <= 0)
+    if (GetMessage(&msg, g_wv.hWnd, 0, 0) <= 0)
     {
       Cmd_Clear();
       Com_Quit_f();

@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--04/14/2026--**
+
+* qcommon/sys:<br />remove in_lagged and improve vm macro optimization
+
 **--04/13/2026--**
 
 * qcommon:<br />avoid long conditional branches on arm64

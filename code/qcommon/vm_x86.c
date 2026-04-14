@@ -102,7 +102,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define R_OPSTACKTOP R_R15
 #endif
 
-#define FUNC_ALIGN 4
+#define FUNC_ALIGN 16
 
 /*
   -------------
@@ -3261,6 +3261,39 @@ ConstOptimize(vm_t *vm, instruction_t *ci, instruction_t *ni)
 #endif
 
 
+#if defined(MACRO_OPTIMIZE)
+/*
+=================
+VM_FindSameInst
+
+Search for the same base instruction ahead
+=================
+*/
+static qbool
+VM_FindSameInst(const instruction_t *base, qint offset, qint count)
+{
+  const instruction_t *next = base + offset;
+
+  while(count-- > 0)
+  {
+    if (next->jused)
+    {
+      break;
+    }
+
+    if (next->op == base->op && next->value == base->value)
+    {
+      return qtrue;
+    }
+
+    next++;
+  }
+
+  return qfalse;
+}
+#endif
+
+
 /*
 =================
 VM_FindMOps
@@ -3269,7 +3302,7 @@ Search for known macro-op sequences
 =================
 */
 static void
-VM_FindMOps(instruction_t *buf, qint instructionCount)
+VM_FindMOps(instruction_t *buf, int instructionCount)
 {
   instruction_t *i;
   qint n;
@@ -3279,11 +3312,13 @@ VM_FindMOps(instruction_t *buf, qint instructionCount)
 
   while(n < instructionCount)
   {
-    if (i->op == OP_LOCAL)
-    {
 #if defined(MACRO_OPTIMIZE)
-      //OP_LOCAL + OP_LOCAL + OP_LOAD4 + OP_CONST + OP_XXX + OP_STORE4
-      if ((i + 1)->op == OP_LOCAL && i->value == (i + 1)->value && (i + 2)->op == OP_LOAD4 && (i + 3)->op == OP_CONST && (i + 4)->op != OP_UNDEF && (i + 5)->op == OP_STORE4)
+    if (i->op == OP_LOCAL || i->op == OP_CONST)
+    {
+      //OP_LOCAL|OP_CONST + OP_LOCAL|OP_CONST + OP_LOAD4 + OP_CONST + OP_XXX + OP_STORE4
+      if ((i + 1)->op == i->op && i->value == (i + 1)->value && (i + 2)->op == OP_LOAD4 && (i + 3)->op == OP_CONST && (i + 4)->op != OP_UNDEF && (i + 5)->op == OP_STORE4 
+      //also check this local/global variable not referenced nearby
+      && !VM_FindSameInst(i, 6, min(instructionCount - n - 1, 8)))
       {
         qint v = (i + 4)->op;
 
@@ -3327,23 +3362,23 @@ VM_FindMOps(instruction_t *buf, qint instructionCount)
           continue;
         }
       }
+    }
 #endif
-      if ((i + 1)->op == OP_CONST && (i + 2)->op == OP_CALL && (i + 3)->op == OP_STORE4 && (i + 4)->op == OP_LOCAL && (i + 5)->op == OP_LOAD4 && (i + 6)->op == OP_LEAVE)
+    if (i->op == OP_LOCAL && (i + 1)->op == OP_CONST && (i + 2)->op == OP_CALL && (i + 3)->op == OP_STORE4 && (i + 4)->op == OP_LOCAL && (i + 5)->op == OP_LOAD4 && (i + 6)->op == OP_LEAVE)
+    {
+      if (i->value == (i + 4)->value && !(i+4)->jused)
       {
-        if (i->value == (i + 4)->value && !(i + 4)->jused)
-        {
-          (i + 0)->op = OP_IGNORE;
-          (i + 0)->value = 0;
-          (i + 3)->op = OP_IGNORE;
-          (i + 3)->value = 0;
-          (i + 4)->op = OP_IGNORE;
-          (i + 4)->value = 0;
-          (i + 5)->op = OP_IGNORE;
-          (i + 5)->value = 0;
-          i += 7;
-          n += 7;
-          continue;
-        }
+        (i + 0)->op = OP_IGNORE;
+        (i + 0)->value = 0;
+        (i + 3)->op = OP_IGNORE;
+        (i + 3)->value = 2;
+        (i + 4)->op = OP_IGNORE;
+        (i + 4)->value = 0;
+        (i + 5)->op = OP_IGNORE;
+        (i + 5)->value = 0;
+        i += 7;
+        n += 7;
+        continue;
       }
     }
 
@@ -3363,6 +3398,7 @@ static qbool
 EmitMOPs(vm_t *vm, instruction_t *ci, macro_op_t op)
 {
   uint32_t reg_base;
+  var_addr_t var;
   qint n;
 
   if ((ci + 1)->op == OP_LOCAL)
@@ -3374,45 +3410,51 @@ EmitMOPs(vm_t *vm, instruction_t *ci, macro_op_t op)
     reg_base = R_DATABASE;
   }
 
+  var.base = reg_base;
+  var.addr = ci->value;
+  var.size = 4;
+
+  wipe_var_range(&var);
+
   switch(op)
   {
-    //[local] += CONST
+    //[var] += CONST
     case
     MOP_ADD:
       n = inst[ip + 2].value;
-      emit_op_mem_imm(X_ADD, R_PROCBASE, ci->value, n);
+      emit_op_mem_imm(X_ADD, reg_base, ci->value, n);
       ip += 5;
       return qtrue;
 
-    //[local] -= CONST
+    //[var] -= CONST
     case
     MOP_SUB:
       n = inst[ip + 2].value;
-      emit_op_mem_imm(X_SUB, R_PROCBASE, ci->value, n);
+      emit_op_mem_imm(X_SUB, reg_base, ci->value, n);
       ip += 5;
       return qtrue;
 
-    //[local] &= CONST
+    //[var] &= CONST
     case
     MOP_BAND:
       n = inst[ip + 2].value;
-      emit_op_mem_imm(X_AND, R_PROCBASE, ci->value, n);
+      emit_op_mem_imm(X_AND, reg_base, ci->value, n);
       ip += 5;
       return qtrue;
 
-    //[local] |= CONST
+    //[var] |= CONST
     case
     MOP_BOR:
       n = inst[ip + 2].value;
-      emit_op_mem_imm(X_OR, R_PROCBASE, ci->value, n);
+      emit_op_mem_imm(X_OR, reg_base, ci->value, n);
       ip += 5;
       return qtrue;
 
-    //[local] ^= CONST
+    //[var] ^= CONST
     case
     MOP_BXOR:
       n = inst[ip + 2].value;
-      emit_op_mem_imm(X_XOR, R_PROCBASE, ci->value, n);
+      emit_op_mem_imm(X_XOR, reg_base, ci->value, n);
       ip += 5;
       return qtrue;
   }

@@ -1,18 +1,17 @@
 # Tremulous11e
 
-This is a modern idTech 3 Tremulous engine aimed to be fast, secure, and compatible with all existing Tremulous 1.1 mods.
+This is a modern Tremulous engine aimed to be fast, secure, and compatible with all existing Tremulous 1.1.0 mods.
 It is based on the latest non-SDL source dump of [ioquake3](https://github.com/ioquake/ioq3) with latest upstream fixes applied.
 
 Go to [Releases](../../releases) section to download latest binaries for your platform or follow [Build Instructions](#build-instructions)
 
-*This repository does not contain any game content so in order to play you must copy the resulting binaries into your existing Tremulous 1.1 installation or download the [original Tremulous files](https://sourceforge.net/projects/tremulous/files/tremulous/1.1/)*
+*This repository does not contain any game content so in order to play you must copy the resulting binaries into your existing Tremulous 1.1.0 installation or download the [original Tremulous files](https://sourceforge.net/projects/tremulous/files/tremulous/1.1/)*
 
 **Key features**:
 * integrated ACEBot navigation logic through syscalls
 * optimized OpenGL renderer
 * optimized Vulkan renderer
 * raw mouse input support, enabled automatically instead of DirectInput(**\in_mouse 1**) if available
-* unlagged mouse events processing, can be reverted by setting **\in_lagged 1**
 * **\in_minimize** - hotkey for minimize/restore main window (win32-only, direct replacement for Q3Minimizer)
 * **\video-pipe** - to use external ffmpeg binary as an encoder for better quality and smaller output files
 * significantly reworked QVM (Quake Virtual Machine)
