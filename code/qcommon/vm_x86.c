@@ -3317,7 +3317,7 @@ VM_FindMOps(instruction_t *buf, int instructionCount)
     {
       //OP_LOCAL|OP_CONST + OP_LOCAL|OP_CONST + OP_LOAD4 + OP_CONST + OP_XXX + OP_STORE4
       if ((i + 1)->op == i->op && i->value == (i + 1)->value && (i + 2)->op == OP_LOAD4 && (i + 3)->op == OP_CONST && (i + 4)->op != OP_UNDEF && (i + 5)->op == OP_STORE4 
-      //also check this local/global variable not referenced nearby
+      //also check this local/global variable not referenced afterwards - otherwise load/op/store/load forwarding is preferable
       && !VM_FindSameInst(i, 6, min(instructionCount - n - 1, 8)))
       {
         qint v = (i + 4)->op;
@@ -3364,23 +3364,6 @@ VM_FindMOps(instruction_t *buf, int instructionCount)
       }
     }
 #endif
-    if (i->op == OP_LOCAL && (i + 1)->op == OP_CONST && (i + 2)->op == OP_CALL && (i + 3)->op == OP_STORE4 && (i + 4)->op == OP_LOCAL && (i + 5)->op == OP_LOAD4 && (i + 6)->op == OP_LEAVE)
-    {
-      if (i->value == (i + 4)->value && !(i+4)->jused)
-      {
-        (i + 0)->op = OP_IGNORE;
-        (i + 0)->value = 0;
-        (i + 3)->op = OP_IGNORE;
-        (i + 3)->value = 2;
-        (i + 4)->op = OP_IGNORE;
-        (i + 4)->value = 0;
-        (i + 5)->op = OP_IGNORE;
-        (i + 5)->value = 0;
-        i += 7;
-        n += 7;
-        continue;
-      }
-    }
 
     i++;
     n++;
@@ -3718,6 +3701,7 @@ __compile:
 
         case
         OP_IGNORE:
+          ip += ci->value;
           break;
 
         case

@@ -4,6 +4,10 @@ Please note that this is not a complete list of every change. It will be continu
 
 Changes
 -----------------------
+**--04/15/2026--**
+
+* qcommon:<br />share x86 specific optimization with others
+
 **--04/14/2026--**
 
 * qcommon/sys:<br />remove in_lagged and improve vm macro optimization

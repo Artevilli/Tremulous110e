@@ -2145,6 +2145,7 @@ __recompile:
 
         case
         OP_IGNORE:
+          ip += ci->value;
           break;
 
         case
