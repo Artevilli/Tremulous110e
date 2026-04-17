@@ -55,7 +55,6 @@
 #define FRAME_TIME_WARNING 30
 
 extern cvar_t *sv_fps; //time rate for running non-clients
-extern cvar_t *sv_cl_fps; //time rater for running non-clients (used for cgame)
 extern cvar_t *sv_timeout; //seconds without any message
 extern cvar_t *sv_zombietime; //seconds to sink messages after disconnect
 #if defined(INCLUDE_REMOTE_COMMANDS)
@@ -66,7 +65,6 @@ extern cvar_t *sv_rconWhitelist; //barrier to entry for rcon access
 extern cvar_t *sv_privatePassword; // password for the privateClient slots
 extern cvar_t *sv_hidden;
 extern cvar_t *sv_allowDownload;
-extern cvar_t *sv_cl_allowDownload;
 extern cvar_t *sv_maxclients;
 extern cvar_t *sv_maxclientsPerIP;
 extern cvar_t *sv_clientTLD;

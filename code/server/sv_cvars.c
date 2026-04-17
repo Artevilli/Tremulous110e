@@ -29,7 +29,6 @@
 #include "sv_cvars.h"
 
 cvar_t *sv_fps = NULL; //time rate for running non-clients
-cvar_t *sv_cl_fps; //time rate for running non-clients (used for cgame)
 cvar_t *sv_timeout; //seconds without any message
 cvar_t *sv_zombietime; //seconds to sink messages after disconnect
 #if defined(INCLUDE_REMOTE_COMMANDS)
@@ -40,7 +39,6 @@ cvar_t *sv_rconWhitelist; //barrier to entry for rcon access
 cvar_t *sv_privatePassword; // password for the privateClient slots
 cvar_t *sv_hidden;
 cvar_t *sv_allowDownload;
-cvar_t *sv_cl_allowDownload;
 cvar_t *sv_maxclients;
 cvar_t *sv_maxclientsPerIP;
 cvar_t *sv_clientTLD;
@@ -176,17 +174,11 @@ SV_InitCvars(void)
   sv_fps = Cvar_GetAndDescribe("sv_fps", "20", CVAR_SERVERINFO | CVAR_SYSTEMINFO, "1000 divided by this value is the time until the next server frame is processed.");
 #endif
   Cvar_CheckRange(sv_fps, "10", "125", CV_INTEGER);
-#if defined(USE_JAVA) || defined(USE_BULLET)
-  sv_cl_fps = Cvar_GetAndDescribe("sv_cl_fps", "60", CVAR_SYSTEMINFO, "This cvar is purely for cgame, do not touch.");
-#else
-  sv_cl_fps = Cvar_GetAndDescribe("sv_cl_fps", "20", CVAR_SYSTEMINFO, "This cvar is purely for cgame, do not touch.");
-#endif
   sv_timeout = Cvar_GetAndDescribe("sv_timeout", "200", CVAR_TEMP, "Seconds without any message before automatic client disconnect.");
   Cvar_CheckRange(sv_timeout, "4", NULL, CV_INTEGER);
   sv_zombietime = Cvar_GetAndDescribe("sv_zombietime", "2", CVAR_TEMP, "Seconds to sink messages after disconnect.");
   Cvar_CheckRange(sv_zombietime, "1", NULL, CV_INTEGER);
   sv_allowDownload = Cvar_GetAndDescribe("sv_allowDownload", "0", CVAR_SERVERINFO, "Toggle the ability for clients to download files maps etc. from server.");
-  sv_cl_allowDownload = Cvar_GetAndDescribe("cl_allowDownload", "1", CVAR_SYSTEMINFO, "Force enable downloading for 1.1 clients");
   sv_hidden = Cvar_GetAndDescribe("sv_hidden", "0", CVAR_ARCHIVE, "Hide the server from queries and from master servers.");
   Cvar_GetAndDescribe("sv_dlURL", "", CVAR_SERVERINFO | CVAR_ARCHIVE, "Disconnects clients and redirects them to download paks from this URL instead of the server. When the download finishes, the client will automatically be reconnected.\nNOTE: if the URL does not have the correct paks, is missing some, or the checksum is mismatched, clients will get dropped!");
   Cvar_Get("sv_wwwDownload", "1", CVAR_SYSTEMINFO | CVAR_ARCHIVE);

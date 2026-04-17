@@ -1013,7 +1013,6 @@ SV_Init(void)
   Cvar_SetGroup(sv_minRate, CVG_SERVER);
   Cvar_SetGroup(sv_maxRate, CVG_SERVER);
   Cvar_SetGroup(sv_fps, CVG_SERVER);
-  Cvar_SetGroup(sv_cl_fps, CVG_SERVER);
 
   //force initial check
   SV_TrackCvarChanges();

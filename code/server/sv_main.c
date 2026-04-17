@@ -2263,11 +2263,6 @@ SV_TrackCvarChanges(void)
     Com_DPrintf("sv_minRate adjusted to 1000\n");
   }
 
-  if (sv_cl_fps->integer != sv_fps->integer)
-  {
-    Cvar_Set("sv_cl_fps", va("%i", sv_fps->integer));
-  }
-
   Cvar_ResetGroup(CVG_SERVER, qfalse);
 
   if (sv.state == SS_DEAD || !svs.clients)
