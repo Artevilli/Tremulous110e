@@ -169,9 +169,9 @@ SV_InitCvars(void)
 #endif
   sv_privatePassword = Cvar_Get("sv_privatePassword", "", CVAR_TEMP);
 #if defined(USE_JAVA) || defined(USE_BULLET)
-  sv_fps = Cvar_GetAndDescribe("sv_fps", "60", CVAR_SERVERINFO | CVAR_SYSTEMINFO, "1000 divided by this value is the time until the next server frame is processed.");
+  sv_fps = Cvar_GetAndDescribe("sv_fps", "60", CVAR_TEMP, "Set the max frames per second the server sends the client.");
 #else
-  sv_fps = Cvar_GetAndDescribe("sv_fps", "20", CVAR_SERVERINFO | CVAR_SYSTEMINFO, "1000 divided by this value is the time until the next server frame is processed.");
+  sv_fps = Cvar_GetAndDescribe("sv_fps", "20", CVAR_TEMP, "Set the max frames per second the server sends the client.");
 #endif
   Cvar_CheckRange(sv_fps, "10", "125", CV_INTEGER);
   sv_timeout = Cvar_GetAndDescribe("sv_timeout", "200", CVAR_TEMP, "Seconds without any message before automatic client disconnect.");
