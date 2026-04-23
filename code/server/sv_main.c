@@ -26,16 +26,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 serverStatic_t svs; //persistant server info
 server_t sv; //local server
 
-//Chey
-#if defined(INCLUDE_REMOTE_COMMANDS)
-serverRconPassword_t rconWhitelist[MAXIMUM_RCON_WHITELIST];
-qint rconWhitelistCount = 0;
-#endif
-#define MAX_QUEUE 10
-netadr_t queue[MAX_QUEUE];
-unsigned lastQueue[MAX_QUEUE];
-unsigned queueCount;
-
 /*
 =============================================================================
 
@@ -1180,12 +1170,6 @@ SVC_Info(const netadr_t *from)
   Info_SetValueForKey(infostring, "pure", va("%i", sv.pure));
   Info_SetValueForKey(infostring, "gamename", GAMENAME_FOR_MASTER);
 
-#if defined(USE_VOIP)
-    if (sv_voip->integer)
-    {
-      Info_SetValueForKey(infostring, "voip", va("%i", sv_voip->integer));
-    }
-#endif
   gamedir = Cvar_VariableString("fs_game");
 
   if (*gamedir != '\0')
@@ -1196,38 +1180,12 @@ SVC_Info(const netadr_t *from)
   NET_OutOfBandPrint(NS_SERVER, from, "infoResponse\n%s", infostring);
 }
 
-#if defined(INCLUDE_REMOTE_COMMANDS) //Chey: the #endif is only after SV_DropClientsByAddress to shut up a compiler warning, dunno if i will use it elsewhere
-/*
-================
-SV_IsRconWhitelisted
-
-Check whether a certain address is rcon whitelisted
-================
-*/
-static const ID_INLINE qbool
-SV_IsRconWhitelisted(const netadr_t *from)
-{
-  unsigned index;
-  const serverRconPassword_t *curPass;
-
-  for(index = 0;index < rconWhitelistCount;index++)
-  {
-    curPass = &rconWhitelist[index];
-
-    if (NET_CompareBaseAdrMask(&curPass->ip, from, curPass->subNet))
-    {
-      return qtrue;
-    }
-  }
-
-  return qfalse;
-}
-
 /*
 ================
 SV_DropClientsByAddress
 ================
 */
+#if 0 //unused
 static ID_INLINE void
 SV_DropClientsByAddress(const netadr_t *drop, const qchar *reason)
 {
@@ -1246,7 +1204,7 @@ SV_DropClientsByAddress(const netadr_t *drop, const qchar *reason)
     }
 
     //skip other addresses
-    if (NET_CompareBaseAdr(drop, &cl->netchan.remoteAddress))
+    if (!NET_CompareBaseAdr(drop, &cl->netchan.remoteAddress))
     {
       continue;
     }
@@ -1255,18 +1213,23 @@ SV_DropClientsByAddress(const netadr_t *drop, const qchar *reason)
     SV_DropClient(cl, reason);
   }
 }
+#endif
+
+
+#if defined(INCLUDE_REMOTE_COMMANDS)
+static netadr_t redirectAddress; //for rcon return messages
 
 /*
 ================
-SVC_FlushRedirect
+SV_FlushRedirect
 ================
 */
 static void
-SVC_FlushRedirect(const qchar *outputbuf)
+SV_FlushRedirect(const qchar *outputbuf)
 {
   if (*outputbuf)
   {
-    NET_OutOfBandPrint(NS_SERVER, &svs.redirectAddress, "print\n%s", outputbuf);
+    NET_OutOfBandPrint(NS_SERVER, &redirectAddress, "print\n%s", outputbuf);
   }
 }
 #endif
@@ -1474,21 +1437,6 @@ SVC_RemoteCommand(const netadr_t *from, msg_t *msg)
   const qchar *pw;
   fileHandle_t rconLog = 0;
 
-  if (sv_rconWhitelist->string && *sv_rconWhitelist->string)
-  {
-    if (SV_IsRconWhitelisted(from))
-    {
-      if (com_developer->integer)
-      {
-        Com_Printf("unauthorized rcon attempt from %s\n", NET_AdrToString(from));
-      }
-
-      NET_OutOfBandPrint(NS_SERVER, from, "print\nsorry but you can not use rcon commands\n");
-      SV_DropClientsByAddress(from, "you are not admin");
-      return;
-    }
-  }
-
   if (strlen(sv_rconLog->string))
   {
     rconLog = FS_FOpenFileAppend(sv_rconLog->string);
@@ -1504,7 +1452,7 @@ SVC_RemoteCommand(const netadr_t *from, msg_t *msg)
 
   pw = Cmd_Argv(1);
 
-  if ((sv_rconPassword->string[0] && strcmp(pw, sv_rconPassword->string) == 0) || (rconPassword2[0] && strcmp(pw, rconPassword2) == 0)
+  if ((sv_rconPassword->string[0] && strcmp(pw, sv_rconPassword->string) == 0) || (rconPassword2[0] && strcmp(pw, rconPassword2) == 0))
   {
     valid = qtrue;
     message = va("Rcon from %s: %s\n", NET_AdrToString(from), Cmd_ArgsFrom(2));
@@ -1512,7 +1460,7 @@ SVC_RemoteCommand(const netadr_t *from, msg_t *msg)
   else
   {
     valid = qfalse;
-    message = ("Bad rcon from %s: %s\n", NET_AdrToString(from), Cmd_ArgsFrom(2));
+    message = va("Bad rcon from %s: %s\n", NET_AdrToString(from), Cmd_ArgsFrom(2));
   }
 
   Com_Printf("%s", message);
@@ -1550,7 +1498,7 @@ SVC_RemoteCommand(const netadr_t *from, msg_t *msg)
 
     while(*cmd_aux && *cmd_aux <= ' ') //skip whitespace
     {
-      cmd_aux;;
+      cmd_aux++;
     }
 
     cmd_aux += 4; //"rcon"
@@ -2176,46 +2124,6 @@ SV_CheckPaused(void)
 
 /*
 ==================
-SV_UpdateQueue
-==================
-*/
-static ID_INLINE void
-SV_UpdateQueue(void)
-{
-  netadr_t temp[MAX_QUEUE];
-  unsigned templast[MAX_QUEUE];
-  unsigned i;
-  unsigned j;
-
-  j = 0;
-
-  for(i = 0;i < queueCount;i++)
-  {
-    if (svs.time - lastQueue[i] > 4000)
-    {
-#if defined(DEDICATED)
-      SV_WriteAttackLog(va("Queue position %d for %s has timed out! - %d ms\n", i, NET_AdrToString(&queue[i]), svs.time - lastQueue[i]));
-#endif
-      continue;
-    }
-
-    temp[j] = queue[i];
-    templast[j] = lastQueue[i];
-    j++;
-  }
-
-  queueCount = 0;
-
-  for(i = 0;i < j;i++)
-  {
-    queue[i] = temp[i];
-    lastQueue[i] = templast[i];
-    queueCount++;
-  }
-}
-
-/*
-==================
 SV_FrameMsec
 
 Return time in msec until processing of next server frame.
@@ -2339,7 +2247,6 @@ SV_Frame(const qint msec)
   unsigned averageFrameTime;
   unsigned timeVal;
   unsigned i;
-  static unsigned updatequeue;
   static unsigned start;
   static unsigned end;
 
@@ -2616,21 +2523,6 @@ SV_Frame(const qint msec)
       {
         Com_Printf("^3WARNING: Average frame time has reached a critical value of %ims\n", (qint)svs.stats.avg);
       }
-    }
-  }
-
-  //Chey
-  updatequeue = 0;
-
-  if (queueCount)
-  {
-    updatequeue++;
-
-    //four seconds
-    if (updatequeue >= 80)
-    {
-      SV_UpdateQueue();
-      updatequeue = 0;
     }
   }
 }

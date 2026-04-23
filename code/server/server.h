@@ -396,14 +396,6 @@ client_s
   netchan_buffer_t *netchan_start_queue;
   netchan_buffer_t **netchan_end_queue;
 
-#if defined(USE_VOIP)
-  qbool hasVoip;
-  qbool muteAllVoip;
-  qbool ignoreVoipFromClient[MAX_CLIENTS];
-  voipServerPacket_t voipPacket[64]; //!!! FIXME: WAY too much memory!
-  qint queuedVoipPackets;
-#endif
-
   qint oldServerTime;
   qbool csUpdated[MAX_CONFIGSTRINGS];
   qbool compat;
@@ -462,11 +454,6 @@ typedef struct
 }
 floodBan_t;
 
-#define MAX_QUEUE 10
-extern netadr_t queue[MAX_QUEUE];
-extern unsigned lastQueue[MAX_QUEUE];
-extern unsigned queueCount;
-
 //webconsole
 #if defined(USE_WEBCONSOLE)
 extern qint sv_webconsoleSocket;
@@ -497,8 +484,6 @@ typedef struct
   receipt_t infoReceipts[MAX_INFO_RECEIPTS];
   floodBan_t infoFloodBans[MAX_INFO_FLOOD_BANS];
 #if defined(INCLUDE_REMOTE_COMMANDS)
-  netadr_t redirectAddress; //for rcon return messages
-
   netadr_t authorizeAddress; //for rcon return messages
 #endif
 
@@ -519,26 +504,6 @@ typedef struct
   snapshotFrame_t *currFrame; //current frame that clients can refer
 }
 serverStatic_t;
-
-//=============================================================================
-
-#if defined(INCLUDE_REMOTE_COMMANDS)
-#define MAXIMUM_RCON_WHITELIST 32
-
-//Chey: struct for managing rcon password from file
-typedef struct
-{
-  netadr_t ip;
-
-  //for cidr notation type suffix
-  qint subNet;
-  qbool isException;
-}
-serverRconPassword_t;
-
-extern serverRconPassword_t rconWhitelist[MAXIMUM_RCON_WHITELIST];
-extern qint rconWhitelistCount;
-#endif
 
 //=============================================================================
 
@@ -673,11 +638,6 @@ void
 SV_FreeIP4DB(void);
 void
 SV_PrintLocations_f(client_t *client);
-
-#if defined(USE_VOIP)
-void
-SV_WriteVoipToClient(client_t *cl, msg_t *msg);
-#endif
 
 //
 //sv_cvars.c

@@ -30,7 +30,7 @@
 #include "../qcommon/qcommon.h"
 
 //enabling rcon
-//#define INCLUDE_REMOTE_COMMANDS
+#define INCLUDE_REMOTE_COMMANDS
 
 //switching between the first and second version of stateless challenges
 //#define STATELESS_CHALLENGES_VERSION_ONE
@@ -41,9 +41,6 @@
 
 //fix client ping calculation to more accurately reflect packet loss, enabled by sv_pingFix, also force minimum ping for humans to 1
 #define INCLUDE_SV_PINGFIX
-
-//voip support
-//#define USE_VOIP
 
 //stateless challenges v2 does not support debugging yet
 #if defined(STATELESS_CHALLENGES_VERSION_ONE)
@@ -60,7 +57,6 @@ extern cvar_t *sv_zombietime; //seconds to sink messages after disconnect
 #if defined(INCLUDE_REMOTE_COMMANDS)
 extern cvar_t *sv_rconPassword; //password for remote server commands
 extern cvar_t *sv_rconLog; //log file for remote server commands
-extern cvar_t *sv_rconWhitelist; //barrier to entry for rcon access
 #endif
 extern cvar_t *sv_privatePassword; // password for the privateClient slots
 extern cvar_t *sv_hidden;
@@ -114,10 +110,6 @@ extern cvar_t *sv_antiWallhack;
 extern cvar_t *sv_sendNearbyEnts;
 extern cvar_t *sv_sendNearbyEntsRange;
 extern cvar_t *sv_filterCommands;
-
-#if defined(USE_VOIP)
-extern cvar_t *sv_voip;
-#endif
 
 #if defined(DEBUG_SV_CHALLENGE)
 extern cvar_t *sv_debugChallenges;

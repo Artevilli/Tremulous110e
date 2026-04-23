@@ -34,7 +34,6 @@ cvar_t *sv_zombietime; //seconds to sink messages after disconnect
 #if defined(INCLUDE_REMOTE_COMMANDS)
 cvar_t *sv_rconPassword; //password for remote server commands
 cvar_t *sv_rconLog; //log file for remote server commands
-cvar_t *sv_rconWhitelist; //barrier to entry for rcon access
 #endif
 cvar_t *sv_privatePassword; // password for the privateClient slots
 cvar_t *sv_hidden;
@@ -87,10 +86,6 @@ cvar_t *sv_antiWallhack;
 cvar_t *sv_sendNearbyEnts;
 cvar_t *sv_sendNearbyEntsRange;
 cvar_t *sv_filterCommands;
-
-#if defined(USE_VOIP)
-cvar_t *sv_voip;
-#endif
 
 #if defined(DEBUG_SV_CHALLENGE)
 cvar_t  *sv_debugChallenges;
@@ -165,7 +160,6 @@ SV_InitCvars(void)
 #if defined(INCLUDE_REMOTE_COMMANDS)
   sv_rconPassword = Cvar_GetAndDescribe("rconPassword", "", CVAR_TEMP, "Password for remote server commands.");
   sv_rconLog = Cvar_GetAndDescribe("sv_rconLog", "", CVAR_ARCHIVE, "Name for the file which stores logs of all rcon commands, double quote to disable.");
-  sv_rconWhitelist = Cvar_GetAndDescribe("sv_rconWhitelist", "whitelist.dat", CVAR_ARCHIVE, "Sets the file which contains ip addresses allowed to execute rcon commands, NOTE: use double quotes to disable!");
 #endif
   sv_privatePassword = Cvar_Get("sv_privatePassword", "", CVAR_TEMP);
 #if defined(USE_JAVA) || defined(USE_BULLET)
@@ -215,11 +209,6 @@ SV_InitCvars(void)
   sv_sendNearbyEntsRange = Cvar_GetAndDescribe("sv_sendNearbyEntsRange", "1500", CVAR_ARCHIVE, "Specifies the range at which entities that fail the pvs check are sent to the client.");
   Cvar_CheckRange(sv_sendNearbyEntsRange, "0", NULL, CV_INTEGER);
   sv_filterCommands = Cvar_GetAndDescribe("sv_filterCommands", "1", CVAR_ARCHIVE, "Toggles whether or not to filter excessive client commands.\n0: only strip essentials\n1: strip \\n and \\r\n2: also strip ;");
-
-#if defined(USE_VOIP)
-  sv_voip = Cvar_Get("sv_voip", "1", CVAR_SYSTEMINFO | CVAR_LATCH);
-  Cvar_CheckRange(sv_voip, "0", "1", CV_INTEGER);
-#endif
 
 #if defined(DEBUG_SV_CHALLENGE)
   sv_debugChallenges = Cvar_GetAndDescribe("sv_debugChallenges", "0", CVAR_ARCHIVE, "Toggles whether or not to print debug messages for serverside stateless challenge generation.");

@@ -1044,27 +1044,6 @@ SV_Locations_f(void)
 
 /*
 ==================
-SV_ListQueue_f
-==================
-*/
-static void
-SV_ListQueue_f(void)
-{
-  qint i;
-
-  for(i = 0;i < queueCount;i++)
-  {
-    if (!i)
-    {
-      Com_Printf("connection ips in queue\n_____________________\n");
-    }
-
-    Com_Printf("%d: %s : %d\n", i + 1, NET_AdrToString(&queue[i]), svs.time - lastQueue[i]);
-  }
-}
-
-/*
-==================
 SV_CompleteMapName
 ==================
 */
@@ -1121,124 +1100,6 @@ SV_Uptime_f(void)
   }
 }
 
-#if defined(INCLUDE_REMOTE_COMMANDS)
-/*
-==================
-SV_RconFileRehash
-
-Helper to reload a "serverBan_t" type of file
-Returns number of entries loaded
-==================
-*/
-static qint
-SV_RconFileRehash(qint maxEntries, serverRconPassword_t buffer[])
-{
-  const qchar *fileName;
-  qint index;
-  qint filelen;
-  fileHandle_t readfrom;
-  qchar *textbuf;
-  qchar *curpos;
-  qchar *maskpos;
-  qchar *newlinepos;
-  qchar *endpos;
-  qchar filepath[MAX_QPATH];
-  qint numEntries;
-
-  numEntries = 0;
-  fileName = sv_rconWhitelist->string;
-
-  if (!fileName || !*fileName)
-  {
-    goto exit;
-  }
-
-  if (!(curpos = Cvar_VariableString("fs_game")) || !*curpos)
-  {
-    curpos = BASEGAME;
-  }
-
-  Com_sprintf(filepath, sizeof(filepath), "%s/%s", curpos, fileName);
-
-  if ((filelen = FS_FOpenFileRead(filepath, &readfrom, qfalse)) < 0)
-  {
-    Com_Printf("sv rehash server rcon file failed to open %s\n", filepath);
-    goto exit;
-  }
-
-  if (filelen < 2)
-  {
-    //dont bother if too short
-    FS_FCloseFile(readfrom);
-    goto exit;
-  }
-
-  curpos = textbuf = Z_Malloc(filelen);
-  filelen = FS_Read(textbuf, filelen, readfrom);
-  FS_FCloseFile(readfrom);
-  endpos = textbuf + filelen;
-
-  for(index = 0;index < maxEntries && curpos + 2 < endpos;index++)
-  {
-    //find end of addr string
-    for(maskpos = curpos + 2;maskpos < endpos && *maskpos != ' ';maskpos++);
-
-    if (maskpos + 1 >= endpos)
-    {
-      break;
-    }
-
-    *maskpos = '\0';
-    maskpos++;
-
-    //find end of subnet specifier
-    for(newlinepos = maskpos;newlinepos < endpos && *newlinepos != '\n';newlinepos++);
-
-    if (newlinepos >= endpos)
-    {
-      break;
-    }
-
-    *newlinepos = '\0';
-
-    if (NET_StringToAdr(curpos + 2, &buffer[index].ip, NA_UNSPEC))
-    {
-      buffer[index].isException = (curpos[0] != '0');
-      buffer[index].subNet = Q_atoi(maskpos);
-
-      if (buffer[index].ip.type == NA_IP && (buffer[index].subNet < 1 || buffer[index].subNet > 32))
-      {
-        buffer[index].subNet = 32;
-      }
-      else if (buffer[index].ip.type == NA_IP6 && (buffer[index].subNet < 1 || buffer[index].subNet > 128))
-      {
-        buffer[index].subNet = 128;
-      }
-    }
-
-    curpos = newlinepos + 1;
-  }
-
-  Z_Free(textbuf);
-  numEntries = index;
-  exit:
-  return numEntries;
-}
-
-/*
-==================
-SV_RconWhitelistRehash_f
-
-Load rcon whitelist from file
-==================
-*/
-static void
-SV_RconWhitelistRehash_f(void)
-{
-  rconWhitelistCount = SV_RconFileRehash(MAXIMUM_RCON_WHITELIST, rconWhitelist);
-}
-#endif
-
 //===========================================================
 
 /*
@@ -1273,10 +1134,6 @@ SV_AddOperatorCommands(void)
   Cmd_AddCommand("uptime", SV_Uptime_f);
   Cmd_AddCommand("filter", SV_AddFilter_f);
   Cmd_AddCommand("filtercmd", SV_AddFilterCmd_f);
-  Cmd_AddCommand("listqueue", SV_ListQueue_f);
-#if defined(INCLUDE_REMOTE_COMMANDS)
-  Cmd_AddCommand("rconwhitelistrehash", SV_RconWhitelistRehash_f);
-#endif
 }
 
 /*

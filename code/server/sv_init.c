@@ -647,11 +647,6 @@ SV_SpawnServer(const qchar *mapname, qbool killBots)
     sv.configstrings[i] = CopyString("");
   }
 
-#if defined(INCLUDE_REMOTE_COMMANDS)
-  //load saved whitelist
-  Cbuf_AddText("rconwhitelistrehash\n");
-#endif
-
 #if !defined(DEDICATED)
   //make sure we are not paused
   Cvar_Set("cl_paused", "0");

@@ -1098,10 +1098,6 @@ SV_SendClientSnapshot(client_t *client)
   //and the playerState_t
   SV_WriteSnapshotToClient(client, &msg);
 
-#if defined(USE_VOIP)
-  SV_WriteVoipToClient(client, &msg);
-#endif
-
   //check for overflow
   if (msg.overflowed)
   {
