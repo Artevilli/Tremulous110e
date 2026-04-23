@@ -6,6 +6,8 @@ Changes
 -----------------------
 **--04/17/2026--**
 
+* sys:<br />fix win32 dedicated console
+
 * server:<br />fix `sv_fps` flags
 
 * server:<br />drop now redundant `sv_cl_fps` cvar and don't force clients to accept downloads

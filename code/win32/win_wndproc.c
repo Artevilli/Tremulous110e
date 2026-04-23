@@ -1295,9 +1295,9 @@ HandleEvents(void)
   MSG msg;
 
   //pump the message loop
-  while(PeekMessage(&msg, g_wv.hWnd, 0, 0, PM_NOREMOVE))
+  while(PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
   {
-    if (GetMessage(&msg, g_wv.hWnd, 0, 0) <= 0)
+    if (GetMessage(&msg, NULL, 0, 0) <= 0)
     {
       Cmd_Clear();
       Com_Quit_f();
