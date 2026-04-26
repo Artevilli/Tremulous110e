@@ -1620,7 +1620,7 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
     {
       if (com_developer->integer)
       {
-        Com_Printf("%s: connect packet is too long - %i\n", NET_AdrToString(from), msg->cursize);
+        Com_Printf(S_COLOR_DEVEL "%s: connect packet is too long - %i\n", NET_AdrToString(from), msg->cursize);
       }
 
       return;
@@ -2134,7 +2134,7 @@ SV_FrameMsec(void)
 {
   if (sv_fps)
   {
-    const qint frameMsec = 1000.0f / sv_fps->value;
+    const qint frameMsec = 1000 / sv_fps->integer;
     const qint scaledResidual = (const qint)(sv.timeResidual / com_timescale->value);
 
     if (frameMsec < scaledResidual)
