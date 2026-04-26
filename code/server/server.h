@@ -51,7 +51,7 @@ protect_flags_t;
 #define	MAX_ENT_CLUSTERS 16
 
 //use an alternative dropped gamestate, simplifying code and fixing potential udp download issues
-//#define GAMESTATE_RETRANSMIT_VERSION_TWO
+#define GAMESTATE_RETRANSMIT_VERSION_TWO
 
 //avoid a potential issue where clients load the map twice after a download completes
 #if defined(GAMESTATE_RETRANSMIT_VERSION_TWO)
