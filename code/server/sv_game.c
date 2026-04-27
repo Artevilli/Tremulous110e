@@ -485,7 +485,7 @@ SV_GetValue(qchar *value, qint valueSize, const qchar *key)
     return qtrue;
   }
 
-  if (!Q_stricmp(key, "trap_Cvar_SetDescription_Q3E"))
+  if (!Q_stricmp(key, "trap_Cvar_SetDescription_T110E"))
   {
     Com_sprintf(value, valueSize, "%i", G_CVAR_SETDESCRIPTION);
     return qtrue;

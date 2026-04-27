@@ -429,7 +429,7 @@ static qbool CL_GetValue( qchar* value, qint valueSize, const qchar* key ) {
 		return qtrue;
 	}
 
-	if ( !Q_stricmp( key, "trap_R_AddLinearLightToScene_Q3E" ) && re.AddLinearLightToScene ) {
+	if ( !Q_stricmp( key, "trap_R_AddLinearLightToScene_T110E" ) && re.AddLinearLightToScene ) {
 		Com_sprintf( value, valueSize, "%i", CG_R_ADDLINEARLIGHTTOSCENE );
 		return qtrue;
 	}
@@ -439,7 +439,7 @@ static qbool CL_GetValue( qchar* value, qint valueSize, const qchar* key ) {
 		return qtrue;
 	}
 
-	if ( !Q_stricmp( key, "trap_Cvar_SetDescription_Q3E" ) ) {
+	if ( !Q_stricmp( key, "trap_Cvar_SetDescription_T110E" ) ) {
 		Com_sprintf( value, valueSize, "%i", CG_CVAR_SETDESCRIPTION );
 		return qtrue;
 	}
