@@ -1288,9 +1288,10 @@ SV_SendClientGameState(client_t *client)
       csUpdated = 0;
     }
 
-    if (client->gamestateAck == GSA_SENT_ONCE && csUpdated == 0)
+    if ((client->gamestateAck == GSA_SENT_ONCE || client->gamestateAck == GSA_ACKED) && csUpdated == 0)
     {
       //if no configstrings being updated since last submission then assume that we're (re)sending identical gamestate
+      client->gamestateAck = GSA_SENT_ONCE;
     }
     else
     {
@@ -1532,14 +1533,6 @@ SV_DoneDownload_f(client_t *cl)
     //dont immediately trip dropped download gamestate checks in SV_ExecuteClientMessage
     cl->gamestateMessageNum = cl->messageAcknowledge - 1;
     return;
-  }
-#endif
-
-#if !defined(GAMESTATE_RETRANSMIT_VERSION_TWO)
-  //reset acknowledge in case of skipped "download" command e.g. client using cURL and stays CS_PRIMED
-  if (cl->gamestateAck == GSA_ACKED)
-  {
-    cl->gamestateAck = GSA_SENT_ONCE;
   }
 #endif
 
