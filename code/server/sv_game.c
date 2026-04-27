@@ -479,7 +479,7 @@ GVM_ArgPtr(intptr_t intValue)
 static qbool
 SV_GetValue(qchar *value, qint valueSize, const qchar *key)
 {
-  if (!Q_stricmp(key, "SVF_SELF_PORTAL2"))
+  if (!Q_stricmp(key, "SVF_SELF_PORTAL2_T110E"))
   {
     Com_sprintf(value, valueSize, "%i", SVF_SELF_PORTAL2);
     return qtrue;
