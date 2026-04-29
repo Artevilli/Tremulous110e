@@ -748,7 +748,7 @@ NET_CompareAdr(const netadr_t *a, const netadr_t *b)
       break;
 
     default:
-      return qfalse;
+      return qtrue;
   }
 
   return qfalse;
