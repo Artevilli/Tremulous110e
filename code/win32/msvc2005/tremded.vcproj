@@ -516,10 +516,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\server\sv_webconsole.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\server\sv_world.c"
 				>
 			</File>

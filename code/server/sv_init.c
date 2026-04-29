@@ -23,11 +23,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "server.h"
 
-//attack log file starts when server is init, log attacks when server waits for rcon
-#if defined(DEDICATED)
-qint attHandle = 0; //attack log handle
-#endif
-
 /*
 ===============
 SV_SendConfigstring
@@ -862,115 +857,6 @@ SV_SpawnServer(const qchar *mapname, qbool killBots)
   Com_FrameInit();
 }
 
-#if defined(DEDICATED)
-/*
-===============
-SV_WriteAttackLog
-===============
-*/
-void
-SV_WriteAttackLog(const qchar *log)
-{
-  static qint lastAttackLogTime;
-  qchar string[512];
-  qtime_t time;
-
-  if (Sys_Milliseconds() > lastAttackLogTime + sv_protectLogInterval->integer)
-  {
-    if (attHandle > 0)
-    {
-      Com_RealTime(&time);
-      Com_sprintf(string, sizeof(string), "%i/%02i/%02i %02i:%02i:%02i %s", 1900 + time.tm_year, time.tm_mday, time.tm_mon + 1, time.tm_hour, time.tm_min, time.tm_sec, log);
-      (void)FS_Write(string, strlen(string), attHandle);
-    }
-
-    if (sv_protect->integer & SVP_CONSOLE)
-    {
-      Com_Printf("%s", log);
-    }
-
-    lastAttackLogTime = Sys_Milliseconds();
-  }
-}
-
-/*
-===============
-SV_WriteAttackLogUnrestricted
-
-Same as SV_WriteAttackLog, but bypasses the sv_protectLogInterval->integer setting
-===============
-*/
-void
-SV_WriteAttackLogUnrestricted(const qchar *log)
-{
-  qchar string[512];
-  qtime_t time;
-
-  if (attHandle > 0)
-  {
-    Com_RealTime(&time);
-    Com_sprintf(string, sizeof(string), "%i/%02i/%02i %02i:%02i:%02i %s", 1900 + time.tm_year, time.tm_mday, time.tm_mon + 1, time.tm_hour, time.tm_min, time.tm_sec, log);
-    (void)FS_Write(string, strlen(string), attHandle);
-  }
-
-  if (sv_protect->integer & SVP_CONSOLE)
-  {
-    Com_Printf("%s", log);
-  }
-}
-
-/*
-===============
-SV_InitAttackLog
-===============
-*/
-void
-SV_InitAttackLog(void)
-{
-  if (sv_protectLog->string[0] == '\0')
-  {
-    Com_Printf("not logging server attacks to disk\n");
-  }
-  else
-  {
-    //sync so admins can check
-    FS_FOpenFileByMode(sv_protectLog->string, &attHandle, FS_APPEND_SYNC);
-
-    if (attHandle <= 0)
-    {
-      Com_Printf("WARNING: couldnt open server attack logfile %s\n", sv_protectLog->string);
-    }
-    else
-    {
-      Com_Printf("logging attacks to %s\n", sv_protectLog->string);
-      SV_WriteAttackLogUnrestricted("-------------------------------------------------------------------------------\n");
-      SV_WriteAttackLogUnrestricted("Start attack log\n");
-      SV_WriteAttackLogUnrestricted("-------------------------------------------------------------------------------\n");
-    }
-  }
-}
-
-/*
-===============
-SV_CloseAttackLog
-===============
-*/
-void
-SV_CloseAttackLog(void)
-{
-  if (attHandle > 0)
-  {
-    SV_WriteAttackLogUnrestricted("-------------------------------------------------------------------------------\n");
-    SV_WriteAttackLogUnrestricted("Close attack log\n");
-    SV_WriteAttackLogUnrestricted("-------------------------------------------------------------------------------\n");
-    Com_Printf("Attack log closed\n");
-  }
-
-  FS_FCloseFile(attHandle);
-  attHandle = 0; //local
-}
-#endif
-
 /*
 ===============
 SV_Init
@@ -992,14 +878,6 @@ SV_Init(void)
 
   //initialize cvars
   SV_InitCvars();
-#if defined(DEDICATED)
-  //init attack log with tremded
-  SV_InitAttackLog();
-#endif
-#if defined(USE_WEBCONSOLE)
-  //attempt to connect to webconsole
-  sv_webconsoleConnected = sv_webconsole_connect(&sv_webconsoleSocket);
-#endif
 
   svs.serverLoad = 0;
 
@@ -1079,22 +957,12 @@ SV_Shutdown(const qchar *finalmsg)
 {
   qint index;
 
-#if defined(DEDICATED)
-  //close attack log
-  SV_CloseAttackLog();
-#endif
-
   if (!com_sv_running || !com_sv_running->integer)
   {
     return;
   }
 
   Com_Printf("----- Server Shutdown (%s) -----\n", finalmsg);
-
-#if defined(USE_WEBCONSOLE)
-  //webconsole shutdown
-  sv_webconsole_close(&sv_webconsoleSocket);
-#endif
 
 #if defined(USE_IPV6)
   NET_LeaveMulticast6();

@@ -36,16 +36,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define	PERS_SCORE 0 //!!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
 
-//server attack protection
-typedef enum
-protect_flags_s
-{
-  SVP_XREAL = BIT(0), //1 xreal
-  SVP_OWOLF = BIT(1), //2 openwolf
-  SVP_CONSOLE = BIT(2), //4 console print
-}
-protect_flags_t;
-
 #define MAX_BPS_WINDOW 20
 
 #define	MAX_ENT_CLUSTERS 16
@@ -69,9 +59,6 @@ protect_flags_t;
 
 //allow mods to set custom player scores that are sent in response to status queries rather than using the playerstate score field
 #define SUPPORT_STATUS_SCORES_OVERRIDE
-
-//webconsole support
-//#define USE_WEBCONSOLE
 
 #if defined(USE_VOIP)
 typedef struct
@@ -177,22 +164,6 @@ typedef struct
 #endif
 }
 server_t;
-
-typedef enum
-{
-  SVC_INVALID,
-  SVC_CONNECT,
-  SVC_CONNECTW,
-  SVC_GETSTATUS,
-  SVC_FIRST = SVC_GETSTATUS,
-  SVC_GETINFO,
-  SVC_GETCHALLENGE,
-  SVC_RCON,
-  SVC_PING,
-  SVC_DISCONNECT,
-  SVC_MAX
-}
-svcType_t;
 
 typedef struct
 {
@@ -454,12 +425,6 @@ typedef struct
 }
 floodBan_t;
 
-//webconsole
-#if defined(USE_WEBCONSOLE)
-extern qint sv_webconsoleSocket;
-extern qbool sv_webconsoleConnected;
-#endif
-
 #define MAX_INFO_RECEIPTS 48 //max number of getstatus and getinfo responses sent in two second time period
 
 #define MAX_INFO_FLOOD_BANS 36
@@ -516,13 +481,15 @@ extern server_t sv; //cleared each map
 //sv_main.c
 //
 const qbool
-SVC_RateLimit(rateLimit_t *bucket, qint burst, qint period, qint now);
+SVC_RateLimit(rateLimit_t *bucket, qint burst, qint period);
+const qbool
+SVC_RateLimitAddress(const netadr_t *from, qint burst, qint period);
 void
-SVC_RateRestoreBurstAddress(const netadr_t *from, qint burst, qint period, qint now);
+SVC_RateRestoreBurstAddress(const netadr_t *from, qint burst, qint period);
 void
-SVC_RateRestoreToxicAddress(const netadr_t *from, qint burst, qint period, qint now);
+SVC_RateRestoreToxicAddress(const netadr_t *from, qint burst, qint period);
 void
-SVC_RateDropAddress(const netadr_t *from, qint burst, qint period, qint now);
+SVC_RateDropAddress(const netadr_t *from, qint burst, qint period);
 #if defined(SUPPORT_STATUS_SCORES_OVERRIDE)
 void
 SV_HandleGameInfoMessage(const qchar *info);
@@ -544,18 +511,6 @@ SV_MasterGameStat(const qchar *data);
 const qint
 SV_RateMsec(const client_t *client);
 
-//sv_webconsole.c
-#if defined(USE_WEBCONSOLE)
-qbool
-sv_webconsole_connect(qint *sockfd);
-void
-sv_webconsole_send(qint *sockfd, qchar *message, qbool *connected);
-void
-sv_webconsole_close(qint *sockfd);
-const qchar *
-sv_webconsole_read(qint *sockfd, qbool *connected);
-#endif
-
 //
 //sv_init.c
 //
@@ -571,20 +526,6 @@ void
 SV_GetUserinfo(const qint index, qchar *buffer, const qint bufferSize);
 void
 SV_SpawnServer(const qchar *server, qbool killBots);
-#if defined(DEDICATED)
-void
-SV_WriteAttackLog(const qchar *log);
-void
-SV_WriteAttackLogUnrestricted(const qchar *log);
-
-#if defined(NDEBUG)
-#define SV_WriteAttackLogD(x)
-#define SV_WriteAttackLogUnrestrictedD(x)
-#else
-#define SV_WriteAttackLogD(x) SV_WriteAttackLog(x)
-#define SV_WriteAttackLogUnrestrictedD(x) SV_WriteAttackLogUnrestricted(x)
-#endif
-#endif
 
 #if defined(STATELESS_CHALLENGES_VERSION_ONE)
 //

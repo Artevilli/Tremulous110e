@@ -851,13 +851,6 @@ SV_GameSystemCalls(intptr_t *args)
       VM_CHECKBOUNDS(sv.gvm, args[1], args[2]);
       return SV_GetValue(VMA(1), args[2], VMA(3));
 
-    case
-    G_WEBCONSOLE_SEND:
-#if defined(USE_WEBCONSOLE)
-      sv_webconsole_send(&sv_webconsoleSocket, VMA(1), &sv_webconsoleConnected);
-#endif
-      return 0;
-
     default:
       Com_Error(ERR_DROP, "Bad game system trap: %ld", (long qint)args[0]);
   }
