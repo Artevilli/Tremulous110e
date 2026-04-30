@@ -380,6 +380,9 @@ SV_MapRestart_f(void)
       continue;
     }
 
+    //don't delta from pre-map_restart messages
+    client->deltaStart = client->netchan.outgoingSequence;
+
     if (client->netchan.remoteAddress.type == NA_BOT)
     {
       isBot = qtrue;

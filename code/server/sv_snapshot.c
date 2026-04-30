@@ -213,21 +213,18 @@ SV_WriteSnapshotToClient(client_t *client, msg_t *msg)
   frame = &client->frames[client->netchan.outgoingSequence & PACKET_MASK];
 
   // try to use a previous frame as the source for delta compressing the snapshot
-  if (/*client->deltaMessage <= 0 || */client->state != CS_ACTIVE)
+  if (client->state != CS_ACTIVE || !client->deltaActive || client->deltaStart - client->messageAcknowledge > 0)
   {
     //client is asking for a retransmit
     oldframe = NULL;
     lastframe = 0;
   }
-  else if (client->netchan.outgoingSequence - client->deltaMessage >= (PACKET_BACKUP - 3))
+  else if (client->netchan.outgoingSequence - client->messageAcknowledge >= (PACKET_BACKUP - 3))
   {
     //client hasn't gotten a good message through in a long time
     if (com_developer->integer)
     {
-      if (client->deltaMessage != client->netchan.outgoingSequence - (PACKET_BACKUP + 1))
-      {
-        Com_Printf("%s: Delta request from out of date packet.\n", client->name);
-      }
+      Com_Printf(S_COLOR_DEVEL "%s: Delta request from out of date packet.\n", client->name);
     }
 
     oldframe = NULL;
@@ -236,8 +233,8 @@ SV_WriteSnapshotToClient(client_t *client, msg_t *msg)
   else
   {
     // we have a valid snapshot to delta from
-    oldframe = &client->frames[client->deltaMessage & PACKET_MASK];
-    lastframe = client->netchan.outgoingSequence - client->deltaMessage;
+    oldframe = &client->frames[client->messageAcknowledge & PACKET_MASK];
+    lastframe = client->netchan.outgoingSequence - client->messageAcknowledge;
 
     //we may refer on outdated frame
     if (oldframe->frameNum - svs.lastValidFrame < 0)
@@ -245,6 +242,10 @@ SV_WriteSnapshotToClient(client_t *client, msg_t *msg)
       Com_DPrintf("%s: Delta request from out of date frame.\n", client->name);
       oldframe = NULL;
       lastframe = 0;
+    }
+    else
+    {
+      client->deltaStart = client->messageAcknowledge; //adjust delta range
     }
   }
 
@@ -1255,9 +1256,9 @@ SV_SendClientMessages(void)
 #if defined(SNAPSHOT_DELTA_BUFFER_FIX)
     qint bufferUsage = 0;
 
-    if (c->state == CS_ACTIVE && c->netchan.outgoingSequence - c->deltaMessage < (PACKET_BACKUP - 3))
+    if (c->state == CS_ACTIVE && c->netchan.outgoingSequence - c->messageAcknowledge < (PACKET_BACKUP - 3))
     {
-      const clientSnapshot_t *deltaFrame = &c->frames[c->deltaMessage & PACKET_MASK];
+      const clientSnapshot_t *deltaFrame = &c->frames[c->messageAcknowledge & PACKET_MASK];
 
       if (deltaFrame->frameNum - svs.lastValidFrame >= 0)
       {
@@ -1267,7 +1268,7 @@ SV_SendClientMessages(void)
 
         for(j = 0;j < PACKET_BACKUP;++j)
         {
-          const qint messageNum = c->deltaMessage + j;
+          const qint messageNum = c->messageAcknowledge + j;
           const clientSnapshot_t *frame = &c->frames[messageNum & PACKET_MASK];
 
           if (messageNum >= c->netchan.outgoingSequence)
@@ -1290,7 +1291,7 @@ SV_SendClientMessages(void)
     if (bufferUsage >= 2048 - 256)
     {
       Com_DPrintf("forcing non delta snapshot %i for client %i due to entity buffer usage %i\n", c->netchan.outgoingSequence, i, bufferUsage);
-      c->deltaMessage = c->netchan.outgoingSequence - (PACKET_BACKUP + 1);
+      c->messageAcknowledge = c->netchan.outgoingSequence - (PACKET_BACKUP + 1);
     }
 #endif
 

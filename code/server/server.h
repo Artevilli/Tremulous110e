@@ -346,7 +346,8 @@ client_s
   unsigned downloadAckTime; //time we last got an ack from the client
 #endif
 
-  qint deltaMessage; //frame last client usercmd message
+  qbool deltaActive; //delta snapshots enabled
+  qint deltaStart; //don't delta from messages earlier than this when CS_ACTIVE
   qint nextReliableUserTime; //svs.time when another useinfo change will be allowed
   qint lastPacketTime; //svs.time when packet was last received
   qint lastConnectTime; //svs.time when connection started
