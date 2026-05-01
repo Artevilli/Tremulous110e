@@ -1,4 +1,6 @@
-# Tremulous11e
+# Tremulous110e
+
+[![build](../../workflows/build/badge.svg)](../../actions?query=workflow%3Abuild)
 
 This is a modern Tremulous engine aimed to be fast, secure, and compatible with all existing Tremulous 1.1.0 mods.
 It is based on the latest non-SDL source dump of [ioquake3](https://github.com/ioquake/ioq3) with latest upstream fixes applied.
