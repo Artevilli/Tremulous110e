@@ -41,7 +41,6 @@ static void S_memoryLoad( sfx_t *sfx );
 
 static snd_stream_t *s_backgroundStream = NULL;
 static qchar s_backgroundLoop[MAX_QPATH];
-//static qchar		s_backgroundMusic[MAX_QPATH]; //TTimo: unused
 
 static byte		buffer2[ 0x10000 ]; // for muted painting
 
@@ -136,21 +135,21 @@ S_Base_SoundList
 =================
 */
 static void S_Base_SoundList( void ) {
-	qint		i;
-	const sfx_t *sfx;
-	qint		size, total;
-	const qchar *type[4] = { "16bit", "adpcm", "daub4", "mulaw" };
-	const qchar *mem[2] = { "paged out", "resident " };
+	static const qchar* type[4] = { "16bit", "adpcm", "daub4", "mulaw" };
+	static const qchar* mem[2] = { "paged out", "resident" };
+	const sfx_t* sfx;
+	qint i, total;
 
 	total = 0;
-	for (sfx=s_knownSfx, i=0 ; i<s_numSfx ; i++, sfx++) {
-		size = sfx->soundLength;
-		total += size;
-		Com_Printf("%6i[%s] : %s[%s]\n", size,
-				type[sfx->soundCompressionMethod],
-				sfx->soundName, mem[sfx->inMemory] );
+	for ( sfx = s_knownSfx, i = 0; i < s_numSfx; i++, sfx++ ) {
+		const qint size = sfx->soundLength * sizeof(short);
+		if ( sfx->inMemory ) {
+			total += size;
+		}
+		Com_Printf( "%7i[%s] : %s [%s]\n", size, type[ sfx->soundCompressionMethod ],
+			sfx->soundName, mem[ sfx->inMemory ] );
 	}
-	Com_Printf ("Total resident: %i\n", total);
+	Com_Printf( "Total resident: %i\n", total );
 	S_DisplayFreeMemory();
 }
 
@@ -420,8 +419,8 @@ static void S_SpatializeOrigin( const vec3_t origin, qint master_vol, qint *left
 
 	dist = VectorNormalize(source_vec);
 	dist -= SOUND_FULLVOLUME;
-	if (dist < 0)
-		dist = 0;			// close enough to be at full volume
+	if (dist < 0.0f)
+		dist = 0.0f;		// close enough to be at full volume
 	dist *= dist_mult;		// different attenuation levels
 	
 	VectorRotate( source_vec, listener_axis, vec );
@@ -429,29 +428,29 @@ static void S_SpatializeOrigin( const vec3_t origin, qint master_vol, qint *left
 	dot = -vec[1];
 
 	if (dma.channels == 1)
-	{ // no attenuation = no spatialization
-		rscale = 1.0;
-		lscale = 1.0;
+	{	// no attenuation = no spatialization
+		rscale = 1.0f;
+		lscale = 1.0f;
 	}
 	else
 	{
-		rscale = 0.5 * (1.0 + dot);
-		lscale = 0.5 * (1.0 - dot);
-		if ( rscale < 0.0 ) {
-			rscale = 0.0;
+		rscale = 0.5f * (1.0f + dot);
+		lscale = 0.5f * (1.0f - dot);
+		if ( rscale < 0.0f ) {
+			rscale = 0.0f;
 		}
-		if ( lscale < 0.0 ) {
-			lscale = 0.0;
+		if ( lscale < 0.0f ) {
+			lscale = 0.0f;
 		}
 	}
 
 	// add in distance effect
-	scale = (1.0 - dist) * rscale;
+	scale = (1.0f - dist) * rscale;
 	*right_vol = (master_vol * scale);
 	if (*right_vol < 0)
 		*right_vol = 0;
 
-	scale = (1.0 - dist) * lscale;
+	scale = (1.0f - dist) * lscale;
 	*left_vol = (master_vol * scale);
 	if (*left_vol < 0)
 		*left_vol = 0;
