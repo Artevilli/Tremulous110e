@@ -272,16 +272,11 @@ qbool S_LoadSound( sfx_t *sfx )
 	short	*samples;
 	snd_info_t	info;
 //	qint		size;
-	qint		size_per_sec;
 
 	// load it in
 	data = S_CodecLoad(sfx->soundName, &info);
 	if(!data)
 		return qfalse;
-
-	size_per_sec = info.rate * info.channels * info.width;
-	if( size_per_sec > 0 )
-		sfx->duration = (qint)(1000.0f * ((double)info.size / size_per_sec));
 
 	if ( info.width == 1 ) {
 		Com_DPrintf(S_COLOR_YELLOW "WARNING: %s is a 8 bit audio file\n", sfx->soundName);

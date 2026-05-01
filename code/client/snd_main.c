@@ -58,7 +58,6 @@ static qbool S_ValidSoundInterface( const soundInterface_t *s )
 	if( !s->DisableSounds ) return qfalse;
 	if( !s->BeginRegistration ) return qfalse;
 	if( !s->RegisterSound ) return qfalse;
-	if( !s->SoundDuration ) return qfalse;
 	if( !s->ClearSoundBuffer ) return qfalse;
 	if( !s->SoundInfo ) return qfalse;
 	if( !s->SoundList ) return qfalse;
@@ -283,20 +282,6 @@ sfxHandle_t	S_RegisterSound( const qchar *sample, qbool compressed )
 	} else {
 		return 0;
 	}
-}
-
-
-/*
-=================
-S_SoundDuration
-=================
-*/
-qint S_SoundDuration( sfxHandle_t handle )
-{
-	if( si.SoundDuration )
-		return si.SoundDuration( handle );
-	else
-		return 0;
 }
 
 

@@ -59,7 +59,6 @@ typedef struct sfx_s {
 	qint				soundChannels;
 	qchar 			soundName[MAX_QPATH];
 	qint				lastTimeUsed;
-	qint				duration;
 	struct sfx_s	*next;
 } sfx_t;
 
@@ -144,7 +143,6 @@ typedef struct
 	void (*DisableSounds)( void );
 	void (*BeginRegistration)( void );
 	sfxHandle_t (*RegisterSound)( const qchar *sample, qbool compressed );
-	qint  (*SoundDuration)( sfxHandle_t handle );
 	void (*ClearSoundBuffer)( void );
 	void (*SoundInfo)( void );
 	void (*SoundList)( void );
