@@ -73,6 +73,8 @@ cvar_t *sv_pingFix;
 cvar_t *sv_userInfoFloodProtect;
 cvar_t *sv_showAverageBPS;
 cvar_t *sv_lanForceRate; //dedicated 1 (LAN) server forces local client rates to 99999 (bug #491)
+cvar_t *sv_antiDRDoS;
+cvar_t *sv_antiDRDoSAffectsLan;
 cvar_t *sv_dequeuePeriod;
 cvar_t *sv_levelTimeReset;
 cvar_t *sv_filter;
@@ -187,6 +189,8 @@ SV_InitCvars(void)
   sv_killserver = Cvar_GetAndDescribe("sv_killserver", "0", 0, "Internal flag to manage server state.");
   sv_mapChecksum = Cvar_GetAndDescribe("sv_mapChecksum", "", CVAR_ROM, "Allows check for client server map to match.");
   sv_lanForceRate = Cvar_GetAndDescribe("sv_lanForceRate", "1", CVAR_ARCHIVE_ND, "Forces LAN clients to the maximum rate instead of accepting client setting.");
+  sv_antiDRDoS = Cvar_GetAndDescribe("sv_antiDRDoS", "0", CVAR_ARCHIVE, "Uses stricter temporary bans to protect against distributed reflected denial-of-service (DRDoS) attacks, in addition to built-in rate limiting.");
+  sv_antiDRDoSAffectsLan = Cvar_GetAndDescribe("sv_antiDRDoSAffectsLan", "0", CVAR_ARCHIVE, "Sets whether sv_antiDRDoS guards against LAN clients or not.");
   sv_dequeuePeriod = Cvar_Get("sv_dequeuePeriod", "500", CVAR_ARCHIVE);
   sv_levelTimeReset = Cvar_GetAndDescribe("sv_levelTimeReset", "0", CVAR_ARCHIVE_ND, "Toggle whether or not to reset leveltime after a new map loads.");
   sv_filter = Cvar_GetAndDescribe("sv_filter", "filter.txt", CVAR_ARCHIVE, "Cvar that point on filter file, if it is \"\" then filtering will be disabled.");

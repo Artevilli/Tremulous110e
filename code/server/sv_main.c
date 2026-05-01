@@ -712,8 +712,6 @@ SVC_BucketForAddress(const netadr_t *address, qint burst, qint period)
 /*
 ================
 SVC_RateLimit
-
-dont call if sv_protect 1 xreal isnt set
 ================
 */
 const qbool
@@ -1237,6 +1235,182 @@ SVC_Ping(const netadr_t *from)
   NET_OutOfBandPrint(NS_SERVER, from, "print\nacknowledged\n");
 }
 
+
+/*
+================
+SVC_CheckDRDoS
+
+DRDoS stands for "Distributed Reflected Denial of Service"
+See here: http://www.lemuria.org/security/application-drdos.html
+
+If the address isn't NA_IP it is automatically denied.
+
+Return qfalse if we're good.
+Otherwise, return qtrue if we need to block.
+
+NOTE: Do not call if sv_antiDRDoS is not set!
+================
+*/
+static const qbool
+SVC_CheckDRDoS(const netadr_t *from)
+{
+  unsigned i;
+  unsigned oldestBan;
+  unsigned oldestBanTime;
+  unsigned globalCount;
+  unsigned specificCount;
+  receipt_t *receipt;
+  netadr_t modifiedFrom;
+  unsigned oldest;
+  unsigned oldestTime;
+  static unsigned lastGlobalLogTime = 0;
+  floodBan_t *ban;
+
+  //Chey: i added this cvar because i dont believe this should be a de facto rule, also id say its good for testing purposes, makes things easier
+  if (!sv_antiDRDoSAffectsLan->integer)
+  {
+    //network is usually smart enough to block incoming udp packets with a source being a spoofed lan and if not then sending packets to other lan is not a big deal na loopback qualifies as lan
+    if (Sys_IsLANAddress(from))
+    {
+      return qfalse;
+    }
+  }
+
+  modifiedFrom = *from;
+
+  if (modifiedFrom.type == NA_IP)
+  {
+    modifiedFrom.ipv._4[3] = '\0'; //xx.xx.xx.0
+  }
+#if defined(USE_IPV6)
+  else if (modifiedFrom.type == NA_IP6)
+  {
+    Com_Memset(modifiedFrom.ipv._6 + 7, '\0', 9); //mask to /56
+  }
+#endif
+  else
+  {
+    //Chey: i have no idea what this could possibly be
+    return qtrue;
+  }
+
+  //quick exit strategy which does not impact server performance
+  oldestBan = 0;
+  oldestBanTime = 0x7fffffff;
+
+  for(i = 0;i < MAX_INFO_FLOOD_BANS;i++)
+  {
+    ban = &svs.infoFloodBans[i];
+
+    if (svs.time - ban->time < 120000 && NET_CompareBaseAdr(&modifiedFrom, &ban->adr)) //two minutes ban
+    {
+      ban->count++;
+
+      if (!ban->flood && ((svs.time - ban->time) >= 3000) && ban->count <= 5)
+      {
+        if (com_developer->integer)
+        {
+          Com_Printf("%s: Unban info flood protect for address %s, they're not flooding.\n", __func__, NET_AdrToString(from));
+        }
+
+        Com_Memset(ban, 0, sizeof(floodBan_t));
+        oldestBan = i;
+        break;
+      }
+
+      if (ban->count >= 180)
+      {
+        if (com_developer->integer)
+        {
+          Com_Printf("%s: Renewing info flood ban for address %s, received %i getinfo/getstatus requests in %i milliseconds.\n", __func__, NET_AdrToString(from), ban->count, svs.time - ban->time);
+        }
+
+        ban->time = svs.time;
+        ban->count = 0;
+        ban->flood = qtrue;
+      }
+
+      return qtrue;
+    }
+
+    if (ban->time < oldestBanTime)
+    {
+      oldestBanTime = ban->time;
+      oldestBan = i;
+    }
+  }
+
+  //count receipts in last two seconds
+  globalCount = 0;
+  specificCount = 0;
+  oldest = 0;
+  oldestTime = 0x7fffffff;
+
+  for(i = 0;i < MAX_INFO_RECEIPTS;i++)
+  {
+    receipt = &svs.infoReceipts[i];
+
+    if (receipt->time + 2000 > svs.time)
+    {
+      if (receipt->time)
+      {
+        //all receipts start at zero and svs time is close to zero so check that receipt time is set so master server query doesnt get ignored but that means an unlimited number of getinfo and getstatus responses can be sent during the first frame of a servers life
+        globalCount++;
+      }
+
+      if (NET_CompareBaseAdr(&modifiedFrom, &receipt->adr))
+      {
+        specificCount++;
+      }
+    }
+
+    if (receipt->time < oldestTime)
+    {
+      oldestTime = receipt->time;
+      oldest = i;
+    }
+  }
+
+  if (specificCount >= 3) //sent three to ip in last two seconds
+  {
+    if (com_developer->integer)
+    {
+      Com_Printf("%s: Possible DRDoS attack to address %s, putting into temporary getinfo/getstatus ban list.\n", __func__, NET_AdrToString(from));
+    }
+
+    ban = &svs.infoFloodBans[oldestBan];
+    ban->adr = modifiedFrom;
+    ban->time = svs.time;
+    ban->count = 0;
+    ban->flood = qfalse;
+    return qtrue;
+  }
+
+  if (globalCount == MAX_INFO_RECEIPTS) //all in last two seconds
+  {
+    //detect time wrap where server sets time back to zero since static variable does not get zeroed when time wraps
+    //TTimo way is casting everything including the difference to uint but this may be confusing
+    if (svs.time < lastGlobalLogTime)
+    {
+      lastGlobalLogTime = 0;
+    }
+
+    if (lastGlobalLogTime + 1000 <= svs.time) //one log per second
+    {
+      Com_DPrintf("%s: Detected flood of arbitrary getinfo/getstatus connectionless packets.\n", __func__);
+      lastGlobalLogTime = svs.time;
+    }
+
+    return qtrue;
+  }
+
+  receipt = &svs.infoReceipts[oldest];
+  receipt->adr = modifiedFrom;
+  receipt->time = svs.time;
+  return qfalse;
+}
+
+
 #if defined(INCLUDE_REMOTE_COMMANDS)
 /*
 ===============
@@ -1428,6 +1602,14 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
 
   if (!Q_stricmp(c, "rcon"))
   {
+    if (sv_antiDRDoS->integer)
+    {
+      if (SVC_CheckDRDoS(from))
+      {
+        return;
+      }
+    }
+
 #if defined(INCLUDE_REMOTE_COMMANDS)
     SVC_RemoteCommand(from);
 #endif
@@ -1446,6 +1628,14 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
       return;
     }
 
+    if (sv_antiDRDoS->integer)
+    {
+      if (SVC_CheckDRDoS(from))
+      {
+        return;
+      }
+    }
+
     SVC_Status(from);
   }
   else if (!Q_stricmp(c, "getinfo"))
@@ -1456,14 +1646,38 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
       return;
     }
 
+    if (sv_antiDRDoS->integer)
+    {
+      if (SVC_CheckDRDoS(from))
+      {
+        return;
+      }
+    }
+
     SVC_Info(from);
   }
   else if (!Q_stricmp(c, "getchallenge"))
   {
+    if (sv_antiDRDoS->integer)
+    {
+      if (SVC_CheckDRDoS(from))
+      {
+        return;
+      }
+    }
+
     SV_GetChallenge(from);
   }
   else if (!Q_stricmp(c, "connect"))
   {
+    if (sv_antiDRDoS->integer)
+    {
+      if (SVC_CheckDRDoS(from))
+      {
+        return;
+      }
+    }
+
     SV_DirectConnect(from);
   }
   else if (!Q_stricmp(c, "ping"))
@@ -1471,6 +1685,14 @@ SVC_ConnectionlessPacket(const netadr_t *from, msg_t *msg)
     if (sv_hidden->integer)
     {
       return;
+    }
+
+    if (sv_antiDRDoS->integer)
+    {
+      if (SVC_CheckDRDoS(from))
+      {
+        return;
+      }
     }
 
     SVC_Ping(from);
