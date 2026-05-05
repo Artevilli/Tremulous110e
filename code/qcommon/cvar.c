@@ -1525,7 +1525,7 @@ Cvar_Op(funcType_t ftype, qint *ival, float *fval)
 
       if (fmod)
       {
-        *ival /= fmod;
+        *fval /= fmod;
       }
 
       break;
