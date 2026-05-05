@@ -1560,6 +1560,22 @@ Cvar_Op(funcType_t ftype, qint *ival, float *fval)
   {
     if (GetValue(4, &icap, &fcap))
     {
+      if (*ival < icap)
+      {
+        *ival = icap;
+      }
+
+      if (*fval < fcap)
+      {
+        *fval = fcap;
+      }
+    }
+  }
+
+  if (Cmd_Argc() > 5) //high bound
+  {
+    if (GetValue(5, &icap, &fcap))
+    {
       if (*ival > icap)
       {
         *ival = icap;
