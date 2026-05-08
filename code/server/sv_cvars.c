@@ -57,7 +57,6 @@ cvar_t *sv_serverid;
 cvar_t *sv_minRate;
 cvar_t *sv_maxRate;
 cvar_t *sv_dlRate;
-cvar_t *sv_minSnaps;
 cvar_t *sv_novis;
 cvar_t *sv_pure;
 cvar_t *sv_cpuusagepublic;
@@ -67,9 +66,7 @@ cvar_t *sv_warningsframetime;
 cvar_t *sv_floodWait;
 cvar_t *sv_floodLimit;
 cvar_t *sv_floodProtect;
-#if defined(INCLUDE_SV_PINGFIX)
 cvar_t *sv_pingFix;
-#endif
 cvar_t *sv_userInfoFloodProtect;
 cvar_t *sv_showAverageBPS;
 cvar_t *sv_lanForceRate; //dedicated 1 (LAN) server forces local client rates to 99999 (bug #491)
@@ -111,18 +108,8 @@ SV_InitCvars(void)
   Cvar_CheckRange(sv_minRate, "0", "100000", CV_INTEGER);
   sv_maxRate = Cvar_GetAndDescribe("sv_maxRate", "0", CVAR_ARCHIVE_ND | CVAR_SERVERINFO, "Maximum server bandwidth (in bit per second) a client can use.");
   Cvar_CheckRange(sv_maxRate, "0", "100000", CV_INTEGER);
-  sv_dlRate = Cvar_GetAndDescribe("sv_dlRate", "1000", CVAR_ARCHIVE | CVAR_SERVERINFO, "Bandwidth allotted to PK3 file downloads via UDP, in kbyte/s.");
-#if defined(UDP_DOWNLOAD_OPTIMIZE)
-  Cvar_CheckRange(sv_dlRate, "0", "1500", CV_INTEGER);
-#else
+  sv_dlRate = Cvar_GetAndDescribe("sv_dlRate", "100", CVAR_ARCHIVE | CVAR_SERVERINFO, "Bandwidth allotted to PK3 file downloads via UDP, in kbyte/s.");
   Cvar_CheckRange(sv_dlRate, "0", "500", CV_INTEGER);
-#endif
-#if defined(USE_JAVA) || defined(USE_BULLET)
-  sv_minSnaps = Cvar_GetAndDescribe("sv_minSnaps", "60", CVAR_ARCHIVE | CVAR_SERVERINFO, "Minimum snaps the client is allowed to have.");
-#else
-  sv_minSnaps = Cvar_GetAndDescribe("sv_minSnaps", "10", CVAR_ARCHIVE | CVAR_SERVERINFO, "Minimum snaps the client is allowed to have.");
-#endif
-  Cvar_CheckRange(sv_minSnaps, "10", "125", CV_INTEGER);
   sv_novis = Cvar_GetAndDescribe("sv_novis", "0", CVAR_ARCHIVE, "Toggle whether or not to skip the pvs check when transmitting entities.");
   sv_cpuusagepublic = Cvar_GetAndDescribe("sv_cpuusagepublic", "0", CVAR_ARCHIVE, "Toggle whether or not to publicly display server cpu usage in getinfo responses.");
   sv_avgframetimepublic = Cvar_GetAndDescribe("sv_avgframetimepublic", "0", CVAR_ARCHIVE, "Toggle whether or not to publicly display the average frame response time in getinfo responses.");
@@ -133,9 +120,7 @@ SV_InitCvars(void)
   sv_floodWait = Cvar_GetAndDescribe("sv_floodWait", "500", CVAR_ARCHIVE, "Time in milliseconds that a client has to wait before sending another client command.");
   sv_floodLimit = Cvar_GetAndDescribe("sv_floodLimit", "8", CVAR_ARCHIVE, "The number of client commands a client is allowed to send before flood protection triggers.");
   sv_floodProtect = Cvar_GetAndDescribe("sv_floodProtect", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, "Toggle server flood protection to keep players from bringing the server down.");
-#if defined(INCLUDE_SV_PINGFIX)
   sv_pingFix = Cvar_GetAndDescribe("sv_pingFix", "1", CVAR_ARCHIVE, "Fix client ping calculation to more accurately reflect packet loss and force minimum ping for humans to 1");
-#endif
   sv_userInfoFloodProtect = Cvar_GetAndDescribe("sv_userInfoFloodProtect", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, "Prevents users from flooding the server with userinfo changes by delaying the next change for 5 seconds.");
   sv_showAverageBPS = Cvar_GetAndDescribe("sv_showAverageBPS", "0", 0, "BSP Network debugging");
   sv_collectClientJunkInfo = Cvar_GetAndDescribe("sv_collectClientJunkInfo", "0", CVAR_ARCHIVE, "If this is set, prints if message readcount isn't equal to the message cursize.");

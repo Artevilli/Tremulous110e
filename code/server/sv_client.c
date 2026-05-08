@@ -582,7 +582,7 @@ SV_DirectConnect(const netadr_t *from)
   {
     const netadr_t *addr = &svs.clients[i].netchan.remoteAddress;
 
-    if (NET_CompareBaseAdr(addr, from) && !Sys_IsLANAddress(from) && addr->type != NA_BOT)
+    if (addr->type != NA_BOT && NET_CompareBaseAdr(addr, from))
     {
       if (svs.clients[i].state >= CS_CONNECTED && !svs.clients[i].justConnected)
       {
@@ -1236,19 +1236,9 @@ SV_SendClientGameState(client_t *client)
   const svEntity_t *svEnt;
   msg_t msg;
   byte msgBuffer[MAX_MSGLEN_BUF];
-#if !defined(GAMESTATE_RETRANSMIT_VERSION_TWO)
   qint csUpdated;
-#endif
 
   Com_DPrintf("SV_SendClientGameState() for %s\n", client->name);
-
-#if defined(UDP_DOWNLOAD_NO_DOUBLE_LOAD)
-  if (client->state < CS_PRIMED)
-  {
-    //clear old cs change log to avoid unnecessary retransmits
-    Com_Memset(client->csUpdated, 0, sizeof(client->csUpdated));
-  }
-#endif
 
   SV_SetClientState(client, CS_PRIMED);
 
@@ -1264,12 +1254,12 @@ SV_SendClientGameState(client_t *client)
   //gamestate message was not just sent, forcing a retransmit
   client->gamestateMessageNum = client->netchan.outgoingSequence;
 
-  //don't delta from messages prior to this gamestate
-  client->deltaStart = client->netchan.outgoingSequence;
-
   //only accept usercmds from current server time
   Com_Memset(&client->lastUsercmd, 0x0, sizeof(client->lastUsercmd));
   client->lastUsercmd.serverTime = sv.time - 1;
+
+  //don't delta from messages prior to this gamestate
+  client->deltaStart = client->netchan.outgoingSequence;
 
   MSG_Init(&msg, msgBuffer, MAX_MSGLEN);
 
@@ -1288,9 +1278,8 @@ SV_SendClientGameState(client_t *client)
   MSG_WriteLong(&msg, client->reliableSequence);
 
   //write the configstrings
-#if !defined(GAMESTATE_RETRANSMIT_VERSION_TWO)
   csUpdated = 0;
-#endif
+
   for(start = 0;start < MAX_CONFIGSTRINGS;start++)
   {
     if (*sv.configstrings[start] != '\0')
@@ -1313,15 +1302,12 @@ SV_SendClientGameState(client_t *client)
       }
     }
 
-#if !defined(GAMESTATE_RETRANSMIT_VERSION_TWO)
     if (client->csUpdated[start])
     {
       csUpdated++;
     }
-#endif
   }
 
-#if !defined(GAMESTATE_RETRANSMIT_VERSION_TWO)
   if (client->gamestateAck == GSA_INIT)
   {
     //initial submission, accept any messageAcknowledge with matching serverId
@@ -1359,12 +1345,6 @@ SV_SendClientGameState(client_t *client)
       client->gamestateAck = GSA_SENT_MANY;
     }
   }
-#endif
-
-#if defined(GAMESTATE_OVERFLOW_FIX)
-  //update client->baseline_cutoff
-  SV_CalculateMaxBaselines(client, msg);
-#endif
 
   //write the baselines
   Com_Memset(&nullstate, 0, sizeof(nullstate));
@@ -1375,13 +1355,6 @@ SV_SendClientGameState(client_t *client)
     {
       continue;
     }
-
-#if defined(GAMESTATE_OVERFLOW_FIX)
-    if (start > client->maxEntityBaseline)
-    {
-      continue;
-    }
-#endif
 
     svEnt = &sv.svEntities[start];
     MSG_WriteByte(&msg, svc_baseline);
@@ -1431,9 +1404,7 @@ SV_ClientEnterWorld(client_t *client)
   isBot = client->netchan.remoteAddress.type == NA_BOT;
 
   SV_SetClientState(client, CS_ACTIVE);
-#if !defined(GAMESTATE_RETRANSMIT_VERSION_TWO)
   client->gamestateAck = GSA_ACKED;
-#endif
 
   client->oldServerTime = 0;
 
@@ -1468,35 +1439,6 @@ CLIENT COMMAND EXECUTION
 
 ============================================================
 */
-#if defined(UDP_DOWNLOAD_OPTIMIZE)
-//size of chunks to read from source pk3
-//serverside only, does not affect outgoing messages
-#define DOWNLOAD_READ_CHUNK_SIZE 16384
-
-//rate control constants
-#define DOWNLOAD_MAX_RATE (sv_dlRate->integer ? (sv_dlRate->integer >= 250 ? (Q_min(sv_dlRate->integer, 5000)):250):5000) //in KB/s
-#define DOWNLOAD_MIN_RATE 250 //in KB/s (burst rate, overall speed may be slower due to transmit window)
-#define DOWNLOAD_RETRANSMIT_RATE_DECREASE(oldRate) (oldRate * 0.8) //on retransmit
-#define DOWNLOAD_RATE_INCREASE(oldRate, blockSize) (oldRate + blockSize / 200.0) //on block acknowledge
-
-//max bytes per packet, should match FRAGMENT_SIZE
-#define DOWNLOAD_FRAGMENT_SIZE 1300
-
-//assumed size of packet for rate limiting purposes (account for a bit of overhead)
-#define DOWNLOAD_RATE_PACKET_SIZE (DOWNLOAD_FRAGMENT_SIZE + 100)
-
-//maximum full-sized packets allowed per block
-//roughly MAX_MSGLEN / DOWNLOAD_FRAGMENT_SIZE
-#define DOWNLOAD_MAX_PACKETS_PER_BLOCK 12
-
-#define DOWNLOAD_MAX_PACKETS_PER_MS (DOWNLOAD_MAX_RATE / DOWNLOAD_FRAGMENT_SIZE + 2)
-
-//for certain purposes, don't treat client download rate as higher than global rate limit
-#define DOWNLOAD_CLIENT_RATE(cl) (sv_dlRate->integer > 0 && sv_dlRate->integer < cl->downloadCurrentRate ? sv_dlRate->integer:cl->downloadCurrentRate)
-
-//max unacknowledged bytes to send (should be enough to accommodate client ping)
-#define DOWNLOAD_WINDOW_BYTES(cl) (DOWNLOAD_CLIENT_RATE(cl) * 200)
-#endif
 
 /*
 ==================
@@ -1508,7 +1450,7 @@ clear/free any download vars
 static ID_INLINE void
 SV_CloseDownload(client_t *cl)
 {
-  unsigned i;
+  qint i;
 
   //EOF
   if (cl->download != FS_INVALID_HANDLE)
@@ -1528,15 +1470,8 @@ SV_CloseDownload(client_t *cl)
       cl->downloadBlocks[i] = NULL;
     }
   }
-
-#if defined(UDP_DOWNLOAD_OPTIMIZE)
-  if (cl->downloadSrcChunk)
-  {
-    Z_Free(cl->downloadSrcChunk);
-    cl->downloadSrcChunk = NULL;
-  }
-#endif
 }
+
 
 /*
 ==================
@@ -1561,6 +1496,7 @@ SV_StopDownload_f(client_t *cl)
   SV_CloseDownload(cl);
 }
 
+
 /*
 ==================
 SV_DoneDownload_f
@@ -1583,25 +1519,13 @@ SV_DoneDownload_f(client_t *cl)
 
   Com_DPrintf("clientDownload: %s Done\n", cl->name);
 
-#if defined(UDP_DOWNLOAD_NO_DOUBLE_LOAD)
-  if (cl->state == CS_PRIMED)
-  {
-    //clients will load the map based on the pre-download gamestate, therefore
-    //a new one is unnecessary and may cause double loading
-    cl->downloading = qfalse;
-
-    //dont immediately trip dropped download gamestate checks in SV_ExecuteClientMessage
-    cl->gamestateMessageNum = cl->messageAcknowledge - 1;
-    return;
-  }
-#endif
-
   //resend the game state to update any clients that entered during the download
   SV_SendClientGameState(cl);
 
   //apply rate to avoid retransmission after late gamestate acknowledge check
   SVC_RateLimit(&cl->gamestate_rate, 1, 1000);
 }
+
 
 /*
 ==================
@@ -1621,32 +1545,6 @@ SV_NextDownload_f(client_t *cl)
     return;
   }
 
-#if defined(UDP_DOWNLOAD_OPTIMIZE)
-  if (cl->download && block == cl->downloadClientBlock && block < cl->downloadCurrentBlock)
-  {
-    const qint blockIndex = cl->downloadClientBlock % MAX_DOWNLOAD_WINDOW;
-
-    Com_DPrintf("clientDownload: %d: client acknowledge of block %d\n", ARRAY_INDEX(svs.clients, cl), block);
-
-    //find out if we are done, a zero length block indicates eof
-    if (!cl->downloadBlockSize[blockIndex])
-    {
-      Com_Printf("clientDownload: %d: file \"%s\" completed\n", ARRAY_INDEX(svs.clients, cl), cl->downloadName);
-      SV_CloseDownload(cl);
-      return;
-    }
-
-    //gradually increment rate
-    cl->downloadCurrentRate = DOWNLOAD_RATE_INCREASE(cl->downloadCurrentRate, cl->downloadBlockSize[blockIndex]);
-
-    if (cl->downloadCurrentRate > DOWNLOAD_MAX_RATE)
-    {
-      cl->downloadCurrentRate = DOWNLOAD_MAX_RATE;
-    }
-
-    cl->downloadAckTime = svs.time;
-    cl->downloadClientBlock++;
-#else
   if (block == cl->downloadClientBlock)
   {
     Com_DPrintf("clientDownload: %d: client acknowledge of block %d\n", ARRAY_INDEX(svs.clients, cl), block);
@@ -1659,9 +1557,7 @@ SV_NextDownload_f(client_t *cl)
       return;
     }
 
-    cl->downloadAckTime = svs.time;
     cl->downloadClientBlock++;
-#endif
     return;
   }
 
@@ -1670,6 +1566,7 @@ SV_NextDownload_f(client_t *cl)
   //because the cgame isn't loaded yet
   SV_DropClient(cl, "broken download");
 }
+
 
 /*
 ==================
@@ -1691,178 +1588,17 @@ SV_BeginDownload_f(client_t *cl)
   //the file itself
   Q_strncpyz(cl->downloadName, Cmd_Argv(1), sizeof(cl->downloadName));
 
-#if defined(UDP_DOWNLOAD_NO_DOUBLE_LOAD)
-  //Chey: clients may try to load the map based on the pre-download gamestate, so track configstring updates during the download
-  SV_SetClientState(cl, CS_PRIMED);
-#else
   //Chey: contrary to primed, this avoids server to client commands from accumulating without being sent which leads to unnecessary commands being sent when downloading finishes, which should avoid potential server command overflows
   SV_SetClientState(cl, CS_CONNECTED);
-#endif
   cl->gentity = NULL;
   cl->downloading = qtrue;
 
-#if defined(GAMESTATE_RETRANSMIT_VERSION_TWO)
-  cl->downloadGamestateDropCheck = qtrue;
-#else
   if (cl->gamestateAck == GSA_ACKED)
   {
     cl->gamestateAck = GSA_SENT_ONCE;
   }
-#endif
 }
 
-#if defined(UDP_DOWNLOAD_OPTIMIZE)
-/*
-==================
-SV_GetDownloadBlockSize
-
-Determine amount of download data to fit into block. Try to get an amount that
-fragments cleanly so each packet has close to the maximum amount of data.
-==================
-*/
-static const ID_INLINE qint
-SV_GetDownloadBlockSize(client_t *cl)
-{
-  //make sure blocksize is large enough to support large pk3s by a safe margin
-  const qint paksizeBytesPerBlock = (cl->downloadSize / 32768) * 2 + 50;
-
-  //make sure blocksize is large enough to avoid block window bottleneck
-  const qint rateBytesPerBlock = DOWNLOAD_WINDOW_BYTES(cl) / MAX_DOWNLOAD_WINDOW;
-
-  //use smallest packet count that meets pk3 size and rate requirements, since
-  //smaller blocks have much better packet loss tolerance
-  const qint bytesPerBlock = paksizeBytesPerBlock > rateBytesPerBlock ? paksizeBytesPerBlock:rateBytesPerBlock;
-  qint packetsPerBlock = bytesPerBlock / DOWNLOAD_FRAGMENT_SIZE + 1;
-
-  //force small blocks at beginning of download to help with high packet loss scenarios
-  if (packetsPerBlock > cl->downloadClientBlock / 4)
-  {
-    packetsPerBlock = cl->downloadClientBlock / 4;
-  }
-
-  if (packetsPerBlock > DOWNLOAD_MAX_PACKETS_PER_BLOCK)
-  {
-    packetsPerBlock = DOWNLOAD_MAX_PACKETS_PER_BLOCK;
-  }
-
-  if (packetsPerBlock < 1)
-  {
-    packetsPerBlock = 1;
-  }
-
-  //reduce size a bit to allow for overhead
-  return packetsPerBlock * DOWNLOAD_FRAGMENT_SIZE - 50;
-}
-
-/*
-==================
-SV_ReadDownloadBlock
-
-Reads a new download block from source pk3 and writes to dataOut / sizeOut.
-
-On success: Returns qtrue and sizeOut > 0.
-On end of file: Returns qtrue and sizeOut = 0.
-On error: Returns qfalse (client should be dropped).
-==================
-*/
-static const ID_INLINE qbool
-SV_ReadDownloadBlock(client_t *cl, qchar **dataOut, qint *sizeOut)
-{
-  const qint tgtSize = SV_GetDownloadBlockSize(cl);
-  qint dataPos = 0;
-  msg_t msg;
-  byte msgBuffer[MAX_MSGLEN_BUF];
-  qchar data[16384]; //size matches CL_ParseDownload
-
-  MSG_Init(&msg, msgBuffer, MAX_MSGLEN);
-
-  while(msg.cursize < tgtSize && dataPos < sizeof(data))
-  {
-    if (cl->downloadSrcChunkPos >= cl->downloadSrcChunkSize)
-    {
-      //check for eof
-      if (cl->downloadSrcFileRemaining == 0)
-      {
-        break;
-      }
-
-      //read next source chunk
-      cl->downloadSrcChunkSize = cl->downloadSrcFileRemaining < DOWNLOAD_READ_CHUNK_SIZE ? cl->downloadSrcFileRemaining:DOWNLOAD_READ_CHUNK_SIZE;
-
-      if (FS_Read(cl->downloadSrcChunk, cl->downloadSrcChunkSize, cl->download) != (qint)cl->downloadSrcChunkSize)
-      {
-        return qfalse;
-      }
-
-      cl->downloadSrcFileRemaining -= cl->downloadSrcChunkSize;
-      cl->downloadSrcChunkPos = 0;
-    }
-
-    //add byte to message
-    data[dataPos] = cl->downloadSrcChunk[cl->downloadSrcChunkPos];
-    cl->downloadSrcChunkPos++;
-    MSG_WriteByte(&msg, ((byte *)data)[dataPos]);
-    ++dataPos;
-  }
-
-  *sizeOut = dataPos;
-
-  if (*dataOut)
-  {
-    Z_Free(*dataOut);
-  }
-
-  *dataOut = Z_Malloc(dataPos);
-  Com_Memcpy(*dataOut, data, dataPos);
-  return qtrue;
-}
-
-/*
-==================
-SV_DownloadRetransmit
-==================
-*/
-static ID_INLINE void
-SV_DownloadRetransmit(client_t *cl)
-{
-  cl->downloadXmitBlock = cl->downloadClientBlock;
-  cl->downloadRetransmitMsg = cl->downloadCurrentMsg;
-
-  //decrease current rate due to dropped blocks
-  //it will climb back up as blocks are acknowledged, but if the lower rate is needed
-  //due to some connection issues, this should at least provide a temporary period for
-  //the download to limp forward rather than stalling completely.
-  cl->downloadCurrentRate = DOWNLOAD_RETRANSMIT_RATE_DECREASE(cl->downloadCurrentRate);
-
-  if (cl->downloadCurrentRate < DOWNLOAD_MIN_RATE)
-  {
-    cl->downloadCurrentRate = DOWNLOAD_MIN_RATE;
-  }
-
-  Com_Printf("clientDownload: %d: currentRate set to %lf due to retransmit\n", ARRAY_INDEX(svs.clients, cl), cl->downloadCurrentRate);
-}
-
-/*
-==================
-SV_DownloadCountOutgoingBytes
-
-Returns the number of bytes sent to the client that are not yet acknowledged.
-==================
-*/
-static const ID_INLINE qint
-SV_DownloadCountOutgoingBytes(client_t *cl)
-{
-  qint i;
-  qint count = 0;
-
-  for(i = cl->downloadClientMsg;i < cl->downloadCurrentMsg;++i)
-  {
-    count += cl->downloadMsgTable[i % MAX_DOWNLOAD_MESSAGE_HISTORY].size;
-  }
-
-  return count;
-}
-#endif
 
 /*
 ==================
@@ -1872,259 +1608,6 @@ Check to see if the client wants a file, open it if needed and start pumping the
 Fill up msg with data, return if a download block was added.
 ==================
 */
-#if defined(UDP_DOWNLOAD_OPTIMIZE)
-static const qbool
-SV_WriteDownloadToClient(client_t *cl)
-{
-  qint curindex;
-  qchar errorMessage[1024];
-  msg_t msg;
-  qbool skip = qfalse;
-  byte msgBuffer[MAX_MSGLEN_BUF];
-
-  if (!*cl->downloadName)
-  {
-    return qfalse; //nothing being downloaded
-  }
-
-  //CVE-2006-2082: validate the download against the list of pak files
-  if (!FS_VerifyPak(cl->downloadName))
-  {
-    //will drop the client and leave it hanging on the other side. good for him
-    SV_DropClient(cl, "illegal download request");
-    return qfalse;
-  }
-
-  if (cl->download == FS_INVALID_HANDLE)
-  {
-    //we open the file here
-    if (!(sv_allowDownload->integer & DLF_ENABLE) || (sv_allowDownload->integer & DLF_NO_UDP) || (cl->downloadSize = FS_SV_FOpenFileRead(cl->downloadName, &cl->download)) < 0)
-    {
-      //cannot auto-download file
-      if (!(sv_allowDownload->integer & DLF_ENABLE) || (sv_allowDownload->integer & DLF_NO_UDP))
-      {
-        Com_Printf("clientDownload: %d : \"%s\" download disabled", ARRAY_INDEX(svs.clients, cl), cl->downloadName);
-
-        if (sv.pure)
-        {
-          Com_sprintf(errorMessage, sizeof(errorMessage), "could not download \"%s\" because autodownloading is disabled on the server\n\nyou will need to get this file elsewhere before you can connect to this pure server\n", cl->downloadName);
-        }
-        else
-        {
-          Com_sprintf(errorMessage, sizeof(errorMessage), "could not download \"%s\" because autodownloading is disabled on the server\n\nthe server you are connecting to is not a pure server, set autodownload to no in your settings and you might be able to join the game anyway\n", cl->downloadName);
-        }
-      }
-      else
-      {
-        //NOTE TTimo this is NOT supposed to happen unless bug in our filesystem scheme?
-        //if the pk3 is referenced, it must have been found somewhere in the filesystem
-        Com_Printf("clientDownload: %d: \"%s\" file not found on server\n", ARRAY_INDEX(svs.clients, cl), cl->downloadName);
-        Com_sprintf(errorMessage, sizeof(errorMessage), "File \"%s\" not found on server for autodownloading.\n", cl->downloadName);
-      }
-
-      MSG_Init(&msg, msgBuffer, sizeof(msgBuffer) - 8);
-      MSG_WriteLong(&msg, cl->lastClientCommand);
-      MSG_WriteByte(&msg, svc_download);
-      MSG_WriteShort(&msg, 0); //client is expecting block zero
-      MSG_WriteLong(&msg, -1); //illegal file size
-      MSG_WriteString(&msg, errorMessage);
-      MSG_WriteByte(&msg, svc_EOF);
-      SV_Netchan_Transmit(cl, &msg);
-
-      *cl->downloadName = '\0';
-
-      if (cl->download != FS_INVALID_HANDLE)
-      {
-        FS_FCloseFile(cl->download);
-        cl->download = FS_INVALID_HANDLE;
-      }
-
-      return qtrue;
-    }
-
-    Com_Printf("clientDownload: %d: beginning \"%s\"\n", ARRAY_INDEX(svs.clients, cl), cl->downloadName);
-    cl->downloadClientBlock = 0;
-    cl->downloadXmitBlock = 0;
-    cl->downloadSrcFileRemaining = cl->downloadSize;
-    cl->downloadSrcChunkPos = 0;
-    cl->downloadSrcChunkSize = 0;
-    cl->downloadCurrentBlock = 0;
-    cl->downloadSrcChunk = Z_Malloc(DOWNLOAD_READ_CHUNK_SIZE);
-    cl->downloadClientMsg = 0;
-    cl->downloadRetransmitMsg = 0;
-    cl->downloadCurrentMsg = 0;
-    cl->downloadLastSentTime = Sys_Milliseconds();
-    cl->downloadCurrentRate = DOWNLOAD_MAX_RATE;
-    cl->downloadRatePool = 0;
-
-    //reset the ack time to current when we start
-    cl->downloadAckTime = svs.time;
-  }
-
-  //check if we have unsent fragments or queue already in the pipe and don't add to the issue (too much)
-  if (cl->netchan_start_queue)
-  {
-    const netchan_buffer_t *next = cl->netchan_start_queue;
-    qint count = 0;
-
-    while(next)
-    {
-      count++;
-      next = next->next;
-
-      if (count > 20)
-      {
-        return qfalse;
-      }
-    }
-  }
-
-  if (cl->netchan.unsentFragments && cl->netchan.unsentLength > 10000)
-  {
-    return qfalse;
-  }
-
-  //send next packet of fragmented message
-  if (cl->netchan.unsentFragments || cl->netchan_start_queue)
-  {
-    SV_Netchan_TransmitNextFragment(cl);
-    cl->downloadLastSentTime = Sys_Milliseconds();
-    return qtrue;
-  }
-
-  //check acknowledged messages
-  while(cl->downloadClientMsg < cl->downloadCurrentMsg)
-  {
-    const downloadMessageRecord_t *record = &cl->downloadMsgTable[cl->downloadClientMsg % MAX_DOWNLOAD_MESSAGE_HISTORY];
-
-    if (cl->messageAcknowledge < record->msgNumber)
-    {
-      break;
-    }
-
-    if (record->blockNumber >= cl->downloadClientBlock && cl->downloadClientMsg >= cl->downloadRetransmitMsg)
-    {
-      Com_Printf("clientDownload: %d: reset due to message acknowledge with dropped block\n", ARRAY_INDEX(svs.clients, cl));
-      SV_DownloadRetransmit(cl);
-    }
-
-    ++cl->downloadClientMsg;
-  }
-
-  if (cl->downloadXmitBlock > 0 && !cl->downloadBlockSize[(cl->downloadXmitBlock - 1) % MAX_DOWNLOAD_WINDOW])
-  {
-    //sent the final block
-    if (cl->downloadClientBlock >= cl->downloadXmitBlock)
-    {
-      //client already acknowledged, should not happen, download should be closed in SV_NextDownload_f
-      Com_Printf(S_COLOR_YELLOW "clientDownload: %d: WARNING: attempt to write completed download\n", ARRAY_INDEX(svs.clients, cl));
-      return qfalse;
-    }
-    else
-    {
-      Com_DPrintf("clientDownload: %d: skip due to final block sent\n", ARRAY_INDEX(svs.clients, cl));
-      skip = qtrue;
-    }
-  }
-  else if (cl->downloadXmitBlock - cl->downloadClientBlock >= MAX_DOWNLOAD_WINDOW)
-  {
-    Com_DPrintf("clientDownload: %d: skip due to download window (max blocks)\n", ARRAY_INDEX(svs.clients, cl));
-    skip = qtrue;
-  }
-  else if (SV_DownloadCountOutgoingBytes(cl) > DOWNLOAD_WINDOW_BYTES(cl))
-  {
-    Com_DPrintf("clientDownload: %d: skip due to download window (max bytes)\n", ARRAY_INDEX(svs.clients, cl));
-    skip = qtrue;
-  }
-
-  //if skip is set, either return here, or if 500ms has elapsed since last sent
-  //message, continue forward to send keepalive message.
-  if (skip && Sys_Milliseconds() - cl->downloadLastSentTime < 500)
-  {
-    return qfalse;
-  }
-
-  //send current block
-  curindex = (cl->downloadXmitBlock % MAX_DOWNLOAD_WINDOW);
-  MSG_Init(&msg, msgBuffer, sizeof(msgBuffer) - 8);
-  MSG_WriteLong(&msg, cl->lastClientCommand);
-
-  if (skip)
-  {
-    //send an empty message with no download block to update message sequence number on
-    //the client, fixes potential deadlock due to dropped messages in which client is
-    //stuck on old sequence number and server is stuck due to full download window
-    Com_Printf("clientDownload: %d: writing keepalive message\n", ARRAY_INDEX(svs.clients, cl));
-    MSG_WriteByte(&msg, svc_EOF);
-    SV_Netchan_Transmit(cl, &msg);
-    cl->downloadLastSentTime = Sys_Milliseconds();
-    return qtrue;
-  }
-
-  MSG_WriteByte(&msg, svc_download);
-  MSG_WriteShort(&msg, cl->downloadXmitBlock);
-
-  //block zero is special, contains file size
-  if (!cl->downloadXmitBlock)
-  {
-    MSG_WriteLong(&msg, cl->downloadSize);
-  }
-
-  //read next current block from pk3 if needed
-  if (cl->downloadXmitBlock >= cl->downloadCurrentBlock)
-  {
-    if (cl->downloadXmitBlock != cl->downloadCurrentBlock)
-    {
-      //should not happen
-      SV_DropClient(cl, "unexpected download current block number");
-      return qfalse;
-    }
-
-    if (!SV_ReadDownloadBlock(cl, (qchar **)&cl->downloadBlocks[curindex], &cl->downloadBlockSize[curindex]))
-    {
-      SV_DropClient(cl, "failed to read download pk3");
-      return qfalse;
-    }
-
-    cl->downloadCurrentBlock = cl->downloadXmitBlock + 1;
-  }
-
-  MSG_WriteShort(&msg, cl->downloadBlockSize[curindex]);
-
-  //write the block
-  if (cl->downloadBlockSize[curindex] > 0)
-  {
-    MSG_WriteData(&msg, cl->downloadBlocks[curindex], cl->downloadBlockSize[curindex]);
-  }
-
-  MSG_WriteByte(&msg, svc_EOF);
-  SV_Netchan_Transmit(cl, &msg);
-  Com_DPrintf("clientDownload: %d: writing block %d\n", ARRAY_INDEX(svs.clients, cl), cl->downloadXmitBlock);
-
-  //in case of MAX_DOWNLOAD_MESSAGE_HISTORY overflow, delete top entry to make space
-  if (cl->downloadCurrentMsg - cl->downloadClientMsg >= MAX_DOWNLOAD_MESSAGE_HISTORY)
-  {
-    Com_Printf("clientDownload: %d: message history overfow\n", ARRAY_INDEX(svs.clients, cl));
-    ++cl->downloadClientMsg;
-  }
-
-  //generate message entry
-  {
-    downloadMessageRecord_t *record = &cl->downloadMsgTable[cl->downloadCurrentMsg % MAX_DOWNLOAD_MESSAGE_HISTORY];
-    cl->downloadCurrentMsg++;
-    record->blockNumber = cl->downloadXmitBlock;
-    record->msgNumber = cl->netchan.outgoingSequence;
-    record->size = cl->downloadBlockSize[curindex];
-    Com_DPrintf("clientDownload: %d: outgoing size %i\n", ARRAY_INDEX(svs.clients, cl), SV_DownloadCountOutgoingBytes(cl));
-  }
-
-  cl->downloadLastSentTime = svs.time;
-
-  //move on to the next block
-  cl->downloadXmitBlock++;
-  return qtrue;
-}
-#else
 static const qbool
 SV_WriteDownloadToClient(client_t *cl)
 {
@@ -2132,11 +1615,6 @@ SV_WriteDownloadToClient(client_t *cl)
   qchar errorMessage[1024];
   msg_t msg;
   byte msgBuffer[MAX_DOWNLOAD_BLKSIZE * 2 + 8];
-
-  if (!*cl->downloadName)
-  {
-    return qfalse; //nothing being downloaded
-  }
 
   //CVE-2006-2082: validate the download against the list of pak files
   if (!FS_VerifyPak(cl->downloadName))
@@ -2199,32 +1677,6 @@ SV_WriteDownloadToClient(client_t *cl)
     cl->downloadCurrentBlock = cl->downloadClientBlock = cl->downloadXmitBlock = 0;
     cl->downloadCount = 0;
     cl->downloadEOF = qfalse;
-
-    //reset the ack time to current when we start
-    cl->downloadAckTime = svs.time;
-  }
-
-  //check if we have unsent fragments or queue already in the pipe and don't add to the issue (too much)
-  if (cl->netchan_start_queue)
-  {
-    netchan_buffer_t *next = cl->netchan_start_queue;
-    qint count = 0;
-
-    while(next)
-    {
-      count++;
-      next = next->next;
-
-      if (count > 20)
-      {
-        return qfalse;
-      }
-    }
-  }
-
-  if (cl->netchan.unsentFragments && cl->netchan.unsentLength > 10000)
-  {
-    return qfalse;
   }
 
   //perform any reads that we need to
@@ -2234,7 +1686,7 @@ SV_WriteDownloadToClient(client_t *cl)
 
     if (!cl->downloadBlocks[curindex])
     {
-      cl->downloadBlocks[curindex] = (unsigned qchar *)Z_Malloc(MAX_DOWNLOAD_BLKSIZE);
+      cl->downloadBlocks[curindex] = Z_Malloc(MAX_DOWNLOAD_BLKSIZE);
     }
 
     cl->downloadBlockSize[curindex] = FS_Read(cl->downloadBlocks[curindex], MAX_DOWNLOAD_BLKSIZE, cl->download);
@@ -2290,7 +1742,7 @@ SV_WriteDownloadToClient(client_t *cl)
   MSG_WriteShort(&msg, cl->downloadXmitBlock);
 
   //block zero is special, contains file size
-  if (!cl->downloadXmitBlock)
+  if (cl->downloadXmitBlock == 0)
   {
     MSG_WriteLong(&msg, cl->downloadSize);
   }
@@ -2298,7 +1750,7 @@ SV_WriteDownloadToClient(client_t *cl)
   MSG_WriteShort(&msg, cl->downloadBlockSize[curindex]);
 
   //write the block
-  if (cl->downloadBlockSize[curindex])
+  if (cl->downloadBlockSize[curindex] > 0)
   {
     MSG_WriteData(&msg, cl->downloadBlocks[curindex], cl->downloadBlockSize[curindex]);
   }
@@ -2315,7 +1767,8 @@ SV_WriteDownloadToClient(client_t *cl)
 
   return qtrue;
 }
-#endif
+
+
 /*
 ==================
 SV_SendQueuedMessages
@@ -2335,13 +1788,6 @@ SV_SendQueuedMessages(void)
   for(i = 0;i < sv.maxclients;i++)
   {
     cl = &svs.clients[i];
-
-#if defined(UDP_DOWNLOAD_OPTIMIZE)
-    if (*cl->downloadName)
-    {
-      continue; //handled using SV_SendDownloadMessages
-    }
-#endif
 
     if (cl->state)
     {
@@ -2372,100 +1818,6 @@ Send one round of download messages to all clients
 const qint
 SV_SendDownloadMessages(void)
 {
-#if defined(UDP_DOWNLOAD_OPTIMIZE)
-//pending bytes should hold up to 5ms worth of traffic, or ~1.5 packets, whichever is higher
-#define MAX_PENDING_BYTES(rate) ((rate) * 5 > DOWNLOAD_RATE_PACKET_SIZE * 3 / 2 ? (rate) * 5:DOWNLOAD_RATE_PACKET_SIZE * 3 / 2)
-  static qint lastTime;
-  static unsigned currentClient = 0;
-  static qint globalRatePool; //bytes available to send
-  qint round;
-  qint i;
-  client_t *cl;
-  qint timeElapsed = Sys_Milliseconds() - lastTime;
-  const qint globalRate = sv_dlRate->integer > 0 && sv_dlRate->integer < 100000 ? sv_dlRate->integer:100000; //KB/s
-  qbool downloadsActive = qfalse;
-
-  //update elapsed time
-  if (timeElapsed < 0)
-  {
-    timeElapsed = 0;
-  }
-
-  if (timeElapsed > 5)
-  {
-    timeElapsed = 5;
-  }
-
-  lastTime = Sys_Milliseconds();
-
-  //increment global rate
-  globalRatePool += globalRate * timeElapsed;
-
-  if (globalRatePool > MAX_PENDING_BYTES(globalRate))
-  {
-    globalRatePool = MAX_PENDING_BYTES(globalRate);
-  }
-
-  //increment client rates
-  for(i = 0;i < sv.maxclients;i++)
-  {
-    cl = &svs.clients[i];
-
-    if (cl->state >= CS_CONNECTED && *cl->downloadName)
-    {
-      cl->downloadRatePool += cl->downloadCurrentRate * timeElapsed;
-
-      if (cl->downloadRatePool > MAX_PENDING_BYTES(DOWNLOAD_CLIENT_RATE(cl)))
-      {
-        cl->downloadRatePool = MAX_PENDING_BYTES(DOWNLOAD_CLIENT_RATE(cl));
-      }
-    }
-  }
-
-  //send download packets
-  for(round = 0;round < DOWNLOAD_MAX_PACKETS_PER_MS;round++)
-  {
-    for(i = 0;i < sv.maxclients;i++)
-    {
-      cl = &svs.clients[currentClient];
-      currentClient = (currentClient + 1) % sv.maxclients;
-
-      if (cl->state >= CS_CONNECTED && *cl->downloadName)
-      {
-        downloadsActive = qtrue;
-
-        if (globalRatePool < DOWNLOAD_RATE_PACKET_SIZE)
-        {
-          goto end;
-        }
-
-        if (cl->downloadCurrentRate > 0.0)
-        {
-          if (cl->downloadRatePool < DOWNLOAD_RATE_PACKET_SIZE)
-          {
-            continue;
-          }
-
-          cl->downloadRatePool -= DOWNLOAD_RATE_PACKET_SIZE;
-        }
-
-        if (SV_WriteDownloadToClient(cl))
-        {
-          globalRatePool -= DOWNLOAD_RATE_PACKET_SIZE;
-        }
-      }
-    }
-
-    if (!downloadsActive)
-    {
-      break;
-    }
-  }
-
-end:
-  //for now, just use 1ms wait when downloads are running
-  return downloadsActive ? 1:INT_MAX;
-#else
   qint i;
   qint numDLs;
   client_t *cl;
@@ -2483,7 +1835,6 @@ end:
   }
 
   return numDLs;
-#endif
 }
 
 
@@ -2694,6 +2045,7 @@ SV_VerifyPaks_f(client_t *cl)
   }
 }
 
+
 /*
 =================
 SV_ResetPureClient_f
@@ -2706,70 +2058,6 @@ SV_ResetPureClient_f(client_t *cl)
   cl->gotCP = qfalse;
 }
 
-static const qchar *checkedTypeKeys[CHECKEDTYPE_TYPECOUNT] =
-{
-  "rate",
-  "snaps"
-};
-
-/*
-=================
-SV_GetUserInfoKeyVerifiedNumber
-=================
-*/
-static const qint
-SV_GetUserInfoKeyVerifiedNumber(client_t *cl, checkedNumberType_t type)
-{
-  const qchar *valueString;
-  const qchar *s;
-  qbool invalidValue = qfalse;
-
-  if (type >= CHECKEDTYPE_TYPECOUNT || type < 0)
-  {
-    Com_Error(ERR_FATAL, "SV_GetUserInfoKeyVerifiedNumber: unknown type %d", (qint)type);
-    return 0;
-  }
-
-  if (cl->state != CS_ACTIVE)
-  {
-    return INT_MAX; //shut up double print
-  }
-
-  valueString = Info_ValueForKey(cl->userinfo, checkedTypeKeys[type]);
-
-  if (!*valueString)
-  {
-    invalidValue = qtrue;
-  }
-  else
-  {
-    s = valueString;
-
-    while(*s)
-    {
-      if (!((*s >= '0' && *s <= '9') || *s == '-'))
-      {
-        invalidValue = qtrue;
-        break;
-      }
-
-      s++;
-    }
-  }
-
-  if (invalidValue)
-  {
-    cl->invalidValues |= BIT((qint)type);
-    Com_Printf(S_COLOR_YELLOW "Invalid '%s' value detected for client '%s' (%d): '%s'\n", checkedTypeKeys[type], cl->name, ARRAY_INDEX(svs.clients, cl), valueString);
-  }
-  else
-  {
-    cl->invalidValues &= ~BIT((qint)type);
-  }
-
-  cl->lastInvalidValuesWarning = 0;
-  return Q_atoi(valueString);
-}
 
 /*
 =================
@@ -2799,9 +2087,6 @@ SV_UserinfoChanged(client_t *cl, const qbool updateUserinfo, const qbool runFilt
 
   //if the client is on the same subnet as the server and we aren't running an
   //internet public server, assume they don't need a rate choke
-  cl->rate = SV_GetUserInfoKeyVerifiedNumber(cl, CHECKEDTYPE_RATE);
-  cl->snaps = SV_GetUserInfoKeyVerifiedNumber(cl, CHECKEDTYPE_SNAPS);
-
   if (cl->netchan.remoteAddress.type == NA_LOOPBACK || (cl->netchan.isLANAddress && com_dedicated->integer != 2 && sv_lanForceRate->integer))
   {
     cl->rate = 0; //lans should not rate limit
@@ -2848,11 +2133,6 @@ SV_UserinfoChanged(client_t *cl, const qbool updateUserinfo, const qbool runFilt
     i = sv_fps->integer; //sync with server
   }
 
-  if (i < sv_minSnaps->integer)
-  {
-    i = sv_minSnaps->integer;
-  }
-
   //range check
   if (i < 1)
   {
@@ -2863,7 +2143,7 @@ SV_UserinfoChanged(client_t *cl, const qbool updateUserinfo, const qbool runFilt
     i = sv_fps->integer;
   }
 
-  i = 1000 / i;
+  i = 1000 / i; //from FPS to milliseconds
 
   if (i != cl->snapshotMsec)
   {
@@ -3443,7 +2723,7 @@ SV_AcknowledgeGamestate(client_t *cl, qint serverId)
     const qint messageDelta = cl->messageAcknowledge - cl->gamestateMessageNum;
 
     //accept either exact message delta or any positive delta with known identical gamestate sent before
-    if (!messageDelta || (messageDelta > 0 && cl->gamestateAck == GSA_SENT_ONCE))
+    if (messageDelta == 0 || (messageDelta > 0 && cl->gamestateAck == GSA_SENT_ONCE))
     {
       cl->gamestateAck = GSA_ACKED;
       //this client has acknowledged the new gamestate so it's
@@ -3517,14 +2797,6 @@ SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
   cl->reliableAcknowledge = reliableAcknowledge;
   cl->justConnected = qfalse;
 
-#if defined(GAMESTATE_RETRANSMIT_VERSION_TWO)
-  if (cl->oldServerTime && serverId == sv.serverId)
-  {
-    //this client has acknowledged the new gamestate so it is safe to start sending it the real time again
-    Com_DPrintf("%s acknowledged gamestate\n", cl->name);
-    cl->oldServerTime = 0;
-  }
-#else
   //if this is a usercmd from a previous gamestate,
   //ignore it or retransmit the current gamestate
   //
@@ -3563,7 +2835,7 @@ SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
     //in case of lost gamestate client replies with (messageAcknowledge - gamestateMessageNum) > 0 and (serverId == sv.serverId)
     //in case of disconnect/etc. client replies with any serverId
   //}
-#endif
+
   //read optional clientCommand strings
   do
   {
@@ -3586,38 +2858,6 @@ SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
   }
   while(1);
 
-#if defined(GAMESTATE_RETRANSMIT_VERSION_TWO)
-  if (cl->downloading)
-  {
-    return; //waiting for donedl
-  }
-
-  //check for sending initial gamestate
-  if (cl->state == CS_CONNECTED)
-  {
-    if (!SVC_RateLimit(&cl->gamestate_rate, 2, 1000))
-    {
-      SV_SendClientGameState(cl);
-    }
-
-    return;
-  }
-
-  //check for dropped gamestate
-  if (cl->state != CS_ACTIVE && serverId != sv.serverId)
-  {
-    if (cl->messageAcknowledge - cl->gamestateMessageNum > 0)
-    {
-      if (!SVC_RateLimit(&cl->gamestate_rate, 2, 1000))
-      {
-        Com_DPrintf("%s: %s gamestate, resending\n", cl->name, serverId != sv.serverId ? "outdated":"dropped");
-        SV_SendClientGameState(cl);
-      }
-    }
-
-    return;
-  }
-#else
   if (cl->gamestateAck != GSA_ACKED)
   {
     //late check for gamestate resend
@@ -3640,7 +2880,6 @@ SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
       return; //cl->state <= CS_CONNECTED
     }
   }
-#endif
 
   //read the usercmd_t
   if (c == clc_move)
@@ -3656,33 +2895,8 @@ SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
     Com_Printf("WARNING: bad command byte %i for client %i\n", c, ARRAY_INDEX(svs.clients, cl));
   }
 
-  if (msg->readcount != msg->cursize && sv_collectClientJunkInfo->integer)
-  {
-    Com_Printf("WARNING: junk at end of packet for client %i\n", ARRAY_INDEX(svs.clients, cl));
-  }
-
-#if defined(GAMESTATE_RETRANSMIT_VERSION_TWO)
-  //extra check for dropped gamestate for post udp download clients, since after
-  //download client can have correct serverid but still be awaiting gamestate
-  if (cl->downloadGamestateDropCheck)
-  {
-    const qint gsDelta = cl->messageAcknowledge - cl->gamestateMessageNum;
-
-    //either a move command (implied by CS_ACTIVE) or exact acknowledge of
-    //gamestate message number implies client has the new gamestate
-    if (cl->state == CS_ACTIVE || !gsDelta)
-    {
-      Com_DPrintf("%s: acknowledged post-download gamestate (state: %i gsDelta: %i)\n", cl->name, cl->state, gsDelta);
-      cl->downloadGamestateDropCheck = qfalse;
-    }
-    else if (gsDelta > 20)
-    {
-      if (!SVC_RateLimit(&cl->gamestate_rate, 2, 1000))
-      {
-        Com_DPrintf("%s: dropped post-download gamestate, resending\n", cl->name);
-        SV_SendClientGameState(cl);
-      }
-    }
-  }
-#endif
+  //if (msg->readcount != msg->cursize && sv_collectClientJunkInfo->integer)
+  //{
+    //Com_Printf("WARNING: junk at end of packet for client %i\n", ARRAY_INDEX(svs.clients, cl));
+  //}
 }

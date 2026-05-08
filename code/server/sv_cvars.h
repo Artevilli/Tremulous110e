@@ -35,13 +35,6 @@
 //switching between the first and second version of stateless challenges
 //#define STATELESS_CHALLENGES_VERSION_ONE
 
-//improve udp download rate control for better performance, especially on slower or less stable connections
-//supports larger downloads
-#define UDP_DOWNLOAD_OPTIMIZE
-
-//fix client ping calculation to more accurately reflect packet loss, enabled by sv_pingFix, also force minimum ping for humans to 1
-#define INCLUDE_SV_PINGFIX
-
 //stateless challenges v2 does not support debugging yet
 #if defined(STATELESS_CHALLENGES_VERSION_ONE)
 //challenge debugging
@@ -82,7 +75,6 @@ extern cvar_t *sv_maxRate;
 extern cvar_t *sv_maxOOBRate;
 extern cvar_t *sv_maxOOBRateIP;
 extern cvar_t *sv_dlRate;
-extern cvar_t *sv_minSnaps;
 extern cvar_t *sv_minRebootDelayMins;
 extern cvar_t *sv_novis;
 extern cvar_t *sv_pure;
@@ -93,9 +85,7 @@ extern cvar_t *sv_warningsframetime;
 extern cvar_t *sv_floodWait;
 extern cvar_t *sv_floodLimit;
 extern cvar_t *sv_floodProtect;
-#if defined(INCLUDE_SV_PINGFIX)
 extern cvar_t *sv_pingFix;
-#endif
 extern cvar_t *sv_userInfoFloodProtect;
 extern cvar_t *sv_showAverageBPS;
 extern cvar_t *sv_lanForceRate; //dedicated 1 (LAN) server forces local client rates to 99999 (bug #491)

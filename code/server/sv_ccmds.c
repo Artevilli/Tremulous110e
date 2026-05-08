@@ -692,7 +692,7 @@ SV_Status_f(void)
     }
   }
 
-  Com_Printf("cpu server utilization: %i%%\navg response time: %i ms\nserver load: %i\nmap: %s\n", (qint)svs.stats.cpu, (qint)svs.stats.avg, (qint)svs.serverLoad, sv_mapname->string);
+  Com_Printf("map: %s\n", sv_mapname->string);
 #if 0
   Com_Printf("cl score ping name                        address                     rate\n");
   Com_Printf("-- ----- ---- --------------------------- --------------------------- -----\n");

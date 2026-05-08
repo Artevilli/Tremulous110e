@@ -140,25 +140,11 @@ SV_AddServerCommand(client_t *client, const qchar *cmd)
     //return;
   //}
 
-#if defined(SKIP_PRE_ACTIVE_COMMANDS)
-  if (client->state < CS_ACTIVE)
-  {
-    return;
-  }
-#else
   //do not send commands until the gamestate has been sent
   if (client->state < CS_PRIMED)
   {
     return;
   }
-#endif
-
-#if defined(UDP_DOWNLOAD_NO_DOUBLE_LOAD)
-  if (client->downloading)
-  {
-    return;
-  }
-#endif
 
   client->reliableSequence++;
   /*
@@ -299,7 +285,7 @@ but not on every player enter or exit.
 static void
 SV_MasterHeartbeat(const qchar *message)
 {
-  unsigned i;
+  qint i;
 
   if (sv_hidden->integer)
   {
@@ -315,7 +301,7 @@ SV_MasterHeartbeat(const qchar *message)
   }
 
   //if not time yet, don't send anything
-  if (svs.time < svs.nextHeartbeatTime)
+  if (svs.nextHeartbeatTime - svs.time > 0)
   {
     return;
   }
@@ -324,7 +310,7 @@ SV_MasterHeartbeat(const qchar *message)
 
   //this needs to be used instead of svs.time because svs.time resets every time the map changes (actually
   //every time the game restarts) and resolving every map change is not really needed
-  const unsigned time = Com_Milliseconds();
+  const qint time = Com_Milliseconds();
 
   //send to group masters
   for(i = 0;i < MAX_MASTER_SERVERS;i++)
@@ -384,10 +370,6 @@ SV_MasterHeartbeat(const qchar *message)
 #endif
       if (masterAddr[i][0].type == NA_BAD && masterAddr[i][1].type == NA_BAD)
       {
-        //if the address failed to resolve, clear it to avoid taking repeated dns hits
-        Com_Printf("Couldn't resolve address: %s\n", sv_master[i]->string);
-        Cvar_Set(sv_master[i]->name, "");
-        sv_master[i]->modified = qfalse;
         continue;
       }
     }
@@ -592,17 +574,13 @@ SVC_BucketForAddress(const netadr_t *address, qint burst, qint period)
   qint i;
   qint n;
 
-  n = 0;
-
-  for(bucket = bucketHashes[hash];bucket;bucket = bucket->next)
+  for(bucket = bucketHashes[hash], n = 0;bucket;bucket = bucket->next, n++)
   {
-    n++;
-
     switch(bucket->type)
     {
       case
       NA_IP:
-        if (!(memcmp(bucket->ipv._4, address->ipv._4, 4)))
+        if (memcmp(bucket->ipv._4, address->ipv._4, 4) == 0)
         {
           if (n > 8)
           {
@@ -616,7 +594,7 @@ SVC_BucketForAddress(const netadr_t *address, qint burst, qint period)
 #if defined(USE_IPV6)
       case
       NA_IP6:
-        if (!(memcmp(bucket->ipv._6, address->ipv._6, 16)))
+        if (memcmp(bucket->ipv._6, address->ipv._6, 16) == 0)
         {
           if (n > 8)
           {
@@ -705,7 +683,7 @@ SVC_BucketForAddress(const netadr_t *address, qint burst, qint period)
     }
   }
 
-  //could not allocate a bucket for this address so write to attack log since it is relevant info
+  //could not allocate a bucket for this address
   return NULL;
 }
 
@@ -862,120 +840,6 @@ CONNECTIONLESS COMMANDS
 ==============================================================================
 */
 
-#if defined(SUPPORT_STATUS_SCORES_OVERRIDE)
-static struct
-{
-  qbool active[MAX_CLIENTS];
-  qint scores[MAX_CLIENTS];
-}
-statusScoresOverride_state;
-
-/*
-================
-SV_HandleGameInfoMessage
-================
-*/
-void
-SV_HandleGameInfoMessage(const qchar *info)
-{
-  const qchar *token = Info_ValueForKey(info, "type");
-
-  if (!Q_stricmp(token, "clientstate"))
-  {
-    token = Info_ValueForKey(info, "client");
-
-    if (*token)
-    {
-      const qint clientNum = Q_atoi(token);
-
-      if (clientNum >= 0 && clientNum < MAX_CLIENTS)
-      {
-        token = Info_ValueForKey(info, "score");
-
-        if (*token)
-        {
-          statusScoresOverride_state.active[clientNum] = qtrue;
-          statusScoresOverride_state.scores[clientNum] = Q_atoi(token);
-        }
-        else
-        {
-          statusScoresOverride_state.active[clientNum] = qfalse;
-        }
-      }
-    }
-  }
-}
-
-/*
-================
-SV_StatusScoresOverride_Reset
-================
-*/
-void
-SV_StatusScoresOverride_Reset(void)
-{
-  Com_Memset(&statusScoresOverride_state, 0, sizeof(statusScoresOverride_state));
-}
-
-/*
-================
-SV_StatusScoresOverride_AdjustScore
-================
-*/
-qint
-SV_StatusScoresOverride_AdjustScore(qint defaultScore, qint clientNum)
-{
-  if (clientNum >= 0 && clientNum < MAX_CLIENTS && statusScoresOverride_state.active[clientNum])
-  {
-    return statusScoresOverride_state.scores[clientNum];
-  }
-
-  return defaultScore;
-}
-#endif
-
-#if defined(GAMESTATE_OVERFLOW_FIX)
-/*
-================
-SV_CalculateMaxBaselines
-
-Sets client->maxEntityBaseline to the highest entity baseline index that can be written
-safely without potential gamestate overflow.
-================
-*/
-void
-SV_CalculateMaxBaselines(client_t *client, msg_t msg)
-{
-  qint start;
-  const svEntity_t *svEnt;
-  entityState_t nullstate;
-  byte msgBuffer[MAX_MSGLEN_BUF];
-
-  client->maxEntityBaseline = -1;
-  Com_Memset(&nullstate, 0, sizeof(nullstate));
-  msg.data = msgBuffer;
-
-  for(start = 0;start < MAX_GENTITIES;start++)
-  {
-    if (!sv.baselineUsed[start])
-    {
-      continue;
-    }
-
-    svEnt = &sv.svEntities[start];
-    MSG_WriteByte(&msg, svc_baseline);
-    MSG_WriteDeltaEntity(&msg, &nullstate, &svEnt->baseline, qtrue);
-
-    if (msg.cursize + 32 >= msg.maxsize)
-    {
-      break;
-    }
-
-    client->maxEntityBaseline = start;
-  }
-}
-#endif
-
 /*
 ================
 SVC_Status
@@ -1041,11 +905,8 @@ SVC_Status(const netadr_t *from)
     {
       ps = SV_GameClientNum(i);
       playerLength = Com_sprintf(player, sizeof(player), "%i %i \"%s\"\n", 
-#if defined(SUPPORT_STATUS_SCORES_OVERRIDE)
-      SV_StatusScoresOverride_AdjustScore(ps->persistant[PERS_SCORE], i), cl->ping, cl->name);
-#else
       ps->persistant[PERS_SCORE], cl->ping, cl->name);
-#endif
+
       if (statusLength + playerLength >= MAX_PACKETLEN - 4)
       {
         break; //can't hold any more
@@ -1121,18 +982,6 @@ SVC_Info(const netadr_t *from)
   Info_SetValueForKey(infostring, "challenge", Cmd_Argv(1));
   Info_SetValueForKey(infostring, "protocol", va("%i", com_protocol->integer));
   Info_SetValueForKey(infostring, "hostname", sv_hostname->string);
-  Info_SetValueForKey(infostring, "serverload", va("%i", svs.serverLoad)); //Chey: included in SV_Status_f
-
-  if (sv_cpuusagepublic->integer)
-  {
-    Info_SetValueForKey(infostring, "cpuusage", va("%lf", svs.stats.cpu));
-  }
-
-  if (sv_avgframetimepublic->integer)
-  {
-    Info_SetValueForKey(infostring, "avgframetime", va("%lf", svs.stats.avg));
-  }
-
   Info_SetValueForKey(infostring, "mapname", sv_mapname->string);
   Info_SetValueForKey(infostring, "clients", va("%i", count));
   Info_SetValueForKey(infostring, "sv_maxclients", va("%i", sv.maxclients - sv_privateClients->integer));
@@ -1881,7 +1730,6 @@ SV_CalcPings(void)
     total = 0;
     count = 0;
 
-#if defined(INCLUDE_SV_PINGFIX)
     if (sv_pingFix->integer)
     {
       qint current_frame = cl->netchan.outgoingSequence - 1;
@@ -1907,7 +1755,6 @@ SV_CalcPings(void)
     }
     else
     {
-#endif
       for(j = 0;j < PACKET_BACKUP;j++)
       {
         if (!cl->frames[j].messageAcked)
@@ -1919,9 +1766,7 @@ SV_CalcPings(void)
         count++;
         total += delta;
       }
-#if defined(INCLUDE_SV_PINGFIX)
     }
-#endif
 
     if (!count)
     {
@@ -1936,7 +1781,6 @@ SV_CalcPings(void)
         cl->ping = 999;
       }
 
-#if defined(INCLUDE_SV_PINGFIX)
       if (sv_pingFix->integer)
       {
         if (cl->ping < 1)
@@ -1945,7 +1789,6 @@ SV_CalcPings(void)
           cl->ping = 1;
         }
       }
-#endif
     }
 
     // let the game qvm know about the ping
@@ -2192,9 +2035,9 @@ happen before SV_Frame is called
 void
 SV_Frame(const qint msec)
 {
-  unsigned frameMsec;
-  unsigned startTime;
-  unsigned i;
+  qint frameMsec;
+  qint startTime;
+  qint i;
 
   if (Cvar_CheckGroup(CVG_SERVER))
   {
@@ -2406,17 +2249,12 @@ Return the time in msec until we expect to be called next
 const qint
 SV_SendQueuedPackets(void)
 {
-#if defined(UDP_DOWNLOAD_OPTIMIZE)
-  qint delayT;
-  qint timeVal = INT_MAX;
-#else
   qint numBlocks;
   qint dlStart;
   qint deltaT;
   qint delayT;
   static qint dlNextRound = 0;
   qint timeVal = INT_MAX;
-#endif
 
   //send out fragmented packets since idle
   delayT = SV_SendQueuedMessages();
@@ -2425,14 +2263,7 @@ SV_SendQueuedPackets(void)
   {
     timeVal = delayT;
   }
-#if defined(UDP_DOWNLOAD_OPTIMIZE)
-  delayT = SV_SendDownloadMessages();
 
-  if (delayT >= 0 && delayT < timeVal)
-  {
-    timeVal = delayT;
-  }
-#else
   if (sv_dlRate->integer)
   {
     //rate limiting, imprecise for high dl rates
@@ -2487,7 +2318,7 @@ SV_SendQueuedPackets(void)
       timeVal = 0;
     }
   }
-#endif
+
   return timeVal;
 }
 

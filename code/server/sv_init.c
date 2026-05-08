@@ -879,8 +879,6 @@ SV_Init(void)
   //initialize cvars
   SV_InitCvars();
 
-  svs.serverLoad = 0;
-
   //track group cvar changes
   Cvar_SetGroup(sv_lanForceRate, CVG_SERVER);
   Cvar_SetGroup(sv_minRate, CVG_SERVER);
@@ -1004,7 +1002,6 @@ SV_Shutdown(const qchar *finalmsg)
 
   Com_Memset(&svs, 0, sizeof(svs));
   sv.time = 0;
-  svs.serverLoad = 0;
 
   Cvar_Set("sv_running", "0");
 

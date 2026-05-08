@@ -40,40 +40,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define	MAX_ENT_CLUSTERS 16
 
-//use an alternative dropped gamestate, simplifying code and fixing potential udp download issues
-#define GAMESTATE_RETRANSMIT_VERSION_TWO
-
-//avoid a potential issue where clients load the map twice after a download completes
-#if defined(GAMESTATE_RETRANSMIT_VERSION_TWO)
-#define UDP_DOWNLOAD_NO_DOUBLE_LOAD
-#endif
-
-//avoid sending reliable commands to loading clients, testing needed
-#define SKIP_PRE_ACTIVE_COMMANDS
-
-//fix for certain cases of delta parseentitiesnum too old errors in certain cases, such as 40+ sv_fps values with high client ping or bad connection
-#define SNAPSHOT_DELTA_BUFFER_FIX
-
-//prevent gamestate overflows by dropping entity baselines, fixes errors on certain maps under certain conditions
-#define GAMESTATE_OVERFLOW_FIX
-
-//allow mods to set custom player scores that are sent in response to status queries rather than using the playerstate score field
-#define SUPPORT_STATUS_SCORES_OVERRIDE
-
-#if defined(USE_VOIP)
-typedef struct
-voipServerPacket_s
-{
-  qint generation;
-  qint sequence;
-  qint frames;
-  qint len;
-  qint sender;
-  byte data[1024];
-}
-voipServerPacket_t;
-#endif
-
 typedef struct
 svEntity_s
 {
@@ -236,7 +202,6 @@ leakyBucket_s
   leakyBucket_t *next;
 };
 
-#if !defined(GAMESTATE_RETRANSMIT_VERSION_TWO)
 typedef enum
 {
   GSA_INIT = 0, //gamestate never sent with current sv.serverId
@@ -245,28 +210,6 @@ typedef enum
   GSA_ACKED //gamestate acknowledged, no retransmissions needed
 }
 gameStateAck_t;
-#endif
-
-#if defined(UDP_DOWNLOAD_OPTIMIZE)
-#define MAX_DOWNLOAD_MESSAGE_HISTORY 64
-
-typedef struct
-{
-  qint blockNumber;
-  qint msgNumber;
-  qint size;
-}
-downloadMessageRecord_t;
-#endif
-
-typedef enum
-checkedNumberType_s
-{
-  CHECKEDTYPE_RATE,
-  CHECKEDTYPE_SNAPS,
-  CHECKEDTYPE_TYPECOUNT,
-}
-checkedNumberType_t;
 
 typedef struct
 client_s
@@ -298,40 +241,6 @@ client_s
   //qint serverId; //last acknowledged server id
 
   //downloading
-#if defined(UDP_DOWNLOAD_OPTIMIZE)
-  qchar downloadName[MAX_QPATH]; //if not empty string, we are downloading
-
-  //source file
-  fileHandle_t download; //file being downloaded
-  qint downloadSize; //total bytes in pk3
-  unsigned downloadSrcFileRemaining; //number of bytes left to read from file
-
-  //file read buffer
-  qchar *downloadSrcChunk; //current chunk buffer
-  unsigned downloadSrcChunkPos; //number of bytes read from current chunk
-  unsigned downloadSrcChunkSize; //total bytes in current chunk
-
-  //download blocks
-  unsigned qchar *downloadBlocks[MAX_DOWNLOAD_WINDOW];
-  qint downloadBlockSize[MAX_DOWNLOAD_WINDOW];
-  qint downloadClientBlock; //one more than last block acknowledged by client
-  qint downloadXmitBlock; //one more than last block sent (may go backwards for retransmit)
-  qint downloadCurrentBlock; //one more than last block generated on server
-
-  //download messages
-  downloadMessageRecord_t downloadMsgTable[MAX_DOWNLOAD_MESSAGE_HISTORY];
-  qint downloadClientMsg; //one more than last msg (table index) acknowledged by client
-  qint downloadRetransmitMsg; //first message (table index) since xmit block was reset for retransmit
-  qint downloadCurrentMsg; //one more than last msg (table index) generated on server
-  qint downloadLastSentTime; //time in Sys_Milliseconds() of last outgoing packet
-
-  //rate limiting
-  double downloadCurrentRate; //rate in KB/s
-  qint downloadRatePool; //bytes available to send
-
-  //dropping dead connections
-  qint downloadAckTime; //time we last got an ack from the client
-#else
   qchar downloadName[MAX_QPATH]; //if not empty string, we are downloading
   fileHandle_t download; //file being downloaded
   qint downloadSize; //total bytes (can't use EOF because of paks)
@@ -343,8 +252,6 @@ client_s
   qint downloadBlockSize[MAX_DOWNLOAD_WINDOW];
   qbool downloadEOF; //We have sent the EOF block
   qint downloadSendTime;	//time we last sent a package
-  unsigned downloadAckTime; //time we last got an ack from the client
-#endif
 
   qbool deltaActive; //delta snapshots enabled
   qint deltaStart; //don't delta from messages earlier than this when CS_ACTIVE
@@ -372,9 +279,6 @@ client_s
   qbool csUpdated[MAX_CONFIGSTRINGS];
   qbool compat;
 
-  qint invalidValues; //checkedNumberType_t
-  qint lastInvalidValuesWarning;
-
   //flood protection
   rateLimit_t cmd_rate;
   rateLimit_t info_rate;
@@ -395,20 +299,6 @@ client_s
 client_t;
 
 //=============================================================================
-
-#define STATFRAMES(frametime) (frametime * 5) //FIXME: i think this is actually FRAMETIME / @sv_fps //5 seconds, assume running at sv_fps
-
-typedef struct
-{
-  double active;
-  double idle;
-  qint count;
-  double latched_active;
-  double latched_idle;
-  float cpu;
-  float avg;
-}
-svstats_t;
 
 typedef struct
 {
@@ -452,13 +342,6 @@ typedef struct
 #if defined(INCLUDE_REMOTE_COMMANDS)
   netadr_t authorizeAddress; //for rcon return messages
 #endif
-
-  unsigned sampleTimes[SERVER_PERFORMANCECOUNTER_SAMPLES];
-  unsigned currentSampleIndex;
-  unsigned totalFrameTime;
-  unsigned currentFrameIndex;
-  unsigned serverLoad;
-  svstats_t stats;
 
   //common snapshot storage
   qint freeStorageEntities;

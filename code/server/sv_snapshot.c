@@ -53,83 +53,6 @@ SV_EmitPacketEntities
 Writes a delta update of an entityState_t list to the message.
 =============
 */
-#if defined(GAMESTATE_OVERFLOW_FIX)
-static void
-SV_EmitPacketEntities(const clientSnapshot_t *from, const clientSnapshot_t *to, msg_t *msg, qint maxEntityBaseline)
-{
-  const entityState_t *newent = NULL;
-  const entityState_t *oldent = NULL;
-  qint oldindex = 0;
-  qint newindex = 0;
-  qint oldnum;
-  qint newnum;
-  const qint from_num_entities = from ? from->num_entities:0;
-
-  while(newindex < to->num_entities || oldindex < from_num_entities)
-  {
-    if (newindex >= to->num_entities)
-    {
-      newnum = MAX_GENTITIES + 1;
-    }
-    else
-    {
-      newent = to->ents[newindex];
-      newnum = newent->number;
-    }
-
-    if (oldindex >= from_num_entities)
-    {
-      oldnum = MAX_GENTITIES + 1;
-    }
-    else
-    {
-      oldent = from->ents[oldindex];
-      oldnum = oldent->number;
-    }
-
-    if (newnum == oldnum)
-    {
-      //delta update from old position
-      //because the force parm is qfalse, this will not result
-      //in any bytes being emited if the entity has not changed at all
-      MSG_WriteDeltaEntity(msg, oldent, newent, qfalse);
-      oldindex++;
-      newindex++;
-      continue;
-    }
-
-    if (newnum < oldnum)
-    {
-      //this is a new entity, send it from the baseline
-      if (newnum > maxEntityBaseline)
-      {
-        //treat baselines excluded from gamestate as null
-        entityState_t null_baseline;
-
-        Com_Memset(&null_baseline, 0, sizeof(null_baseline));
-        MSG_WriteDeltaEntity(msg, &null_baseline, newent, qtrue);
-      }
-      else
-      {
-        MSG_WriteDeltaEntity(msg, &sv.svEntities[newnum].baseline, newent, qtrue);
-      }
-
-      newindex++;
-      continue;
-    }
-
-    if (newnum > oldnum)
-    {
-      //the old entity isn't present in the new message
-      MSG_WriteDeltaEntity(msg, oldent, NULL, qtrue);
-      oldindex++;
-      continue;
-    }
-  }
-
-  MSG_WriteBits(msg, (MAX_GENTITIES - 1), GENTITYNUM_BITS); //end of packetentities
-}
-#else
 static void
 SV_EmitPacketEntities(const clientSnapshot_t *from, const clientSnapshot_t *to, msg_t *msg)
 {
@@ -193,7 +116,7 @@ SV_EmitPacketEntities(const clientSnapshot_t *from, const clientSnapshot_t *to, 
 
   MSG_WriteBits(msg, (MAX_GENTITIES - 1), GENTITYNUM_BITS); //end of packetentities
 }
-#endif
+
 
 /*
 ==================
@@ -316,11 +239,7 @@ SV_WriteSnapshotToClient(client_t *client, msg_t *msg)
   }
 
   //delta encode the entities
-#if defined(GAMESTATE_OVERFLOW_FIX)
-  SV_EmitPacketEntities(oldframe, frame, msg, client->maxEntityBaseline);
-#else
   SV_EmitPacketEntities(oldframe, frame, msg);
-#endif
 
   //padding for rate debugging
   if (sv_padPackets->integer)
@@ -454,7 +373,6 @@ SV_AddEntitiesVisibleFromPoint(const vec3_t origin, clientSnapshot_t *frame, sna
   qint clientarea;
   qint clientcluster;
   qint leafnum;
-  qint eventNumber;
   byte *clientpvs;
   const byte *bitvector;
 
@@ -507,16 +425,6 @@ SV_AddEntitiesVisibleFromPoint(const vec3_t origin, clientSnapshot_t *frame, sna
       }
 
       if (~ent->r.singleClient & BIT(frame->ps.clientNum))
-      {
-        continue;
-      }
-    }
-
-    if (ent->s.eType >= ET_EVENTS)
-    {
-      eventNumber = (ent->s.eType - ET_EVENTS) & ~EV_EVENT_BITS;
-
-      if (eventNumber == EV_JUMP || eventNumber == EV_SWIM || eventNumber == EV_FOOTSTEP)
       {
         continue;
       }
@@ -709,6 +617,7 @@ SV_AddEntitiesVisibleFromPoint(const vec3_t origin, clientSnapshot_t *frame, sna
         vec3_t dir;
 
         VectorSubtract(ent->s.origin, origin, dir);
+
         if (VectorLengthSquared(dir) > (float)ent->s.generic1 * ent->s.generic1)
         {
           continue;
@@ -892,12 +801,14 @@ SV_BuildClientSnapshot(client_t *client)
   clientSnapshot_t *frame;
   snapshotEntityNumbers_t entityNumbers;
   qint i;
+  qint cl;
   svEntity_t *svEnt;
   qint clientNum;
   playerState_t *ps;
 
   //this is the frame we are creating
   frame = &client->frames[client->netchan.outgoingSequence & PACKET_MASK];
+  cl = ARRAY_INDEX(svs.clients, client);
 
   //clear everything in this snapshot
   Com_Memset(frame->areabits, 0, sizeof(frame->areabits));
@@ -913,7 +824,7 @@ SV_BuildClientSnapshot(client_t *client)
   }
 
   // grab the current playerState_t
-  ps = SV_GameClientNum(ARRAY_INDEX(svs.clients, client));
+  ps = SV_GameClientNum(cl);
   frame->ps = *ps;
 
   //never send client's own entity, because it can
@@ -996,8 +907,6 @@ Called by SV_SendClientSnapshot and SV_SendClientGameState
 void
 SV_SendMessageToClient(msg_t *msg, client_t *client)
 {
-  //qint rateMsec;
-
   if (client->gentity && (client->gentity->r.svFlags & SVF_BOT))
   {
     return; //Chey: bots dont need snapshots
@@ -1115,72 +1024,6 @@ SV_SendClientSnapshot(client_t *client)
 
 /*
 =======================
-SV_CheckInvalidUserInfoValues
-=======================
-*/
-static void
-SV_CheckInvalidUserInfoValues(client_t *cl)
-{
-  const qchar *warning = NULL;
-  qint timeout = 120000;
-  qbool critical = qfalse;
-
-  if (cl->state != CS_ACTIVE)
-  {
-    return;
-  }
-
-  if (cl->netchan.remoteAddress.type == NA_LOOPBACK || (cl->netchan.isLANAddress && com_dedicated->integer != 2 && sv_lanForceRate->integer))
-  {
-    return; //don't warn if rate is forced
-  }
-
-  if ((cl->invalidValues & BIT((qint)CHECKEDTYPE_RATE)) && cl->rate != 0)
-  {
-    warning = ("^1Your 'rate' value is invalid. Please check it and set a proper value.");
-    critical = qtrue;
-  }
-  else if (cl->invalidValues & BIT((qint)CHECKEDTYPE_SNAPS))
-  {
-    warning = ("^1Your 'snaps' value is invalid. Please check it and set a proper value.");
-    critical = qtrue;
-  }
-  else if (cl->rate != 0 && cl->rate < 5000)
-  {
-    warning = va("^3Your 'rate' value is extremely low (%d). Please consider a higher value.", cl->rate);
-    timeout = 1200000; //(60000 * 20) every 20 minutes
-  }
-  else if (cl->snaps < 20) //30)
-  {
-    //FIXME: only warn about this in spectators
-    warning = va("^3Your 'snaps' value is extremely low (%d). Please consider a higher value.", cl->snaps);
-    timeout = 3600000; //(60000 * 60) every 60 minutes
-  }
-
-  if (!warning || (cl->lastInvalidValuesWarning && svs.time - timeout < cl->lastInvalidValuesWarning && svs.time > cl->lastInvalidValuesWarning))
-  {
-    return;
-  }
-
-  //SV_SendServerCommand(cl, va("print \"%s\n\"", warning));
-
-  if (critical)
-  {
-    //SV_SendServerCommand(cl, va("cp \"%s\n\"", warning));
-    SV_SendServerCommand(cl, va("print \"%s\n\"", warning)); //FIXME: cp gets cut off very fast for some reason...
-    Com_Printf(S_COLOR_RED "Sending critical warning to client %s: %s\n", cl->name, warning);
-  }
-  else
-  {
-    SV_SendServerCommand(cl, va("print \"%s\n\"", warning));
-    Com_Printf(S_COLOR_YELLOW "Sending non-critical warning to client %s: %s\n", cl->name, warning);
-  }
-
-  cl->lastInvalidValuesWarning = svs.time;
-}
-
-/*
-=======================
 SV_SendClientMessages
 =======================
 */
@@ -1211,26 +1054,12 @@ SV_SendClientMessages(void)
       continue; //dont send snapshots if downloading
     }
 
-#if defined(UDP_DOWNLOAD_NO_DOUBLE_LOAD)
-    //extra check since downloading clients can now be CS_PRIMED
-    if (c->downloading)
-    {
-      continue;
-    }
-#endif
+    //1. Local clients get snapshots every server frame
+    //2. Remote clients get snapshots depending from rate and requested number of updates
 
     if (svs.time - c->lastSnapshotTime < c->snapshotMsec * com_timescale->value)
     {
       continue; //not time yet
-    }
-
-    if (*c->downloadName)
-    {
-      //if the client is downloading via netchan and has not acknowledged a package in 12 seconds, drop it
-      if (c->download && (svs.time - c->downloadAckTime) > 12000)
-      {
-        SV_DropClient(c, "Download failed");
-      }
     }
 
     if (c->netchan.unsentFragments || c->netchan_start_queue)
@@ -1252,51 +1081,6 @@ SV_SendClientMessages(void)
     }
 
     numclients++;
-
-#if defined(SNAPSHOT_DELTA_BUFFER_FIX)
-    qint bufferUsage = 0;
-
-    if (c->state == CS_ACTIVE && c->netchan.outgoingSequence - c->messageAcknowledge < (PACKET_BACKUP - 3))
-    {
-      const clientSnapshot_t *deltaFrame = &c->frames[c->messageAcknowledge & PACKET_MASK];
-
-      if (deltaFrame->frameNum - svs.lastValidFrame >= 0)
-      {
-        //got valid delta frame according to SV_WriteSnapshotToClient conditions
-        //now tally entity usage from delta frame up to current frame
-        qint j;
-
-        for(j = 0;j < PACKET_BACKUP;++j)
-        {
-          const qint messageNum = c->messageAcknowledge + j;
-          const clientSnapshot_t *frame = &c->frames[messageNum & PACKET_MASK];
-
-          if (messageNum >= c->netchan.outgoingSequence)
-          {
-            break;
-          }
-
-          if (frame->frameNum >= deltaFrame->frameNum)
-          {
-            bufferUsage += frame->num_entities;
-          }
-        }
-      }
-    }
-
-    //old clients (prior to a certain ioq3 import from 2013) use a MAX_PARSE_ENTITIES value of 2048 with
-    //CL_ParseSnapshot failing if the buffer usage ahead of the new snapshot is greater than
-    //MAX_PARSE_ENTITIES - 128, the limit here is reduced to MAX_PARSE_ENTITIES - 256 to be extra safe
-    //against theoretically possible (but probably unlikely) entity corruption
-    if (bufferUsage >= 2048 - 256)
-    {
-      Com_DPrintf("forcing non delta snapshot %i for client %i due to entity buffer usage %i\n", c->netchan.outgoingSequence, i, bufferUsage);
-      c->messageAcknowledge = c->netchan.outgoingSequence - (PACKET_BACKUP + 1);
-    }
-#endif
-
-    //warn user if he has invalid snaps/rate settings
-    SV_CheckInvalidUserInfoValues(c);
 
     //generate and send a new message
     SV_SendClientSnapshot(c);
