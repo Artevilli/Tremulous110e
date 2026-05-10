@@ -803,15 +803,25 @@ NET_AdrToString(const netadr_t *a)
 
     case
     NA_IP:
-#if defined(USE_IPV6)
-    case
-    NA_IP6:
-#endif
+    {
       sockaddr_t sadr;
 
       NetadrToSockadr(a, &sadr);
       Sys_SockaddrToString(s, sizeof(s), &sadr);
       break;
+    }
+#if defined(USE_IPV6)
+    case
+    NA_IP6:
+    {
+      sockaddr_t sadr;
+
+      NetadrToSockadr(a, &sadr);
+      Sys_SockaddrToString(s, sizeof(s), &sadr);
+      break;
+    }
+#endif
+
     case
     NA_BAD: //invalid, unknown or non-applicable address type
       //Com_Printf("NET_AdrToString: Address type: 0.0.0.0 or ::\n");
