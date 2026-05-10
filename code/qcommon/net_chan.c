@@ -47,6 +47,10 @@ to the new value before sending out any replies.
 
 */
 
+#define	FRAGMENT_SIZE			(MAX_PACKETLEN - 100)
+
+#define	FRAGMENT_BIT			(1U<<31)
+
 cvar_t		*showpackets;
 cvar_t		*showdrop;
 cvar_t		*qport;
@@ -308,7 +312,7 @@ void Netchan_Transmit( netchan_t *chan, qint length, const byte *data ) {
 	byte		send_buf[MAX_PACKETLEN + 8];
 
 	if ( length > MAX_MSGLEN ) {
-		Com_Error( ERR_DROP, "Netchan_Transmit: length = %i", length );
+		Com_Error( ERR_DROP, "%s: length = %i", __func__, length );
 	}
 	chan->unsentFragmentStart = 0;
 
@@ -907,7 +911,7 @@ qint NET_StringToAdr( const qchar *s, netadr_t *a, netadrtype_t family )
 	if (!strcmp (s, "localhost")) {
 		Com_Memset (a, 0, sizeof(*a));
 		a->type = NA_LOOPBACK;
-// as NA_LOOPBACK doesn't require ports report port was given.
+		// as NA_LOOPBACK doesn't require ports report port was given.
 		return 1;
 	}
 

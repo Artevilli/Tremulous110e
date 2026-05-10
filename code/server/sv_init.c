@@ -971,9 +971,6 @@ SV_Shutdown(const qchar *finalmsg)
     SV_FinalMessage(finalmsg);
   }
 
-  //Chey: XXX: should this go here?
-  NET_Shutdown();
-
   SV_RemoveOperatorCommands();
   SV_MasterShutdown();
 #if defined(STATELESS_CHALLENGES_VERSION_ONE)
