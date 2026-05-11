@@ -25,6 +25,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../qcommon/qcommon.h"
 #include "server.h"
 
+#define MAX_NETCHAN_QUEUE 32
+
+
 /*
 ==============
 SV_Netchan_Encode
@@ -261,6 +264,24 @@ SV_Netchan_Transmit(client_t *client, msg_t *msg)
     netchan_buffer_t *netbuf;
     size_t netSize = sizeof(netchan_buffer_t);
     size_t cmdLen = strlen(client->lastClientCommandString) + 1;
+
+    if (client->netchan_start_queue)
+    {
+      netchan_buffer_t *next = client->netchan_start_queue;
+      qint count = 0;
+
+      while(next)
+      {
+        count++;
+        next = next->next;
+
+        if (count > MAX_NETCHAN_QUEUE)
+        {
+          SV_DropClient(client, "netchan queue overflow");
+          return;
+        }
+      }
+    }
 
     Com_DPrintf("#462 SV_Netchan_Transmit: unsent fragments, stacked\n");
     netbuf = (netchan_buffer_t *)Z_Malloc(netSize + msg->cursize + cmdLen);

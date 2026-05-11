@@ -1679,6 +1679,29 @@ SV_WriteDownloadToClient(client_t *cl)
     cl->downloadEOF = qfalse;
   }
 
+  //check if we have unsent fragments or queue already in the pipe and don't add to the issue too much
+  if (cl->netchan_start_queue)
+  {
+    netchan_buffer_t *next = cl->netchan_start_queue;
+    qint count = 0;
+
+    while(next)
+    {
+      count++;
+      next = next->next;
+
+      if (count > 20)
+      {
+        return qfalse;
+      }
+    }
+  }
+
+  if (cl->netchan.unsentFragments && cl->netchan.unsentLength > 10000)
+  {
+    return qfalse;
+  }
+
   //perform any reads that we need to
   while(cl->downloadCurrentBlock - cl->downloadClientBlock < MAX_DOWNLOAD_WINDOW && cl->downloadSize != cl->downloadCount)
   {
