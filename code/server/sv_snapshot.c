@@ -920,48 +920,12 @@ SV_SendMessageToClient(msg_t *msg, client_t *client)
   SV_Netchan_Transmit(client, msg);
 }
 
-/*
-=======================
-SV_SendClientIdle
-
-There is no need to send full snapshots who are loading a map.
-Send them idle packets with the bare minimum required to keep the client on the server.
-=======================
-*/
-static void
-SV_SendClientIdle(client_t *client)
-{
-  byte msg_buf[MAX_MSGLEN_BUF];
-  msg_t msg;
-
-  MSG_Init(&msg, msg_buf, MAX_MSGLEN);
-
-  //NOTE, MRE: all server->client messages now acknowledge
-  //let the client know which reliable clientCommands we have received
-  MSG_WriteLong(&msg, client->lastClientCommand);
-
-  //(re)send any reliable server commands
-  SV_UpdateServerCommandsToClient(client, &msg);
-
-  //check for overflow
-  if (msg.overflowed)
-  {
-    Com_Printf("WARNING: msg overflowed for %s\n", client->name);
-    MSG_Clear(&msg);
-  }
-
-  SV_SendMessageToClient(&msg, client);
-
-  sv.bpsTotalBytes += msg.cursize;
-  sv.ubpsTotalBytes += msg.uncompsize / 8;
-}
 
 /*
 =======================
 SV_SendClientSnapshot
 
 Also called by SV_FinalMessage
-
 =======================
 */
 void
@@ -976,24 +940,8 @@ SV_SendClientSnapshot(client_t *client)
     return;
   }
 
-  //zombie clients need full snaps to process reliable commands such as picking up disconnect reason
-  if (client->state < CS_ACTIVE)
-  {
-    if (client->state != CS_ZOMBIE)
-    {
-      SV_SendClientIdle(client);
-      return;
-    }
-  }
-
   //build the snapshot
   SV_BuildClientSnapshot(client);
-
-  //bots need to have snapshots built but they query without directly needing to be sent
-  //if (client->gentity && client->gentity->r.svFlags & SVF_BOT)
-  //{
-    //return;
-  //}
 
   MSG_Init(&msg, msg_buf, MAX_MSGLEN);
 
@@ -1021,6 +969,7 @@ SV_SendClientSnapshot(client_t *client)
   sv.bpsTotalBytes += msg.cursize;
   sv.ubpsTotalBytes += msg.uncompsize / 8;
 }
+
 
 /*
 =======================

@@ -742,11 +742,7 @@ SV_Status_f(void)
 
     Com_Printf("%2i ", i); //id
     ps = SV_GameClientNum(i);
-#if defined(SUPPORT_STATUS_SCORES_OVERRIDE)
-    Com_Printf("%5i ", SV_StatusScoresOverride_AdjustScore(ps->persistant[PERS_SCORE], i));
-#else
     Com_Printf("%5i ", ps->persistant[PERS_SCORE]);
-#endif
 
     if (cl->state == CS_PRIMED)
     {

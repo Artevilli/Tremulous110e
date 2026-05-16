@@ -163,8 +163,8 @@ clientState_t;
 typedef struct netchan_buffer_s
 {
   msg_t msg;
-  byte *msgBuffer;
-  qchar *lastClientCommandString; //valid command string for SV_Netchan_Encode
+  byte msgBuffer[MAX_MSGLEN];
+  qchar clientCommandString[MAX_STRING_CHARS]; //valid command string for SV_Netchan_Encode
   struct netchan_buffer_s *next;
 }
 netchan_buffer_t;
@@ -232,11 +232,7 @@ client_s
   qchar lastClientCommandString[MAX_STRING_CHARS];
   sharedEntity_t *gentity; //SV_GentityNum(clientnum)
   qchar name[MAX_NAME_LENGTH]; //extracted from userinfo, high bits masked
-#if defined(GAMESTATE_RETRANSMIT_VERSION_TWO)
-  qbool downloadGamestateDropCheck; //perform extra dropped gamestate check after downloads
-#else
   gameStateAck_t gamestateAck;
-#endif
   qbool downloading; //set at "download", reset at gamestate retransmission
   //qint serverId; //last acknowledged server id
 
@@ -291,10 +287,6 @@ client_s
 
   qchar tld[3]; //"XX\0"
   const qchar *country;
-
-#if defined(GAMESTATE_OVERFLOW_FIX)
-  qint maxEntityBaseline;
-#endif
 }
 client_t;
 
@@ -374,18 +366,6 @@ void
 SVC_RateRestoreToxicAddress(const netadr_t *from, qint burst, qint period);
 void
 SVC_RateDropAddress(const netadr_t *from, qint burst, qint period);
-#if defined(SUPPORT_STATUS_SCORES_OVERRIDE)
-void
-SV_HandleGameInfoMessage(const qchar *info);
-void
-SV_StatusScoresOverride_Reset(void);
-qint
-SV_StatusScoresOverride_AdjustScore(qint defaultScore, qint clientNum);
-#endif
-#if defined(GAMESTATE_OVERFLOW_FIX)
-void
-SV_CalculateMaxBaselines(client_t *client, msg_t msg);
-#endif
 void QDECL
 SV_SendServerCommand(client_t *cl, const qchar *fmt, ...);
 void

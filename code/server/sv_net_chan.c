@@ -25,8 +25,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../qcommon/qcommon.h"
 #include "server.h"
 
-#define MAX_NETCHAN_QUEUE 32
-
 
 /*
 ==============
@@ -37,7 +35,7 @@ long reliableAcknowledge;
 ==============
 */
 static void
-SV_Netchan_Encode(client_t *client, msg_t *msg, const qchar *commandString)
+SV_Netchan_Encode(client_t *client, msg_t *msg, const qchar *clientCommandString)
 {
   long i;
   long index;
@@ -66,7 +64,7 @@ SV_Netchan_Encode(client_t *client, msg_t *msg, const qchar *commandString)
   msg->bit = sbit;
   msg->readcount = srdc;
         
-  string = (byte *)commandString;
+  string = (byte *)clientCommandString;
   index = 0;
 
   //xor the client challenge with the netchan sequence number
@@ -199,7 +197,7 @@ SV_Netchan_TransmitNextInQueue(client_t *client)
 
   if (client->compat)
   {
-    SV_Netchan_Encode(client, &netbuf->msg, netbuf->lastClientCommandString);
+    SV_Netchan_Encode(client, &netbuf->msg, netbuf->clientCommandString);
   }
 
   Netchan_Transmit(&client->netchan, netbuf->msg.cursize, netbuf->msg.data);
@@ -262,39 +260,16 @@ SV_Netchan_Transmit(client_t *client, msg_t *msg)
   if (client->netchan.unsentFragments || client->netchan_start_queue)
   {
     netchan_buffer_t *netbuf;
-    size_t netSize = sizeof(netchan_buffer_t);
-    size_t cmdLen = strlen(client->lastClientCommandString) + 1;
-
-    if (client->netchan_start_queue)
-    {
-      netchan_buffer_t *next = client->netchan_start_queue;
-      qint count = 0;
-
-      while(next)
-      {
-        count++;
-        next = next->next;
-
-        if (count > MAX_NETCHAN_QUEUE)
-        {
-          SV_DropClient(client, "netchan queue overflow");
-          return;
-        }
-      }
-    }
 
     Com_DPrintf("#462 SV_Netchan_Transmit: unsent fragments, stacked\n");
-    netbuf = (netchan_buffer_t *)Z_Malloc(netSize + msg->cursize + cmdLen);
-    netbuf->msgBuffer = ((byte *)netbuf) + netSize;
-    netbuf->lastClientCommandString = (qchar *)(((byte *)netbuf) + (netSize + msg->cursize));
-    netbuf->lastClientCommandString[0] = '\0';
+    netbuf = (netchan_buffer_t *)Z_Malloc(sizeof(netchan_buffer_t));
 
-    //store the msg, we can't store it encoded, as the encoding depends on stuff we still have to finish sending
-    MSG_Copy(&netbuf->msg, netbuf->msgBuffer, msg->cursize, msg);
+    //store the msg, we can't store it encoded, as the encoding string depends on stuff we still have to finish sending
+    MSG_Copy(&netbuf->msg, netbuf->msgBuffer, sizeof(netbuf->msgBuffer), msg);
 
     if (client->compat)
     {
-      Q_strncpyz(netbuf->lastClientCommandString, client->lastClientCommandString, cmdLen);
+      Q_strncpyz(netbuf->clientCommandString, client->lastClientCommandString, sizeof(netbuf->clientCommandString));
     }
 
     netbuf->next = NULL;
