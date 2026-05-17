@@ -41,9 +41,6 @@
 #define DEBUG_SV_CHALLENGE //enable for com_dprintf debugging output
 #endif
 
-#define CPU_USAGE_WARNING 70
-#define FRAME_TIME_WARNING 30
-
 extern cvar_t *sv_fps; //time rate for running non-clients
 extern cvar_t *sv_timeout; //seconds without any message
 extern cvar_t *sv_zombietime; //seconds to sink messages after disconnect
@@ -57,13 +54,11 @@ extern cvar_t *sv_allowDownload;
 extern cvar_t *sv_maxclients;
 extern cvar_t *sv_maxclientsPerIP;
 extern cvar_t *sv_clientTLD;
-extern cvar_t *sv_collectClientJunkInfo;
 extern cvar_t *sv_cheats;
 extern cvar_t *sv_privateClients; //number of clients reserved for password
 extern cvar_t *sv_hostname;
 extern cvar_t *sv_master[MAX_MASTER_SERVERS]; //master server ip address
 extern cvar_t *sv_reconnectlimit; //minimum seconds between connect messages
-extern cvar_t *sv_showloss; //report when usercmds are lost
 extern cvar_t *sv_padPackets; //add nop bytes to messages
 extern cvar_t *sv_killserver; //menu system can set to 1 to shut server down
 extern cvar_t *sv_mapname;
@@ -78,20 +73,14 @@ extern cvar_t *sv_dlRate;
 extern cvar_t *sv_minRebootDelayMins;
 extern cvar_t *sv_novis;
 extern cvar_t *sv_pure;
-extern cvar_t *sv_cpuusagepublic;
-extern cvar_t *sv_avgframetimepublic;
-extern cvar_t *sv_warningscpu;
-extern cvar_t *sv_warningsframetime;
 extern cvar_t *sv_floodWait;
 extern cvar_t *sv_floodLimit;
 extern cvar_t *sv_floodProtect;
 extern cvar_t *sv_pingFix;
-extern cvar_t *sv_userInfoFloodProtect;
 extern cvar_t *sv_showAverageBPS;
 extern cvar_t *sv_lanForceRate; //dedicated 1 (LAN) server forces local client rates to 99999 (bug #491)
 extern cvar_t *sv_antiDRDoS;
 extern cvar_t *sv_antiDRDoSAffectsLan;
-extern cvar_t *sv_dequeuePeriod;
 extern cvar_t *sv_levelTimeReset;
 extern cvar_t *sv_filter;
 extern cvar_t *sv_antiWallhack;

@@ -312,9 +312,6 @@ floodBan_t;
 
 #define MAX_INFO_FLOOD_BANS 36
 
-#define SERVER_PERFORMANCECOUNTER_FRAMES 600
-#define SERVER_PERFORMANCECOUNTER_SAMPLES 6
-
 //this structure will be cleared only when the game dll changes
 typedef struct
 {

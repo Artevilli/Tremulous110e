@@ -2434,7 +2434,7 @@ SV_ExecuteClientCommand(client_t *cl, const qchar *s)
 
  //applying flood protection only to "CS_ACTIVE" clients leaves too much room for abuse, extending this flood protection to clients pre CS_ACTIVE should not cause any issues, as the download-commands are handled within the engine and floodprotect only filters calls to the qvm
   isBot = cl->netchan.remoteAddress.type == NA_BOT ? qtrue:qfalse;
-  bFloodProtect = !isBot && cl->state >= CS_ACTIVE;
+  bFloodProtect = !isBot; //&& cl->state >= CS_ACTIVE;
 
   //see if it is a server level command
   for(ucmd = ucmds;ucmd->name;ucmd++)
@@ -2445,12 +2445,9 @@ SV_ExecuteClientCommand(client_t *cl, const qchar *s)
       {
         if (bFloodProtect)
         {
-          if (sv_userInfoFloodProtect->integer)
+          if (!SVC_RateLimit(&cl->info_rate, 5, 1000))
           {
-            if (!SVC_RateLimit(&cl->info_rate, 5, 1000))
-            {
-              return qfalse; //lag flooder
-            }
+            return qfalse; //lag flooder
           }
         }
       }
@@ -2895,7 +2892,7 @@ SV_ExecuteClientMessage(client_t *cl, msg_t *msg)
     Com_Printf("WARNING: bad command byte %i for client %i\n", c, ARRAY_INDEX(svs.clients, cl));
   }
 
-  //if (msg->readcount != msg->cursize && sv_collectClientJunkInfo->integer)
+  //if (msg->readcount != msg->cursize)
   //{
     //Com_Printf("WARNING: junk at end of packet for client %i\n", ARRAY_INDEX(svs.clients, cl));
   //}
