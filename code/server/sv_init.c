@@ -101,11 +101,6 @@ SV_UpdateConfigstrings(client_t *client)
       continue;
     }
 
-    if (client->gentity && (client->gentity->r.svFlags & SVF_BOT))
-    {
-      continue; //Chey: bots dont need config string updates
-    }
-
     SV_SendConfigstring(client, index);
     client->csUpdated[index] = qfalse;
   }
@@ -121,12 +116,6 @@ SV_SetConfigstring(const qint index, const qchar *val)
 {
   qint i;
   client_t *client;
-
-  //Chey: FIXME: what the fuck?
-  if (index > MAX_CONFIGSTRINGS - 1)
-  {
-    return;
-  }
 
   if (index < 0 || index >= MAX_CONFIGSTRINGS)
   {
@@ -701,7 +690,7 @@ SV_SpawnServer(const qchar *mapname, qbool killBots)
     //send the new gamestate to all connected clients
     if (svs.clients[i].state >= CS_CONNECTED)
     {
-      if (svs.clients[i].netchan.remoteAddress.type == NA_BOT) // || svs.clients[i].gentity->r.svFlags & SVF_BOT) //Chey: FIXME: what is this?
+      if (svs.clients[i].netchan.remoteAddress.type == NA_BOT)
       {
         if (killBots)
         {

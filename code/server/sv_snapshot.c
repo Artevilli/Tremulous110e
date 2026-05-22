@@ -907,11 +907,6 @@ Called by SV_SendClientSnapshot and SV_SendClientGameState
 void
 SV_SendMessageToClient(msg_t *msg, client_t *client)
 {
-  if (client->gentity && (client->gentity->r.svFlags & SVF_BOT))
-  {
-    return; //Chey: bots dont need snapshots
-  }
-
   //record information about the message
   client->frames[client->netchan.outgoingSequence & PACKET_MASK].messageSize = msg->cursize;
   client->frames[client->netchan.outgoingSequence & PACKET_MASK].messageSent = svs.msgTime;
@@ -1022,11 +1017,6 @@ SV_SendClientMessages(void)
       //not enough time since last packet passed through the line
       c->rateDelayed = qtrue;
       continue;
-    }
-
-    if (c->gentity && (c->gentity->r.svFlags & SVF_BOT))
-    {
-      continue; //Chey: bots may cause error drops in the server net chan
     }
 
     numclients++;

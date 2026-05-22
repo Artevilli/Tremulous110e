@@ -215,15 +215,10 @@ SV_SendServerCommand(client_t *cl, const qchar *fmt, ...)
     Com_Printf("broadcast: %s\n", SV_ExpandNewlines(message));
   }
 
-  //send the data to all relevent clients
+  //send the data to all relevant clients
   for(j = 0;j < sv.maxclients;j++)
   {
     client = &svs.clients[j];
-
-    if (client->gentity && (client->gentity->r.svFlags & SVF_BOT))
-    {
-      continue; //bots dont need server commands
-    }
 
     //if(client->state == CS_ACTIVE)
     if (len <= 1022 || client->longstr)
