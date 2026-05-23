@@ -1792,6 +1792,7 @@ SV_CalcPings(void)
   }
 }
 
+
 /*
 ==================
 SV_CheckTimeouts
@@ -1829,7 +1830,8 @@ SV_CheckTimeouts(void)
     if (cl->state == CS_ZOMBIE && cl->lastPacketTime - zombiepoint < 0)
     {
       //using the client id cause the cl->name is empty at this point
-      SV_SetClientState(cl, CS_FREE); //can now be reused
+      SV_PrintClientStateChange(cl, CS_FREE);
+      cl->state = CS_FREE; //can now be reused
       continue;
     }
 

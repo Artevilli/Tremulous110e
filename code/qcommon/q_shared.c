@@ -2690,7 +2690,7 @@ Info_ValueForKey(const qchar *s, const qchar *key)
 
 static const qchar *info_keys[MAX_INFO_TOKENS];
 static const qchar *info_values[MAX_INFO_TOKENS];
-static unsigned info_tokens;
+static qint info_tokens;
 
 /*
 ===================

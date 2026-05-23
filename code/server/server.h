@@ -412,13 +412,11 @@ SV_InitChallenger(void);
 void
 SV_DirectConnect(const netadr_t *from);
 void
-SV_SetClientState(client_t *cl, const clientState_t newState);
+SV_PrintClientStateChange(const client_t *cl, const clientState_t newState);
 void
 SV_ExecuteClientMessage(client_t *cl, msg_t *msg);
 void
 SV_UserinfoChanged(client_t *cl, const qbool updateUserinfo, const qbool runFilter);
-void
-SV_UpdateUserinfo_f(client_t *cl);
 void
 SV_ClientEnterWorld(client_t *client);
 void

@@ -938,6 +938,13 @@ SV_SendClientSnapshot(client_t *client)
   //build the snapshot
   SV_BuildClientSnapshot(client);
 
+  //bots need to have their snapshots build, but
+  //the query them directly without needing to be sent
+  if (client->netchan.remoteAddress.type == NA_BOT)
+  {
+    return;
+  }
+
   MSG_Init(&msg, msg_buf, MAX_MSGLEN);
 
   //NOTE, MRE: all server->client messages now acknowledge
@@ -954,7 +961,6 @@ SV_SendClientSnapshot(client_t *client)
   //check for overflow
   if (msg.overflowed)
   {
-    //This always end fucking the server.
     Com_Printf("WARNING: msg overflowed for %s\n", client->name);
     MSG_Clear(&msg);
   }

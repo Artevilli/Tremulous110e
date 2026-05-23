@@ -59,6 +59,7 @@ SV_CreateChallenge(qint timestamp, const netadr_t *from)
   return challenge;
 }
 
+
 /*
 =================
 SV_CreateChallenge
@@ -83,6 +84,7 @@ SV_VerifyChallenge(qint receivedChallenge, const netadr_t *from)
   return (receivedChallenge == expectedChallenge) ? qtrue:qfalse;
 }
 
+
 /*
 =================
 SV_InitChallenger
@@ -94,6 +96,7 @@ SV_InitChallenger(void)
   Com_MD5Init();
 }
 #endif
+
 
 /*
 =================
@@ -159,6 +162,7 @@ SV_GetChallenge(const netadr_t *from)
   }
 }
 
+
 /*
 ==================
 SV_SetClientTLD
@@ -201,6 +205,7 @@ static const tld_info_t tld_info[] =
   #include "tlds.h"
 };
 
+
 /*
 ==================
 SV_FreeIP4DB
@@ -218,6 +223,7 @@ SV_FreeIP4DB(void)
   ipdb_range = NULL;
   ipdb_tld = NULL;
 }
+
 
 /*
 ==================
@@ -320,6 +326,7 @@ SV_LoadIP4DB(const qchar *filename)
   return qtrue;
 }
 
+
 static void
 SV_SetTLD(qchar *str, const netadr_t *from, qbool isLAN)
 {
@@ -393,6 +400,7 @@ SV_SetTLD(qchar *str, const netadr_t *from, qbool isLAN)
   }
 }
 
+
 static qint seqs[MAX_CLIENTS];
 
 static void
@@ -405,6 +413,7 @@ SV_SaveSequences(void)
     seqs[i] = svs.clients[i].reliableSequence;
   }
 }
+
 
 static void
 SV_InjectLocation(const char *tld, const char *country)
@@ -441,6 +450,7 @@ SV_InjectLocation(const char *tld, const char *country)
   }
 }
 
+
 static const qchar *
 SV_FindCountry(const qchar *tld)
 {
@@ -461,6 +471,7 @@ SV_FindCountry(const qchar *tld)
 
   return "Unknown Location";
 }
+
 
 /*
 ==================
@@ -497,39 +508,35 @@ SV_GetStateName(const clientState_t state)
   }
 }
 
+
 /*
 ==================
-SV_SetClientState
+SV_PrintClientStateChange
 ==================
 */
 void
-SV_SetClientState(client_t *cl, const clientState_t newState)
+SV_PrintClientStateChange(const client_t *cl, const clientState_t newState)
 {
   if (cl->state == newState)
   {
     return;
   }
 
-#if 0 //!defined(_DEBUG)
+#if !defined(_DEBUG)
   if (!com_developer->integer)
   {
     return;
   }
 #endif
 
-  if (com_developer->integer)
+  if (cl->name[0] != '\0')
   {
-    if (cl->name[0] != '\0')
-    {
-      Com_Printf("%s is going from %s to %s\n", cl->name, SV_GetStateName(cl->state), SV_GetStateName(newState));
-    }
-    else
-    {
-      Com_Printf("%d is going from %s to %s\n", ARRAY_INDEX(svs.clients, cl), SV_GetStateName(cl->state), SV_GetStateName(newState));
-    }
+    Com_Printf("Going from %s to %s for %s\n", SV_GetStateName(cl->state), SV_GetStateName(newState), cl->name);
   }
-
-  cl->state = newState;
+  else
+  {
+    Com_Printf("Going from %s to %s for client %d\n", SV_GetStateName(cl->state), SV_GetStateName(newState), ARRAY_INDEX(svs.clients, cl));
+  }
 }
 
 /*
@@ -985,8 +992,9 @@ gotnewcl:
     NET_OutOfBandPrint(NS_SERVER, from, "connectResponse %d", challenge);
   }
 
-  SV_SetClientState(newcl, CS_CONNECTED);
+  SV_PrintClientStateChange(newcl, CS_CONNECTED);
 
+  newcl->state = CS_CONNECTED;
   newcl->lastSnapshotTime = svs.time - 9999; //generate a snapshot immediately
   newcl->lastPacketTime = svs.time;
   newcl->lastConnectTime = svs.time;
@@ -1102,7 +1110,8 @@ SV_DropClient(client_t *drop, const qchar *reason)
   else
   {
     Q_strncpyz(drop->name, name, sizeof(name));
-    SV_SetClientState(drop, CS_ZOMBIE); //become free in a few seconds
+    SV_PrintClientStateChange(drop, CS_ZOMBIE);
+    drop->state = CS_ZOMBIE; //become free in a few seconds
   }
 
   if (!reason)
@@ -1240,8 +1249,9 @@ SV_SendClientGameState(client_t *client)
 
   Com_DPrintf("SV_SendClientGameState() for %s\n", client->name);
 
-  SV_SetClientState(client, CS_PRIMED);
+  SV_PrintClientStateChange(client, CS_PRIMED);
 
+  client->state = CS_PRIMED;
   client->downloading = qfalse;
   client->pureAuthentic = qfalse;
   client->gotCP = qfalse;
@@ -1403,7 +1413,16 @@ SV_ClientEnterWorld(client_t *client)
 
   isBot = client->netchan.remoteAddress.type == NA_BOT;
 
-  SV_SetClientState(client, CS_ACTIVE);
+  if (!isBot)
+  {
+    SV_PrintClientStateChange(client, CS_ACTIVE);
+  }
+  else
+  {
+    //client->serverId = sv.serverId;
+  }
+
+  client->state = CS_ACTIVE;
   client->gamestateAck = GSA_ACKED;
 
   client->oldServerTime = 0;
@@ -1589,7 +1608,8 @@ SV_BeginDownload_f(client_t *cl)
   Q_strncpyz(cl->downloadName, Cmd_Argv(1), sizeof(cl->downloadName));
 
   //Chey: contrary to primed, this avoids server to client commands from accumulating without being sent which leads to unnecessary commands being sent when downloading finishes, which should avoid potential server command overflows
-  SV_SetClientState(cl, CS_CONNECTED);
+  SV_PrintClientStateChange(cl, CS_CONNECTED);
+  cl->state = CS_CONNECTED;
   cl->gentity = NULL;
   cl->downloading = qtrue;
 
@@ -2219,7 +2239,7 @@ SV_UserinfoChanged(client_t *cl, const qbool updateUserinfo, const qbool runFilt
 SV_UpdateUserinfo_f
 ==================
 */
-void
+static void
 SV_UpdateUserinfo_f(client_t *cl)
 {
   const qchar *info;
@@ -2239,6 +2259,7 @@ SV_UpdateUserinfo_f(client_t *cl)
   //call prog code to allow overrides
   VM_Call(sv.gvm, 1, GAME_CLIENT_USERINFO_CHANGED, ARRAY_INDEX(svs.clients, cl));
 }
+
 
 extern qint
 SV_Strlen(const qchar *str);
