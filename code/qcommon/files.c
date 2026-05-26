@@ -1022,6 +1022,28 @@ FS_SV_FOpenFileWrite(const qchar *filename)
   return f;
 }
 
+
+/*
+============
+FS_BannedPakFile
+
+Check if file should NOT be loaded from pk3 or pk3dir archives
+============
+*/
+static qbool
+FS_BannedPakFile(const qchar *filename)
+{
+  if (!strcmp(filename, "autoexec.cfg") || !strcmp(filename, Q3CONFIG_CFG))
+  {
+    return qtrue;
+  }
+  else
+  {
+    return qfalse;
+  }
+}
+
+
 /*
 ===========
 FS_SV_FOpenFileRead
@@ -1859,6 +1881,11 @@ FS_FOpenFileRead(const qchar *filename, fileHandle_t *file, qbool uniqueFILE)
       }
       else if (search->dir && search->policy != DIR_DENY)
       {
+        if (search->policy != DIR_STATIC && FS_BannedPakFile(filename))
+        {
+          continue;
+        }
+
         dir = search->dir;
         netpath = FS_BuildOSPath(dir->path, dir->gamedir, filename);
         temp = Sys_FOpen(netpath, "rb");
@@ -1913,16 +1940,12 @@ FS_FOpenFileRead(const qchar *filename, fileHandle_t *file, qbool uniqueFILE)
     }
     else if (search->dir && search->policy != DIR_DENY)
     {
+      if (search->policy != DIR_STATIC && FS_BannedPakFile(filename))
+      {
+        continue;
+      }
+
       //check a file in the directory tree
-
-      //if we are running restricted, the only files we
-      //will allow to come from the directory are .cfg files
-      //FIXME TTimo I'm not sure about the fs_numServerPaks test
-      //if you are using FS_ReadFile to find out if a file exists,
-      //this test can make the search fail although the file is in the directory
-      //I had the problem on https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=8
-      //turned out I used FS_FileExists instead
-
       dir = search->dir;
 
       netpath = FS_BuildOSPath(dir->path, dir->gamedir, filename);
@@ -2704,25 +2727,6 @@ FS_PakHashSize(const qint filecount)
   return hashSize;
 }
 
-/*
-============
-FS_DeniedPakFile
-
-Check if file should NOT be added to hash search table
-============
-*/
-static qbool
-FS_BannedPakFile(const qchar *filename)
-{
-  if (!strcmp(filename, "autoexec.cfg") || !strcmp(filename, Q3CONFIG_CFG))
-  {
-    return qtrue;
-  }
-  else
-  {
-    return qfalse;
-  }
-}
 
 /*
 =================
@@ -4077,9 +4081,14 @@ FS_ListFilteredFiles(const qchar *path, const qchar *extension, const qchar *fil
 
       for(i = 0;i < numSysFiles;i++)
       {
-        //unique match
+        //unique the match
         name = sysFiles[i];
         length = strlen(name);
+
+        if (search->policy != DIR_STATIC && FS_BannedPakFile(name))
+        {
+          continue;
+        }
 
         if (fnamecallback)
         {
