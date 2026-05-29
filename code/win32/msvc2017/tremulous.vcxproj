@@ -328,7 +328,6 @@
     <ClCompile Include="..\..\server\sv_ccmds.c" />
     <ClCompile Include="..\..\server\sv_challenge.c" />
     <ClCompile Include="..\..\server\sv_client.c" />
-    <ClCompile Include="..\..\server\sv_cvars.c" />
     <ClCompile Include="..\..\server\sv_filter.c" />
     <ClCompile Include="..\..\server\sv_game.c" />
     <ClCompile Include="..\..\server\sv_game_java.c" />

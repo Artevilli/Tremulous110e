@@ -30,9 +30,20 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "../qcommon/md5.h"
 #include "../game/g_public.h"
 #include "../game/bg_public.h"
-#include "sv_cvars.h"
 
 //=============================================================================
+
+//enabling rcon
+#define INCLUDE_REMOTE_COMMANDS
+
+//switching between the first and second version of stateless challenges
+//#define STATELESS_CHALLENGES_VERSION_ONE
+
+//stateless challenges v2 does not support debugging yet
+#if defined(STATELESS_CHALLENGES_VERSION_ONE)
+//challenge debugging
+#define DEBUG_SV_CHALLENGE //enable for com_dprintf debugging output
+#endif
 
 #define	PERS_SCORE 0 //!!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
 
@@ -348,6 +359,12 @@ serverStatic_t;
 extern serverStatic_t svs; //persistant server info across maps
 extern server_t sv; //cleared each map
 
+extern cvar_t *sv_master[MAX_MASTER_SERVERS];
+
+#define EXTERN_SV_CVAR
+#include "sv_cvars.h"
+#undef EXTERN_SV_CVAR
+
 //===========================================================
 
 //
@@ -438,12 +455,6 @@ void
 SV_FreeIP4DB(void);
 void
 SV_PrintLocations_f(client_t *client);
-
-//
-//sv_cvars.c
-//
-void
-SV_InitCvars(void);
 
 //
 //sv_ccmds.c

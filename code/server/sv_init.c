@@ -849,6 +849,8 @@ Only called at main exe startup, not for each game
 void
 SV_Init(void)
 {
+  int index;
+
   SV_UptimeReset();
 
   SV_AddOperatorCommands();
@@ -859,7 +861,32 @@ SV_Init(void)
   }
 
   //initialize cvars
-  SV_InitCvars();
+
+  //serverinfo vars
+  Cvar_Get("dmflags", "0", CVAR_SERVERINFO);
+  Cvar_Get("timelimit", "0", CVAR_SERVERINFO);
+  Cvar_Get ("sv_keywords", "", CVAR_SERVERINFO);
+  //Cvar_Get("protocol", va("%i", PROTOCOL_VERSION), CVAR_SERVERINFO | CVAR_ROM);
+
+  //systeminfo
+  Cvar_Get("sv_paks", "", CVAR_SYSTEMINFO | CVAR_ROM);
+  Cvar_Get("sv_pakNames", "", CVAR_SYSTEMINFO | CVAR_ROM);
+  Cvar_Get("sv_referencedPaks", "", CVAR_SYSTEMINFO | CVAR_ROM);
+
+  Cvar_Get("sv_dlURL", "", CVAR_SERVERINFO | CVAR_ARCHIVE);
+
+  //moved to Com_Init()
+  //sv_master[0] = Cvar_Get("sv_master1", MASTER_SERVER_NAME, CVAR_ARCHIVE_ND | CVAR_PROTECTED);
+
+  //master servers
+  for(index = 0;index < MAX_MASTER_SERVERS;index++)
+  {
+    sv_master[index] = Cvar_Get(va("sv_master%d", index + 1), "", CVAR_ARCHIVE_ND | CVAR_PROTECTED);
+  }
+
+#define SV_CVAR_LIST
+#include "sv_cvars.h"
+#undef SV_CVAR_LIST
 
   //track group cvar changes
   Cvar_SetGroup(sv_lanForceRate, CVG_SERVER);

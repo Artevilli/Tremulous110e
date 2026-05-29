@@ -26,6 +26,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 serverStatic_t svs; //persistant server info
 server_t sv; //local server
 
+cvar_t *sv_master[MAX_MASTER_SERVERS];
+
+#define DECLARE_SV_CVAR
+#include "sv_cvars.h"
+#undef DECLARE_SV_CVAR
+
 /*
 =============================================================================
 
