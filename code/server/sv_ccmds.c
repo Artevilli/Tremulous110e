@@ -263,10 +263,8 @@ SV_MapRestart_f(void)
   qint i;
   client_t *client;
   const qchar *denied;
-  qchar mapname[MAX_QPATH];
   qbool isBot;
   qint delay;
-  qbool isDownloading = qfalse;
 
   //make sure we aren't restarting twice in the same frame
   if (com_frameTime == sv.restartedServerId)
@@ -281,7 +279,7 @@ SV_MapRestart_f(void)
     return;
   }
 
-  if (sv.restartTime)
+  if (sv.restartTime != 0)
   {
     return;
   }
@@ -295,11 +293,11 @@ SV_MapRestart_f(void)
     delay = 5;
   }
 
-  if (delay && !Cvar_VariableValue("g_doWarmup"))
+  if (delay != 0 && !Cvar_VariableValue("g_doWarmup") == 0)
   {
     sv.restartTime = sv.time + delay * 1000;
 
-    if (!sv.restartTime)
+    if (sv.restartTime == 0)
     {
       sv.restartTime = 1;
     }
@@ -308,21 +306,12 @@ SV_MapRestart_f(void)
     return;
   }
 
-  for(i = 0;i < sv.maxclients;i++)
-  {
-    client = &svs.clients[i];
-
-    if (*client->downloadName)
-    {
-      isDownloading = qtrue;
-      break;
-    }
-  }
-
   //check for changes in variables that can't just be restarted
   //check for maxclients change
-  if (sv_maxclients->modified || sv_pure->modified || isDownloading)
+  if (sv_maxclients->modified || sv_pure->modified)
   {
+    qchar mapname[MAX_QPATH];
+
     Com_Printf("variable change and/or client downloading -- restarting.\n");
 
     //restart the map the slow way
