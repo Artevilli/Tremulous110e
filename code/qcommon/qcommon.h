@@ -125,10 +125,6 @@ void MSG_WriteDeltaEntity( msg_t *msg, const entityState_t *from, const entitySt
 void MSG_ReadDeltaEntity( msg_t *msg, const entityState_t *from, entityState_t *to, 
 						 qint number );
 
-void
-MSG_WriteDeltaSharedEntity(msg_t *msg, void *from, void *to, qbool force, qint number);
-void
-MSG_ReadDeltaSharedEntity(msg_t *msg, void *from, void *to, qint number);
 void MSG_WriteDeltaPlayerstate( msg_t *msg, const playerState_t *from, const playerState_t *to );
 void MSG_ReadDeltaPlayerstate( msg_t *msg, const playerState_t *from, playerState_t *to );
 

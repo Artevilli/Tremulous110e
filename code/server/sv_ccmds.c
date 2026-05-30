@@ -312,7 +312,7 @@ SV_MapRestart_f(void)
   {
     qchar mapname[MAX_QPATH];
 
-    Com_Printf("variable change and/or client downloading -- restarting.\n");
+    Com_Printf("variable change -- restarting.\n");
 
     //restart the map the slow way
     Q_strncpyz(mapname, Cvar_VariableString("mapname"), sizeof(mapname));
