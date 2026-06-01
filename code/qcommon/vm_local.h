@@ -227,6 +227,8 @@ vm_s
   qint breakFunction; //increment breakCount on function entry to this
   qint breakCount;
 
+  qint syscallCount; //syscall counter for current VM_Call invocation
+
   int32_t *jumpTableTargets;
   int32_t numJumpTableTargets;
 
