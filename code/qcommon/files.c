@@ -1872,7 +1872,7 @@ FS_FOpenFileRead(const qchar *filename, fileHandle_t *file, qbool uniqueFILE)
           if (!FS_FilenameCompare(pakFile->name, filename))
           {
             //found it!
-            return pakFile->size ? pakFile->size:qtrue;
+            return pakFile->size;
           }
 
           pakFile = pakFile->next;
@@ -5618,11 +5618,6 @@ FS_Startup(void)
   fs_locked = Cvar_GetAndDescribe("fs_locked", "0", CVAR_INIT, "Set file handle policy for pk3 files:\n0 - release after use, unlimited number of pk3 files can be loaded\n1 - keep file handle locked, more consistent, total pk3 files count limited to ~1k-4k\n");
 #endif
 
-  if (!fs_basegame->string[0])
-  {
-    Com_Error(ERR_FATAL, "* fs_basegame is not set *");
-  }
-
   homePath = Sys_DefaultHomePath();
 
   if (homePath == NULL || homePath[0] == '\0')
@@ -5693,9 +5688,6 @@ FS_Startup(void)
     }
   }
 
-  //reorder search paths to minimize further changes
-  FS_ReorderSearchPaths();
-
   //check for additional game folder for mods
   if (fs_gamedirvar->string[0] != '\0' && !FS_IsBaseGame(fs_gamedirvar->string))
   {
@@ -5714,6 +5706,9 @@ FS_Startup(void)
       FS_AddGameDirectory(fs_homepath->string, fs_gamedirvar->string);
     }
   }
+
+  //reorder search paths to minimize further changes
+  FS_ReorderSearchPaths();
 
   //https://zerowing.idsoftware.com/bugzilla/show_bug.cgi?id=506
   //reorder the pure pk3 files according to server order
