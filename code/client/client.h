@@ -51,7 +51,7 @@ typedef struct {
 
 	qint				messageNum;		// copied from netchan->incoming_sequence
 	qint				deltaNum;		// messageNum the delta is from
-	qint				ping;			// time from when cmdNum-1 was sent to time packet was reeceived
+	qint				ping;			// time from when cmdNum-1 was sent to time packet was received
 	qint				areabytes;
 	byte			areamask[MAX_MAP_AREA_BYTES];		// portalarea visibility bits
 

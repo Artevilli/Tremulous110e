@@ -3301,6 +3301,7 @@ VM_FindMOps
 Search for known macro-op sequences
 =================
 */
+#if defined(MACRO_OPTIMIZE)
 static void
 VM_FindMOps(instruction_t *buf, int instructionCount)
 {
@@ -3312,7 +3313,6 @@ VM_FindMOps(instruction_t *buf, int instructionCount)
 
   while(n < instructionCount)
   {
-#if defined(MACRO_OPTIMIZE)
     if (i->op == OP_LOCAL || i->op == OP_CONST)
     {
       //OP_LOCAL|OP_CONST + OP_LOCAL|OP_CONST + OP_LOAD4 + OP_CONST + OP_XXX + OP_STORE4
@@ -3363,12 +3363,12 @@ VM_FindMOps(instruction_t *buf, int instructionCount)
         }
       }
     }
-#endif
 
     i++;
     n++;
   }
 }
+#endif //MACRO_OPTIMIZE
 
 
 #if defined(MACRO_OPTIMIZE)
@@ -3536,7 +3536,9 @@ VM_Compile(vm_t *vm, vmHeader_t *header)
 
   VM_ReplaceInstructions(vm, inst);
 
+#if defined(MACRO_OPTIMIZE)
   VM_FindMOps(inst, vm->instructionCount);
+#endif
 
 #if JUMP_OPTIMIZE
   for(i = 0;i < header->instructionCount;i++)
