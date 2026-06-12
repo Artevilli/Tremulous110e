@@ -1648,6 +1648,11 @@ ConstOptimize(vm_t *vm, instruction_t *ci, instruction_t *ni)
   uint32_t sx[2];
   uint32_t x, imm;
 
+  if (ni->jused)
+  {
+    return qfalse;
+  }
+
   switch(ni->op)
   {
     case
@@ -1779,7 +1784,7 @@ ConstOptimize(vm_t *vm, instruction_t *ci, instruction_t *ni)
 
     case
     OP_JUMP:
-      flush_volatile();
+      flush_opstack();
       emit(B(vm->instructionPointers[ci->value] - compiledOfs));
       ip += 1; //OP_JUMP
       return qtrue;
@@ -1890,6 +1895,7 @@ ConstOptimize(vm_t *vm, instruction_t *ci, instruction_t *ni)
       uint32_t comp = get_comp(ni->op);
 
       rx[0] = load_rx_opstack(R0 | RCONST); dec_opstack(); //r0 = *opstack; opstack -= 4
+      flush_nonvolatile();
       x = ci->value;
 
       if (x == 0 && (ni->op == OP_EQ || ni->op == OP_NE))
@@ -2148,7 +2154,7 @@ __recompile:
       {
         //we can safely perform register optimizations only in case if
         //we are 100% sure that current instruction is not a jump label
-        flush_volatile();
+        flush_opstack();
       }
 
       vm->instructionPointers[ip++] = compiledOfs;
@@ -2316,7 +2322,7 @@ __recompile:
         case
         OP_JUMP:
           rx[0] = load_rx_opstack(R0 | RCONST); dec_opstack(); //r0 = *opstack; opstack -= 4
-          flush_volatile();
+          flush_opstack();
           emit_CheckJump(vm, rx[0], proc_base, proc_len); //check if r0 is within current proc
           rx[1] = alloc_rx(R16);
           emit(LDR64_8(rx[1], rINSPOINTERS, rx[0])); //r16 = instructionPointers[r0]
@@ -2360,6 +2366,7 @@ __recompile:
 
           rx[0] = load_rx_opstack(R0 | RCONST); dec_opstack(); //r0 = *opstack; opstack -= 4
           rx[1] = load_rx_opstack(R1 | RCONST); dec_opstack(); //r1 = *opstack; opstack -= 4
+          flush_nonvolatile();
           unmask_rx(rx[0]);
           unmask_rx(rx[1]);
           emit(CMP32(rx[1], rx[0]));
@@ -2389,6 +2396,7 @@ __recompile:
 
           sx[0] = load_sx_opstack(S0 | RCONST); dec_opstack(); //s0 = *opstack; opstack -= 4
           sx[1] = load_sx_opstack(S1 | RCONST); dec_opstack(); //s1 = *opstack; opstack -= 4
+          flush_nonvolatile();
           unmask_sx(sx[0]);
           unmask_sx(sx[1]);
           emit(FCMP(sx[1], sx[0]));

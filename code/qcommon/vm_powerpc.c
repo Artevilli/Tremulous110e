@@ -1518,6 +1518,10 @@ static qbool ConstOptimize( vm_t* vm, instruction_t* ci, instruction_t* ni )
 {
 	uint32_t rx[2];
 
+	if ( ni->jused ) {
+		return qfalse;
+	}
+
 	switch ( ni->op ) {
 		case OP_ADD:
 		case OP_SUB:
@@ -1597,7 +1601,7 @@ static qbool ConstOptimize( vm_t* vm, instruction_t* ci, instruction_t* ni )
 
 
 		case OP_JUMP:
-			flush_volatile();
+			flush_opstack();
 			emit( PPC_B( vm->instructionPointers[ci->value] - compiledOfs ) );
 			ip += 1; // OP_JUMP
 			return qtrue;
@@ -1666,6 +1670,7 @@ static qbool ConstOptimize( vm_t* vm, instruction_t* ci, instruction_t* ni )
 					break;
 			}
 			rx[0] = load_rx_opstack( R3 | RCONST ); dec_opstack(); // r3 = *opstack; opstack -= 4
+			flush_nonvolatile();
 			switch ( ni->op ) {
 				case OP_LTU:
 				case OP_LEU:
@@ -1881,7 +1886,7 @@ __recompile:
 		{
 			// we can safely perform register optimizations only in case if
 			// we are 100% sure that current instruction is not a jump label
-			flush_volatile();
+			flush_opstack();
 		}
 
 		vm->instructionPointers[ ip ] = compiledOfs;
@@ -2057,7 +2062,7 @@ __recompile:
 			case OP_JUMP:
 				// indirect jump: target = *opstack
 				rx[0] = load_rx_opstack( R3 | RCONST ); dec_opstack();	// r3 = *opstack; opstack -= 4
-				flush_volatile();
+				flush_opstack();
 				emit_CheckJump( vm, rx[0], proc_base, proc_len );		// check if r3 is within current proc
 				// Load target address from instructionPointers[R3]
 				// R11 = R3 << 3
@@ -2083,6 +2088,7 @@ __recompile:
 				// pop two, compare, branch
 				rx[0] = load_rx_opstack( R4 | RCONST ); dec_opstack(); // r4 = *opstack; opstack -= 4
 				rx[1] = load_rx_opstack( R3 | RCONST ); dec_opstack(); // r3 = *opstack; opstack -= 4
+				flush_nonvolatile();
 				unmask_rx( rx[0] );
 				unmask_rx( rx[1] );
 				switch ( ci->op ) {
@@ -2110,6 +2116,7 @@ __recompile:
 				// opstack values are stored as 32-bit IEEE 754 floats
 				sx[1] = load_sx_opstack( F1 | RCONST ); dec_opstack(); // F1 = *opstack; opstack -= 4
 				sx[0] = load_sx_opstack( F0 | RCONST ); dec_opstack(); // F0 = *opstack; opstack -= 4
+				flush_nonvolatile();
 				emit( PPC_FCMPU( 0, sx[0], sx[1] ) );
 				// emit_branchConditional( vm, ci, ci->op );
 				emit_branchConditionalShort( vm, ci );
