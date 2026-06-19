@@ -444,6 +444,11 @@ static qbool CL_GetValue( qchar* value, qint valueSize, const qchar* key ) {
 		return qtrue;
 	}
 
+	if ( !Q_stricmp( key, "trap_Key_CapsLockOn_T110E" ) ) {
+		Com_sprintf( value, valueSize, "%i", CG_KEY_CAPSLOCK_ON );
+		return qtrue;
+	}
+
 	return qfalse;
 }
 
@@ -830,6 +835,9 @@ static intptr_t CL_CgameSystemCalls( intptr_t *args ) {
 	case CG_TRAP_GETVALUE:
 		VM_CHECKBOUNDS( cls.cgvm, args[1], args[2] );
 		return CL_GetValue( VMA(1), args[2], VMA(3) );
+
+	case CG_KEY_CAPSLOCK_ON:
+		return Key_CapsLockOn();
 
 	default:
 		Com_Error( ERR_DROP, "Bad cgame system trap: %ld", (long qint) args[0] );

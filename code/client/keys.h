@@ -60,6 +60,8 @@ Key_GetBindingBuf(qint keynum, qchar *buf, qint buflen);
 
 qbool
 Key_IsDown(qint keynum);
+qbool
+Key_CapsLockOn(void);
 void
 Key_ClearStates(void);
 
