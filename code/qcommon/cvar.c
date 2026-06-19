@@ -1000,11 +1000,6 @@ Cvar_SetSafe(const qchar *var_name, const qchar *value)
       return;
     }
 
-    if (flags & CVAR_PROTECTED_SAFE)
-    {
-      return;
-    }
-
     //don't let VMs or server change engine latched cvars instantly
     //if ((flags & CVAR_LATCH) && !(flags & CVAR_VM_CREATED))
     //{

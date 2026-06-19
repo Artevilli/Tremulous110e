@@ -960,6 +960,19 @@ qbool CL_GameCommand( void ) {
 	return bRes;
 }
 
+/*
+====================
+CL_GameConsoleText
+====================
+*/
+void CL_GameConsoleText( void ) {
+	if ( !cls.cgvm ) {
+		return;
+	}
+
+	VM_Call( cls.cgvm, 0, CG_CONSOLE_TEXT );
+}
+
 
 /*
 =====================
