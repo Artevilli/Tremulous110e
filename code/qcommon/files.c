@@ -1847,7 +1847,7 @@ FS_FOpenFileRead(const qchar *filename, fileHandle_t *file, qbool uniqueFILE)
       *file = FS_INVALID_HANDLE;
     }
 
-    return qfalse;
+    return -1;
   }
 
   //we will calculate full hash only once then just mask it by correct pack->hashSize
@@ -1862,6 +1862,12 @@ FS_FOpenFileRead(const qchar *filename, fileHandle_t *file, qbool uniqueFILE)
       //is the element a pak file?
       if (search->pack && search->pack->hashTable[(hash = fullHash & (search->pack->hashSize - 1))])
       {
+        //skip non-pure files
+        if (!FS_PakIsPure(search->pack))
+        {
+          continue;
+        }
+
         //look through all the pak file elements
         pak = search->pack;
         pakFile = pak->hashTable[hash];
@@ -1981,7 +1987,7 @@ FS_FOpenFileRead(const qchar *filename, fileHandle_t *file, qbool uniqueFILE)
   }
 #endif
   *file = FS_INVALID_HANDLE;
-  return qfalse;
+  return -1;
 }
 
 /*
@@ -4846,7 +4852,7 @@ FS_CompleteFileName(const qchar *args, qint argNum)
 FS_Which_f
 ============
 */
-void
+static void
 FS_Which_f(void)
 {
   const searchpath_t *search;
@@ -4884,19 +4890,19 @@ FS_Which_f(void)
       hash = FS_HashFileName(filename, search->pack->hashSize);
     }
 
-    //is the element a pak file
+    //is the element a pak file?
     if (search->pack && search->pack->hashTable[hash])
     {
       //look through all the pak file elements
       pak = search->pack;
       pakFile = pak->hashTable[hash];
 
-      while(pakFile != NULL)
+      do
       {
         //case and separator insensitive comparisons
         if (!FS_FilenameCompare(pakFile->name, filename))
         {
-          //found it
+          //found it!
           Com_Printf("File \"%s\" found in \"%s\"\n", filename, pak->pakFilename);
 
           if (++numfound >= 32)
@@ -4907,10 +4913,12 @@ FS_Which_f(void)
 
         pakFile = pakFile->next;
       }
+      while(pakFile != NULL);
     }
     else if (search->dir)
     {
       dir = search->dir;
+
       netpath = FS_BuildOSPath(dir->path, dir->gamedir, filename);
       temp = Sys_FOpen(netpath, "rb");
 
