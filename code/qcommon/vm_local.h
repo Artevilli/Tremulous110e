@@ -275,8 +275,8 @@ opcode_info_s
   qint size;
   qint stack;
   qint nargs;
-  qint flags;
+  qint flags; //rhs type cast
 }
 opcode_info_t;
 
-extern opcode_info_t ops[OP_MAX];
+extern const opcode_info_t ops[OP_MAX];

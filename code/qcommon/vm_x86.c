@@ -80,8 +80,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define LOAD_OPTIMIZE
 #define FPU_OPTIMIZE
 #define CONST_OPTIMIZE
+#define MACRO_OPTIMIZE
 //#define RET_OPTIMIZE //increases code size
-//#define MACRO_OPTIMIZE //slows down a bit?
 
 #define USE_LITERAL_POOL //allocate data for FP immediates at the end of the code
 
@@ -2831,8 +2831,13 @@ IsCeilTrap(const vm_t *vm, const qint trap)
 
 
 static qbool
-NextLoad(const var_addr_t *v, const instruction_t *i, qint op)
+VarIsReferenced(const var_addr_t *v, const instruction_t *i, qint op)
 {
+  while(i->op == OP_IGNORE && !i->jused)
+  {
+    i++;
+  }
+
   if (i->jused)
   {
     return qfalse;
@@ -2884,9 +2889,12 @@ ConstOptimize(vm_t *vm, instruction_t *ci, instruction_t *ni)
 
       if (addr_on_top(&var, R_DATABASE, R_PROCBASE))
       {
-        if (NextLoad(&var, ni + 1, OP_LOAD4))
+        //address is a global/local variable
+        if (VarIsReferenced(&var, ni + 1, OP_LOAD4))
         {
-          return qfalse; //store value in a register
+          //it will be referenced/loaded afterwards
+          //so store value in a register, do not optimize
+          return qfalse;
         }
 
         //v = *opstack; opstack -= 4
@@ -2899,6 +2907,7 @@ ConstOptimize(vm_t *vm, instruction_t *ci, instruction_t *ni)
       }
       else
       {
+        //address is specified by register
         qint rx = load_rx_opstack(forceDataMask ? R_EAX:R_EAX | RCONST);
         dec_opstack(); //eax = *opStack; opStack -= 4
         emit_CheckReg(vm, rx, FUNC_DATW);
@@ -2916,7 +2925,7 @@ ConstOptimize(vm_t *vm, instruction_t *ci, instruction_t *ni)
     {
       if (addr_on_top(&var, R_DATABASE, R_PROCBASE))
       {
-        if (NextLoad(&var, ni + 1, OP_LOAD2) || find_rx_const_mask(ci->value, 0xFFFF))
+        if (VarIsReferenced(&var, ni + 1, OP_LOAD2) || find_rx_const_mask(ci->value, 0xFFFF))
         {
           return qfalse; //store value in a register
         }
@@ -2948,7 +2957,7 @@ ConstOptimize(vm_t *vm, instruction_t *ci, instruction_t *ni)
     {
       if (addr_on_top(&var, R_DATABASE, R_PROCBASE))
       {
-        if (NextLoad(&var, ni + 1, OP_LOAD1) || find_rx_const_mask(ci->value, 0xFF))
+        if (VarIsReferenced(&var, ni + 1, OP_LOAD1) || find_rx_const_mask(ci->value, 0xFF))
         {
           return qfalse; //store value in a register
         }
@@ -3271,20 +3280,18 @@ Search for the same base instruction ahead
 =================
 */
 static qbool
-VM_FindSameInst(const instruction_t *base, qint offset, qint count)
+VM_FindSameLoad4(const instruction_t *base, qint offset)
 {
   const instruction_t *next = base + offset;
 
-  while(count-- > 0)
+  while(!next->jused)
   {
-    if (next->jused)
-    {
-      break;
-    }
-
     if (next->op == base->op && next->value == base->value)
     {
-      return qtrue;
+      if (!(next + 1)->jused && (next + 1)->op == OP_LOAD4)
+      {
+        return qtrue;
+      }
     }
 
     next++;
@@ -3303,6 +3310,72 @@ Search for known macro-op sequences
 =================
 */
 #if defined(MACRO_OPTIMIZE)
+
+static qint
+VM_IsMopSequence(const instruction_t *i)
+{
+  qint n;
+
+  //OP_LOCAL|OP_CONST + OP_LOCAL|OP_CONST + OP_LOAD4 + OP_CONST + OP_XXX + OP_STORE4
+
+  if (i->op != OP_LOCAL && i->op != OP_CONST)
+  {
+    return OP_UNDEF;
+  }
+
+  if (i->op != (i + 1)->op)
+  {
+    return OP_UNDEF;
+  }
+
+  if (i->value != (i + 1)->value)
+  {
+    return OP_UNDEF;
+  }
+
+  for(n = 1;n < 6;n++)
+  {
+    if (i[n].jused)
+    {
+      return OP_UNDEF;
+    }
+  }
+
+  if ((i + 2)->op != OP_LOAD4 || (i + 3)->op != OP_CONST || (i + 5)->op != OP_STORE4)
+  {
+    return OP_UNDEF;
+  }
+
+  switch((i + 4)->op)
+  {
+    case
+    OP_ADD:
+      return MOP_ADD;
+
+    case
+    OP_SUB:
+      return MOP_SUB;
+
+    case
+    OP_BAND:
+      return MOP_BAND;
+
+    case
+    OP_BOR:
+      return MOP_BOR;
+
+    case
+    OP_BXOR:
+      return MOP_BXOR;
+
+    default:
+      break;
+  }
+
+  return OP_UNDEF;
+}
+
+
 static void
 VM_FindMOps(instruction_t *buf, int instructionCount)
 {
@@ -3314,65 +3387,22 @@ VM_FindMOps(instruction_t *buf, int instructionCount)
 
   while(n < instructionCount)
   {
-    if (i->op == OP_LOCAL || i->op == OP_CONST)
+    qint v = VM_IsMopSequence(i);
+
+    if (v != OP_UNDEF && !VM_FindSameLoad4(i, 6))
     {
-      //OP_LOCAL|OP_CONST + OP_LOCAL|OP_CONST + OP_LOAD4 + OP_CONST + OP_XXX + OP_STORE4
-      if ((i + 1)->op == i->op && i->value == (i + 1)->value && (i + 2)->op == OP_LOAD4 && (i + 3)->op == OP_CONST && (i + 4)->op != OP_UNDEF && (i + 5)->op == OP_STORE4 
-      //also check this local/global variable not referenced afterwards - otherwise load/op/store/load forwarding is preferable
-      && !VM_FindSameInst(i, 6, min(instructionCount - n - 1, 8)))
-      {
-        qint v = (i + 4)->op;
-
-        if (v == OP_ADD)
-        {
-          i->op = MOP_ADD;
-          i += 6;
-          n += 6;
-          continue;
-        }
-
-        if (v == OP_SUB)
-        {
-          i->op = MOP_SUB;
-          i += 6;
-          n += 6;
-          continue;
-        }
-
-        if (v == OP_BAND)
-        {
-          i->op = MOP_BAND;
-          i += 6;
-          n += 6;
-          continue;
-        }
-
-        if (v == OP_BOR)
-        {
-          i->op = MOP_BOR;
-          i += 6;
-          n += 6;
-          continue;
-        }
-
-        if (v == OP_BXOR)
-        {
-          i->op = MOP_BXOR;
-          i += 6;
-          n += 6;
-          continue;
-        }
-      }
+      i->op = v;
+      i += 6;
+      n += 6;
+      continue;
     }
 
     i++;
     n++;
   }
 }
-#endif //MACRO_OPTIMIZE
 
 
-#if defined(MACRO_OPTIMIZE)
 /*
 =================
 EmitMOPs
@@ -3536,6 +3566,11 @@ VM_Compile(vm_t *vm, vmHeader_t *header)
 #endif
 
   VM_ReplaceInstructions(vm, inst);
+
+  //terminator for look-ahead parsers/optimizations
+  inst[header->instructionCount].jused = 1;
+  inst[header->instructionCount].endp = 1;
+  inst[header->instructionCount].op = OP_IGNORE;
 
 #if defined(MACRO_OPTIMIZE)
   VM_FindMOps(inst, vm->instructionCount);

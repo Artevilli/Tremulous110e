@@ -38,7 +38,7 @@ and one exported function: Perform
 
 #include "vm_local.h"
 
-opcode_info_t ops[OP_MAX] =
+const opcode_info_t ops[OP_MAX] =
 {
   //size, stack, nargs, flags
   {0, 0, 0, 0}, //undef
@@ -1405,6 +1405,7 @@ VM_Fixup(instruction_t *buf, qint instructionCount)
 VM_LoadInstructions
 
 loads instructions in structured format
+performs basic consistency checks
 =================
 */
 const qchar *
@@ -1432,7 +1433,7 @@ VM_LoadInstructions(const byte *code_pos, qint codeLength, qint instructionCount
   {
     op0 = *code_pos;
 
-    if (op0 < 0 || op0 >= OP_MAX)
+    if ((unsigned)op0 >= OP_MAX)
     {
       sprintf(errBuf, "bad opcode %02X at offset %d", op0, (qint)(code_pos - code_start));
       return errBuf;
@@ -1479,6 +1480,19 @@ VM_LoadInstructions(const byte *code_pos, qint codeLength, qint instructionCount
 
     ci->opStack = opStack;
     opStack += ops[op0].stack;
+
+    //opstack checks
+    if (opStack < 0)
+    {
+      sprintf(errBuf, "opStack underflow at %i", i);
+      return errBuf;
+    }
+
+    if (opStack >= PROC_OPSTACK_SIZE * 4)
+    {
+      sprintf(errBuf, "opStack overflow at %i", i);
+      return errBuf;
+    }
   }
 
   return NULL;
@@ -1540,27 +1554,6 @@ VM_CheckInstructions(instruction_t *buf, qint instructionCount, const int32_t *j
   qint endp;
   qint safe_stores;
   qint unsafe_stores;
-
-  ci = buf;
-  opStack = 0;
-
-  //opstack checks
-  for(i = 0;i < instructionCount;i++, ci++)
-  {
-    opStack += ops[ci->op].stack;
-
-    if (opStack < 0)
-    {
-      sprintf(errBuf, "opStack underflow at %i", i);
-      return errBuf;
-    }
-
-    if (opStack >= PROC_OPSTACK_SIZE * 4)
-    {
-      sprintf(errBuf, "opStack overflow at %i", i);
-      return errBuf;
-    }
-  }
 
   ci = buf;
   pstack = 0;
@@ -1674,7 +1667,8 @@ VM_CheckInstructions(instruction_t *buf, qint instructionCount, const int32_t *j
       continue;
     }
 
-    //proc opstack will carry max.possible opstack value
+    //proc opStack will carry max.used opStack value
+    //to be checked against vm->opStackTop on function entry
     if (proc && ci->opStack > proc->opStack)
     {
       proc->opStack = ci->opStack;
@@ -1691,7 +1685,7 @@ VM_CheckInstructions(instruction_t *buf, qint instructionCount, const int32_t *j
         return errBuf;
       }
 
-      //bad opStack before return
+      //bad opStack before return: either void (OP_PUSH) or real value must be present
       if (ci->opStack != 4)
       {
         v = ci->opStack;
@@ -1811,6 +1805,12 @@ VM_CheckInstructions(instruction_t *buf, qint instructionCount, const int32_t *j
         {
           ci->swtch = 1;
         }
+      }
+
+      //mark next instruction as jump target too
+      if (i < instructionCount - 1)
+      {
+        buf[i + 1].jused = 1;
       }
 
       continue;
