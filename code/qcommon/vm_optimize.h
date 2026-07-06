@@ -134,12 +134,12 @@ mov_rx(uint32_t dst, uint32_t src);
 //fp.dst = fp.src
 static void
 mov_sx(uint32_t dst, uint32_t src);
-//alloc new.gp.reg; new.gp.reg = gp.reg
+//alloc new.gp.reg; unmask (gp_reg); return new.gp.reg
 static uint32_t
-clone_rx(uint32_t reg);
-//alloc new.fp.reg; new.fp.reg = fp.reg
+split_rx(uint32_t reg);
+//alloc new.fp.reg; unmask (fp.reg); return new.fp.reg
 static uint32_t
-clone_sx(uint32_t reg);
+split_sx(uint32_t reg);
 //gp.rx = fp.sx
 static void
 mov_rx_sx(uint32_t rx, uint32_t sx);
@@ -1574,7 +1574,10 @@ finish_rx(uint32_t pref, uint32_t reg)
     else
     {
       //duplicate
-      return clone_rx(reg);
+      const uint32_t rx = split_rx(reg);
+
+      mov_rx(rx, reg);
+      return rx;
     }
   }
 
@@ -1708,7 +1711,10 @@ finish_sx(uint32_t pref, uint32_t reg)
     else
     {
       //duplicate
-      return clone_sx(reg);
+      const uint32_t sx = split_sx(reg);
+
+      mov_sx(sx, reg);
+      return sx;
     }
   }
 

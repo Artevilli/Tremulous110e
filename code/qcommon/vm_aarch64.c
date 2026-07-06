@@ -964,22 +964,20 @@ mov_sx(uint32_t dst, uint32_t src)
 
 
 static uint32_t
-clone_rx(uint32_t reg)
+split_rx(uint32_t reg)
 {
   const uint32_t rx = alloc_rx(R2);
 
-  mov_rx(rx, reg);
   unmask_rx(reg);
   return rx;
 }
 
 
 static uint32_t
-clone_sx(uint32_t reg)
+split_sx(uint32_t reg)
 {
   const uint32_t sx = alloc_sx(S2);
 
-  mov_sx(sx, reg);
   unmask_sx(reg);
   return sx;
 }
@@ -2500,12 +2498,18 @@ __recompile:
                 OP_LOAD1:
                   if (reg->ext != Z_EXT8)
                   {
-                    emit(UXTB(rx[0], rx[0])); //r0 = (unsigned byte) r0
-
-                    //invalidate any mappings that overlaps with high [8..31] bits
-                    //var.addr += 1; var.size = 3;
-                    //wipe_reg_range(rx_regs + rx[0], &var);
-                    reduce_map_size(reg, 1);
+                    if (search_opstack(TYPE_RX, rx[0]))
+                    {
+                      rx[1] = split_rx(rx[0]); //alloc rx[1], unmask rx[0]
+                      emit(UXTB(rx[1], rx[0])); //r1 = (unsigned byte) r0
+                      set_rx_ext(rx[1], Z_EXT8);
+                      rx[0] = rx[1]; //remap rx[0] to the copy
+                    }
+                    else
+                    {
+                      emit(UXTB(rx[0], rx[0])); //r0 = (unsigned byte) r0
+                      reduce_map_size(reg, 1);
+                    }
                   }
 
                   break;
@@ -2514,12 +2518,18 @@ __recompile:
                 OP_LOAD2:
                   if (reg->ext != Z_EXT16)
                   {
-                    emit(UXTH(rx[0], rx[0])); //r0 = (unsigned short) r0
-
-                    //invalidate any mappings that overlaps with high [16..31] bits 
-                    //var.addr += 2; var.size = 2;
-                    //wipe_reg_range(rx_regs + rx[0], &var);
-                    reduce_map_size(reg, 2);
+                    if (search_opstack(TYPE_RX, rx[0]))
+                    {
+                      rx[1] = split_rx(rx[0]); //alloc rx[1], unmask rx[0]
+                      emit(UXTH(rx[1], rx[0])); //r1 = (unsigned short) r0
+                      set_rx_ext(rx[1], Z_EXT16);
+                      rx[0] = rx[1]; //remap rx[0] to the copy
+                    }
+                    else
+                    {
+                      emit(UXTH(rx[0], rx[0])); //r0 = (unsigned short) r0
+                      reduce_map_size(reg, 2);
+                    }
                   }
 
                   break;
