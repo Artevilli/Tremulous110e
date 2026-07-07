@@ -293,7 +293,7 @@ SV_MapRestart_f(void)
     delay = 5;
   }
 
-  if (delay != 0 && !Cvar_VariableValue("g_doWarmup") == 0)
+  if (delay != 0 && Cvar_VariableValue("g_doWarmup") == 0)
   {
     sv.restartTime = sv.time + delay * 1000;
 

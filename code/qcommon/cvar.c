@@ -66,10 +66,6 @@ generateHashValue(const qchar *fname)
   return hash;
 }
 
-//"-Wnan-infinity-disabled" is irrelevant when used with values parsed from strings
-#if defined(__clang__)
-#pragma clang diagnostic ignored "-Wnan-infinity-disabled"
-#endif
 
 /*
 ============
@@ -105,6 +101,7 @@ Cvar_ValidateName(const qchar *name)
   return qtrue;
 }
 
+
 /*
 ============
 Cvar_FindVar
@@ -133,6 +130,7 @@ Cvar_FindVar(const qchar *var_name)
 
   return NULL;
 }
+
 
 /*
 ============
@@ -174,6 +172,7 @@ Cvar_VariableIntegerValue(const qchar *var_name)
 
   return var->integer;
 }
+
 
 /*
 ============
@@ -218,6 +217,7 @@ Cvar_VariableStringBuffer(const qchar *var_name, qchar *buffer, qint bufsize)
   }
 }
 
+
 /*
 ============
 Cvar_VariableStringBufferSafe
@@ -239,6 +239,7 @@ Cvar_VariableStringBufferSafe(const qchar *var_name, qchar *buffer, qint bufsize
     Q_strncpyz(buffer, var->string, bufsize);
   }
 }
+
 
 /*
 ============
@@ -267,6 +268,7 @@ Cvar_Flags(const qchar *var_name)
   }
 }
 
+
 /*
 ============
 Cvar_CommandCompletion
@@ -285,6 +287,7 @@ Cvar_CommandCompletion(void (*callback)(const qchar *s))
     }
   }
 }
+
 
 /*
 ============
@@ -311,6 +314,7 @@ Cvar_IsIntegral(const qchar *s)
 
   return qtrue;
 }
+
 
 /*
 ============
@@ -667,6 +671,7 @@ Cvar_Get(const qchar *var_name, const qchar *var_value, qint flags)
   return var;
 }
 
+
 static void
 Cvar_QSortByName(cvar_t **a, qint n)
 {
@@ -713,6 +718,7 @@ Cvar_QSortByName(cvar_t **a, qint n)
     Cvar_QSortByName(a + i, n - i);
   }
 }
+
 
 static void
 Cvar_Sort(void)
@@ -761,6 +767,7 @@ Cvar_Sort(void)
   }
 }
 
+
 /*
 ============
 Cvar_Print
@@ -804,6 +811,7 @@ Cvar_Print(const cvar_t *v)
     Com_Printf("%s\n", v->description);
   }
 }
+
 
 /*
 ============
@@ -962,6 +970,7 @@ Cvar_Set2(const qchar *var_name, const qchar *value, qbool force)
   return var;
 }
 
+
 /*
 ============
 Cvar_Set
@@ -1010,6 +1019,7 @@ Cvar_SetSafe(const qchar *var_name, const qchar *value)
   Cvar_Set2(var_name, value, force);
 }
 
+
 /*
 ============
 Cvar_SetLatched
@@ -1020,6 +1030,7 @@ Cvar_SetLatched(const qchar *var_name, const qchar *value)
 {
   Cvar_Set2(var_name, value, qfalse);
 }
+
 
 /*
 ============
@@ -1043,6 +1054,7 @@ Cvar_SetValue(const qchar *var_name, float value)
   Cvar_Set(var_name, val);
 }
 
+
 /*
 ============
 Cvar_SetIntegerValue
@@ -1056,6 +1068,7 @@ Cvar_SetIntegerValue(const qchar *var_name, qint value)
   sprintf(val, "%i", value);
   Cvar_Set(var_name, val);
 }
+
 
 /*
 ============
@@ -1078,6 +1091,7 @@ Cvar_SetValueSafe(const qchar *var_name, float value)
 
   Cvar_SetSafe(var_name, val);
 }
+
 
 /*
 ============
@@ -1102,6 +1116,7 @@ Cvar_SetModified(const qchar *var_name, qbool modified)
   }
 }
 
+
 /*
 ============
 Cvar_Reset
@@ -1113,6 +1128,7 @@ Cvar_Reset(const qchar *var_name)
   Cvar_Set2(var_name, NULL, qfalse);
 }
 
+
 /*
 ============
 Cvar_ForceReset
@@ -1123,6 +1139,7 @@ Cvar_ForceReset(const qchar *var_name)
 {
   Cvar_Set2(var_name, NULL, qtrue);
 }
+
 
 /*
 ============
@@ -1157,6 +1174,7 @@ Cvar_SetCheatState(void)
   }
 }
 
+
 /*
 ============
 Cvar_Command
@@ -1188,6 +1206,7 @@ Cvar_Command(void)
   Cvar_Set2(v->name, Cmd_ArgsFrom(1), qfalse);
   return qtrue;
 }
+
 
 /*
 ============
@@ -1221,6 +1240,7 @@ Cvar_Print_f(void)
     Com_Printf("Cvar %s does not exist.\n", name);
   }
 }
+
 
 /*
 ============
@@ -1271,6 +1291,7 @@ Cvar_Toggle_f(void)
   //fallback
   Cvar_Set2(Cmd_Argv(1), Cmd_Argv(2), qfalse);
 }
+
 
 /*
 ============
@@ -1343,6 +1364,7 @@ Cvar_Set_f(void)
   }
 }
 
+
 /*
 ============
 Cvar_Reset_f
@@ -1359,6 +1381,7 @@ Cvar_Reset_f(void)
 
   Cvar_Reset(Cmd_Argv(1));
 }
+
 
 //returns NULL for non-existent "-" argument
 static const qchar *
@@ -1395,6 +1418,7 @@ GetValue(qint index, qint *ival, float *fval)
     return buf;
   }
 }
+
 
 typedef enum
 {
@@ -1460,6 +1484,7 @@ GetFuncType(void)
   return FT_BAD;
 }
 
+
 static qbool
 AllowEmptyCvar(funcType_t ftype)
 {
@@ -1485,6 +1510,7 @@ AllowEmptyCvar(funcType_t ftype)
       return qtrue;
   }
 }
+
 
 static void
 Cvar_Op(funcType_t ftype, qint *ival, float *fval)
@@ -1589,6 +1615,7 @@ Cvar_Op(funcType_t ftype, qint *ival, float *fval)
   }
 }
 
+
 static void
 Cvar_Rand(qint *ival, float *fval)
 {
@@ -1619,6 +1646,7 @@ Cvar_Rand(qint *ival, float *fval)
     }
   }
 }
+
 
 static void
 Cvar_Func_f(void)
@@ -1705,6 +1733,7 @@ Cvar_Func_f(void)
   Cvar_Set2(cvar_name, value, qfalse);
 }
 
+
 /*
 ============
 Cvar_WriteVariables
@@ -1757,6 +1786,7 @@ Cvar_WriteVariables(fileHandle_t f)
     }
   }
 }
+
 
 /*
 ============
@@ -1882,6 +1912,7 @@ Cvar_List_f(void)
   Com_Printf("\n%i total cvars\n", i);
   Com_Printf("%i cvar indexes\n", cvar_numIndexes);
 }
+
 
 /*
 ============
@@ -2015,6 +2046,7 @@ Cvar_ListModified_f(void)
   Com_Printf("\n%i total modified cvars\n", totalModified);
 }
 
+
 /*
 ============
 Cvar_Unset
@@ -2097,6 +2129,7 @@ Cvar_Unset(cvar_t * cv)
   return next;
 }
 
+
 /*
 ============
 Cvar_Unset_f
@@ -2131,6 +2164,7 @@ Cvar_Unset_f(void)
     Com_Printf("error %s variable %s is not user created\n", Cmd_Argv(0), cv->name);
   }
 }
+
 
 /*
 ============
@@ -2167,6 +2201,7 @@ Cvar_Restart(qbool unsetVM)
   }
 }
 
+
 static void
 Cvar_Trim(qbool verbose)
 {
@@ -2189,6 +2224,7 @@ Cvar_Trim(qbool verbose)
     curvar = curvar->next;
   }
 }
+
 
 /*
 ============
@@ -2249,6 +2285,7 @@ Cvar_Trim_f(void)
   Com_Printf(S_COLOR_YELLOW " You've been warned.\n");
 }
 
+
 /*
 ============
 Cvar_Restart_f
@@ -2261,6 +2298,7 @@ Cvar_Restart_f(void)
 {
   Cvar_Restart(qfalse);
 }
+
 
 /*
 =====================
@@ -2370,6 +2408,7 @@ Cvar_InfoString_Big(qint bit, qbool *truncated)
   return info;
 }
 
+
 /*
 =====================
 Cvar_InfoStringBuffer
@@ -2380,6 +2419,7 @@ Cvar_InfoStringBuffer(qint bit, qchar *buff, qint buffsize)
 {
   Q_strncpyz(buff, Cvar_InfoString(bit, NULL), buffsize);
 }
+
 
 /*
 =====================
@@ -2428,6 +2468,7 @@ Cvar_CheckRange(cvar_t *var, const char *minVal, const char *maxVal, cvarValidat
   Cvar_Set(var->name, var->string);
 }
 
+
 /*
 =====================
 Cvar_SetDescription
@@ -2446,6 +2487,7 @@ Cvar_SetDescription(cvar_t *var, const qchar *var_description)
     var->description = CopyString(var_description);
   }
 }
+
 
 /*
 =====================
@@ -2480,6 +2522,7 @@ Cvar_SetDescription2(const qchar *var_name, const qchar *var_description)
   }
 }
 
+
 /*
 =====================
 Cvar_GetAndDescribe
@@ -2504,6 +2547,7 @@ Cvar_GetAndDescribe(const qchar *varName, const qchar *value, const qint flags, 
   return tmp;
 }
 
+
 /*
 =====================
 Cvar_SetGroup
@@ -2522,6 +2566,7 @@ Cvar_SetGroup(cvar_t *var, cvarGroup_t group)
   }
 }
 
+
 /*
 =====================
 Cvar_CheckGroup
@@ -2537,6 +2582,7 @@ Cvar_CheckGroup(cvarGroup_t group)
 
   return 0;
 }
+
 
 /*
 =====================
@@ -2564,6 +2610,7 @@ Cvar_ResetGroup(cvarGroup_t group, qbool resetModifiedFlags)
     }
   }
 }
+
 
 /*
 =====================
@@ -2680,6 +2727,7 @@ Cvar_Update(vmCvar_t *vmCvar, qint privateFlag)
   vmCvar->integer = cv->integer;
 }
 
+
 /*
 ==================
 Cvar_CompleteCvarName
@@ -2699,6 +2747,7 @@ Cvar_CompleteCvarName(const qchar *args, qint argNum)
     }
   }
 }
+
 
 /*
 ============
