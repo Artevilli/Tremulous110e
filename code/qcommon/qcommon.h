@@ -493,10 +493,6 @@ Cbuf_NestedReset(void);
 //resets nested cmd offset
 
 void
-Cbuf_InsertText(const qchar *text);
-//adds command text at the beginning of the buffer, add \n
-
-void
 Cbuf_ExecuteText(cbufExec_t exec_when, const qchar *text);
 //this can be used in place of either Cbuf_AddText or Cbuf_InsertText
 

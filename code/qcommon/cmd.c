@@ -215,7 +215,7 @@ Adds command text immediately after the current command
 Adds a \n to the text
 ============
 */
-void
+static void
 Cbuf_InsertText(const qchar *text)
 {
   qint len;

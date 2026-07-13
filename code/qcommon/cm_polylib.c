@@ -136,7 +136,7 @@ void WindingPlane (winding_t *w, vec3_t normal, vec_t *dist)
 WindingArea
 =============
 */
-static vec_t	WindingArea (winding_t *w)
+static vec_t WindingArea (winding_t *w)
 {
 	qint		i;
 	vec3_t	d1, d2, cross;
@@ -311,8 +311,7 @@ winding_t	*ReverseWinding (winding_t *w)
 ClipWindingEpsilon
 =============
 */
-static void	ClipWindingEpsilon (winding_t *in, vec3_t normal, vec_t dist, 
-				vec_t epsilon, winding_t **front, winding_t **back)
+static void ClipWindingEpsilon (winding_t *in, vec3_t normal, vec_t dist, vec_t epsilon, winding_t **front, winding_t **back)
 {
 	vec_t	dists[MAX_POINTS_ON_WINDING+4];
 	qint		sides[MAX_POINTS_ON_WINDING+4];

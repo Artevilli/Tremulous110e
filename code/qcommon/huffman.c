@@ -213,7 +213,7 @@ static void increment(huff_t* huff, node_t *node) {
 	}
 }
 
-void Huff_addRef(huff_t* huff, byte ch) {
+static void Huff_addRef(huff_t* huff, byte ch) {
 	node_t *tnode, *tnode2;
 	if (huff->loc[ch] == NULL) { /* if this is the first transmission of this node */
 		tnode = &(huff->nodeList[huff->blocNode++]);
