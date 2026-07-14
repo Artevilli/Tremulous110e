@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #if defined(_WIN32)
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <iphlpapi.h>
 #if (WINVER < 0x501)
 #if defined(__MINGW32__)
 //wspiapi.h isn't available on MinGW, so if it's
@@ -353,7 +354,7 @@ NET_ErrorString(void)
 
     case
     WSAECONNABORTED:
-      return "WSWSAECONNABORTEDAEINTR";
+      return "WSWSAECONNABORTED";
 
     case
     WSAECONNRESET:
@@ -840,7 +841,7 @@ NET_AdrToString(const netadr_t *a)
 const qchar *
 NET_AdrToStringwPort(const netadr_t *a)
 {
-  static qchar s[NET_ADDRSTRMAXLEN_EXT];
+  static qchar s[NET_ADDRSTRMAXLEN + 8]; //including strlen("[]:65535")
 
   switch(a->type)
   {
@@ -1858,6 +1859,8 @@ NET_GetLocalAddress(void)
   struct ifaddrs *ifap;
   struct ifaddrs *search;
 
+  numIP = 0;
+
   if (gethostname(hostname, sizeof(hostname)))
   {
     return;
@@ -1865,9 +1868,7 @@ NET_GetLocalAddress(void)
 
   Com_Printf("Hostname: %s\n", hostname);
 
-  numIP = 0;
-
-  if (getifaddrs(&ifap))
+  if (getifaddrs(&ifap) != 0)
   {
     Com_Printf("NET_GetLocalAddress: Unable to get list of network interfaces: %s\n", NET_ErrorString());
   }
@@ -1881,13 +1882,71 @@ NET_GetLocalAddress(void)
         NET_AddLocalAddress(search->ifa_name, search->ifa_addr, search->ifa_netmask);
       }
     }
-	
+
     freeifaddrs(ifap);
-		
+
     Sys_ShowIP();
   }
 }
 #else //_WIN32
+
+
+static void
+NET_FindNetMask4(const struct sockaddr *addr, struct sockaddr *netmask)
+{
+  MIB_IPADDRTABLE *addrTable;
+  const struct sockaddr_in *s;
+  DWORD dwResult, i;
+  HANDLE hHeap;
+  ULONG size;
+
+  size = 0;
+  dwResult = GetIpAddrTable( NULL, &size, 0 );
+
+  if (dwResult != ERROR_INSUFFICIENT_BUFFER)
+  {
+    return; //keep original netmask
+  }
+
+  hHeap = GetProcessHeap();
+
+  if (hHeap == NULL)
+  {
+    return;
+  }
+
+  addrTable = (MIB_IPADDRTABLE *)HeapAlloc(hHeap, 0, size);
+
+  if (addrTable == NULL)
+  {
+    return;
+  }
+
+  dwResult = GetIpAddrTable(addrTable, &size, 0);
+
+  if (dwResult != NO_ERROR)
+  {
+    HeapFree(hHeap, 0, addrTable);
+    return;
+  }
+
+  s = (const struct sockaddr_in *)addr;
+
+  for(i = 0;i < addrTable->dwNumEntries;i++)
+  {
+    if (memcmp(&s->sin_addr, &addrTable->table[i].dwAddr, sizeof(IN_ADDR)) == 0)
+    {
+      struct sockaddr_in *o = (struct sockaddr_in *)netmask;
+
+      Com_Memcpy(&o->sin_addr, &addrTable->table[i].dwMask, sizeof(IN_ADDR));
+      break;
+    }
+  }
+
+  HeapFree(hHeap, 0, addrTable);
+}
+
+
 static void
 NET_GetLocalAddress(void)
 {
@@ -1903,15 +1962,15 @@ NET_GetLocalAddress(void)
   }
 
   Com_Printf("Hostname: %s\n", hostname);
-	
+
   Com_Memset(&hint, 0, sizeof(hint));
-	
+
   hint.ai_family = AF_UNSPEC;
   hint.ai_socktype = SOCK_DGRAM;
-	
-  if (!getaddrinfo(hostname, NULL, &hint, &res))
+
+  if (getaddrinfo(hostname, NULL, &hint, &res) == 0)
   {
-    struct addrinfo *search;
+    const struct addrinfo *search;
     struct sockaddr_in mask4;
 #if defined(USE_IPV6)
     struct sockaddr_in6 mask6;
@@ -1920,12 +1979,12 @@ NET_GetLocalAddress(void)
     /* On operating systems where it's more difficult to find out the configured interfaces, we'll just assume a
     * netmask with all bits set. */
 	
-    Com_Memset(&mask4, 0, sizeof(mask4));
+    Com_Memset(&mask4, 0x0, sizeof(mask4));
     mask4.sin_family = AF_INET;
     Com_Memset(&mask4.sin_addr.s_addr, 0xFF, sizeof(mask4.sin_addr.s_addr));
 
 #if defined(USE_IPV6)
-    Com_Memset(&mask6, 0, sizeof(mask6));
+    Com_Memset(&mask6, 0x0, sizeof(mask6));
     mask6.sin6_family = AF_INET6;
     Com_Memset(&mask6.sin6_addr, 0xFF, sizeof(mask6.sin6_addr));
 #endif
@@ -1935,12 +1994,16 @@ NET_GetLocalAddress(void)
     {
       if (search->ai_family == AF_INET)
       {
+        NET_FindNetMask4(search->ai_addr, (struct sockaddr *)&mask4);
         NET_AddLocalAddress("", search->ai_addr, (struct sockaddr *)&mask4);
+        continue;
       }
 #if defined(USE_IPV6)
-      else if (search->ai_family == AF_INET6)
+      if (search->ai_family == AF_INET6)
       {
+        //TODO: NET_FindNetMask6()
         NET_AddLocalAddress("", search->ai_addr, (struct sockaddr *)&mask6);
+        continue;
       }
 #endif
     }
@@ -2140,6 +2203,8 @@ NET_Config(qbool enableNetworking)
   qbool modified;
   qbool stop;
   qbool start;
+
+  NET_FlushPacketQueue(-99999);
 
   //get any latched changes to cvars
   modified = NET_GetCvars();

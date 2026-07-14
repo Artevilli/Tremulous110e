@@ -947,7 +947,7 @@ SV_FinalMessage(const qchar *message)
     }
   }
 
-  NET_FlushPacketQueue(99999);
+  NET_FlushPacketQueue(-99999);
 }
 
 

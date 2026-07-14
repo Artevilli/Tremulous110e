@@ -193,8 +193,7 @@ func_t;
 #if defined(MACRO_OPTIMIZE)
 typedef enum
 {
-  MOP_UNDEF = OP_MAX,
-  MOP_ADD,
+  MOP_ADD = OP_MAX,
   MOP_SUB,
   MOP_BAND,
   MOP_BOR,
