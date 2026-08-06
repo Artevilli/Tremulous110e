@@ -987,7 +987,7 @@ SVC_Info(const netadr_t *from)
   Info_SetValueForKey(infostring, "clients", va("%i", count));
   Info_SetValueForKey(infostring, "sv_maxclients", va("%i", sv.maxclients - sv_privateClients->integer));
   Info_SetValueForKey(infostring, "pure", va("%i", sv.pure));
-  Info_SetValueForKey(infostring, "gamename", GAMENAME_FOR_MASTER);
+  Info_SetValueForKey(infostring, "g_needpass", va("%d", Cvar_VariableIntegerValue("g_needpass")));
 
   gamedir = Cvar_VariableString("fs_game");
 
