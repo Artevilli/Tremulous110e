@@ -210,10 +210,16 @@ or configs will never get loaded from disk!
 #define USE_PK3_CACHE_FILE
 
 #define USE_HANDLE_CACHE
-#define MAX_CACHED_HANDLES 384
+#define MAX_CACHED_HANDLES 250 //minimal from win32|linux|mac
 
-#define MAX_ZPATH			256
-#define MAX_FILEHASH_SIZE	4096
+#if defined(MAX_CACHED_HANDLES) && (MAX_CACHED_HANDLES < 4)
+//to avoid infinite loops in FS_AddToHandleList()
+//assume that at least (FS_LOCK_REF + 1) can be kept locked
+#error "invalid filesystem configuration"
+#endif
+
+#define MAX_ZPATH 256
+#define MAX_FILEHASH_SIZE 4096
 
 typedef struct
 fileInPack_s
@@ -222,7 +228,7 @@ fileInPack_s
   unsigned long pos; //file info position in zip
   unsigned long len; //uncompress file size
   unsigned long size; //file size
-  struct fileInPack_s* next; //next file in the hash
+  struct fileInPack_s* next; //next file in the hash bucket
 }
 fileInPack_t;
 
@@ -241,7 +247,7 @@ pack_s
   qint hashSize; //hash table size (power of 2)
   fileInPack_t*	*hashTable; //hash table
   fileInPack_t*	buildBuffer; //buffer with the filenames etc.
-  qint index;
+  qint index; //serial index assigned at FS_Startup()
 
   qint handleUsed;
 
@@ -1252,7 +1258,7 @@ FS_RemoveFromHandleList(pack_t *pak)
 
   pak->next_h = NULL;
   pak->prev_h = NULL;
-	
+
   hpaksCount--;
 
 #if defined(_DEBUG)
@@ -1283,9 +1289,20 @@ FS_AddToHandleList(pack_t *pak)
     Com_Error(ERR_DROP, "%s(): invalid pak pointers", __func__);
   }
 #endif
+
+  //LRU eviction: if list is full, remove least recently used pak handle
   while(hpaksCount >= MAX_CACHED_HANDLES)
   {
-    pack_t *pk = hhead->prev_h; //tail item
+    pack_t *pk = hhead->prev_h;
+
+    //skip locked items
+    while(pk->referenced & FS_LOCK_REF)
+    {
+      //adjust head to avoid redundant lookups in future calls
+      hhead = pk;
+      //TODO: insert new item after hhead?
+      pk = pk->prev_h;
+    }
 #if defined(_DEBUG)
     if (pk->handle == NULL || pk->handleUsed != 0)
     {
@@ -1304,6 +1321,7 @@ FS_AddToHandleList(pack_t *pak)
   }
   else
   {
+    //insert before current head
     hhead->prev_h->next_h = pak;
     pak->prev_h = hhead->prev_h;
     hhead->prev_h = pak;
@@ -1321,7 +1339,7 @@ FS_FCloseFile
 
 If the FILE pointer is an open pak file, leave it open.
 
-For some reason, other dll's can't just cal fclose()
+For some reason, other dll's can't just call fclose()
 on files returned by FS_FOpenFile...
 ==============
 */
@@ -1339,6 +1357,7 @@ FS_FCloseFile(fileHandle_t f)
 
   if (fd->zipFile && fd->pak)
   {
+    //pak file
     unzCloseCurrentFile(fd->handleFiles.file.z);
 
     if (fd->handleFiles.unique)
@@ -1355,9 +1374,9 @@ FS_FCloseFile(fileHandle_t f)
       FS_AddToHandleList(fd->pak);
     }
 #else
-    if (!fs_locked->integer)
+    if (fs_locked->integer == 0)
     {
-      if (fd->pak->handle && !fd->pak->handleUsed)
+      if (fd->pak->handle && fd->pak->handleUsed == 0)
       {
         unzClose(fd->pak->handle);
         fd->pak->handle = NULL;
@@ -1367,7 +1386,8 @@ FS_FCloseFile(fileHandle_t f)
   }
   else
   {
-    if (fd->handleFiles.file.o)
+    //regular file
+    if (fd->handleFiles.file.o != NULL)
     {
       fclose(fd->handleFiles.file.o);
       fd->handleFiles.file.o = NULL;
@@ -1713,14 +1733,22 @@ FS_OpenFileInPak(fileHandle_t *file, pack_t *pak, fileInPack_t *pakFile, qbool u
     pak->referenced |= FS_GENERAL_REF;
   }
 
-  if (!(pak->referenced & FS_CGAME_REF) && !strcmp(pakFile->name, "vm/cgame.qvm"))
+  if (!strncmp(pakFile->name, "vm/", 3))
   {
-    pak->referenced |= FS_CGAME_REF;
-  }
+    if (!(pak->referenced & FS_CGAME_REF) && !strcmp(pakFile->name + 3, "cgame.qvm"))
+    {
+      pak->referenced |= FS_CGAME_REF;
+    }
 
-  if (!(pak->referenced & FS_UI_REF) && !strcmp(pakFile->name, "vm/ui.qvm"))
-  {
-    pak->referenced |= FS_UI_REF;
+    if (!(pak->referenced & FS_UI_REF) && !strcmp(pakFile->name + 3, "ui.qvm"))
+    {
+      pak->referenced |= FS_UI_REF;
+    }
+
+    if (!(pak->referenced & FS_GAME_REF) && !strcmp(pakFile->name + 3, "game.qvm"))
+    {
+      pak->referenced |= FS_GAME_REF;
+    }
   }
 
   if (!pak->handle)
@@ -1996,7 +2024,7 @@ FS_TouchFileInPak
 ===========
 */
 void
-FS_TouchFileInPak(const qchar *filename)
+FS_TouchFileInPak(const qchar *filename, qint refbits)
 {
   const searchpath_t *search;
   long fullHash;
@@ -2029,22 +2057,7 @@ FS_TouchFileInPak(const qchar *filename)
         //case and separator insensitive comparisons
         if (!FS_FilenameCompare(pakFile->name, filename))
         {
-          //found it!
-          if (!(pak->referenced & FS_GENERAL_REF) && FS_GeneralRef(filename))
-          {
-            pak->referenced |= FS_GENERAL_REF;
-          }
-
-          if (!(pak->referenced & FS_CGAME_REF) && !strcmp(filename, "vm/cgame.qvm"))
-          {
-            pak->referenced |= FS_CGAME_REF;
-          }
-
-          if (!(pak->referenced & FS_UI_REF) && !strcmp(filename, "vm/ui.qvm"))
-          {
-            pak->referenced |= FS_UI_REF;
-          }
-
+          pak->referenced |= refbits;
           return;
         }
 
@@ -5391,7 +5404,7 @@ FS_ReorderSearchPaths(void)
   }
 
   //relink path chains in following order:
-  //1. pk3dirs @ pak files
+  //1. pak files and pk3dirs
   //2. directories
   list = (searchpath_t **)Z_Malloc(cnt * sizeof(list[0]));
   paks = list;
@@ -5927,7 +5940,7 @@ FS_ReferencedPakChecksums(void)
         continue;
       }
 
-      if (search->pack->referenced || !FS_IsBaseGame(search->pack->pakGamename)) 
+      if ((search->pack->referenced & FS_PURE_REF) || !FS_IsBaseGame(search->pack->pakGamename)) 
       {
         Q_strcat(info, sizeof(info), va("%i ", search->pack->checksum));
       }
@@ -6041,7 +6054,7 @@ FS_ExcludeReference(void)
   {
     if (search->pack)
     {
-      if (!search->pack->referenced)
+      if ((search->pack->referenced & FS_PURE_REF) == 0)
       {
         continue;
       }
@@ -6091,7 +6104,7 @@ FS_ReferencedPakNames(void)
         continue;
       }
 
-      if (search->pack->referenced || !FS_IsBaseGame(search->pack->pakGamename)) 
+      if ((search->pack->referenced & FS_PURE_REF) || !FS_IsBaseGame(search->pack->pakGamename)) 
       {
         pakName = va("%s/%s", search->pack->pakGamename, search->pack->pakBasename);
 
@@ -6118,7 +6131,7 @@ FS_ClearPakReferences(qint flags)
 {
   const searchpath_t *search;
 
-  if (!flags)
+  if (flags == 0)
   {
     flags = -1;
   }
@@ -6330,9 +6343,9 @@ FS_InitFilesystem(void)
   Com_StartupVariable("fs_locked");
 #endif
 
-#if defined(_WIN32)
-  _setmaxstdio(2048);
-#endif
+//#if defined(_WIN32)
+//  _setmaxstdio(2048);
+//#endif
 
   //try to start up normally
   FS_Restart(0);

@@ -1300,7 +1300,7 @@ qbool CL_Disconnect( qbool showMainMenu ) {
 	FS_PureServerSetLoadedPaks( "", "" );
 	FS_PureServerSetReferencedPaks( "", "" );
 
-	FS_ClearPakReferences( FS_GENERAL_REF | FS_UI_REF | FS_CGAME_REF );
+	FS_ClearPakReferences( FS_ALL_REF );
 
 	if ( CL_GameSwitch() ) {
 		// keep current gamestate and connection

@@ -20,7 +20,7 @@ along with Tremulous; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
-// qcommon.h -- definitions common between client and server, but not game.or ref modules
+// qcommon.h -- definitions common between client and server, but not game or ref modules
 #pragma once
 
 #include <sys/types.h>
@@ -612,7 +612,7 @@ set r_draworder 0	as above, but creates the cvar if not present
 Cvars are restricted from having the same names as commands to keep this
 interface from being ambiguous.
 
-The are also occasionally used to communicated information between different
+They are also occasionally used to communicate information between different
 modules of the program.
 
 */
@@ -717,7 +717,7 @@ void
 Cvar_CompleteCvarName(const qchar *args, qint argNum);
 
 extern qint cvar_modifiedFlags;
-// whenever a cvar is modifed, its flags will be OR'd into this, so
+// whenever a cvar is modified, its flags will be OR'd into this, so
 // a single check can determine if any CVAR_USERINFO, CVAR_SERVERINFO,
 // etc, variables have been modified since the last check.  The bit
 // can then be cleared to allow another change detection.
@@ -738,9 +738,14 @@ issues.
 
 // referenced flags
 // these are in loop specific order so don't change the order
-#define FS_GENERAL_REF	0x01
-#define FS_UI_REF		0x02
-#define FS_CGAME_REF	0x04
+#define FS_GENERAL_REF 0x01
+#define FS_UI_REF 0x02
+#define FS_CGAME_REF 0x04
+#define FS_GAME_REF 0x08
+
+#define FS_PURE_REF (FS_GENERAL_REF | FS_UI_REF | FS_CGAME_REF)
+#define FS_ALL_REF (FS_PURE_REF | FS_GAME_REF)
+#define FS_LOCK_REF (FS_UI_REF | FS_CGAME_REF | FS_GAME_REF)
 
 typedef enum
 {
@@ -835,7 +840,7 @@ qint		FS_FOpenFileRead( const qchar *qpath, fileHandle_t *file, qbool uniqueFILE
 // file IO goes through FS_ReadFile, which Does The Right Thing already.
 
 void
-FS_TouchFileInPak(const qchar *filename);
+FS_TouchFileInPak(const qchar *filename, qint refbits);
 
 void
 FS_BypassPure(void);

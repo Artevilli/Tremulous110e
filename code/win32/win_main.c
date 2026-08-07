@@ -120,12 +120,6 @@ Sys_Error(const qchar *error, ...)
     TranslateMessage(&msg);
     DispatchMessage(&msg);
   }
-
-  SetUnhandledExceptionFilter(NULL);
-
-  Sys_DestroyConsole();
-
-  exit(1);
 }
 
 /*
