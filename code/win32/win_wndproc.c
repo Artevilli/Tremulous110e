@@ -54,8 +54,13 @@ WinKeyHook(qint code, WPARAM wParam, LPARAM lParam)
     WM_SYSKEYDOWN:
       if ((key->vkCode == VK_LWIN || key->vkCode == VK_RWIN) && !(Key_GetCatcher() & KEYCATCH_CONSOLE))
       {
-        Sys_QueEvent(0, SE_KEY, K_SUPER, qtrue, 0, NULL);
-        return 1;
+        const qchar *bind = Key_GetBinding(K_SUPER);
+
+        if (bind && *bind != '\0')
+        {
+          Sys_QueEvent(0, SE_KEY, K_SUPER, qtrue, 0, NULL);
+          return 1;
+        }
       }
 
       if (key->vkCode == VK_SNAPSHOT)
@@ -71,8 +76,13 @@ WinKeyHook(qint code, WPARAM wParam, LPARAM lParam)
     WM_SYSKEYUP:
       if ((key->vkCode == VK_LWIN || key->vkCode == VK_RWIN) && !(Key_GetCatcher() & KEYCATCH_CONSOLE))
       {
-        Sys_QueEvent(0, SE_KEY, K_SUPER, qfalse, 0, NULL);
-        return 1;
+        const qchar *bind = Key_GetBinding(K_SUPER);
+
+        if (bind && *bind != '\0')
+        {
+          Sys_QueEvent(0, SE_KEY, K_SUPER, qfalse, 0, NULL);
+          return 1;
+        }
       }
 
       if (key->vkCode == VK_SNAPSHOT)
