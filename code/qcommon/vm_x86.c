@@ -3743,7 +3743,11 @@ VM_Compile(vm_t *vm, vmHeader_t *header)
 #if JUMP_OPTIMIZE
   for(i = 0;i < header->instructionCount;i++)
   {
+#if defined(MACRO_OPTIMIZE)
+    if (inst[i].op < OP_MAX && ops[inst[i].op].flags & JUMP)
+#else
     if (ops[inst[i].op].flags & JUMP)
+#endif
     {
       qint d = inst[i].value - i;
 
