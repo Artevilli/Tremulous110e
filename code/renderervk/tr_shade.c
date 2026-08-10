@@ -1089,21 +1089,21 @@ static void RB_IterateStagesGeneric( const shaderCommands_t *input )
 
 #ifdef USE_VULKAN
 
-void VK_SetFogParams( vkUniform_t *uniform1, qint *fogStage )
+void VK_SetFogParams( vkUniform_t *uniform, qint *fogStage )
 {
 	if ( tess.fogNum && tess.shader->fogPass ) {
 		const fogProgramParms_t *fp = RB_CalcFogProgramParms();
 		// vertex data
-		Vector4Copy( fp->fogDistanceVector, uniform1->fogDistanceVector );
-		Vector4Copy( fp->fogDepthVector, uniform1->fogDepthVector );
-		uniform1->fogEyeT[0] = fp->eyeT;
+		Vector4Copy( fp->fogDistanceVector, uniform->fogDistanceVector );
+		Vector4Copy( fp->fogDepthVector, uniform->fogDepthVector );
+		uniform->fogEyeT[0] = fp->eyeT;
 		if ( fp->eyeOutside ) {
-			uniform1->fogEyeT[1] = 0.0; // fog eye out
+			uniform->fogEyeT[1] = 0.0; // fog eye out
 		} else {
-			uniform1->fogEyeT[1] = 1.0; // fog eye in
+			uniform->fogEyeT[1] = 1.0; // fog eye in
 		}
 		// fragment data
-		Vector4Copy( fp->fogColor, uniform1->fogColor );
+		Vector4Copy( fp->fogColor, uniform->fogColor );
 		*fogStage = 1;
 	} else {
 		*fogStage = 0;
@@ -1112,7 +1112,7 @@ void VK_SetFogParams( vkUniform_t *uniform1, qint *fogStage )
 
 
 #ifdef USE_PMLIGHT
-static void VK_SetLightParams( vkUniform_t *uniform1, const dlight_t *dl ) {
+static void VK_SetLightParams( vkUniform_t *uniform, const dlight_t *dl ) {
 	float radius;
 
 #ifdef USE_VULKAN
@@ -1120,38 +1120,38 @@ static void VK_SetLightParams( vkUniform_t *uniform1, const dlight_t *dl ) {
 #else
 	if ( !glConfig.deviceSupportsGamma )
 #endif
-		VectorScale( dl->color, 2 * powf( r_intensity->value, r_gamma->value ), uniform1->light.color);
+		VectorScale( dl->color, 2 * powf( r_intensity->value, r_gamma->value ), uniform->light.color);
 	else
-		VectorCopy( dl->color, uniform1->light.color );
+		VectorCopy( dl->color, uniform->light.color );
 
 	radius = dl->radius;
 
 	// vertex data
-	VectorCopy( backEnd.or.viewOrigin, uniform1->eyePos ); uniform1->eyePos[3] = 0.0f;
-	VectorCopy( dl->transformed, uniform1->light.pos ); uniform1->light.pos[3] = 0.0f;
+	VectorCopy( backEnd.or.viewOrigin, uniform->eyePos ); uniform->eyePos[3] = 0.0f;
+	VectorCopy( dl->transformed, uniform->light.pos ); uniform->light.pos[3] = 0.0f;
 
 	// fragment data
-	uniform1->light.color[3] = 1.0f / Square( radius );
+	uniform->light.color[3] = 1.0f / Square( radius );
 
 	if ( dl->linear )
 	{
 		vec4_t ab;
 		VectorSubtract( dl->transformed2, dl->transformed, ab );
 		ab[3] = 1.0f / DotProduct( ab, ab );
-		Vector4Copy( ab, uniform1->light.vector );
+		Vector4Copy( ab, uniform->light.vector );
 	}
 }
 #endif
 
 
-uint32_t VK_PushUniform( const vkUniform_t *uniform1 ) {
+uint32_t VK_PushUniform( const vkUniform_t *uniform ) {
 	const uint32_t offset = vk.cmd->uniform_read_offset = PAD( vk.cmd->vertex_buffer_offset, vk.uniform_alignment );
 
 	if ( offset + vk.uniform_item_size > vk.geometry_buffer_size )
 		return ~0U;
 
 	// push uniform
-	Com_Memcpy( vk.cmd->vertex_buffer_ptr + offset, uniform1, sizeof( *uniform1 ) );
+	Com_Memcpy( vk.cmd->vertex_buffer_ptr + offset, uniform, sizeof( *uniform ) );
 	vk.cmd->vertex_buffer_offset = offset + vk.uniform_item_size;
 
 	vk_reset_descriptor( VK_DESC_UNIFORM );
