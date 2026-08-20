@@ -661,14 +661,6 @@ FS_CreatePath(const qchar *OSPath)
 {
   qchar *ofs;
   qchar path[MAX_OSPATH * 2 + 1];
-	
-  //make absolutely sure that it can't back up the path
-  //FIXME: is c: allowed???
-  if (FS_CheckDirTraversal(OSPath))
-  {
-    Com_Printf("WARNING: refusing to create relative path \"%s\"\n", OSPath);
-    return qtrue;
-  }
 
   Q_strncpyz(path, OSPath, sizeof(path));
   FS_ReplaceSeparators(path);
@@ -991,6 +983,13 @@ FS_SV_FOpenFileWrite(const qchar *filename)
     return FS_INVALID_HANDLE;
   }
 
+  if (FS_CheckDirTraversal(filename))
+  {
+    return FS_INVALID_HANDLE;
+  }
+
+  FS_CheckFilenameIsNotAllowed(filename, __func__, qtrue);
+
   ospath = FS_BuildOSPath(fs_homepath->string, filename, NULL);
 
   f = FS_HandleForFile();
@@ -1001,8 +1000,6 @@ FS_SV_FOpenFileWrite(const qchar *filename)
   {
     Com_Printf("FS_SV_FOpenFileWrite: %s\n", ospath);
   }
-
-  FS_CheckFilenameIsNotAllowed(ospath, __func__, qtrue);
 
   Com_DPrintf("writing to: %s\n", ospath);
   fd->handleFiles.file.o = Sys_FOpen(ospath, "wb");
@@ -1162,6 +1159,12 @@ FS_SV_Rename(const qchar *from, const qchar *to)
   //S_ClearSoundBuffer();
 #endif
 
+  if (FS_CheckDirTraversal(from) || FS_CheckDirTraversal(to))
+  {
+    Com_Printf(S_COLOR_ERROR "%s: rename %s -> %s failed\n", __func__, from, to);
+    return;
+  }
+
   from_ospath = FS_BuildOSPath(fs_homepath->string, from, NULL);
   to_ospath = FS_BuildOSPath(fs_homepath->string, to, NULL);
 
@@ -1201,6 +1204,12 @@ FS_Rename(const qchar *from, const qchar *to)
   //don't let sound stutter
   //S_ClearSoundBuffer();
 #endif
+
+  if (FS_CheckDirTraversal(from) || FS_CheckDirTraversal(to))
+  {
+    Com_Printf(S_COLOR_ERROR "%s: rename %s -> %s failed\n", __func__, from, to);
+    return;
+  }
 
   from_ospath = FS_BuildOSPath(fs_homepath->string, fs_gamedir, from);
   to_ospath = FS_BuildOSPath(fs_homepath->string, fs_gamedir, to);
@@ -1433,14 +1442,19 @@ FS_FOpenFileWrite(const qchar *filename)
     return FS_INVALID_HANDLE;
   }
 
+  if (FS_CheckDirTraversal(filename))
+  {
+    return FS_INVALID_HANDLE;
+  }
+
+  FS_CheckFilenameIsNotAllowed(filename, __func__, qfalse);
+
   ospath = FS_BuildOSPath(fs_homepath->string, fs_gamedir, filename);
 
   if (fs_debug->integer)
   {
     Com_Printf("FS_FOpenFileWrite: %s\n", ospath);
   }
-
-  FS_CheckFilenameIsNotAllowed(ospath, __func__, qfalse);
 
   f = FS_HandleForFile();
   fd = &fsh[f];
@@ -1494,6 +1508,13 @@ FS_FOpenFileAppend(const qchar *filename)
     return FS_INVALID_HANDLE;
   }
 
+  if (FS_CheckDirTraversal(filename))
+  {
+    return FS_INVALID_HANDLE;
+  }
+
+  FS_CheckFilenameIsNotAllowed(filename, __func__, qfalse);
+
 #if !defined(DEDICATED)
   //don't let sound stutter
   //S_ClearSoundBuffer();
@@ -1504,8 +1525,6 @@ FS_FOpenFileAppend(const qchar *filename)
   {
     Com_Printf("FS_FOpenFileAppend: %s\n", ospath);
   }
-
-  FS_CheckFilenameIsNotAllowed(ospath, __func__, qfalse);
 
   f = FS_HandleForFile();
   fd = &fsh[f];
@@ -6733,14 +6752,19 @@ fileHandle_t FS_PipeOpenWrite(const qchar *cmd, const qchar *filename)
     Com_Error(ERR_FATAL, "Filesystem call made without initialization");
   }
 
+  if (FS_CheckDirTraversal(filename))
+  {
+    return FS_INVALID_HANDLE;
+  }
+
+  FS_CheckFilenameIsNotAllowed(filename, __func__, qfalse);
+
   ospath = FS_BuildOSPath(fs_homepath->string, fs_gamedir, filename);
 
   if (fs_debug->integer)
   {
     Com_Printf("FS_PipeOpenWrite: %s\n", ospath);
   }
-
-  FS_CheckFilenameIsNotAllowed(ospath, __func__, qfalse);
 
   f = FS_HandleForFile();
   fd = &fsh[f];

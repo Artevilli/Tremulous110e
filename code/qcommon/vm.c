@@ -1539,7 +1539,7 @@ const qchar *
 VM_CheckInstructions(instruction_t *buf, qint instructionCount, const int32_t *jumpTableTargets, qint numJumpTableTargets, qint dataLength)
 {
   static qchar errBuf[128];
-  instruction_t *opStackPtr[PROC_OPSTACK_SIZE];
+  instruction_t *opStackPtr[PROC_OPSTACK_SIZE + 1];
   qint i;
   qint m;
   qint n;
@@ -1748,6 +1748,28 @@ VM_CheckInstructions(instruction_t *buf, qint instructionCount, const int32_t *j
 
       //mark jump target
       buf[v].jused = 1;
+#if (id386 || idx64)
+      //mark NaN-checks for vm_x86
+      if (ops[ci->op].flags & FPU)
+      {
+        switch(ci->op)
+        {
+          case
+          OP_EQF:
+
+          case
+          OP_LTF:
+
+          case
+          OP_LEF:
+            ci->nanchk = 1;
+            break;
+
+          default:
+            break;
+        }
+      }
+#endif
       continue;
     }
 
