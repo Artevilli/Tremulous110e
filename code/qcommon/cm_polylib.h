@@ -39,7 +39,7 @@ typedef struct
 
 #define	CLIP_EPSILON	0.1f
 
-#define MAX_MAP_BOUNDS			65535
+#define MAX_MAP_BOUNDS			65535.0
 
 // you can define on_epsilon in the makefile as tighter
 #if !defined(ON_EPSILON)
@@ -50,7 +50,7 @@ void	WindingCenter (winding_t *w, vec3_t center);
 winding_t	*ChopWinding (winding_t *in, vec3_t normal, vec_t dist);
 winding_t	*CopyWinding (const winding_t *w);
 winding_t	*ReverseWinding (winding_t *w);
-winding_t	*BaseWindingForPlane (vec3_t normal, vec_t dist);
+winding_t	*BaseWindingForPlane( const vec3_t normal, vec_t dist );
 void	CheckWinding (winding_t *w);
 void	WindingPlane (winding_t *w, vec3_t normal, vec_t *dist);
 void	RemoveColinearPoints (winding_t *w);
