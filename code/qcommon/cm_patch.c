@@ -1508,12 +1508,21 @@ CM_CheckFacetPlane
 ====================
 */
 static qint CM_CheckFacetPlane(const float *plane, const vec3_t start, const vec3_t end, float *enterFrac, float *leaveFrac, qint *hit) {
+#if defined(USE_FIXED_PRECISION)
+	double d1, d2, f;
+
+	*hit = qfalse;
+
+	d1 = DotProductDPf( start, plane ) - plane[3];
+	d2 = DotProductDPf( end, plane ) - plane[3];
+#else
 	float d1, d2, f;
 
 	*hit = qfalse;
 
 	d1 = DotProduct( start, plane ) - plane[3];
 	d2 = DotProduct( end, plane ) - plane[3];
+#endif
 
 	// if completely in front of face, no intersection with the entire facet
 	if (d1 > 0 && ( d2 >= SURFACE_CLIP_EPSILON || d2 >= d1 )  ) {

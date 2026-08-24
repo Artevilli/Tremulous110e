@@ -1609,7 +1609,6 @@ static void
 store_st_opstack(instruction_t *ref)
 {
   opstack_t *it = opstackv + opstack;
-  qint i, c;
 
 #if defined(DEBUG_VM)
   if (opstack <= 0)
@@ -1632,14 +1631,6 @@ store_st_opstack(instruction_t *ref)
   if (ref->flush)
   {
     flush_item(it);
-  }
-
-  for(c = 0, i = 1;i <= opstack;i++)
-  {
-    if (opstackv[i].type == TYPE_ST)
-    {
-      c++;
-    }
   }
 }
 #endif //USE_X87
