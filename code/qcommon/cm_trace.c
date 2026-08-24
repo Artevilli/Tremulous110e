@@ -1585,7 +1585,12 @@ static void CM_Trace( trace_t *results, const vec3_t start,
 		VectorCopy (end, tw.trace.endpos);
 	} else {
 		for ( i=0 ; i<3 ; i++ ) {
+#if defined(USE_FIXED_PRECISION)
+			// fix ledge at {463, -1067, -39} on q3dm12
+			tw.trace.endpos[i] = start[i] + tw.trace.fraction * (double)(end[i] - start[i]);
+#else
 			tw.trace.endpos[i] = start[i] + tw.trace.fraction * (end[i] - start[i]);
+#endif
 		}
 	}
 
@@ -1791,7 +1796,13 @@ void CM_BiSphereTrace( trace_t *results, const vec3_t start,
 	else
 	{
 		for( i = 0; i < 3; i++ )
+		{
+#if defined(USE_FIXED_PRECISION)
+			tw.trace.endpos[ i ] = start[ i ] + tw.trace.fraction * ( double )( end[i] - start[ i ] );
+#else
 			tw.trace.endpos[ i ] = start[ i ] + tw.trace.fraction * ( end[ i ] - start[ i ] );
+#endif
+		}
 	}
 
 	// If allsolid is set (was entirely inside something solid), the plane is not valid.
