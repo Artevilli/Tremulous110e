@@ -594,7 +594,8 @@ qbool CL_Netchan_Process( netchan_t *chan, msg_t *msg );
 //
 // cl_avi.c
 //
-qbool CL_OpenAVIForWriting( const qchar *filename, qbool pipe, qbool reopen );
+qbool CL_OpenAVIForWriting( const qchar *filename, const qchar *pipeFormat, qbool reopen );
+qbool CL_ValidatePipeFormat( const qchar *s );
 void CL_TakeVideoFrame( void );
 void CL_WriteAVIVideoFrame( const byte *imageBuffer, qint size );
 void CL_WriteAVIAudioFrame( const byte *pcmBuffer, qint size );

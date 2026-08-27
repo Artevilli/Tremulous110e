@@ -27,6 +27,12 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define MAX_RIFF_CHUNKS 16
 
+#ifdef _WIN32
+#include <windows.h>
+#define USE_WIN32_NAMED_PIPES
+#define WIN32_HANDLE_VALID(h) ((h) && (h) != INVALID_HANDLE_VALUE)
+#endif
+
 typedef struct audioFormat_s
 {
   qint rate;
@@ -42,6 +48,14 @@ typedef struct aviFileData_s
 {
   qbool      fileOpen;
   qbool      pipe;
+#ifdef USE_WIN32_NAMED_PIPES
+  struct {
+    HANDLE      hNamedPipe;
+    HANDLE      hProcess;
+    HANDLE      hThread;
+    HANDLE      hStdErr;
+  } ffmpeg;
+#endif
   fileHandle_t  f;
   qchar          fileName[ MAX_QPATH ];
   unsigned qint  fileSize;
@@ -82,9 +96,21 @@ static qint  bufIndex;
 SafeFS_Write
 ===============
 */
-static ID_INLINE void SafeFS_Write( const void *buf, qint len, fileHandle_t f )
+static ID_INLINE void SafeFS_Write( const void *buf, unsigned qint len, fileHandle_t f )
 {
-  if ( FS_Write( buf, len, f ) < len )
+#ifdef USE_WIN32_NAMED_PIPES
+	if ( afd.pipe && WIN32_HANDLE_VALID( afd.ffmpeg.hNamedPipe ) ) {
+		DWORD n = 0;
+		WriteFile( afd.ffmpeg.hNamedPipe, buf, len, &n, NULL );
+		if ( n != len ) {
+			// ffmpeg died most likely, we should close all handles here to avoid recursive errors
+			Com_Error( ERR_DROP, "Failed to write avi file to pipe" );
+		}
+		return;
+	}
+#endif
+
+	if ( FS_Write( buf, len, f ) < len )
 		Com_Error( ERR_DROP, "Failed to write avi file" );
 }
 
@@ -329,15 +355,18 @@ static void CL_WriteAVIHeader( void )
 }
 
 
-static qbool CL_ValidatePipeFormat( const qchar *s )
+qbool CL_ValidatePipeFormat( const qchar *s )
 {
 	while ( *s != '\0' ) 
 	{
-		if ( *s == '.' && *(s+1) == '.' && ( *(s+2) == '/' || *(s+2) == '\\' ) )
+		// deny directory traversal patterns
+		if ( *s == '.' && *(s+1) == '.' && ( *(s+2) == PATH_SEP || *(s+2) == PATH_SEP_FOREIGN ) )
 			return qfalse;
+		// deny "::"
 		if ( *s == ':' && *(s+1) == ':' )
 			return qfalse;
-		if ( *s == '>' || *s == '|' || *s == '&' )
+		// deny redirections/special characters
+		if ( *s == '>' || *s == '&' )
 			return qfalse;
 		s++;
 	}
@@ -349,11 +378,12 @@ static qbool CL_ValidatePipeFormat( const qchar *s )
 ===============
 CL_OpenAVIForWriting
 
-Creates an AVI file and gets it into a state where
-writing the actual data can begin
+Creates an AVI file and gets it into a state where writing the actual data can begin.
+
+If pipeFormat is non-null/non-empty then open ffmpeg encoder stream redirection
 ===============
 */
-qbool CL_OpenAVIForWriting( const qchar *fileName, qbool pipe, qbool reopen )
+qbool CL_OpenAVIForWriting( const qchar *fileName, const qchar *pipeFormat, qbool reopen )
 {
 	if ( afd.fileOpen )
 		return qfalse;
@@ -372,23 +402,111 @@ qbool CL_OpenAVIForWriting( const qchar *fileName, qbool pipe, qbool reopen )
 		Com_Memset( &afd, 0, sizeof( aviFileData_t ) );
 	}
 
-	if ( pipe )
+	if ( pipeFormat != NULL ) // ffmpeg-redirected encoding
 	{
-		qchar cmd[MAX_OSPATH * 4];
-		const qchar *cmd_fmt = "ffmpeg -f avi -i - -threads 0 -y %s \"%s\" 2> \"%s-log.txt\"";
-		const qchar *ospath;
+		const qchar* ospath = FS_BuildOSPath( Cvar_VariableString( "fs_homepath" ), "", fileName );;
+#ifdef USE_WIN32_NAMED_PIPES
+		qchar cmd[MAX_OSPATH*2];
+		qchar namedPipeName[128];		// base length is 15 chars for "\\.\pipe\LOCAL\", rest is for "q3a-*" suffix reserved
+		qchar logName[MAX_OSPATH*2 + 8];	// fileName + strlen("-log.txt")
+		qint namedPipeRand[1];			// one 32bit random id should be enough to avoid collisions
+		SECURITY_ATTRIBUTES sAttr;
 
-		if ( !CL_ValidatePipeFormat( cl_aviPipeFormat->string ) ) {
-			Com_Printf( S_COLOR_YELLOW "Invalid pipe format: %s\n", cl_aviPipeFormat->string );
+		// we can't use "2> " stderr log file redirection with named pipes
+		// so will create and inherit corresponding file handles
+		const qchar* cmd_fmt2 = "ffmpeg -threads 0 -f avi -i %s -y %s \"%s\"";
+
+		Com_sprintf( logName, sizeof( logName ), "%s-log.txt", ospath );
+		// make sure log file dir exists before file creation
+		FS_CreatePath( logName );
+
+		// create security attributes to inherit log file handle
+		memset( &sAttr, 0x0, sizeof( sAttr ) );
+		sAttr.nLength = sizeof( SECURITY_ATTRIBUTES );
+		sAttr.bInheritHandle = TRUE;
+
+		afd.ffmpeg.hStdErr = CreateFileA( logName, GENERIC_WRITE, FILE_SHARE_READ, &sAttr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+
+		// generate random pipe suffix
+		Sys_RandomBytes( (byte*)namedPipeRand, sizeof( namedPipeRand ) );
+		Com_sprintf( namedPipeName, sizeof( namedPipeName ), "\\\\.\\pipe\\LOCAL\\q3a-%x", namedPipeRand[0] );
+
+		afd.ffmpeg.hNamedPipe = CreateNamedPipeA( namedPipeName, PIPE_ACCESS_OUTBOUND, PIPE_TYPE_MESSAGE | PIPE_REJECT_REMOTE_CLIENTS, 1, 0, 0, 0, NULL );
+		if ( afd.ffmpeg.hNamedPipe != INVALID_HANDLE_VALUE )
+		{
+			STARTUPINFOA si = { sizeof( STARTUPINFOA ) };
+			PROCESS_INFORMATION pi = { 0 };
+			BOOL bResult;
+
+			// hide ffmpeg console window
+			si.dwFlags = STARTF_USESHOWWINDOW;
+			si.wShowWindow = SW_HIDE;
+
+			// enable stdout/stderr redirection for a log file
+			if ( afd.ffmpeg.hStdErr != INVALID_HANDLE_VALUE )
+			{
+				si.dwFlags |= STARTF_USESTDHANDLES;
+				si.hStdInput = GetStdHandle( STD_INPUT_HANDLE );
+				si.hStdOutput = afd.ffmpeg.hStdErr;
+				si.hStdError = afd.ffmpeg.hStdErr;
+			}
+
+			// create ffmpeg command line using name pipe and aviPipeFormat
+			Com_sprintf( cmd, sizeof( cmd ), cmd_fmt2, namedPipeName, pipeFormat, ospath );
+
+			// create ffmpeg process
+			bResult = CreateProcessA( NULL, cmd, NULL,	NULL, si.dwFlags & STARTF_USESTDHANDLES ? TRUE : FALSE, 
+				0, NULL, NULL, &si, &pi );
+
+			if ( bResult == TRUE )
+			{
+				afd.ffmpeg.hProcess = pi.hProcess;
+				afd.ffmpeg.hThread = pi.hThread;
+				// wait till ffmpeg client connects to the pipe
+				ConnectNamedPipe( afd.ffmpeg.hNamedPipe, NULL );
+			}
+			else
+			{
+				qint err = (qint)GetLastError();
+				if ( err == ERROR_FILE_NOT_FOUND ) {
+					Com_Printf( S_COLOR_ERROR "%s: ffmpeg binary not found!\n", __func__ );
+				} else {
+					Com_Printf( S_COLOR_ERROR "%s: ffmpeg startup error %d\n", __func__, err );
+				}
+
+				// cleanup pipe and log handle
+				CloseHandle( afd.ffmpeg.hNamedPipe );
+				afd.ffmpeg.hNamedPipe = INVALID_HANDLE_VALUE;
+				if ( WIN32_HANDLE_VALID( afd.ffmpeg.hStdErr ) )
+				{
+					CloseHandle( afd.ffmpeg.hStdErr );
+					afd.ffmpeg.hStdErr = INVALID_HANDLE_VALUE;
+				}
+
+				return qfalse;
+			}
+		}
+		else
+		{
+			Com_Printf( S_COLOR_ERROR "%s: error %i creating named pipe %s\n", __func__, (qint)GetLastError(), namedPipeName );
+			// cleanup log handle
+			if ( WIN32_HANDLE_VALID( afd.ffmpeg.hStdErr ) )
+			{
+				CloseHandle( afd.ffmpeg.hStdErr );
+				afd.ffmpeg.hStdErr = INVALID_HANDLE_VALUE;
+			}
 			return qfalse;
 		}
+#else // ! USE_WIN32_NAMED_PIPES
+		qchar cmd[MAX_OSPATH*3];
+		const qchar *cmd_fmt = "ffmpeg -threads 0 -f avi -i - -y %s \"%s\" 2> \"%s-log.txt\"";
+		Com_sprintf( cmd, sizeof( cmd ), cmd_fmt, pipeFormat, ospath, ospath );
 
-		ospath = FS_BuildOSPath( Cvar_VariableString( "fs_homepath" ), "", fileName );
-		Com_sprintf( cmd, sizeof( cmd ), cmd_fmt, cl_aviPipeFormat->string, ospath, ospath );
 		if ( (afd.f = FS_PipeOpenWrite( cmd, fileName )) == FS_INVALID_HANDLE )
 			return qfalse;
+#endif
 	}
-	else
+	else // direct uncompressed/mjpeg AVI write
 	{
 		if ( (afd.f = FS_FOpenFileWrite( fileName )) == FS_INVALID_HANDLE )
 			return qfalse;
@@ -408,7 +526,7 @@ qbool CL_OpenAVIForWriting( const qchar *fileName, qbool pipe, qbool reopen )
 	afd.width = cls.captureWidth;
 	afd.height = cls.captureHeight;
 
-	if ( cl_aviMotionJpeg->integer && !pipe )
+	if ( cl_aviMotionJpeg->integer && pipeFormat == NULL )
 		afd.motionJpeg = qtrue;
 	else
 		afd.motionJpeg = qfalse;
@@ -446,7 +564,7 @@ qbool CL_OpenAVIForWriting( const qchar *fileName, qbool pipe, qbool reopen )
 	// correct amount of space at the beginning of the file
 	CL_WriteAVIHeader();
 
-	if ( pipe )
+	if ( pipeFormat != NULL )
 	{
 		afd.pipe = qtrue;
 		SafeFS_Write( buffer, bufIndex, afd.f );
@@ -501,7 +619,7 @@ static qbool CL_CheckFileSize( qint bytesToAdd )
 		CL_CloseAVI( qtrue );
 
 		// ...And open a new one
-		CL_OpenAVIForWriting( va( "%s-%02d.avi", clc.videoName, ++clc.videoIndex ), qfalse, qtrue );
+		CL_OpenAVIForWriting( va( "%s-%02d.avi", clc.videoName, ++clc.videoIndex ), NULL, qtrue );
 
 		return qtrue;
 	}
@@ -628,7 +746,7 @@ void CL_WriteAVIAudioFrame( const byte *pcmBuffer, qint size )
 
 	if ( bytesInBuffer + size > PCM_BUFFER_SIZE )
 	{
-		Com_Printf( S_COLOR_YELLOW "WARNING: Audio capture buffer overflow -- truncating\n" );
+		Com_Printf( S_COLOR_WARNING "WARNING: Audio capture buffer overflow -- truncating\n" );
 		size = PCM_BUFFER_SIZE - bytesInBuffer;
 	}
 
@@ -691,9 +809,32 @@ qbool CL_CloseAVI( qbool reopen )
 
 	if ( afd.pipe )
 	{
-		Com_Printf( "Wrote %d:%d frames to pipe:%s\n", afd.numVideoFrames, afd.numAudioFrames, afd.fileName );
-		FS_FCloseFile( afd.f );
-		afd.f = FS_INVALID_HANDLE;
+		Com_DPrintf( "Wrote %d:%d frames to pipe %s\n", afd.numVideoFrames, afd.numAudioFrames, afd.fileName );
+		if ( afd.f != FS_INVALID_HANDLE )
+		{
+			FS_FCloseFile( afd.f );
+			afd.f = FS_INVALID_HANDLE;
+		}
+#ifdef USE_WIN32_NAMED_PIPES
+		if ( WIN32_HANDLE_VALID( afd.ffmpeg.hNamedPipe ) )
+		{
+			FlushFileBuffers( afd.ffmpeg.hNamedPipe );
+			DisconnectNamedPipe( afd.ffmpeg.hNamedPipe );
+			CloseHandle( afd.ffmpeg.hNamedPipe );
+			if ( WIN32_HANDLE_VALID( afd.ffmpeg.hProcess ) )
+			{
+				WaitForSingleObject( afd.ffmpeg.hProcess, INFINITE );
+				CloseHandle( afd.ffmpeg.hProcess );
+			}
+			CloseHandle( afd.ffmpeg.hThread );
+			if ( WIN32_HANDLE_VALID( afd.ffmpeg.hStdErr ) )
+				CloseHandle( afd.ffmpeg.hStdErr );
+			afd.ffmpeg.hNamedPipe = INVALID_HANDLE_VALUE;
+			afd.ffmpeg.hProcess = INVALID_HANDLE_VALUE;
+			afd.ffmpeg.hThread = INVALID_HANDLE_VALUE;
+			afd.ffmpeg.hStdErr = INVALID_HANDLE_VALUE;
+		}
+#endif
 		afd.fileOpen = qfalse;
 		afd.pipe = qfalse;
 		return qtrue;

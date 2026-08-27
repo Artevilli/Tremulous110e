@@ -982,6 +982,9 @@ FS_SetFilenameCallback(fnamecallback_f func);
 qchar *
 FS_CopyString(const qchar *in);
 
+qbool
+FS_CreatePath(const qchar *ospath);
+
 //AVI pipes
 fileHandle_t
 FS_PipeOpenWrite(const qchar *cmd, const qchar *filename);

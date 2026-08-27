@@ -659,28 +659,20 @@ Creates any directories needed to store the given filename
 qbool
 FS_CreatePath(const qchar *OSPath)
 {
-  qchar *ofs;
   qchar path[MAX_OSPATH * 2 + 1];
+  qchar *ofs;
 
   Q_strncpyz(path, OSPath, sizeof(path));
+  //Make sure we have OS correct slashes
   FS_ReplaceSeparators(path);
 
-  //skip creation of the root directory as it will always be there
-  ofs = strchr(path, PATH_SEP);
-  ofs++;
-
-  for(;ofs != NULL && *ofs;ofs++)
+  for(ofs = path + 1;*ofs;ofs++)
   {
     if (*ofs == PATH_SEP)
     {
       //create the directory
       *ofs = '\0';
-
-      if (!Sys_Mkdir(path))
-      {
-        Com_Error(ERR_FATAL, "FS_CreatePath: failed to create path \"%s\"\n", path);
-      }
-
+      Sys_Mkdir(path);
       *ofs = PATH_SEP;
     }
   }
