@@ -814,7 +814,10 @@ FS_CompareZipChecksum(const qchar *zipfile);
 qint
 FS_GetZipChecksum(const qchar *zipfile);
 
-qint		FS_LoadStack( void );
+qint
+FS_LoadStack(void);
+void
+FS_ResetLoadStack(void);
 
 qint		FS_GetFileList(  const qchar *path, const qchar *extension, qchar *listbuf, qint bufsize );
 
@@ -1278,8 +1281,14 @@ void Hunk_ClearTempMemory( void );
 void *Hunk_AllocateTempMemory( size_t size );
 void Hunk_FreeTempMemory( void *buf );
 qint	Hunk_MemoryRemaining( void );
-void Hunk_Log( void);
-void Hunk_Trash( void );
+void
+Hunk_Log(void);
+qint
+Hunk_GetTempMemory(void **buf);
+void *
+Hunk_MoveTempMemory(ha_pref preference);
+void
+Hunk_AllocPreference(ha_pref preference);
 
 unsigned qint
 Com_TouchMemory(void);
@@ -1324,7 +1333,7 @@ void CL_PacketEvent( const netadr_t *from, msg_t *msg );
 
 void CL_ConsolePrint( const qchar *text );
 
-void CL_MapLoading( void );
+qbool CL_MapLoading( void );
 // do a screen update before starting to load a map
 // when the server is going to load a new map, the entire hunk
 // will be cleared, so the client must shutdown cgame, ui, and

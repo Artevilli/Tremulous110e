@@ -1122,15 +1122,15 @@ screen to let the user know about it, then dump all client
 memory on the hunk from cgame, ui, and renderer
 =====================
 */
-void CL_MapLoading( void ) {
+qbool CL_MapLoading( void ) {
 	if ( com_dedicated->integer ) {
 		cls.state = CA_DISCONNECTED;
 		Key_SetCatcher( KEYCATCH_CONSOLE );
-		return;
+		return qfalse;
 	}
 
 	if ( !com_cl_running->integer ) {
-		return;
+		return qfalse;
 	}
 
 	Con_Close();
@@ -1159,6 +1159,8 @@ void CL_MapLoading( void ) {
 		// we don't need a challenge on the localhost
 		CL_CheckForResend();
 	}
+
+	return qtrue;
 }
 
 
@@ -3218,6 +3220,9 @@ void CL_StartHunkUsers( void ) {
 		}
 	}
 
+	// client data goes on low side of the hunk
+	Hunk_AllocPreference( h_low );
+
 	if ( !cls.rendererStarted ) {
 		cls.rendererStarted = qtrue;
 		CL_InitRenderer();
@@ -3373,6 +3378,7 @@ static void CL_InitRef( void ) {
 #endif
 	rimp.Hunk_AllocateTempMemory = Hunk_AllocateTempMemory;
 	rimp.Hunk_FreeTempMemory = Hunk_FreeTempMemory;
+	rimp.Hunk_GetTempMemory = Hunk_GetTempMemory;
 
 	rimp.CM_ClusterPVS = CM_ClusterPVS;
 	rimp.CM_DrawDebugSurface = CM_DrawDebugSurface;

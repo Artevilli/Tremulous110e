@@ -452,6 +452,19 @@ FS_LoadStack(void)
   return fs_loadStack;
 }
 
+
+/*
+=================
+FS_ResetLoadStack
+=================
+*/
+void
+FS_ResetLoadStack(void)
+{
+  fs_loadStack = 0;
+}
+
+
 /*
 ================
 return a hash value for the filename

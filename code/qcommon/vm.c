@@ -562,7 +562,7 @@ VM_LoadSymbols(vm_t *vm)
     }
 
     chars = strlen(token);
-    sym = Hunk_Alloc(sizeof(*sym) + chars, h_high);
+    sym = Hunk_Alloc(sizeof(*sym) + chars, h_current);
     *prev = sym;
     prev = &sym->next;
     sym->next = NULL;
@@ -1008,7 +1008,7 @@ VM_LoadQVM(vm_t *vm, qbool alloc)
   if (alloc)
   {
     //allocate zero filled space for initialized and uninitialized data
-    vm->dataBase = Hunk_Alloc(dataAlloc, h_high);
+    vm->dataBase = Hunk_Alloc(dataAlloc, h_current);
     vm->dataMask = dataLength - 1;
     vm->dataAlloc = dataAlloc;
   }
@@ -1043,7 +1043,7 @@ VM_LoadQVM(vm_t *vm, qbool alloc)
 
     if (alloc)
     {
-      vm->jumpTableTargets = (int32_t *)Hunk_Alloc(header->jtrgLength, h_high);
+      vm->jumpTableTargets = (int32_t *)Hunk_Alloc(header->jtrgLength, h_current);
     }
     else
     {
@@ -1080,7 +1080,7 @@ VM_LoadQVM(vm_t *vm, qbool alloc)
 
     if (alloc == qtrue)
     {
-      vm->jumpTableTargets = (int32_t *)Hunk_Alloc(length, h_high);
+      vm->jumpTableTargets = (int32_t *)Hunk_Alloc(length, h_current);
     }
     else
     {
@@ -2416,7 +2416,7 @@ VM_Create(vmIndex_t index, syscall_t systemCalls, dllSyscall_t dllSyscalls, vmIn
 
   //allocate space for the jump targets, which will be filled in by the compile/prep functions
   vm->instructionCount = header->instructionCount;
-  //vm->instructionPointers = Hunk_Alloc(vm->instructionCount * sizeof(*vm->instructionPointers), h_high);
+  //vm->instructionPointers = Hunk_Alloc(vm->instructionCount * sizeof(*vm->instructionPointers), h_current);
   vm->instructionPointers = NULL;
 
   //copy or compile the instructions

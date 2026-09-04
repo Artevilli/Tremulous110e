@@ -969,6 +969,8 @@ SV_RestartGameProgs(void)
 
   VM_Call(sv.gvm, 1, GAME_SHUTDOWN, qtrue);
 
+  Hunk_AllocPreference(h_high);
+
   //do a restart instead of a free
   sv.gvm = VM_Restart(sv.gvm);
 

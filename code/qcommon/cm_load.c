@@ -121,7 +121,7 @@ CMod_LoadShaders(const lump_t *l)
     Com_Error(ERR_DROP, "%s: map with no shaders", __func__);
   }
 
-  cm.shaders = Hunk_Alloc(count * sizeof(*cm.shaders), h_high);
+  cm.shaders = Hunk_Alloc(count * sizeof(*cm.shaders), h_current);
   cm.numShaders = count;
 
   Com_Memcpy(cm.shaders, in, count * sizeof(*cm.shaders));
@@ -174,7 +174,7 @@ CMod_LoadSubmodels(const lump_t *l)
     Com_Error(ERR_DROP, "%s: MAX_SUBMODELS exceeded", __func__);
   }
 
-  cm.cmodels = Hunk_Alloc(count * sizeof(*cm.cmodels), h_high);
+  cm.cmodels = Hunk_Alloc(count * sizeof(*cm.cmodels), h_current);
   cm.numSubModels = count;
 
   for(i = 0;i < count;i++, in++)
@@ -202,7 +202,7 @@ CMod_LoadSubmodels(const lump_t *l)
 
     //make a "leaf" just to hold the model's brushes and surfaces
     out->leaf.numLeafBrushes = numBrushes;
-    indexes = Hunk_Alloc(numBrushes * sizeof(*indexes), h_high);
+    indexes = Hunk_Alloc(numBrushes * sizeof(*indexes), h_current);
     out->leaf.firstLeafBrush = indexes - cm.leafbrushes;
 
     for(j = 0;j < numBrushes;j++)
@@ -219,7 +219,7 @@ CMod_LoadSubmodels(const lump_t *l)
     }
 
     out->leaf.numLeafSurfaces = numSurfaces;
-    indexes = Hunk_Alloc(numSurfaces * sizeof(*indexes), h_high);
+    indexes = Hunk_Alloc(numSurfaces * sizeof(*indexes), h_current);
     out->leaf.firstLeafSurface = indexes - cm.leafsurfaces;
 
     for(j = 0;j < numSurfaces;j++)
@@ -260,7 +260,7 @@ CMod_LoadNodes(const lump_t *l)
     Com_Error(ERR_DROP, "%s: map has no nodes", __func__);
   }
 
-  cm.nodes = Hunk_Alloc(count * sizeof(*cm.nodes), h_high);
+  cm.nodes = Hunk_Alloc(count * sizeof(*cm.nodes), h_current);
   cm.numNodes = count;
 
   out = cm.nodes;
@@ -343,7 +343,7 @@ CMod_LoadBrushes(const lump_t *l)
 
   count = l->filelen / sizeof(*in);
 
-  cm.brushes = Hunk_Alloc((BOX_BRUSHES + count) * sizeof(*cm.brushes), h_high);
+  cm.brushes = Hunk_Alloc((BOX_BRUSHES + count) * sizeof(*cm.brushes), h_current);
   cm.numBrushes = count;
 
   out = cm.brushes;
@@ -405,7 +405,7 @@ CMod_LoadLeafs(const lump_t *l)
     Com_Error(ERR_DROP, "%s: map with no leafs", __func__);
   }
 
-  cm.leafs = Hunk_Alloc((BOX_LEAFS + count) * sizeof(*cm.leafs), h_high);
+  cm.leafs = Hunk_Alloc((BOX_LEAFS + count) * sizeof(*cm.leafs), h_current);
   cm.numLeafs = count;
 
   out = cm.leafs;
@@ -459,8 +459,8 @@ CMod_LoadLeafs(const lump_t *l)
     }
   }
 
-  cm.areas = Hunk_Alloc(cm.numAreas * sizeof(*cm.areas), h_high);
-  cm.areaPortals = Hunk_Alloc(cm.numAreas * cm.numAreas * sizeof(*cm.areaPortals), h_high);
+  cm.areas = Hunk_Alloc(cm.numAreas * sizeof(*cm.areas), h_current);
+  cm.areaPortals = Hunk_Alloc(cm.numAreas * cm.numAreas * sizeof(*cm.areaPortals), h_current);
 }
 
 /*
@@ -492,7 +492,7 @@ CMod_LoadPlanes(const lump_t *l)
     Com_Error(ERR_DROP, "%s: map with no planes", __func__);
   }
 
-  cm.planes = Hunk_Alloc((BOX_PLANES + count) * sizeof(*cm.planes), h_high);
+  cm.planes = Hunk_Alloc((BOX_PLANES + count) * sizeof(*cm.planes), h_current);
   cm.numPlanes = count;
 
   out = cm.planes;
@@ -539,7 +539,7 @@ CMod_LoadLeafBrushes(const lump_t *l)
 
   count = l->filelen / sizeof(*in);
 
-  cm.leafbrushes = Hunk_Alloc((count + BOX_BRUSHES) * sizeof(*cm.leafbrushes), h_high);
+  cm.leafbrushes = Hunk_Alloc((count + BOX_BRUSHES) * sizeof(*cm.leafbrushes), h_current);
   cm.numLeafBrushes = count;
 
   out = cm.leafbrushes;
@@ -579,7 +579,7 @@ CMod_LoadLeafSurfaces(const lump_t *l)
 
   count = l->filelen / sizeof(*in);
 
-  cm.leafsurfaces = Hunk_Alloc(count * sizeof(*cm.leafsurfaces), h_high);
+  cm.leafsurfaces = Hunk_Alloc(count * sizeof(*cm.leafsurfaces), h_current);
   cm.numLeafSurfaces = count;
 
   out = cm.leafsurfaces;
@@ -627,7 +627,7 @@ CMod_LoadBrushSides(const lump_t *l)
 
   count = l->filelen / sizeof(*in);
 
-  cm.brushsides = Hunk_Alloc((BOX_SIDES + count) * sizeof(*cm.brushsides), h_high);
+  cm.brushsides = Hunk_Alloc((BOX_SIDES + count) * sizeof(*cm.brushsides), h_current);
   cm.numBrushSides = count;
 
   out = cm.brushsides;
@@ -800,7 +800,7 @@ CMod_CreateBrushSideWindings(void)
     //Allocate a buffer of the actual size
     edgesAlloc = sizeof(cbrushedge_t) * brush->numEdges;
     totalEdgesAlloc += edgesAlloc;
-    brush->edges = (cbrushedge_t *)Hunk_Alloc(edgesAlloc, h_low);
+    brush->edges = (cbrushedge_t *)Hunk_Alloc(edgesAlloc, h_current);
 
     //Copy temporary buffer to permanent buffer
     Com_Memcpy(brush->edges, tempEdges, edgesAlloc);
@@ -822,7 +822,7 @@ CMod_LoadEntityString
 static void
 CMod_LoadEntityString(const lump_t *l)
 {
-  cm.entityString = Hunk_Alloc(l->filelen + 1, h_high);
+  cm.entityString = Hunk_Alloc(l->filelen + 1, h_current);
   cm.numEntityChars = l->filelen;
   Com_Memcpy(cm.entityString, cmod_base + l->fileofs, l->filelen);
   cm.entityString[l->filelen] = 0;
@@ -843,7 +843,7 @@ CMod_LoadVisibility(const lump_t *l)
   byte *buf;
 
   len = PAD(cm.numClusters, 64) >> 3;
-  cm.novis = Hunk_Alloc(len, h_high);
+  cm.novis = Hunk_Alloc(len, h_current);
   Com_Memset(cm.novis, 0xff, len);
 
   len = l->filelen;
@@ -880,7 +880,7 @@ CMod_LoadVisibility(const lump_t *l)
     Com_Error(ERR_DROP, "%s: bad clusterBytes", __func__);
   }
 
-  cm.visibility = Hunk_Alloc(len, h_high);
+  cm.visibility = Hunk_Alloc(len, h_current);
   cm.numClusters = numClusters;
   cm.clusterBytes = clusterBytes;
   Com_Memcpy(cm.visibility, buf, len);
@@ -921,7 +921,7 @@ CMod_LoadPatches(const lump_t *surfs, const lump_t *verts)
   }
 
   cm.numSurfaces = count = surfs->filelen / sizeof(*in);
-  cm.surfaces = Hunk_Alloc(cm.numSurfaces * sizeof(cm.surfaces[0]), h_high);
+  cm.surfaces = Hunk_Alloc(cm.numSurfaces * sizeof(cm.surfaces[0]), h_current);
 
   dv = (void *)(cmod_base + verts->fileofs);
 
@@ -943,7 +943,7 @@ CMod_LoadPatches(const lump_t *surfs, const lump_t *verts)
 
     //FIXME: check for non-colliding patches
 
-    cm.surfaces[i] = patch = Hunk_Alloc(sizeof(*patch), h_high);
+    cm.surfaces[i] = patch = Hunk_Alloc(sizeof(*patch), h_current);
 
     //load the full drawverts onto the stack
     width = LittleLong(in->patchWidth);
@@ -1048,7 +1048,7 @@ CM_LoadMap
 Loads in the map and all submodels
 ==================
 */
-void
+void *
 CM_LoadMap(const qchar *name, qbool clientload, qint *checksum)
 {
   void *buf;
@@ -1071,7 +1071,7 @@ CM_LoadMap(const qchar *name, qbool clientload, qint *checksum)
   if (!strcmp(cm.name, name) && clientload)
   {
     *checksum = cm.checksum;
-    return;
+    return NULL;
   }
 
   //free old stuff
@@ -1083,7 +1083,7 @@ CM_LoadMap(const qchar *name, qbool clientload, qint *checksum)
     cm.numLeafs = 1;
     cm.numClusters = 1;
     cm.numAreas = 1;
-    cm.cmodels = Hunk_Alloc(sizeof(*cm.cmodels), h_high);
+    cm.cmodels = Hunk_Alloc(sizeof(*cm.cmodels), h_current);
     *checksum = 0;
     return;
   }
@@ -1156,7 +1156,7 @@ CM_LoadMap(const qchar *name, qbool clientload, qint *checksum)
   CMod_CreateBrushSideWindings();
 
   //we are NOT freeing the file, because it is cached for the ref
-  FS_FreeFile(buf);
+  //FS_FreeFile(buf);
 
   //check for cycles so we don't overflow stack
   CM_ValidateTree();
@@ -1170,6 +1170,8 @@ CM_LoadMap(const qchar *name, qbool clientload, qint *checksum)
   {
     Q_strncpyz(cm.name, name, sizeof(cm.name));
   }
+
+  return buf;
 }
 
 /*
@@ -1299,7 +1301,7 @@ CM_InitBoxHull(void)
   box_brush->numsides = 6;
   box_brush->sides = cm.brushsides + cm.numBrushSides;
   box_brush->contents = CONTENTS_BODY;
-  box_brush->edges = (cbrushedge_t *)Hunk_Alloc(sizeof(cbrushedge_t) * 12, h_low);
+  box_brush->edges = (cbrushedge_t *)Hunk_Alloc(sizeof(cbrushedge_t) * 12, h_current);
   box_brush->numEdges = 12;
 
   box_model.leaf.numLeafBrushes = 1;
