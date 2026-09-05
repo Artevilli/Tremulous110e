@@ -357,7 +357,8 @@ static void CL_WriteAVIHeader( void )
 
 qbool CL_ValidatePipeFormat( const qchar *s )
 {
-	while ( *s != '\0' ) 
+	qint p = 0;
+	while ( *s != '\0' )
 	{
 		// deny directory traversal patterns
 		if ( *s == '.' && *(s+1) == '.' && ( *(s+2) == PATH_SEP || *(s+2) == PATH_SEP_FOREIGN ) )
@@ -368,7 +369,13 @@ qbool CL_ValidatePipeFormat( const qchar *s )
 		// deny redirections/special characters
 		if ( *s == '>' || *s == '&' )
 			return qfalse;
+		// single '|' can be used to specify extension
+		if ( *s == '|' )
+			p++;
 		s++;
+	}
+	if ( p > 1 ) {
+		return qfalse;
 	}
 	return qtrue;
 }
