@@ -314,7 +314,6 @@
     <ClCompile Include="..\..\qcommon\msg.c" />
     <ClCompile Include="..\..\qcommon\net_chan.c" />
     <ClCompile Include="..\..\qcommon\net_ip.c" />
-    <ClCompile Include="..\..\qcommon\parse.c" />
     <ClCompile Include="..\..\qcommon\puff.c" />
     <ClCompile Include="..\..\qcommon\q_math.c" />
     <ClCompile Include="..\..\qcommon\q_shared.c" />
@@ -412,6 +411,10 @@
     <ResourceCompile Include="..\win_resource.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="botlib.vcxproj">
+      <Project>{a410161f-ae9f-485d-a01f-5294891430a6}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
     <ProjectReference Include="libjpeg.vcxproj">
       <Project>{17867AF4-12CB-4847-A13E-BF37D8BDF597}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>

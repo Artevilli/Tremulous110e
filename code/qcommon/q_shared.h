@@ -764,7 +764,6 @@ void GetPerpendicularViewVector( const vec3_t point, const vec3_t p1,
 		const vec3_t p2, vec3_t up );
 void ProjectPointOntoVector( vec3_t point, vec3_t vStart,
 		vec3_t vEnd, vec3_t vProj );
-float VectorDistance( vec3_t v1, vec3_t v2 );
 
 float pointToLineDistance( const vec3_t point, const vec3_t p1, const vec3_t p2 );
 float VectorMinComponent( vec3_t v );

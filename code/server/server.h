@@ -525,6 +525,8 @@ void
 SV_ShutdownGameProgs(void);
 void
 SV_RestartGameProgs(void);
+qbool
+SV_inPVS(const vec3_t p1, const vec3_t p2);
 
 #if defined(USE_JAVA)
 void
@@ -554,6 +556,8 @@ Java_G_ConsoleCommand(void);
 //
 // sv_bot.c
 //
+void
+SV_BotInitBotLib(void);
 void
 SV_BotFrame(qint time);
 qint

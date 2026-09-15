@@ -400,6 +400,7 @@
 				>
 			</File>
 			<File
+
 				RelativePath="..\..\client\cl_parse.c"
 				>
 			</File>
@@ -521,10 +522,6 @@
 			</File>
 			<File
 				RelativePath="..\..\qcommon\net_ip.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\qcommon\parse.c"
 				>
 			</File>
 			<File

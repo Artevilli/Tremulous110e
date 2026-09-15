@@ -1085,7 +1085,6 @@ Q3OBJ = \
   $(B)/client/net_ip.o \
   $(B)/client/huffman.o \
   $(B)/client/huffman_static.o \
-  $(B)/client/parse.o \
   \
   $(B)/client/snd_adpcm.o \
   $(B)/client/snd_dma.o \
@@ -1115,6 +1114,35 @@ Q3OBJ = \
   \
   $(B)/client/unzip.o \
   $(B)/client/puff.o \
+  \
+  $(B)/client/be_aas_bspq3.o \
+  $(B)/client/be_aas_cluster.o \
+  $(B)/client/be_aas_debug.o \
+  $(B)/client/be_aas_entity.o \
+  $(B)/client/be_aas_file.o \
+  $(B)/client/be_aas_main.o \
+  $(B)/client/be_aas_move.o \
+  $(B)/client/be_aas_optimize.o \
+  $(B)/client/be_aas_reach.o \
+  $(B)/client/be_aas_route.o \
+  $(B)/client/be_aas_routealt.o \
+  $(B)/client/be_aas_sample.o \
+  $(B)/client/be_ai_char.o \
+  $(B)/client/be_ai_chat.o \
+  $(B)/client/be_ai_gen.o \
+  $(B)/client/be_ai_goal.o \
+  $(B)/client/be_ai_move.o \
+  $(B)/client/be_ai_weap.o \
+  $(B)/client/be_ai_weight.o \
+  $(B)/client/be_ea.o \
+  $(B)/client/be_interface.o \
+  $(B)/client/l_crc.o \
+  $(B)/client/l_libvar.o \
+  $(B)/client/l_log.o \
+  $(B)/client/l_memory.o \
+  $(B)/client/l_precomp.o \
+  $(B)/client/l_script.o \
+  $(B)/client/l_struct.o
 
 ifneq ($(USE_SYSTEM_JPEG),1)
   Q3OBJ += $(JPGOBJ)
@@ -1306,12 +1334,40 @@ Q3DOBJ = \
   $(B)/ded/net_ip.o \
   $(B)/ded/huffman.o \
   $(B)/ded/huffman_static.o \
-  $(B)/ded/parse.o \
   \
   $(B)/ded/q_math.o \
   $(B)/ded/q_shared.o \
   \
   $(B)/ded/unzip.o \
+  \
+  $(B)/ded/be_aas_bspq3.o \
+  $(B)/ded/be_aas_cluster.o \
+  $(B)/ded/be_aas_debug.o \
+  $(B)/ded/be_aas_entity.o \
+  $(B)/ded/be_aas_file.o \
+  $(B)/ded/be_aas_main.o \
+  $(B)/ded/be_aas_move.o \
+  $(B)/ded/be_aas_optimize.o \
+  $(B)/ded/be_aas_reach.o \
+  $(B)/ded/be_aas_route.o \
+  $(B)/ded/be_aas_routealt.o \
+  $(B)/ded/be_aas_sample.o \
+  $(B)/ded/be_ai_char.o \
+  $(B)/ded/be_ai_chat.o \
+  $(B)/ded/be_ai_gen.o \
+  $(B)/ded/be_ai_goal.o \
+  $(B)/ded/be_ai_move.o \
+  $(B)/ded/be_ai_weap.o \
+  $(B)/ded/be_ai_weight.o \
+  $(B)/ded/be_ea.o \
+  $(B)/ded/be_interface.o \
+  $(B)/ded/l_crc.o \
+  $(B)/ded/l_libvar.o \
+  $(B)/ded/l_log.o \
+  $(B)/ded/l_memory.o \
+  $(B)/ded/l_precomp.o \
+  $(B)/ded/l_script.o \
+  $(B)/ded/l_struct.o
 
 ifdef MINGW
   Q3DOBJ += \

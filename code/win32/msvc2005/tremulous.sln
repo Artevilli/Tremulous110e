@@ -1,5 +1,7 @@
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "botlib", "botlib.vcproj", "{A410161F-AE9F-485D-A01F-5294891430A6}"
+EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libjpeg", "libjpeg.vcproj", "{17867AF4-12CB-4847-A13E-BF37D8BDF597}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libogg", "libogg.vcproj", "{DE91A5EF-6E01-4113-BDA1-BCC8AF40FAB0}"

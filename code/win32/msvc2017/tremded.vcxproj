@@ -283,7 +283,6 @@
     <ClCompile Include="..\..\qcommon\msg.c" />
     <ClCompile Include="..\..\qcommon\net_chan.c" />
     <ClCompile Include="..\..\qcommon\net_ip.c" />
-    <ClCompile Include="..\..\qcommon\parse.c" />
     <ClCompile Include="..\..\qcommon\q_math.c" />
     <ClCompile Include="..\..\qcommon\q_shared.c" />
     <ClCompile Include="..\..\qcommon\unzip.c" />
@@ -346,6 +345,12 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\win_resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="botlib.vcxproj">
+      <Project>{a410161f-ae9f-485d-a01f-5294891430a6}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="..\..\asm\common_x64.asm">

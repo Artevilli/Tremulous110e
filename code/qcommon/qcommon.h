@@ -1593,17 +1593,6 @@ HuffmanGetBit(const byte* buffer, qint bitIndex);
 qint
 HuffmanGetSymbol(unsigned *symbol, const byte* buffer, qint bitIndex);
 
-qint
-Parse_AddGlobalDefine(qchar *string);
-qint
-Parse_LoadSourceHandle(const qchar *filename);
-qint
-Parse_FreeSourceHandle(qint handle);
-qint
-Parse_ReadTokenHandle(qint handle, pc_token_t *pc_token);
-qint
-Parse_SourceFileAndLine(qint handle, qchar *filename, qint *line);
-
 #define	SV_ENCODE_START 4
 #define SV_DECODE_START 12
 #define	CL_ENCODE_START 12

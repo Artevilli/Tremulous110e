@@ -919,6 +919,9 @@ SV_Init(void)
 #include "sv_cvars.h"
 #undef SV_CVAR_LIST
 
+  //init the botlib here because we need the pre-compiler in the UI
+  SV_BotInitBotLib();
+
   //track group cvar changes
   Cvar_SetGroup(sv_lanForceRate, CVG_SERVER);
   Cvar_SetGroup(sv_minRate, CVG_SERVER);

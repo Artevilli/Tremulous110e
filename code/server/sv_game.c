@@ -26,6 +26,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #if !defined(USE_JAVA)
 
+#include "../botlib/botlib.h"
+
+botlib_export_t	*botlib_export;
+
 static void
 SV_GameError(const qchar *string)
 {
@@ -203,7 +207,7 @@ SV_inPVS
 Also checks portalareas so that doors block sight
 =================
 */
-static qbool
+qbool
 SV_inPVS(const vec3_t p1, const vec3_t p2)
 {
   qint leafnum;
@@ -758,25 +762,25 @@ SV_GameSystemCalls(intptr_t *args)
     //====================================
 
     case
-    G_PARSE_ADD_GLOBAL_DEFINE:
-      return Parse_AddGlobalDefine(VMA(1));
+    BOTLIB_PC_ADD_GLOBAL_DEFINE:
+      return botlib_export->PC_AddGlobalDefine(VMA(1));
 
     case
-    G_PARSE_LOAD_SOURCE:
-      return Parse_LoadSourceHandle(VMA(1));
+    BOTLIB_PC_LOAD_SOURCE:
+      return botlib_export->PC_LoadSourceHandle(VMA(1));
 
     case
-    G_PARSE_FREE_SOURCE:
-      return Parse_FreeSourceHandle(args[1]);
+    BOTLIB_PC_FREE_SOURCE:
+      return botlib_export->PC_FreeSourceHandle(args[1]);
 
     case
-    G_PARSE_READ_TOKEN:
+    BOTLIB_PC_READ_TOKEN:
       VM_CHECKBOUNDS(sv.gvm, args[2], sizeof(pc_token_t));
-      return Parse_ReadTokenHandle(args[1], VMA(2));
+      return botlib_export->PC_ReadTokenHandle(args[1], VMA(2));
 
     case
-    G_PARSE_SOURCE_FILE_AND_LINE:
-      return Parse_SourceFileAndLine(args[1], VMA(2), VMA(3));
+    BOTLIB_PC_SOURCE_FILE_AND_LINE:
+      return botlib_export->PC_SourceFileAndLine(args[1], VMA(2), VMA(3));
 
     //====================================
 

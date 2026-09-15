@@ -94,9 +94,6 @@
     <ClCompile Include="..\..\qcommon\net_ip.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\qcommon\parse.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\qcommon\puff.c">
       <Filter>Source Files</Filter>
     </ClCompile>
