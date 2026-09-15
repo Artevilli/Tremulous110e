@@ -1009,6 +1009,7 @@ default values.
 
 #define CVAR_DEVELOPER 0x10000 //can be set only in developer mode
 #define CVAR_NOTABCOMPLETE 0x20000 //no tab completion in console
+#define CVAR_PROTECTED_SAFE 0x40000 //special flag specifically used for console notify text
 
 #define CVAR_ARCHIVE_ND (CVAR_ARCHIVE | CVAR_NODEFAULT)
 
