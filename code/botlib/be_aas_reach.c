@@ -2193,6 +2193,8 @@ static qint AAS_Reachability_Jump(qint area1num, qint area2num)
 			} //end for
 		} //end for
 	} //end for
+	// no edge pair supplied endpoints
+	if (bestdist == 999999) return qfalse;
 	VectorMiddle(beststart, beststart2, beststart);
 	VectorMiddle(bestend, bestend2, bestend);
 	if (bestdist > 4 && bestdist < maxjumpdistance)
