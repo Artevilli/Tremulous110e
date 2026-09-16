@@ -794,8 +794,13 @@ FS_AllowedExtension(const qchar *fileName, qbool allowPk3s, const qchar **ext)
 
   e = strrchr(fileName, '.');
 
+  if (!e)
+  {
+    return qtrue;
+  }
+
   //check for unix '.so.[0-9]' pattern
-  if (e >= (fileName + 3) && *(e + 1) >= '0' && *(e + 1) <= '9' && *(e + 2) == '\0') 
+  if ((e - fileName) >= 3 && *(e + 1) >= '0' && *(e + 1) <= '9' && *(e + 2) == '\0')
   {
     if (*(e - 3) == '.' && (*(e - 2) == 's' || *(e -2) == 'S') && (*(e - 1) == 'o' || *(e - 1) == 'O'))
     {
@@ -806,11 +811,6 @@ FS_AllowedExtension(const qchar *fileName, qbool allowPk3s, const qchar **ext)
 
       return qfalse;
     }
-  }
-
-  if (!e)
-  {
-    return qtrue;
   }
 
   e++; //skip '.'

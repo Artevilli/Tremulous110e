@@ -2607,7 +2607,7 @@ VM_Call(vm_t *vm, qint nargs, qint callnum, ...)
   if (vm->entryPoint)
   {
     //rcg010207 -  see dissertation at top of VM_DllSyscall() in this file.
-    int32_t args[MAX_VMMAIN_CALL_ARGS - 1];
+    int32_t args[MAX_VMMAIN_CALL_ARGS - 1] = {0};
     va_list ap;
     va_start(ap, callnum);
 

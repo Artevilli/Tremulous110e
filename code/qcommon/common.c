@@ -4030,6 +4030,7 @@ parseAffinityMask(const qchar *str, uint64_t *outv, qint level)
 {
   uint64_t v;
   uint64_t mask = 0;
+  qint hex;
 
   while(*str != '\0')
   {
@@ -4051,9 +4052,9 @@ parseAffinityMask(const qchar *str, uint64_t *outv, qint level)
       ++str;
       continue;
     }
-    else if (*str == '0' && (str[1] == 'x' || str[1] == 'X') && (v = hex_code(str[2])) >= 0)
+    else if (*str == '0' && (str[1] == 'x' || str[1] == 'X') && (hex = hex_code(str[2])) >= 0)
     {
-      qint hex;
+      v = hex;
 
       str += 3; //0xH
 
@@ -4083,9 +4084,11 @@ parseAffinityMask(const qchar *str, uint64_t *outv, qint level)
     {
       while(*str == '+' || *str == '-')
       {
+        const char op = *str;
+
         str = parseAffinityMask(str + 1, &v, level + 1);
 
-        switch(*str)
+        switch(op)
         {
           case
           '+':
