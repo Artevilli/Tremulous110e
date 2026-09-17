@@ -2060,7 +2060,7 @@ SV_VerifyPaks_f(client_t *cl)
       cl->state = CS_ZOMBIE; //skip delta generation
       SV_SendClientSnapshot(cl);
       cl->state = CS_ACTIVE;
-      SV_DropClient(cl, "Unpure client detected. Invalid .PK3 files referenced! You may need to set cl_allowDownload 1 if it isn't already set."); //Chey: should never happen... unless someone disabled http downloads on a newer client?
+      SV_DropClient(cl, "Unpure client detected. Invalid .PK3 files referenced!"); //Chey: should never happen... unless someone disabled http downloads on a newer client?
     }
   }
 }

@@ -870,7 +870,7 @@ SV_GameSystemCalls(intptr_t *args)
       Com_Error(ERR_DROP, "Bad game system trap: %ld", (long qint)args[0]);
   }
 
-  return -1;
+  return 0;
 }
 
 /*
