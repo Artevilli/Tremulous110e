@@ -30,6 +30,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 botlib_export_t	*botlib_export;
 
+static unsigned qvmver; //0 - unknown, 1 - pre darklegion botlib removal, 2 - post darklegion botlib removal
+
 static void
 SV_GameError(const qchar *string)
 {
@@ -519,6 +521,18 @@ SV_GameSystemCalls(intptr_t *args)
 
   ++sv.gvm->syscallCount;
 
+  if (qvmver == 1)
+  {
+    if (args[0] >= 36 && args[0] <= 38)
+    {
+      args[0] -= 2;
+    }
+    else if (args[0] >= 41 && args[0] <= 46)
+    {
+      args[0] -= 4;
+    }
+  }
+
   switch(args[0])
   {
     case
@@ -747,6 +761,16 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_REAL_TIME:
+      if (qvmver == 0 && args[2] == 1024)
+      {
+        qvmver = 1;
+        return SV_GameSystemCalls(args);
+      }
+      else
+      {
+        qvmver = 2;
+      }
+
       return Com_RealTime(VMA(1));
 
     case
@@ -939,6 +963,9 @@ SV_InitGameVM(qbool restart)
 
   //start the entity parsing at the beginning
   sv.entityParsePoint = CM_EntityString();
+
+  //reset vm check
+  qvmver = 0;
 
   //clear all gentity pointers that might still be set from
   //a previous level
