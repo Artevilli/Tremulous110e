@@ -297,7 +297,7 @@ searchpath_s
 }
 searchpath_t;
 
-#define MAX_BASEGAMES 4
+#define MAX_BASEGAMES 8
 static qchar basegame_str[MAX_OSPATH];
 static qchar *basegames[MAX_BASEGAMES];
 static qint basegame_cnt;
@@ -794,6 +794,11 @@ FS_AllowedExtension(const qchar *fileName, qbool allowPk3s, const qchar **ext)
 
   e = strrchr(fileName, '.');
 
+  if (ext)
+  {
+    *ext = e ? e + 1:"";
+  }
+
   if (!e)
   {
     return qtrue;
@@ -828,10 +833,10 @@ FS_AllowedExtension(const qchar *fileName, qbool allowPk3s, const qchar **ext)
   {
     if (!Q_stricmp(e, extlist[i]))
     {
-      if (ext)
-      {
-        *ext = e;
-      }
+      //if (ext)
+      //{
+        //*ext = e;
+      //}
 
       return qfalse;
     }
