@@ -5071,7 +5071,7 @@ __compile:
               emit_fild(var.base, var.addr); //fild dword ptr base[offset]
               check_st_depth();
               store_st_opstack(ci);
-              ip += 1; OP_CVIF;
+              ip += 1; //OP_CVIF
               break;
             }
 #endif //USE_X87
