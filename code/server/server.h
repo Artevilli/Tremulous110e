@@ -45,6 +45,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #define DEBUG_SV_CHALLENGE //enable for com_dprintf debugging output
 #endif
 
+//improve udp download rate control for better performance, especially on slower or less stable connections
+//supports larger downloads
+#define UDP_DOWNLOAD_OPTIMIZE
+
 #define	PERS_SCORE 0 //!!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
 
 #define MAX_BPS_WINDOW 20
@@ -222,6 +226,18 @@ typedef enum
 }
 gameStateAck_t;
 
+#if defined(UDP_DOWNLOAD_OPTIMIZE)
+#define MAX_DOWNLOAD_MESSAGE_HISTORY 64
+
+typedef struct
+{
+  qint blockNumber;
+  qint msgNumber;
+  qint size;
+}
+downloadMessageRecord_t;
+#endif
+
 typedef struct
 client_s
 {
@@ -248,6 +264,37 @@ client_s
   //qint serverId; //last acknowledged server id
 
   //downloading
+#if defined(UDP_DOWNLOAD_OPTIMIZE)
+  qchar downloadName[MAX_QPATH]; //if not empty string, we are downloading
+
+  //source file
+  fileHandle_t download; //file being downloaded
+  qint downloadSize; //total bytes in pk3
+  unsigned downloadSrcFileRemaining; //number of bytes left to read from file
+
+  //file read buffer
+  qchar *downloadSrcChunk; //current chunk buffer
+  unsigned downloadSrcChunkPos; //number of bytes read from current chunk
+  unsigned downloadSrcChunkSize; //total bytes in current chunk
+
+  //download blocks
+  unsigned qchar *downloadBlocks[MAX_DOWNLOAD_WINDOW];
+  qint downloadBlockSize[MAX_DOWNLOAD_WINDOW];
+  qint downloadClientBlock; //one more than last block acknowledged by client
+  qint downloadXmitBlock; //one more than last block sent (may go backwards for retransmit)
+  qint downloadCurrentBlock; //one more than last block generated on server
+
+  //download messages
+  downloadMessageRecord_t downloadMsgTable[MAX_DOWNLOAD_MESSAGE_HISTORY];
+  qint downloadClientMsg; //one more than last msg (table index) acknowledged by client
+  qint downloadRetransmitMsg; //first message (table index) since xmit block was reset for retransmit
+  qint downloadCurrentMsg; //one more than last msg (table index) generated on server
+  qint downloadLastSentTime; //time in Sys_Milliseconds() of last outgoing packet
+
+  //rate limiting
+  double downloadCurrentRate; //rate in KB/s
+  qint downloadRatePool; //bytes available to send
+#else
   qchar downloadName[MAX_QPATH]; //if not empty string, we are downloading
   fileHandle_t download; //file being downloaded
   qint downloadSize; //total bytes (can't use EOF because of paks)
@@ -259,6 +306,7 @@ client_s
   qint downloadBlockSize[MAX_DOWNLOAD_WINDOW];
   qbool downloadEOF; //We have sent the EOF block
   qint downloadSendTime;	//time we last sent a package
+#endif
 
   qbool deltaActive; //delta snapshots enabled
   qint deltaStart; //don't delta from messages earlier than this when CS_ACTIVE

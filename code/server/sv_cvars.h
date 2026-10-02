@@ -60,7 +60,11 @@ SV_CVAR_RANGE(sv_minRate, "0", "100000", CV_INTEGER)
 SV_CVAR(sv_maxRate, "sv_maxRate", "0", CVAR_ARCHIVE_ND | CVAR_SERVERINFO, "Maximum server bandwidth (in bit per second) a client can use.")
 SV_CVAR_RANGE(sv_maxRate, "0", "100000", CV_INTEGER)
 SV_CVAR(sv_dlRate, "sv_dlRate", "100", CVAR_ARCHIVE | CVAR_SERVERINFO, "Bandwidth allotted to PK3 file downloads via UDP, in kbyte/s.")
+#if defined(UDP_DOWNLOAD_OPTIMIZE)
+SV_CVAR_RANGE(sv_dlRate, "0", "1500", CV_INTEGER)
+#else
 SV_CVAR_RANGE(sv_dlRate, "0", "500", CV_INTEGER)
+#endif
 SV_CVAR(sv_floodWait, "sv_floodWait", "500", CVAR_ARCHIVE, "Time in milliseconds that a client has to wait before sending another client command.")
 SV_CVAR(sv_floodLimit, "sv_floodLimit", "8", CVAR_ARCHIVE, "The number of client commands a client is allowed to send before flood protection triggers.")
 SV_CVAR(sv_floodProtect, "sv_floodProtect", "1", CVAR_ARCHIVE | CVAR_SERVERINFO, "Toggle server flood protection to keep players from bringing the server down.")
