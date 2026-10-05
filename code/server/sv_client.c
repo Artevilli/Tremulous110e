@@ -615,7 +615,7 @@ SV_DirectConnect(const netadr_t *from)
   {
     if (!SVC_RateLimit(&bucket, 10, 200))
     {
-      NET_OutOfBandPrint(NS_SERVER, from, "print\nmissing challenge in userinfo\n");
+      NET_OutOfBandPrint(NS_SERVER, from, "print\nMissing challenge in userinfo.\n");
     }
 
     return;
@@ -633,7 +633,7 @@ SV_DirectConnect(const netadr_t *from)
       //avoid excessive outgoing traffic
       if (!SVC_RateLimit(&bucket, 10, 200))
       {
-        NET_OutOfBandPrint(NS_SERVER, from, "print\nincorrect challenge for your address\n");
+        NET_OutOfBandPrint(NS_SERVER, from, "print\nIncorrect challenge for your address.\n");
       }
 
       return;
@@ -644,7 +644,7 @@ SV_DirectConnect(const netadr_t *from)
       //avoid excessive outgoing traffic
       if (!SVC_RateLimit(&bucket, 10, 200))
       {
-        NET_OutOfBandPrint(NS_SERVER, from, "print\nincorrect challenge, please reconnect\n");
+        NET_OutOfBandPrint(NS_SERVER, from, "print\nIncorrect challenge, please reconnect.\n");
       }
 
       return;
@@ -659,7 +659,7 @@ SV_DirectConnect(const netadr_t *from)
   {
     if (!SVC_RateLimit(&bucket, 10, 200))
     {
-      NET_OutOfBandPrint(NS_SERVER, from, "print\nmissing protocol in userinfo\n");
+      NET_OutOfBandPrint(NS_SERVER, from, "print\nMissing protocol in userinfo.\n");
     }
 
     return;
@@ -701,7 +701,7 @@ SV_DirectConnect(const netadr_t *from)
   {
     if (!SVC_RateLimit(&bucket, 10, 200))
     {
-      NET_OutOfBandPrint(NS_SERVER, from, "print\nmissing qport in userinfo\n");
+      NET_OutOfBandPrint(NS_SERVER, from, "print\nMissing qport in userinfo.\n");
     }
 
     return;
@@ -2466,7 +2466,7 @@ SV_ExecuteClientCommand(client_t *cl, const qchar *s)
       {
         if (bFloodProtect)
         {
-          if (!SVC_RateLimit(&cl->info_rate, 5, 1000))
+          if (SVC_RateLimit(&cl->info_rate, 5, 1000))
           {
             return qfalse; //lag flooder
           }
