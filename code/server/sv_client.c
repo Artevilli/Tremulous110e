@@ -1854,6 +1854,7 @@ SV_WriteDownloadToClient(client_t *cl)
   qint curindex;
   qchar errorMessage[1024];
   msg_t msg;
+  const qint curtime = Sys_Milliseconds();
   qbool skip = qfalse;
   byte msgBuffer[MAX_MSGLEN_BUF];
 
@@ -1928,7 +1929,7 @@ SV_WriteDownloadToClient(client_t *cl)
     cl->downloadClientMsg = 0;
     cl->downloadRetransmitMsg = 0;
     cl->downloadCurrentMsg = 0;
-    cl->downloadLastSentTime = Sys_Milliseconds();
+    cl->downloadLastSentTime = curtime;
     cl->downloadCurrentRate = DOWNLOAD_MAX_RATE;
     cl->downloadRatePool = 0;
   }
@@ -1937,7 +1938,7 @@ SV_WriteDownloadToClient(client_t *cl)
   if (cl->netchan.unsentFragments || cl->netchan_start_queue)
   {
     SV_Netchan_TransmitNextFragment(cl);
-    cl->downloadLastSentTime = Sys_Milliseconds();
+    cl->downloadLastSentTime = curtime;
     return qtrue;
   }
 
@@ -1988,7 +1989,7 @@ SV_WriteDownloadToClient(client_t *cl)
 
   //if skip is set, either return here, or if 500ms has elapsed since last sent
   //message, continue forward to send keepalive message.
-  if (skip && Sys_Milliseconds() - cl->downloadLastSentTime < 500)
+  if (skip && curtime - cl->downloadLastSentTime < 500)
   {
     return qfalse;
   }
@@ -2006,7 +2007,7 @@ SV_WriteDownloadToClient(client_t *cl)
     Com_Printf("clientDownload: %d: writing keepalive message\n", ARRAY_INDEX(svs.clients, cl));
     MSG_WriteByte(&msg, svc_EOF);
     SV_Netchan_Transmit(cl, &msg);
-    cl->downloadLastSentTime = Sys_Milliseconds();
+    cl->downloadLastSentTime = curtime;
     return qtrue;
   }
 
@@ -2067,7 +2068,7 @@ SV_WriteDownloadToClient(client_t *cl)
     Com_DPrintf("clientDownload: %d: outgoing size %i\n", ARRAY_INDEX(svs.clients, cl), SV_DownloadCountOutgoingBytes(cl));
   }
 
-  cl->downloadLastSentTime = Sys_Milliseconds();
+  cl->downloadLastSentTime = curtime;
 
   //move on to the next block
   cl->downloadXmitBlock++;
@@ -2300,8 +2301,9 @@ SV_SendDownloadMessages(void)
   static qint globalRatePool; //bytes available to send
   qint round;
   qint i;
+  const qint curtime = Sys_Milliseconds();
   client_t *cl;
-  qint timeElapsed = Sys_Milliseconds() - lastTime;
+  qint timeElapsed = curtime - lastTime;
   const qint globalRate = sv_dlRate->integer > 0 && sv_dlRate->integer < 100000 ? sv_dlRate->integer:100000; //KB/s
   qbool downloadsActive = qfalse;
 
@@ -2316,7 +2318,7 @@ SV_SendDownloadMessages(void)
     timeElapsed = 5;
   }
 
-  lastTime = Sys_Milliseconds();
+  lastTime = curtime;
 
   //increment global rate
   globalRatePool += globalRate * timeElapsed;
@@ -2347,8 +2349,7 @@ SV_SendDownloadMessages(void)
   {
     for(i = 0;i < sv.maxclients;i++)
     {
-      cl = &svs.clients[currentClient];
-      currentClient = (currentClient + 1) % sv.maxclients;
+      cl = &svs.clients[currentClient++ % sv.maxclients];
 
       if (cl->state >= CS_CONNECTED && *cl->downloadName)
       {
