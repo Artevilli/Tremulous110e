@@ -2252,17 +2252,12 @@ Return the time in msec until we expect to be called next
 const qint
 SV_SendQueuedPackets(void)
 {
-#if defined(UDP_DOWNLOAD_OPTIMIZE)
-  qint delayT;
-  qint timeVal = INT_MAX;
-#else
   qint numBlocks;
   qint dlStart;
   qint deltaT;
   qint delayT;
   static qint dlNextRound = 0;
   qint timeVal = INT_MAX;
-#endif
 
   //send out fragmented packets since idle
   delayT = SV_SendQueuedMessages();
@@ -2272,14 +2267,6 @@ SV_SendQueuedPackets(void)
     timeVal = delayT;
   }
 
-#if defined(UDP_DOWNLOAD_OPTIMIZE)
-  delayT = SV_SendDownloadMessages();
-
-  if (delayT >= 0 && delayT < timeVal)
-  {
-    timeVal = delayT;
-  }
-#else
   if (sv_dlRate->integer)
   {
     //rate limiting, imprecise for high dl rates
@@ -2334,7 +2321,6 @@ SV_SendQueuedPackets(void)
       timeVal = 0;
     }
   }
-#endif
 
   return timeVal;
 }
