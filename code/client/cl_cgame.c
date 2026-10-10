@@ -406,7 +406,11 @@ void CL_ShutdownCGame( void ) {
 	VM_Call( cls.cgvm, 0, CG_SHUTDOWN );
 	VM_Free( cls.cgvm );
 	cls.cgvm = NULL;
-	FS_VM_CloseFiles(H_CGAME);
+	FS_VM_CloseFiles( H_CGAME );
+
+	if ( !com_sv_running->integer ) {
+		CM_ClearMap();
+	}
 }
 
 static qint FloatAsInt( float f ) {

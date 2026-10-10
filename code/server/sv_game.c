@@ -944,6 +944,8 @@ SV_ShutdownGameProgs(void)
   VM_Free(sv.gvm);
   sv.gvm = NULL;
   FS_VM_CloseFiles(H_GAME);
+
+  CM_ClearMap();
 }
 
 /*
