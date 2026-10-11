@@ -611,12 +611,12 @@ SV_BotFrame(qint time)
   Java_G_RunAIFrame(time);
 #else
   //NOTE: maybe the game is already shutdown
-  if (!sv.gvm)
+  if (!gvm)
   {
     return;
   }
 
-  VM_Call(sv.gvm, 1, BOTAI_START_FRAME, time);
+  VM_Call(gvm, 1, BOTAI_START_FRAME, time);
 #endif
 }
 

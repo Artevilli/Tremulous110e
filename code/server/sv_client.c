@@ -825,7 +825,7 @@ SV_DirectConnect(const netadr_t *from)
 #if defined(USE_JAVA)
         Java_G_ClientDisconnect(svs.clients, newcl);
 #else
-        VM_Call(sv.gvm, 1, GAME_CLIENT_DISCONNECT, ARRAY_INDEX(svs.clients, newcl));
+        VM_Call(gvm, 1, GAME_CLIENT_DISCONNECT, ARRAY_INDEX(svs.clients, newcl));
 #endif
 
         //don't leak memory or file handles due to e.g. downloads in progress
@@ -964,7 +964,7 @@ gotnewcl:
     return;
   }
 #else
-  denied = VM_Call(sv.gvm, 3, GAME_CLIENT_CONNECT, clientNum, qtrue, qfalse);	//firstTime = qtrue
+  denied = VM_Call(gvm, 3, GAME_CLIENT_CONNECT, clientNum, qtrue, qfalse);	//firstTime = qtrue
 
   if (denied)
   {
@@ -1082,7 +1082,7 @@ SV_DropClient(client_t *drop, const qchar *reason)
 #if defined(USE_JAVA)
   Java_G_ClientDisconnect(ARRAY_INDEX(svs.clients, drop));
 #else
-  VM_Call(sv.gvm, 1, GAME_CLIENT_DISCONNECT, ARRAY_INDEX(svs.clients, drop));
+  VM_Call(gvm, 1, GAME_CLIENT_DISCONNECT, ARRAY_INDEX(svs.clients, drop));
 #endif
 
   //add the disconnect command
@@ -1447,7 +1447,7 @@ SV_ClientEnterWorld(client_t *client)
 #if defined(USE_JAVA)
   Java_G_ClientBegin(clientNum);
 #else
-  VM_Call(sv.gvm, 1, GAME_CLIENT_BEGIN, clientNum);
+  VM_Call(gvm, 1, GAME_CLIENT_BEGIN, clientNum);
 #endif
 }
 
@@ -2181,7 +2181,7 @@ SV_UserinfoChanged(client_t *cl, const qbool updateUserinfo, const qbool runFilt
   val = Info_ValueForKey(cl->userinfo, "name");
 
   //truncate if it is too long as it may cause memory corruption in OSP mod
-  if (sv.gvm->forceDataMask && strlen(val) >= sizeof(buf))
+  if (gvm->forceDataMask && strlen(val) >= sizeof(buf))
   {
     Q_strncpyz(buf, val, sizeof(buf));
     Info_SetValueForKey(cl->userinfo, "name", buf);
@@ -2257,7 +2257,7 @@ SV_UpdateUserinfo_f(client_t *cl)
   SV_UserinfoChanged(cl, qtrue, qtrue); //update userinfo, run filter
 
   //call prog code to allow overrides
-  VM_Call(sv.gvm, 1, GAME_CLIENT_USERINFO_CHANGED, ARRAY_INDEX(svs.clients, cl));
+  VM_Call(gvm, 1, GAME_CLIENT_USERINFO_CHANGED, ARRAY_INDEX(svs.clients, cl));
 }
 
 
@@ -2497,7 +2497,7 @@ SV_ExecuteClientCommand(client_t *cl, const qchar *s)
     //pass unknown strings to the game
     if (!ucmd->name && sv.state == SS_GAME && cl->state >= CS_PRIMED)
     {
-      if (sv.gvm->forceDataMask)
+      if (gvm->forceDataMask)
       {
         Cmd_Args_Sanitize("\n\r;"); //handle ';' for OSP
       }
@@ -2516,7 +2516,7 @@ SV_ExecuteClientCommand(client_t *cl, const qchar *s)
 #if defined(USE_JAVA)
       Java_G_ClientCommand(ARRAY_INDEX(svs.clients, cl));
 #else
-      VM_Call(sv.gvm, 1, GAME_CLIENT_COMMAND, ARRAY_INDEX(svs.clients, cl));
+      VM_Call(gvm, 1, GAME_CLIENT_COMMAND, ARRAY_INDEX(svs.clients, cl));
 #endif
     }
   }
@@ -2589,7 +2589,7 @@ SV_ClientThink(client_t *cl, const usercmd_t *cmd)
 #if defined(USE_JAVA)
   Java_G_ClientThink(ARRAY_INDEX(svs.clients, cl));
 #else
-  VM_Call(sv.gvm, 1, GAME_CLIENT_THINK, ARRAY_INDEX(svs.clients, cl));
+  VM_Call(gvm, 1, GAME_CLIENT_THINK, ARRAY_INDEX(svs.clients, cl));
 #endif
 }
 

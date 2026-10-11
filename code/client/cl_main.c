@@ -97,6 +97,7 @@ cvar_t *cl_drawBuffer;
 clientActive_t		cl;
 clientConnection_t	clc;
 clientStatic_t		cls;
+vm_t				*cgvm = NULL;
 
 netadr_t			rcon_address;
 
@@ -1279,7 +1280,7 @@ qbool CL_Disconnect( qbool showMainMenu ) {
 		CL_CloseAVI( qfalse );
 	}
 
-	if ( cls.cgvm ) {
+	if ( cgvm ) {
 		// do that right after we rendered last video frame
 		CL_ShutdownCGame();
 	}
@@ -1293,8 +1294,8 @@ qbool CL_Disconnect( qbool showMainMenu ) {
 	S_StopAllSounds();
 	Key_ClearStates();
 
-	if ( cls.uivm && showMainMenu ) {
-		VM_Call( cls.uivm, 1, UI_SET_ACTIVE_MENU, UIMENU_NONE );
+	if ( uivm && showMainMenu ) {
+		VM_Call( uivm, 1, UI_SET_ACTIVE_MENU, UIMENU_NONE );
 	}
 
 	// Remove pure paks
@@ -1459,7 +1460,7 @@ void CL_Disconnect_f( void ) {
 	SCR_StopCinematic();
 	Cvar_Set( "ui_singlePlayerActive", "0" );
 	if ( cls.state != CA_DISCONNECTED && cls.state != CA_CINEMATIC ) {
-		if ( (cls.uivm && cls.uivm->callLevel) || (cls.cgvm && cls.cgvm->callLevel) ) {
+		if ( (uivm && uivm->callLevel) || (cgvm && cgvm->callLevel) ) {
 			Com_Error( ERR_DISCONNECT, "Disconnected from server" );
 		} else {
 			// clear any previous "server full" type messages
@@ -1474,8 +1475,8 @@ void CL_Disconnect_f( void ) {
 			if ( !CL_Disconnect( qfalse ) ) { // restart client if not done already
 				CL_FlushMemory();
 			}
-			if ( cls.uivm ) {
-				VM_Call( cls.uivm, 1, UI_SET_ACTIVE_MENU, UIMENU_MAIN );
+			if ( uivm ) {
+				VM_Call( uivm, 1, UI_SET_ACTIVE_MENU, UIMENU_MAIN );
 			}
 		}
 	}
@@ -2849,8 +2850,8 @@ static void CL_CheckTimeout( void ) {
 			if ( !CL_Disconnect( qfalse ) ) { // restart client if not done already
 				CL_FlushMemory();
 			}
-			if ( cls.uivm ) {
-				VM_Call( cls.uivm, 1, UI_SET_ACTIVE_MENU, UIMENU_MAIN );
+			if ( uivm ) {
+				VM_Call( uivm, 1, UI_SET_ACTIVE_MENU, UIMENU_MAIN );
 			}
 			return;
 		}
@@ -2964,10 +2965,10 @@ void CL_Frame( qint msec, qint realMsec ) {
 #endif
 
 	if ( cls.state == CA_DISCONNECTED && !( Key_GetCatcher( ) & KEYCATCH_UI )
-		&& !com_sv_running->integer && cls.uivm ) {
+		&& !com_sv_running->integer && uivm ) {
 		// if disconnected, bring up the menu
 		S_StopAllSounds();
-		VM_Call( cls.uivm, 1, UI_SET_ACTIVE_MENU, UIMENU_MAIN );
+		VM_Call( uivm, 1, UI_SET_ACTIVE_MENU, UIMENU_MAIN );
 	}
 
 	// if recording an avi, lock to a fixed fps

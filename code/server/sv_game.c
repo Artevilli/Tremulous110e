@@ -371,27 +371,27 @@ SV_LocateGameData
 void
 SV_LocateGameData(sharedEntity_t *gEnts, unsigned numGEntities, unsigned sizeofGEntity_t, playerState_t *clients, unsigned sizeofGameClient)
 {
-  if (!sv.gvm->entryPoint)
+  if (!gvm->entryPoint)
   {
     if (numGEntities > MAX_GENTITIES)
     {
       Com_Error(ERR_DROP, "%s: bad entity count %u", __func__, numGEntities);
     }
 
-    if (sizeofGEntity_t < sizeof(sharedEntity_t) || sizeofGEntity_t > sv.gvm->exactDataLength / MAX_GENTITIES)
+    if (sizeofGEntity_t < sizeof(sharedEntity_t) || sizeofGEntity_t > gvm->exactDataLength / MAX_GENTITIES)
     {
       Com_Error(ERR_DROP, "%s: bad entity size %u", __func__, sizeofGEntity_t);
     }
-    else if ((byte *)gEnts - sv.gvm->dataBase > sv.gvm->exactDataLength - sizeofGEntity_t * MAX_GENTITIES)
+    else if ((byte *)gEnts - gvm->dataBase > gvm->exactDataLength - sizeofGEntity_t * MAX_GENTITIES)
     {
       Com_Error(ERR_DROP, "%s: entities located out of data segment", __func__);
     }
 
-    if (sizeofGameClient < sizeof(playerState_t) || sizeofGameClient > sv.gvm->exactDataLength / MAX_CLIENTS)
+    if (sizeofGameClient < sizeof(playerState_t) || sizeofGameClient > gvm->exactDataLength / MAX_CLIENTS)
     {
       Com_Error(ERR_DROP, "%s: bad game client size %u", __func__, sizeofGameClient);
     }
-    else if ((byte *)clients - sv.gvm->dataBase > sv.gvm->exactDataLength - sizeofGameClient * MAX_CLIENTS)
+    else if ((byte *)clients - gvm->dataBase > gvm->exactDataLength - sizeofGameClient * MAX_CLIENTS)
     {
       Com_Error(ERR_DROP, "%s: clients located out of data segment", __func__);
     }
@@ -454,18 +454,18 @@ VM_ArgPtr
 static void *
 VM_ArgPtr(intptr_t intValue)
 {
-  if (!intValue || sv.gvm == NULL)
+  if (!intValue || gvm == NULL)
   {
     return NULL;
   }
 
-  if (sv.gvm->entryPoint)
+  if (gvm->entryPoint)
   {
-    return (void *)(sv.gvm->dataBase + intValue);
+    return (void *)(gvm->dataBase + intValue);
   }
   else
   {
-    return (void *)(sv.gvm->dataBase + (intValue & sv.gvm->dataMask));
+    return (void *)(gvm->dataBase + (intValue & gvm->dataMask));
   }
 }
 
@@ -514,12 +514,12 @@ SV_GameSystemCalls(intptr_t *args)
   //the stock id 1.32 qagame.qvm has a bug in ClientSpawn() where a do/while(1) loop
   //retrying spawn point selection can loop forever if all spawn points have FL_NO_BOTS
   //set, causing the server to hang at 100% CPU
-  if (sv.gvm->syscallCount >= 1024 * 1024)
+  if (gvm->syscallCount >= 1024 * 1024)
   {
     Com_Error(ERR_DROP, "game VM syscall overflow - Loss of control in VM");
   }
 
-  ++sv.gvm->syscallCount;
+  ++gvm->syscallCount;
 
   if (qvmver == 1)
   {
@@ -551,12 +551,12 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_CVAR_REGISTER:
-      Cvar_Register(VMA(1), VMA(2), VMA(3), args[4], sv.gvm->privateFlag); 
+      Cvar_Register(VMA(1), VMA(2), VMA(3), args[4], gvm->privateFlag); 
       return 0;
 
     case
     G_CVAR_UPDATE:
-      Cvar_Update(VMA(1), sv.gvm->privateFlag);
+      Cvar_Update(VMA(1), gvm->privateFlag);
       return 0;
 
     case
@@ -570,8 +570,8 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_CVAR_VARIABLE_STRING_BUFFER:
-      VM_CHECKBOUNDS(sv.gvm, args[2], args[3]);
-      Cvar_VariableStringBufferSafe(VMA(1), VMA(2), args[3], sv.gvm->privateFlag);
+      VM_CHECKBOUNDS(gvm, args[2], args[3]);
+      Cvar_VariableStringBufferSafe(VMA(1), VMA(2), args[3], gvm->privateFlag);
       return 0;
 
     case
@@ -580,7 +580,7 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_ARGV:
-      VM_CHECKBOUNDS(sv.gvm, args[2], args[3]);
+      VM_CHECKBOUNDS(gvm, args[2], args[3]);
       Cmd_ArgvBuffer(args[1], VMA(2), args[3]);
       return 0;
 
@@ -600,12 +600,12 @@ SV_GameSystemCalls(intptr_t *args)
         return 0;
       }
 
-      VM_CheckBounds(sv.gvm, args[1], args[2]);
+      VM_CheckBounds(gvm, args[1], args[2]);
       return FS_VM_ReadFile(VMA(1), args[2], args[3], H_GAME);
 
     case
     G_FS_WRITE:
-      VM_CHECKBOUNDS(sv.gvm, args[1], args[2]);
+      VM_CHECKBOUNDS(gvm, args[1], args[2]);
       FS_VM_WriteFile(VMA(1), args[2], args[3], H_GAME);
       return 0;
 
@@ -620,7 +620,7 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_FS_GETFILELIST:
-      VM_CHECKBOUNDS(sv.gvm, args[3], args[4]);
+      VM_CHECKBOUNDS(gvm, args[3], args[4]);
       return FS_GetFileList(VMA(1), VMA(2), VMA(3), args[4]);
 
     case
@@ -650,7 +650,7 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_ENTITIES_IN_BOX:
-      VM_CHECKBOUNDS3(sv.gvm, args[3], args[4], sizeof(qint));
+      VM_CHECKBOUNDS3(gvm, args[3], args[4], sizeof(qint));
       return SV_AreaEntities(VMA(1), VMA(2), VMA(3), args[4]);
 
     case
@@ -695,7 +695,7 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_GET_CONFIGSTRING:
-      VM_CHECKBOUNDS(sv.gvm, args[2], args[3]);
+      VM_CHECKBOUNDS(gvm, args[2], args[3]);
       SV_GetConfigstring(args[1], VMA(2), args[3]);
       return 0;
 
@@ -706,13 +706,13 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_GET_USERINFO:
-      VM_CHECKBOUNDS(sv.gvm, args[2], args[3]);
+      VM_CHECKBOUNDS(gvm, args[2], args[3]);
       SV_GetUserinfo(args[1], VMA(2), args[3]);
       return 0;
 
     case
     G_GET_SERVERINFO:
-      VM_CHECKBOUNDS(sv.gvm, args[1], args[2]);
+      VM_CHECKBOUNDS(gvm, args[1], args[2]);
       SV_GetServerinfo(VMA(1), args[2]);
       return 0;
 
@@ -736,7 +736,7 @@ SV_GameSystemCalls(intptr_t *args)
       qchar *s;
 
       s = (qchar *)COM_Parse(&sv.entityParsePoint);
-      VM_CHECKBOUNDS(sv.gvm, args[1], args[2]);
+      VM_CHECKBOUNDS(gvm, args[1], args[2]);
       //Q_strncpyz(VMA(1), s, args[2]);
       //we can't use our optimized Q_strncpyz() function
       //because of uninitialized memory bug in defrag mod
@@ -799,7 +799,7 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     BOTLIB_PC_READ_TOKEN:
-      VM_CHECKBOUNDS(sv.gvm, args[2], sizeof(pc_token_t));
+      VM_CHECKBOUNDS(gvm, args[2], sizeof(pc_token_t));
       return botlib_export->PC_ReadTokenHandle(args[1], VMA(2));
 
     case
@@ -817,19 +817,19 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     TRAP_MEMSET:
-      VM_CHECKBOUNDS(sv.gvm, args[1], args[3]);
+      VM_CHECKBOUNDS(gvm, args[1], args[3]);
       Com_Memset(VMA(1), args[2], args[3]);
       return args[1];
 
     case
     TRAP_MEMCPY:
-      VM_CHECKBOUNDS2(sv.gvm, args[1], args[2], args[3]);
+      VM_CHECKBOUNDS2(gvm, args[1], args[2], args[3]);
       Com_Memcpy(VMA(1), VMA(2), args[3]);
       return args[1];
 
     case
     TRAP_STRNCPY:
-      VM_CHECKBOUNDS(sv.gvm, args[1], args[3]);
+      VM_CHECKBOUNDS(gvm, args[1], args[3]);
       Q_strncpy(VMA(1), VMA(2), args[3]);
       return args[1];
 
@@ -887,7 +887,7 @@ SV_GameSystemCalls(intptr_t *args)
 
     case
     G_TRAP_GETVALUE:
-      VM_CHECKBOUNDS(sv.gvm, args[1], args[2]);
+      VM_CHECKBOUNDS(gvm, args[1], args[2]);
       return SV_GetValue(VMA(1), args[2], VMA(3));
 
     default:
@@ -935,14 +935,14 @@ Called every time a map changes
 void
 SV_ShutdownGameProgs(void)
 {
-  if (!sv.gvm)
+  if (!gvm)
   {
     return;
   }
 
-  VM_Call(sv.gvm, 1, GAME_SHUTDOWN, qfalse);
-  VM_Free(sv.gvm);
-  sv.gvm = NULL;
+  VM_Call(gvm, 1, GAME_SHUTDOWN, qfalse);
+  VM_Free(gvm);
+  gvm = NULL;
   FS_VM_CloseFiles(H_GAME);
 
   CM_ClearMap();
@@ -980,7 +980,7 @@ SV_InitGameVM(qbool restart)
 
   //use the current msec count for a random seed
   //init for this gamestate
-  VM_Call(sv.gvm, 3, GAME_INIT, sv.time, Com_Milliseconds(), restart);
+  VM_Call(gvm, 3, GAME_INIT, sv.time, Com_Milliseconds(), restart);
 }
 
 
@@ -995,19 +995,19 @@ Called on a map_restart, but not on a normal map change
 void
 SV_RestartGameProgs(void)
 {
-  if (!sv.gvm)
+  if (!gvm)
   {
     return;
   }
 
-  VM_Call(sv.gvm, 1, GAME_SHUTDOWN, qtrue);
+  VM_Call(gvm, 1, GAME_SHUTDOWN, qtrue);
 
   Hunk_AllocPreference(h_high);
 
   //do a restart instead of a free
-  sv.gvm = VM_Restart(sv.gvm);
+  gvm = VM_Restart(gvm);
 
-  if (!sv.gvm)
+  if (!gvm)
   {
     Com_Error(ERR_FATAL, "VM_Restart on game failed");
   }
@@ -1031,15 +1031,15 @@ SV_InitGameProgs(void)
 {
 #if defined(USE_LLVM)
   //load the dll or bytecode
-  sv.gvm = VM_Create("game", SV_GameSystemCalls, SV_DllSyscall, Cvar_VariableValue("vm_game"));
+  gvm = VM_Create("game", SV_GameSystemCalls, SV_DllSyscall, Cvar_VariableValue("vm_game"));
 #else
   //load the dll
-  //sv.gvm = VM_Create("game", SV_GameSystemCalls, VMI_NATIVE);
+  //gvm = VM_Create("game", SV_GameSystemCalls, VMI_NATIVE);
   //load the dll or bytecode
-  sv.gvm = VM_Create(VM_GAME, SV_GameSystemCalls, SV_DllSyscall, Cvar_VariableValue("vm_game"));
+  gvm = VM_Create(VM_GAME, SV_GameSystemCalls, SV_DllSyscall, Cvar_VariableValue("vm_game"));
 #endif
 
-  if (!sv.gvm)
+  if (!gvm)
   {
     Com_Error(ERR_FATAL, "VM_Create on game failed");
   }
@@ -1066,7 +1066,7 @@ SV_GameCommand(void)
     return qfalse;
   }
 
-  return VM_Call(sv.gvm, 0, GAME_CONSOLE_COMMAND);
+  return VM_Call(gvm, 0, GAME_CONSOLE_COMMAND);
 }
 
 #endif //!defined(USE_JAVA)

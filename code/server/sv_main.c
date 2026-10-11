@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
 
 serverStatic_t svs; //persistant server info
 server_t sv; //local server
+vm_t *gvm = NULL; //game virtual machine
 
 cvar_t *sv_master[MAX_MASTER_SERVERS];
 
@@ -2171,7 +2172,7 @@ SV_Frame(const qint msec)
 #if defined(USE_JAVA)
     Java_G_RunFrame(sv.time);
 #else
-    VM_Call(sv.gvm, 1, GAME_RUN_FRAME, sv.time);
+    VM_Call(gvm, 1, GAME_RUN_FRAME, sv.time);
 #endif
   }
 

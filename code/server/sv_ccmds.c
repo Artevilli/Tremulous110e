@@ -351,7 +351,7 @@ SV_MapRestart_f(void)
 #if defined(USE_JAVA)
     Java_G_RunFrame(sv.time);
 #else
-    VM_Call(sv.gvm, 1, GAME_RUN_FRAME, sv.time);
+    VM_Call(gvm, 1, GAME_RUN_FRAME, sv.time);
 #endif
   }
 
@@ -388,7 +388,7 @@ SV_MapRestart_f(void)
 #if defined(USE_JAVA)
     denied = Java_G_ClientConnect(i, qfalse, isBot);
 #else
-    denied = GVM_ArgPtr(VM_Call(sv.gvm, 3, GAME_CLIENT_CONNECT, i, isBot));
+    denied = GVM_ArgPtr(VM_Call(gvm, 3, GAME_CLIENT_CONNECT, i, isBot));
 #endif
     if (denied)
     {
@@ -415,7 +415,7 @@ SV_MapRestart_f(void)
 #if defined(USE_JAVA)
   Java_G_RunFrame(sv.time);
 #else
-  VM_Call(sv.gvm, 1, GAME_RUN_FRAME, sv.time);
+  VM_Call(gvm, 1, GAME_RUN_FRAME, sv.time);
 #endif
   svs.time += 100;
 
