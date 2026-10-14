@@ -411,8 +411,11 @@ qbool CL_OpenAVIForWriting( const qchar *fileName, const qchar *pipeFormat, qboo
 
 	if ( pipeFormat != NULL ) // ffmpeg-redirected encoding
 	{
-		const qchar* ospath = FS_BuildOSPath( Cvar_VariableString( "fs_homepath" ), "", fileName );;
+		const qchar* ospath = FS_BuildOSPath( Cvar_VariableString( "fs_homepath" ), "", fileName );
 #ifdef USE_WIN32_NAMED_PIPES
+#ifndef PIPE_REJECT_REMOTE_CLIENTS
+#define PIPE_REJECT_REMOTE_CLIENTS 0
+#endif
 		qchar cmd[MAX_OSPATH*2];
 		qchar namedPipeName[128];		// base length is 15 chars for "\\.\pipe\LOCAL\", rest is for "q3a-*" suffix reserved
 		qchar logName[MAX_OSPATH*2 + 8];	// fileName + strlen("-log.txt")
