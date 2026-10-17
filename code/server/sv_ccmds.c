@@ -210,7 +210,7 @@ SV_Map_f(void)
   len = FS_FOpenFileRead(expanded, NULL, qfalse);
   FS_RestorePure();
 
-  if (len == -1)
+  if (len <= 0)
   {
     Com_Printf("Can't find map %s\n", expanded);
     return;
