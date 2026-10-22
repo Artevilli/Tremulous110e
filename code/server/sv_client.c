@@ -1850,6 +1850,11 @@ SV_SendDownloadMessages(void)
 
     if (cl->state >= CS_CONNECTED && *cl->downloadName)
     {
+      if (cl->netchan.unsentFragments || cl->netchan_start_queue)
+      {
+        continue;
+      }
+
       numDLs += SV_WriteDownloadToClient(cl);
     }
   }
