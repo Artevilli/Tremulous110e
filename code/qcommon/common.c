@@ -1,22 +1,21 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Quake III Arena source code.
 
-Tremulous is free software; you can redistribute it
+Quake III Arena source code is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Quake III Arena source code is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -114,8 +113,6 @@ cvar_t *com_cameraMode;
 #if defined(_WIN32) && defined(_DEBUG)
 cvar_t *com_noErrorInterrupt;
 #endif
-
-cvar_t *com_ansiColor;
 
 //com_speeds times
 qint time_game;
@@ -2289,7 +2286,8 @@ static void Com_InitZoneMemory( void ) {
 	// configure the memory manager.
 
 	// allocate the random block zone
-	cv = Cvar_GetAndDescribe( "com_zoneMegs", XSTRING( DEF_COMZONEMEGS ), CVAR_LATCH | CVAR_ARCHIVE, "Initial amount of memory (RAM) allocated for the main block zone (in MB)." );
+	cv = Cvar_Get( "com_zoneMegs", XSTRING( DEF_COMZONEMEGS ), CVAR_LATCH | CVAR_ARCHIVE );
+	Cvar_SetDescription( cv, "Initial amount of memory (RAM) allocated for the main block zone (in MB)." );
 	Cvar_CheckRange( cv, "1", va("%d", INT_MAX / (1024*1024)), CV_INTEGER );
 
 #if !defined(USE_MULTI_SEGMENT)
@@ -2406,7 +2404,8 @@ static void Com_InitHunkMemory( void ) {
 	}
 
 	// allocate the stack based hunk allocator
-	cv = Cvar_GetAndDescribe( "com_hunkMegs", XSTRING( DEF_COMHUNKMEGS ), CVAR_LATCH | CVAR_ARCHIVE, "The size of the hunk memory segment." );
+	cv = Cvar_Get( "com_hunkMegs", XSTRING( DEF_COMHUNKMEGS ), CVAR_LATCH | CVAR_ARCHIVE );
+	Cvar_SetDescription( cv, "The size of the hunk memory segment." );
 	Cvar_CheckRange(cv, XSTRING(MIN_COMHUNKMEGS), va("%d", (INT_MAX-63) / (1024*1024)), CV_INTEGER);
 
 	s_hunkTotal = cv->integer * 1024 * 1024;
@@ -4260,17 +4259,20 @@ Com_Init(qchar *commandLine)
   Cvar_CheckRange(com_developer, NULL, NULL, CV_INTEGER);
 
   Com_StartupVariable("vm_rtChecks");
-  vm_rtChecks = Cvar_GetAndDescribe("vm_rtChecks", "15", CVAR_INIT | CVAR_PROTECTED, "Runtime checks in compiled vm code, bitmask:\n1 - program stack overflow\n2 - opcode stack overflow\n4 - jump target range\n8 - data read/write range");
+  vm_rtChecks = Cvar_Get("vm_rtChecks", "15", CVAR_INIT | CVAR_PROTECTED);
+  Cvar_SetDescription(vm_rtChecks, "Runtime checks in compiled vm code, bitmask:\n1 - program stack overflow\n2 - opcode stack overflow\n4 - jump target range\n8 - data read/write range");
   Cvar_CheckRange(vm_rtChecks, "0", "15", CV_INTEGER);
 
   Com_StartupVariable("journal");
-  com_journal = Cvar_GetAndDescribe("journal", "0", CVAR_INIT | CVAR_PROTECTED, "When enabled, writes events and its data to 'journal.dat' and 'journaldata.dat'.");
+  com_journal = Cvar_Get("journal", "0", CVAR_INIT | CVAR_PROTECTED);
+  Cvar_SetDescription(com_journal, "When enabled, writes events and its data to 'journal.dat' and 'journaldata.dat'.");
   Cvar_CheckRange(com_journal, "0", "2", CV_INTEGER);
 
   Com_StartupVariable("sv_master1");
   Cvar_Get("sv_master1", MASTER_SERVER_NAME, CVAR_INIT | CVAR_PROTECTED);
 
-  com_protocol = Cvar_GetAndDescribe("protocol", XSTRING(DEFAULT_PROTOCOL_VERSION), 0, "Specify network protocol version number, use -compat suffix for OpenArena compaitiblity.");
+  com_protocol = Cvar_Get("protocol", XSTRING(DEFAULT_PROTOCOL_VERSION), 0);
+  Cvar_SetDescription(com_protocol, "Specify network protocol version number, use -compat suffix for OpenArena compaitiblity.");
 
   if (Q_stristr(com_protocol->string, "-compat") > com_protocol->string)
   {
@@ -4294,7 +4296,8 @@ Com_Init(qchar *commandLine)
 
   FS_InitFilesystem();
 
-  com_logfile = Cvar_GetAndDescribe("logfile", "0", CVAR_TEMP, "System console logging:\n"
+  com_logfile = Cvar_Get("logfile", "0", CVAR_TEMP);
+  Cvar_SetDescription(com_logfile, "System console logging:\n"
     " 0 - disabled\n"
     " 1 - overwrite mode, buffered\n"
     " 2 - overwrite mode, synced\n"
@@ -4311,12 +4314,13 @@ Com_Init(qchar *commandLine)
 
   // get dedicated here for proper hunk megs initialization
 #if defined(DEDICATED)
-  com_dedicated = Cvar_GetAndDescribe("dedicated", "1", CVAR_INIT, "Enables dedicated server mode.\n 1: Unlisted dedicated server\n 2: Listed dedicated server");
+  com_dedicated = Cvar_Get("dedicated", "1", CVAR_INIT);
   Cvar_CheckRange(com_dedicated, "1", "2", CV_INTEGER);
 #else
-  com_dedicated = Cvar_GetAndDescribe("dedicated", "0", CVAR_LATCH, "Enables dedicated server mode.\n 0: Listen server\n 1: Unlisted dedicated server\n 2: Listed dedicated server");
+  com_dedicated = Cvar_Get("dedicated", "0", CVAR_LATCH);
   Cvar_CheckRange(com_dedicated, "0", "2", CV_INTEGER);
 #endif
+  Cvar_SetDescription(com_dedicated, "Enables dedicated server mode.\n 0: Listen server\n 1: Unlisted dedicated server\n 2: Listed dedicated server");
 
   //allocate the stack based hunk allocator
   Com_InitHunkMemory();
@@ -4329,43 +4333,58 @@ Com_Init(qchar *commandLine)
   //init commands and vars
   //
 #if !defined(DEDICATED)
-  com_maxfps = Cvar_GetAndDescribe("com_maxfps", "125", 0, "Sets maximum frames per second."); //try to force that in some light way
+  com_maxfps = Cvar_Get("com_maxfps", "125", 0); //try to force that in some light way
+  Cvar_SetDescription(com_maxfps, "Sets maximum frames per second.");
   Cvar_CheckRange(com_maxfps, "0", "1000", CV_INTEGER);
-  com_maxfpsUnfocused = Cvar_GetAndDescribe("com_maxfpsUnfocused", "60", CVAR_ARCHIVE_ND, "Sets maximum frames per second in unfocused game window.");
+  com_maxfpsUnfocused = Cvar_Get("com_maxfpsUnfocused", "60", CVAR_ARCHIVE_ND);
+  Cvar_SetDescription(com_maxfpsUnfocused, "Sets maximum frames per second in unfocused game window.");
   Cvar_CheckRange(com_maxfpsUnfocused, "0", "1000", CV_INTEGER);
-  com_yieldCPU = Cvar_GetAndDescribe("com_yieldCPU", "1", CVAR_ARCHIVE_ND, "Attempt to sleep specified amount of time between rendered frames when game is active, this will greatly reduce CPU load. Use 0 only if you're experiencing some lag.");
+  com_yieldCPU = Cvar_Get("com_yieldCPU", "1", CVAR_ARCHIVE_ND);
+  Cvar_SetDescription(com_yieldCPU, "Attempt to sleep specified amount of time between rendered frames when game is active, this will greatly reduce CPU load. Use 0 only if you're experiencing some lag.");
   Cvar_CheckRange(com_yieldCPU, "0", "16", CV_INTEGER);
 #endif
 
 #if defined(USE_AFFINITY_MASK)
-  com_affinityMask = Cvar_GetAndDescribe("com_affinityMask", "", CVAR_ARCHIVE, "Bind game process to bitmask-specified CPU core(s), special characters:\n A or a - all default cores\n P or p - performance cores\n E or e - efficiency cores\n 0x<value> - use hexadecimal notation\n + or - can be used to add or exclude particular cores");
+  com_affinityMask = Cvar_Get("com_affinityMask", "", CVAR_ARCHIVE);
+  Cvar_SetDescription(com_affinityMask, "Bind game process to bitmask-specified CPU core(s), special characters:\n A or a - all default cores\n P or p - performance cores\n E or e - efficiency cores\n 0x<value> - use hexadecimal notation\n + or - can be used to add or exclude particular cores");
   com_affinityMask->modified = qfalse;
 #endif
 
   //com_blood = Cvar_Get("com_blood", "1", CVAR_ARCHIVE_ND);
 
-  com_timescale = Cvar_GetAndDescribe("timescale", "1", CVAR_CHEAT | CVAR_SYSTEMINFO, "System timing factor:\n < 1: Slows the game down\n = 1: Regular speed\n > 1: Speeds the game up");
+  com_timescale = Cvar_Get("timescale", "1", CVAR_CHEAT | CVAR_SYSTEMINFO);
+  Cvar_SetDescription(com_timescale, "System timing factor:\n < 1: Slows the game down\n = 1: Regular speed\n > 1: Speeds the game up");
   Cvar_CheckRange(com_timescale, "0", NULL, CV_FLOAT);
-  com_fixedtime = Cvar_GetAndDescribe("fixedtime", "0", CVAR_CHEAT, "Toggle the rendering of every frame the game will wait until each frame is completely rendered before sending the next frame.");
-  com_showtrace = Cvar_GetAndDescribe("com_showtrace", "0", CVAR_CHEAT, "Debugging tool that prints out trace information.");
-  com_viewlog = Cvar_GetAndDescribe("viewlog", "0", 0, "Toggle the display of the startup console window over the game screen.");
-  com_speeds = Cvar_GetAndDescribe("com_speeds", "0", 0, "Prints speed information per frame to the console. Used for debugging.");
+  com_fixedtime = Cvar_Get("fixedtime", "0", CVAR_CHEAT);
+  Cvar_SetDescription(com_fixedtime, "Toggle the rendering of every frame the game will wait until each frame is completely rendered before sending the next frame.");
+  com_showtrace = Cvar_Get("com_showtrace", "0", CVAR_CHEAT);
+  Cvar_SetDescription(com_showtrace, "Debugging tool that prints out trace information.");
+  com_viewlog = Cvar_Get("viewlog", "0", 0);
+  Cvar_SetDescription(com_viewlog, "Toggle the display of the startup console window over the game screen.");
+  com_speeds = Cvar_Get("com_speeds", "0", 0);
+  Cvar_SetDescription(com_speeds, "Prints speed information per frame to the console. Used for debugging.");
   com_cameraMode = Cvar_Get("com_cameraMode", "0", CVAR_CHEAT);
 
 #if !defined(DEDICATED)
-  com_timedemo = Cvar_GetAndDescribe("timedemo", "0", CVAR_CHEAT, "When set to '1' times a demo and returns frames per second like a benchmark.");
+  com_timedemo = Cvar_Get("timedemo", "0", CVAR_CHEAT);
+  Cvar_SetDescription(com_timedemo, "When set to '1' times a demo and returns frames per second like a benchmark.");
   Cvar_CheckRange(com_timedemo, "0", "1", CV_INTEGER);
-  cl_paused = Cvar_GetAndDescribe("cl_paused", "0", CVAR_ROM, "Read-only CVAR to toggle functionality of paused games (the variable holds the status of the paused flag on the client side).");
-  cl_packetdelay = Cvar_GetAndDescribe("cl_packetdelay", "0", CVAR_CHEAT, "Artificially set the client's latency. Simulates packet delay, which can lead to packet loss.");
-  com_cl_running = Cvar_GetAndDescribe("cl_running", "0", CVAR_ROM, "Can be used to check the status of the client game.");
+  cl_paused = Cvar_Get("cl_paused", "0", CVAR_ROM);
+  Cvar_SetDescription(cl_paused, "Read-only CVAR to toggle functionality of paused games (the variable holds the status of the paused flag on the client side).");
+  cl_packetdelay = Cvar_Get("cl_packetdelay", "0", CVAR_CHEAT);
+  Cvar_SetDescription(cl_packetdelay, "Artificially set the client's latency. Simulates packet delay, which can lead to packet loss.");
+  com_cl_running = Cvar_Get("cl_running", "0", CVAR_ROM);
+  Cvar_SetDescription(com_cl_running, "Can be used to check the status of the client game.");
 #endif
 
   sv_paused = Cvar_Get ("sv_paused", "0", CVAR_ROM);
-  sv_packetdelay = Cvar_GetAndDescribe("sv_packetdelay", "0", CVAR_CHEAT, "Simulates packet delay, which can lead to packet loss. Server side.");
-  com_sv_running = Cvar_GetAndDescribe("sv_running", "0", CVAR_ROM, "Communicates to game modules if there is a server currently running.");
+  sv_packetdelay = Cvar_Get("sv_packetdelay", "0", CVAR_CHEAT);
+  Cvar_SetDescription(sv_packetdelay, "Simulates packet delay, which can lead to packet loss. Server side.");
+  com_sv_running = Cvar_Get("sv_running", "0", CVAR_ROM);
+  Cvar_SetDescription(com_sv_running, "Communicates to game modules if there is a server currently running.");
 
-  com_buildScript = Cvar_GetAndDescribe("com_buildScript", "0", 0, "Loads all game assets, regardless whether they are required or not.");
-  com_ansiColor = Cvar_GetAndDescribe("com_ansiColor", "0", CVAR_ROM /*CVAR_ARCHIVE*/, "Use ANSI color in the terminal window instead of color codes");
+  com_buildScript = Cvar_Get("com_buildScript", "0", 0);
+  Cvar_SetDescription(com_buildScript, "Loads all game assets, regardless whether they are required or not.");
 
   Cvar_Get("com_errorMessage", "", CVAR_ROM | CVAR_NORESTART);
 
@@ -4397,7 +4416,8 @@ Com_Init(qchar *commandLine)
   Cmd_AddCommand("game_restart", Com_GameRestart_f);
 
   s = va("%s %s %s", Q3_VERSION, PLATFORM_STRING, __DATE__ );
-  com_version = Cvar_GetAndDescribe("version", s, CVAR_PROTECTED | CVAR_ROM | CVAR_SERVERINFO, "Read-only CVAR to see the version of the game.");
+  com_version = Cvar_Get("version", s, CVAR_PROTECTED | CVAR_ROM | CVAR_SERVERINFO);
+  Cvar_SetDescription(com_version, "Read-only CVAR to see the version of the game.");
 
   //this cvar is the single entry point of the entire extension system
   Cvar_Get("//trap_GetValue", va("%i", COM_TRAP_GETVALUE), CVAR_PROTECTED | CVAR_ROM | CVAR_NOTABCOMPLETE);

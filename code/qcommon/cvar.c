@@ -1,22 +1,21 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Quake III Arena source code.
 
-Tremulous is free software; you can redistribute it
+Quake III Arena source code is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Quake III Arena source code is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -2532,31 +2531,6 @@ Cvar_SetDescription2(const qchar *var_name, const qchar *var_description)
 
 /*
 =====================
-Cvar_GetAndDescribe
-
-If the variable already exists, the value will not be set unless CVAR_ROM.
-The flags will be or'ed in if the variable exists.
-
-Order:
-varName: Cvar's technical name
-value: The default value, if not set by config or console
-flags: The cvar's flags
-description: The description of this cvar.
-returns: New cvar registered cvar instance
-=====================
-*/
-cvar_t *
-Cvar_GetAndDescribe(const qchar *varName, const qchar *value, const qint flags, const qchar *description)
-{
-  cvar_t *tmp = Cvar_Get(varName, value, flags);
-
-  Cvar_SetDescription(tmp, description);
-  return tmp;
-}
-
-
-/*
-=====================
 Cvar_SetGroup
 =====================
 */
@@ -2769,8 +2743,10 @@ Cvar_Init(void)
   Com_Memset(cvar_indexes, '\0', sizeof(cvar_indexes));
   Com_Memset(hashTable, '\0', sizeof(hashTable));
 
-  cvar_cheats = Cvar_GetAndDescribe("sv_cheats", "1", CVAR_ROM | CVAR_SYSTEMINFO, "Enable cheating commands (server side only).");
-  cvar_developer = Cvar_GetAndDescribe("developer", "0", CVAR_TEMP, "Toggles developer mode. Prints more info to console and provides more commands.");
+  cvar_cheats = Cvar_Get("sv_cheats", "1", CVAR_ROM | CVAR_SYSTEMINFO);
+  Cvar_SetDescription(cvar_cheats, "Enable cheating commands (server side only).");
+  cvar_developer = Cvar_Get("developer", "0", CVAR_TEMP);
+  Cvar_SetDescription(cvar_developer, "Toggles developer mode. Prints more info to console and provides more commands.");
 
   Cmd_AddCommand("print", Cvar_Print_f);
   Cmd_AddCommand("toggle", Cvar_Toggle_f);

@@ -1,5 +1,3 @@
-#pragma once
-
 {"**", "LAN"},
 {"AD", "Andorra"},
 {"AE", "United Arab Emirates"},

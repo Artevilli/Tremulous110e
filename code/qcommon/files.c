@@ -1,22 +1,21 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Quake III Arena source code.
 
-Tremulous is free software; you can redistribute it
+Quake III Arena source code is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Quake III Arena source code is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -5634,10 +5633,14 @@ FS_Startup(void)
 
   Com_Printf("----- FS_Startup -----\n");
 
-  fs_debug = Cvar_GetAndDescribe("fs_debug", "0", 0, "Debugging tool for the filesystem. Run the game in debug mode. Prints additional information regarding read files into the console.");
-  fs_copyfiles = Cvar_GetAndDescribe("fs_copyfiles", "0", CVAR_INIT, "Whether or not to copy files when loading them into the game. Every file found in the cdpath will be copied over.");
-  fs_basepath = Cvar_GetAndDescribe("fs_basepath", Sys_DefaultBasePath(), CVAR_INIT | CVAR_PROTECTED | CVAR_PRIVATE, "Write-protected CVAR specifying the path to the installation folder of the game.");
-  fs_basegame = Cvar_GetAndDescribe("fs_basegame", BASEGAME, CVAR_INIT | CVAR_PROTECTED, "Write-protected CVAR specifying the path to the base game(s) folder(s), separated by '/'.");
+  fs_debug = Cvar_Get("fs_debug", "0", 0);
+  Cvar_SetDescription(fs_debug, "Debugging tool for the filesystem. Run the game in debug mode. Prints additional information regarding read files into the console.");
+  fs_copyfiles = Cvar_Get("fs_copyfiles", "0", CVAR_INIT);
+  Cvar_SetDescription(fs_copyfiles, "Whether or not to copy files when loading them into the game. Every file found in the cdpath will be copied over.");
+  fs_basepath = Cvar_Get("fs_basepath", Sys_DefaultBasePath(), CVAR_INIT | CVAR_PROTECTED | CVAR_PRIVATE);
+  Cvar_SetDescription(fs_basepath, "Write-protected CVAR specifying the path to the installation folder of the game.");
+  fs_basegame = Cvar_Get("fs_basegame", BASEGAME, CVAR_INIT | CVAR_PROTECTED);
+  Cvar_SetDescription(fs_basegame, "Write-protected CVAR specifying the path to the base game(s) folder(s), separated by '/'.");
   fs_steampath = Cvar_Get("fs_steampath", Sys_SteamPath(), CVAR_INIT | CVAR_PROTECTED | CVAR_PRIVATE);
 
   /* parse fs_basegame cvar */
@@ -5665,7 +5668,8 @@ FS_Startup(void)
   }
 
 #if !defined(USE_HANDLE_CACHE)
-  fs_locked = Cvar_GetAndDescribe("fs_locked", "0", CVAR_INIT, "Set file handle policy for pk3 files:\n0 - release after use, unlimited number of pk3 files can be loaded\n1 - keep file handle locked, more consistent, total pk3 files count limited to ~1k-4k\n");
+  fs_locked = Cvar_Get("fs_locked", "0", CVAR_INIT);
+  Cvar_SetDescription(fs_locked, "Set file handle policy for pk3 files:\n0 - release after use, unlimited number of pk3 files can be loaded\n1 - keep file handle locked, more consistent, total pk3 files count limited to ~1k-4k\n");
 #endif
 
   homePath = Sys_DefaultHomePath();
@@ -5675,8 +5679,10 @@ FS_Startup(void)
     homePath = fs_basepath->string;
   }
 
-  fs_homepath = Cvar_GetAndDescribe("fs_homepath", homePath, CVAR_INIT | CVAR_PROTECTED | CVAR_PRIVATE, "Directory to store user configuration and downloaded files.");
-  fs_gamedirvar = Cvar_GetAndDescribe("fs_game", "", CVAR_INIT | CVAR_SYSTEMINFO, "Specify an alternate mod directory and run the game with this mod.");
+  fs_homepath = Cvar_Get("fs_homepath", homePath, CVAR_INIT | CVAR_PROTECTED | CVAR_PRIVATE);
+  Cvar_SetDescription(fs_homepath, "Directory to store user configuration and downloaded files.");
+  fs_gamedirvar = Cvar_Get("fs_game", "", CVAR_INIT | CVAR_SYSTEMINFO);
+  Cvar_SetDescription(fs_gamedirvar, "Specify an alternate mod directory and run the game with this mod.");
   Cvar_CheckRange(fs_gamedirvar, NULL, NULL, CV_FSPATH);
 
   if (FS_IsBaseGame(fs_gamedirvar->string))
@@ -5684,7 +5690,8 @@ FS_Startup(void)
     Cvar_ForceReset("fs_game");
   }
 
-  fs_excludeReference = Cvar_GetAndDescribe("fs_excludeReference", "", CVAR_ARCHIVE | CVAR_LATCH, "Exclude specified pak files from download list on client side.\nFormat is <moddir>/<pakname> (without .pk3 suffix), you may list multiple entries separated by space.");
+  fs_excludeReference = Cvar_Get("fs_excludeReference", "", CVAR_ARCHIVE | CVAR_LATCH);
+  Cvar_SetDescription(fs_excludeReference, "Exclude specified pak files from download list on client side.\nFormat is <moddir>/<pakname> (without .pk3 suffix), you may list multiple entries separated by space.");
 
   start = Sys_Milliseconds();
 
@@ -6856,33 +6863,4 @@ FS_LoadLibrary(const qchar *name)
   }
 
   return libHandle;
-}
-
-/*
-  Compared request pak against the names as we built them in FS_ReferencedPakNames
-  CVE-2006-2082
-*/
-const qbool
-FS_VerifyPak(const qchar *pak)
-{
-  qchar teststring[BIG_INFO_STRING];
-  const searchpath_t *search;
-
-  for(search = fs_searchpaths;search;search = search->next)
-  {
-    if (search->pack)
-    {
-      Q_strncpyz(teststring, search->pack->pakGamename, sizeof(teststring));
-      Q_strcat(teststring, sizeof(teststring), "/");
-      Q_strcat(teststring, sizeof(teststring), search->pack->pakBasename);
-      Q_strcat(teststring, sizeof(teststring), ".pk3");
-
-      if (!Q_stricmp(teststring, pak))
-      {
-        return qtrue;
-      }
-    }
-  }
-
-  return qfalse;
 }

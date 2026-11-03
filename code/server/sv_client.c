@@ -1,22 +1,21 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Quake III Arena source code.
 
-Tremulous is free software; you can redistribute it
+Quake III Arena source code is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Quake III Arena source code is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -1632,27 +1631,55 @@ static const qbool
 SV_WriteDownloadToClient(client_t *cl)
 {
   qint curindex;
+  qbool unreferenced = qtrue;
   qchar errorMessage[1024];
+  qchar pakbuf[MAX_QPATH];
+  qchar *pakptr;
+  qint numRefPaks;
   msg_t msg;
   byte msgBuffer[MAX_DOWNLOAD_BLKSIZE * 2 + 8];
 
-  //CVE-2006-2082: validate the download against the list of pak files
-  if (!FS_VerifyPak(cl->downloadName))
-  {
-    //will drop the client and leave it hanging on the other side. good for him
-    SV_DropClient(cl, "illegal download request");
-    return qfalse;
-  }
-
   if (cl->download == FS_INVALID_HANDLE)
   {
+    //chop off filename extension
+    Q_strncpyz(pakbuf, cl->downloadName, sizeof(pakbuf));
+    pakptr = strrchr(pakbuf, '.');
+
+    if (pakptr)
+    {
+      *pakptr = '\0';
+
+      //check for pk3 filename extension
+      if (!Q_stricmp(pakptr + 1, "pk3"))
+      {
+        //check whether the file appears in the list of referenced
+        //paks to prevent downloading of arbitrary files
+        Cmd_TokenizeStringIgnoreQuotes(sv_referencedPakNames->string);
+        numRefPaks = Cmd_Argc();
+
+        for(curindex = 0;curindex < numRefPaks;curindex++)
+        {
+          if (!FS_FilenameCompare(Cmd_Argv(curindex), pakbuf))
+          {
+            unreferenced = qfalse;
+            break;
+          }
+        }
+      }
+    }
+
     //we open the file here
-    if (!(sv_allowDownload->integer & DLF_ENABLE) || (sv_allowDownload->integer & DLF_NO_UDP) || (cl->downloadSize = FS_SV_FOpenFileRead(cl->downloadName, &cl->download)) < 0)
+    if (!(sv_allowDownload->integer & DLF_ENABLE) || (sv_allowDownload->integer & DLF_NO_UDP) || unreferenced || (cl->downloadSize = FS_SV_FOpenFileRead(cl->downloadName, &cl->download)) < 0)
     {
       //cannot auto-download file
-      if (!(sv_allowDownload->integer & DLF_ENABLE) || (sv_allowDownload->integer & DLF_NO_UDP))
+      if (unreferenced)
       {
-        Com_Printf("clientDownload: %d : \"%s\" download disabled", ARRAY_INDEX(svs.clients, cl), cl->downloadName);
+        Com_Printf("clientDownload: %d: \"%s\" is not referenced and cannot be downloaded.\n", ARRAY_INDEX(svs.clients, cl), cl->downloadName);
+        Com_sprintf(errorMessage, sizeof(errorMessage), "File \"%s\" is not referenced and cannot be downloaded.", cl->downloadName);
+      }
+      else if (!(sv_allowDownload->integer & DLF_ENABLE) || (sv_allowDownload->integer & DLF_NO_UDP))
+      {
+        Com_Printf("clientDownload: %d: \"%s\" download disabled", ARRAY_INDEX(svs.clients, cl), cl->downloadName);
 
         if (sv.pure)
         {
@@ -2306,14 +2333,7 @@ SV_PrintLocations_f(client_t *client)
       continue;
     }
 
-    if (com_ansiColor && com_ansiColor->integer)
-    {
-      len = SV_Strlen(cl->name); //name length without color sequences
-    }
-    else
-    {
-      len = (qint)strlen(cl->name); //name length with color sequences
-    }
+    len = SV_Strlen(cl->name); //name length without color sequences
 
     if (len > max_namelength)
     {
@@ -2353,14 +2373,7 @@ SV_PrintLocations_f(client_t *client)
       continue;
     }
 
-    if (com_ansiColor && com_ansiColor->integer)
-    {
-      len = Com_sprintf(line, sizeof(line), "%2i %s%-*s" S_COLOR_WHITE " %2s %s\n", i, cl->name, max_namelength - SV_Strlen(cl->name), "", cl->tld, cl->country);
-    }
-    else
-    {
-      len = Com_sprintf(line, sizeof(line), "%2i %s%-*s %2s %s\n", i, cl->name, max_namelength - (qint)strlen(cl->name), "", cl->tld, cl->country);
-    }
+    len = Com_sprintf(line, sizeof(line), "%2i %s%-*s" S_COLOR_WHITE " %2s %s\n", i, cl->name, max_namelength - SV_Strlen(cl->name), "", cl->tld, cl->country);
 
     if (s - buf + len >= sizeof(buf) - 1) //flush accumulated buffer
     {

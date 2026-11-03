@@ -25,7 +25,6 @@
 //sv_challenge.c - stateless challenge creation and verification functions
 
 #include "server.h"
-#include "../qcommon/md5.h"
 
 #if defined(STATELESS_CHALLENGES_VERSION_ONE)
 

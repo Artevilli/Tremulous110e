@@ -21,9 +21,9 @@
  * inflate().
  *
  * All dynamically allocated memory comes from the stack.  The stack required
- * is less than 2K bytes.  This code is compatible with 16-bit qint's and
+ * is less than 2K bytes.  This code is compatible with 16-bit int's and
  * assumes that long's are at least 32 bits.  puff.c uses the short data type,
- * assumed to be 16 bits, for arrays in order to to conserve memory.  The code
+ * assumed to be 16 bits, for arrays in order to conserve memory.  The code
  * works whether integers are stored big endian or little endian.
  *
  * In the comments below are "Format notes" that describe the inflate process
@@ -606,8 +606,8 @@ local int32_t dynamic(struct state *s)
     int16_t lengths[MAXCODES];            /* descriptor code lengths */
     int16_t lencnt[MAXBITS+1], lensym[MAXLCODES];         /* lencode memory */
     int16_t distcnt[MAXBITS+1], distsym[MAXDCODES];       /* distcode memory */
-    struct huffman lencode = {lencnt, lensym};          /* length code */
-    struct huffman distcode = {distcnt, distsym};       /* distance code */
+    struct huffman lencode;				/* length code */
+    struct huffman distcode;			/* distance code */
     static const int16_t order[19] =      /* permutation of code length codes */
         {16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
 
@@ -615,6 +615,12 @@ local int32_t dynamic(struct state *s)
     nlen = bits(s, 5) + 257;
     ndist = bits(s, 5) + 1;
     ncode = bits(s, 4) + 4;
+
+	lencode.count = lencnt;
+	lencode.symbol = lensym;
+	distcode.count = distcnt;
+	distcode.symbol = distsym;
+
     if (nlen > MAXLCODES || ndist > MAXDCODES)
         return -3;                      /* bad counts */
 
@@ -734,7 +740,7 @@ int32_t puff(uint8_t  *dest,           /* pointer to destination pointer */
     s.bitcnt = 0;
 
     /* return if bits() or decode() tries to read past available input */
-    if (Q_setjmp(s.env) != 0)             /* if came back here via longjmp() */
+    if ( Q_setjmp( s.env ) != 0 )       /* if came back here via longjmp() */
         err = 2;                        /* then skip do-loop, return error */
     else {
         /* process blocks until last block or error */

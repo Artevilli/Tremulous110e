@@ -1,22 +1,21 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Quake III Arena source code.
 
-Tremulous is free software; you can redistribute it
+Quake III Arena source code is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Quake III Arena source code is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -46,8 +45,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #endif
 
 #define	PERS_SCORE 0 //!!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
-
-#define MAX_BPS_WINDOW 20
 
 #define	MAX_ENT_CLUSTERS 16
 
@@ -120,19 +117,6 @@ typedef struct
 
   qint restartTime;
   qint time;
-
-  //net debugging
-  qint bpsWindow[MAX_BPS_WINDOW];
-  qint bpsWindowSteps;
-  qint bpsTotalBytes;
-  qint bpsMaxBytes;
-
-  qint ubpsWindow[MAX_BPS_WINDOW];
-  qint ubpsTotalBytes;
-  qint ubpsMaxBytes;
-
-  float ucompAve;
-  qint ucompNum;
 
   byte baselineUsed[MAX_GENTITIES];
 
@@ -303,26 +287,6 @@ client_t;
 
 //=============================================================================
 
-typedef struct
-{
-  netadr_t adr;
-  qint time;
-}
-receipt_t;
-
-typedef struct
-{
-  netadr_t adr;
-  qint time;
-  qint count;
-  qbool flood;
-}
-floodBan_t;
-
-#define MAX_INFO_RECEIPTS 48 //max number of getstatus and getinfo responses sent in two second time period
-
-#define MAX_INFO_FLOOD_BANS 36
-
 //this structure will be cleared only when the game dll changes
 typedef struct
 {
@@ -337,8 +301,6 @@ typedef struct
   qint numSnapshotEntities; //PACKET_BACKUP * MAX_SNAPSHOT_ENTITIES
   entityState_t *snapshotEntities; //[numSnapshotEntities]
   qint nextHeartbeatTime;
-  receipt_t infoReceipts[MAX_INFO_RECEIPTS];
-  floodBan_t infoFloodBans[MAX_INFO_FLOOD_BANS];
 #if defined(INCLUDE_REMOTE_COMMANDS)
   netadr_t authorizeAddress; //for rcon return messages
 #endif
@@ -468,8 +430,6 @@ void
 SV_Heartbeat_f(void);
 client_t *
 SV_GetPlayerByHandle(void);
-void
-SV_UptimeReset(void);
 
 //
 //sv_snapshot.c

@@ -2,20 +2,20 @@
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
 
-This file is part of Tremulous.
+This file is part of Quake III Arena source code.
 
-Tremulous is free software; you can redistribute it
+Quake III Arena source code is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Quake III Arena source code is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -101,6 +101,7 @@ static struct termios tty_tc;
 
 static field_t tty_con;
 
+static cvar_t *ttycon_ansicolor = NULL;
 static qbool ttycon_color_on = qfalse;
 
 tty_err
@@ -287,7 +288,7 @@ Sys_Exit(qint code)
 
 #if defined(NDEBUG) //regular behavior
   //we can't do this
-  //as long as GL DLL's keep installign with atexit...
+  //as long as GL DLL's keep installing with atexit...
   //exit(ex);
   _exit(code);
 #else
@@ -427,7 +428,7 @@ Sys_ConsoleInputInit(void)
   tc.c_cc[VTIME] = 0;
   tcsetattr(STDIN_FILENO, TCSADRAIN, &tc);
 
-  if (com_ansiColor && com_ansiColor->integer)
+  if (ttycon_ansicolor && ttycon_ansicolor->integer)
   {
     ttycon_color_on = qtrue;
   }
@@ -1126,7 +1127,10 @@ main(qint argc, const qchar *argv[])
 
   //Sys_ConsoleInputInit() might be called in signal handler
   //so modify/init any cvars here
-  ttycon = Cvar_GetAndDescribe("ttycon", "1", 0, "Enable access to input/output console terminal.");
+  ttycon = Cvar_Get("ttycon", "1", 0);
+  Cvar_SetDescription(ttycon, "Enable access to input/output console terminal.");
+  ttycon_ansicolor = Cvar_Get("ttycon_ansicolor", "0", CVAR_ARCHIVE);
+  Cvar_SetDescription(ttycon_ansicolor, "Convert in-game color codes to ANSI color codes in console terminal.");
 
   err = Sys_ConsoleInputInit();
 

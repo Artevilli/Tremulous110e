@@ -27,7 +27,8 @@
   Mark Adler    madler@alumni.caltech.edu
  */
 
-#pragma once
+#ifndef __PUFF_H
+#define __PUFF_H
 
 #include "q_shared.h"			/* for definitions of the <stdint.h> types */
 
@@ -39,3 +40,4 @@ int32_t puff(uint8_t  *dest,		/* pointer to destination pointer */
              uint8_t  *source,		/* pointer to source data pointer */
              uint32_t *sourcelen);	/* amount of input available */
 
+#endif // __PUFF_H

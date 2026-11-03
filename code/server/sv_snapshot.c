@@ -1,22 +1,21 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Quake III Arena source code.
 
-Tremulous is free software; you can redistribute it
+Quake III Arena source code is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Quake III Arena source code is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -966,9 +965,6 @@ SV_SendClientSnapshot(client_t *client)
   }
 
   SV_SendMessageToClient(&msg, client);
-
-  sv.bpsTotalBytes += msg.cursize;
-  sv.ubpsTotalBytes += msg.uncompsize / 8;
 }
 
 
@@ -981,13 +977,9 @@ void
 SV_SendClientMessages(void)
 {
   qint i;
-  qint numclients = 0;
   client_t *c;
 
   svs.msgTime = Sys_Milliseconds();
-
-  sv.bpsTotalBytes = 0;
-  sv.ubpsTotalBytes = 0;
 
   //send a message to each connected client
   for(i = 0;i < sv.maxclients;i++)
@@ -1025,61 +1017,9 @@ SV_SendClientMessages(void)
       continue;
     }
 
-    numclients++;
-
     //generate and send a new message
     SV_SendClientSnapshot(c);
     c->lastSnapshotTime = svs.time;
     c->rateDelayed = qfalse;
-  }
-
-  //net debugging
-  if (sv_showAverageBPS->integer && numclients > 0)
-  {
-    float ave = 0;
-    float uave = 0;
-
-    for(i = 0;i < MAX_BPS_WINDOW - 1;i++)
-    {
-      sv.bpsWindow[i] = sv.bpsWindow[i + 1];
-      ave += sv.bpsWindow[i];
-
-      sv.ubpsWindow[i] = sv.ubpsWindow[i + 1];
-      uave += sv.ubpsWindow[i];
-    }
-
-    sv.bpsWindow[MAX_BPS_WINDOW - 1] = sv.bpsTotalBytes;
-    ave += sv.bpsTotalBytes;
-
-    sv.ubpsWindow[MAX_BPS_WINDOW - 1] = sv.ubpsTotalBytes;
-    uave += sv.ubpsTotalBytes;
-
-    if (sv.bpsTotalBytes >= sv.bpsMaxBytes)
-    {
-      sv.bpsMaxBytes = sv.bpsTotalBytes;
-    }
-
-    if (sv.ubpsTotalBytes >= sv.ubpsMaxBytes)
-    {
-      sv.ubpsMaxBytes = sv.ubpsTotalBytes;
-    }
-
-    sv.bpsWindowSteps++;
-
-    if (sv.bpsWindowSteps >= MAX_BPS_WINDOW)
-    {
-      float comp_ratio;
-
-      sv.bpsWindowSteps = 0;
-
-      ave = (ave / (float)MAX_BPS_WINDOW);
-      uave = (uave / (float)MAX_BPS_WINDOW);
-
-      comp_ratio = (1 - ave / uave) * 100.f;
-      sv.ucompAve += comp_ratio;
-      sv.ucompNum++;
-
-      Com_Printf("bpspc(%2.0f) bps(%2.0f) pk(%i) ubps(%2.0f) upk(%i) cr(%2.2f) acr(%2.2f)\n", ave / (float)numclients, ave, sv.bpsMaxBytes, uave, sv.ubpsMaxBytes, comp_ratio, sv.ucompAve / sv.ucompNum);
-    }
   }
 }

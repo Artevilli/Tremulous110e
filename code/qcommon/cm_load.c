@@ -1,22 +1,21 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Quake III Arena source code.
 
-Tremulous is free software; you can redistribute it
+Quake III Arena source code is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Quake III Arena source code is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
@@ -1062,9 +1061,12 @@ CM_LoadMap(const qchar *name, qbool clientload, qint *checksum)
   }
 
 #if !defined(BSPC)
-  cm_noAreas = Cvar_GetAndDescribe("cm_noAreas", "0", CVAR_CHEAT, "Do not use areaportals, all areas are connected.");
-  cm_noCurves = Cvar_GetAndDescribe("cm_noCurves", "0", CVAR_CHEAT, "Do not collide against curves.");
-  cm_playerCurveClip = Cvar_GetAndDescribe("cm_playerCurveClip", "1", CVAR_ARCHIVE_ND | CVAR_CHEAT, "Collide against player curves.");
+  cm_noAreas = Cvar_Get("cm_noAreas", "0", CVAR_CHEAT);
+  Cvar_SetDescription(cm_noAreas, "Do not use areaportals, all areas are connected.");
+  cm_noCurves = Cvar_Get("cm_noCurves", "0", CVAR_CHEAT);
+  Cvar_SetDescription(cm_noCurves, "Do not collide against curves.");
+  cm_playerCurveClip = Cvar_Get("cm_playerCurveClip", "1", CVAR_ARCHIVE_ND | CVAR_CHEAT);
+  Cvar_SetDescription(cm_playerCurveClip, "Collide against player curves.");
 #endif
   Com_DPrintf("%s('%s', %i)\n", __func__, name, clientload);
 

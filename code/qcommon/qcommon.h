@@ -1,27 +1,27 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Quake III Arena source code.
 
-Tremulous is free software; you can redistribute it
+Quake III Arena source code is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Quake III Arena source code is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 // qcommon.h -- definitions common between client and server, but not game or ref modules
-#pragma once
+#if !defined(_QCOMMON_H_)
+#define _QCOMMON_H_
 
 #include <sys/types.h>
 #include "../qcommon/cm_public.h"
@@ -64,7 +64,6 @@ typedef struct {
 	qint		maxsize;
 	qint maxbits; //maxsize in bits, for overflow checks
 	qint		cursize;
-	qint uncompsize;
 	qint		readcount;
 	qint		bit;				// for bitwise reads and writes
 } msg_t;
@@ -140,26 +139,29 @@ NET
 
 ==============================================================
 */
-//#define USE_IPV6
+#if !defined(DISABLE_IPV6)
+#define USE_IPV6
+#endif
+
 #define NET_ENABLEV4            0x01
 #define NET_ENABLEV6            0x02
-//if this flag is set, always attempt ipv6 connections instead of ipv4 if a v6 address is found.
+// if this flag is set, always attempt ipv6 connections instead of ipv4 if a v6 address is found.
 #define NET_PRIOV6              0x04
-//disables ipv6 multicast support if set.
+// disables ipv6 multicast support if set.
 #define NET_DISABLEMCAST        0x08
 
+
 #define	PACKET_BACKUP	32	// number of old messages that must be kept on client and
-							// server for delta comrpession and ping estimation
+							// server for delta compression and ping estimation
 #define	PACKET_MASK		(PACKET_BACKUP-1)
 
 #define	MAX_PACKET_USERCMDS		32		// max number of usercmd_t in a packet
 
-#define MAX_SNAPSHOT_ENTITIES 256
+#define	MAX_SNAPSHOT_ENTITIES	256
+
 #define	PORT_ANY			-1
 
-#define	MAX_RELIABLE_COMMANDS	128			// max string commands buffered for restransmit
-
-#define	MAX_PACKETLEN			1400		// max size of a network packet
+#define	MAX_RELIABLE_COMMANDS	64			// max string commands buffered for restransmit
 
 typedef enum {
 	NA_BAD = 0,					// an address lookup failed
@@ -231,6 +233,7 @@ void		NET_LeaveMulticast6(void);
 qbool
 NET_Sleep(qint timeout);
 
+#define	MAX_PACKETLEN	1400	// max size of a network packet
 
 #define	MAX_MSGLEN 16384 //FIXME: HACK: should be 16384		// max length of a message, which may
 											// be fragmented into multiple packets
@@ -700,8 +703,6 @@ void
 Cvar_SetDescription(cvar_t *var, const qchar *var_description);
 void
 Cvar_SetDescription2(const qchar *var_name, const qchar *var_description);
-cvar_t *
-Cvar_GetAndDescribe(const qchar *varName, const qchar *value, const qint flags, const qchar *description);
 
 void
 Cvar_SetGroup(cvar_t *var, cvarGroup_t group);
@@ -1177,7 +1178,6 @@ extern cvar_t *com_viewlog; // 0 = hidden, 1 = visible, 2 = minimized
 extern cvar_t *com_version;
 extern cvar_t *com_journal;
 extern cvar_t *com_cameraMode;
-extern cvar_t *com_ansiColor;
 extern cvar_t *com_protocol;
 extern qbool com_protocolCompat;
 
@@ -1602,3 +1602,5 @@ HuffmanGetSymbol(unsigned *symbol, const byte* buffer, qint bitIndex);
 
 //functional gate syscall number
 #define COM_TRAP_GETVALUE 700
+
+#endif //_QCOMMON_H_

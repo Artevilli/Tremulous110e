@@ -1,30 +1,26 @@
 /*
 ===========================================================================
 Copyright (C) 1999-2005 Id Software, Inc.
-Copyright (C) 2000-2006 Tim Angus
 
-This file is part of Tremulous.
+This file is part of Quake III Arena source code.
 
-Tremulous is free software; you can redistribute it
+Quake III Arena source code is free software; you can redistribute it
 and/or modify it under the terms of the GNU General Public License as
 published by the Free Software Foundation; either version 2 of the License,
 or (at your option) any later version.
 
-Tremulous is distributed in the hope that it will be
+Quake III Arena source code is distributed in the hope that it will be
 useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with Tremulous; if not, write to the Free Software
+along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
 #include "server.h"
-#include <time.h>
-
-static time_t uptimeSince;
 
 /*
 ===============================================================================
@@ -648,16 +644,8 @@ SV_Status_f(void)
     np[i] = nc;
     nc += l;
 
-    if (com_ansiColor->integer)
-    {
-      //name length without color sequences
-      nl[i] = SV_Strlen(cl->name);
-    }
-    else
-    {
-      //name length with color sequences
-      nl[i] = strlen(cl->name);
-    }
+    //name length without color sequences
+    nl[i] = SV_Strlen(cl->name);
 
     if (nl[i] > max_namelength)
     {
@@ -762,16 +750,7 @@ SV_Status_f(void)
 
     //variable-length address field
     s = ap[i];
-
-    if (com_ansiColor && com_ansiColor->integer)
-    {
-      Com_Printf(S_COLOR_WHITE " %s", s);
-    }
-    else
-    {
-      Com_Printf(" %s", s);
-    }
-
+    Com_Printf(S_COLOR_WHITE " %s", s);
     l = max_addrlength - al[i];
 
     for(j = 0;j < l;j++)
@@ -1051,43 +1030,6 @@ SV_CompleteMapName(const qchar *args, qint argNum)
   }
 }
 
-/*
-==================
-SV_UptimeReset
-==================
-*/
-void
-SV_UptimeReset(void)
-{
-  uptimeSince = time(NULL);
-}
-
-/*
-==================
-SV_Uptime_f
-
-Prints the server uptime.
-==================
-*/
-static void
-SV_Uptime_f(void)
-{
-  const unsigned long uptime = (unsigned long)(difftime(time(NULL), uptimeSince));
-  const unsigned s = uptime % 60;
-  const unsigned m = (uptime % 3600) / 60;
-  const unsigned h = (uptime % 86400) / 3600;
-  const unsigned d = uptime / 86400;
-
-  if (Cmd_Argc() == 2)
-  {
-    Com_Printf("uptime: %u days, %u hours, %u min, %u sec\nserver time: %i\ninternal time: %i\n", d, h, m, s, svs.time, Sys_Milliseconds());
-  }
-  else
-  {
-    Com_Printf("uptime: %u days, %u hours, %u min, %u sec\n", d, h, m, s);
-  }
-}
-
 //===========================================================
 
 /*
@@ -1119,7 +1061,6 @@ SV_AddOperatorCommands(void)
   Cmd_AddCommand("devmap", SV_Map_f);
   Cmd_SetCommandCompletionFunc("devmap", SV_CompleteMapName);
   Cmd_AddCommand("killserver", SV_KillServer_f);
-  Cmd_AddCommand("uptime", SV_Uptime_f);
   Cmd_AddCommand("filter", SV_AddFilter_f);
   Cmd_AddCommand("filtercmd", SV_AddFilterCmd_f);
 }
