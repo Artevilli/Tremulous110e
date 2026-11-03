@@ -403,7 +403,7 @@ BotImport_Trace(bsp_trace_t *bsptrace, vec3_t start, vec3_t mins, vec3_t maxs, v
 {
   trace_t trace;
 
-  SV_Trace(&trace, start, mins, maxs, end, passent, contentmask, qfalse);
+  SV_Trace(&trace, start, mins, maxs, end, passent, contentmask, TT_NONE);
 
   //copy the trace information
   bsptrace->allsolid = trace.allsolid;
@@ -438,7 +438,7 @@ BotImport_EntityTrace(bsp_trace_t *bsptrace, vec3_t start, vec3_t mins, vec3_t m
     entnum = ENTITYNUM_NONE;
   }
 
-  SV_ClipToEntity(&trace, start, mins, maxs, end, entnum, contentmask, qfalse);
+  SV_ClipToEntity(&trace, start, mins, maxs, end, entnum, contentmask, TT_NONE);
 
   //copy the trace information
   bsptrace->allsolid = trace.allsolid;
