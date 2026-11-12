@@ -79,8 +79,6 @@ SV_CVAR_DESCRIBE(sv_floodLimit, "The number of client commands a client is allow
 SV_CVAR(sv_floodProtect, "sv_floodProtect", "1", CVAR_ARCHIVE | CVAR_SERVERINFO)
 SV_CVAR_DESCRIBE(sv_floodProtect, "Toggle server flood protection to keep players from bringing the server down.")
 
-SV_CVAR(sv_novis, "sv_novis", "0", CVAR_ARCHIVE)
-SV_CVAR_DESCRIBE(sv_novis, "Toggle whether or not to skip the pvs check when transmitting entities.")
 SV_CVAR(sv_pingFix, "sv_pingFix", "1", CVAR_ARCHIVE)
 SV_CVAR_DESCRIBE(sv_pingFix, "Fix client ping calculation to more accurately reflect packet loss and force minimum ping for humans to 1")
 
@@ -142,15 +140,6 @@ SV_CVAR(sv_levelTimeReset, "sv_levelTimeReset", "0", CVAR_ARCHIVE_ND)
 SV_CVAR_DESCRIBE(sv_levelTimeReset, "Whether or not to reset leveltime after a new map loads.")
 SV_CVAR(sv_filter, "sv_filter", "filter.txt", CVAR_ARCHIVE)
 SV_CVAR_DESCRIBE(sv_filter, "Cvar that point on filter file, if it is \"\" then filtering will be disabled.")
-
-SV_CVAR(sv_antiWallhack, "sv_antiWallhack", "0", CVAR_ARCHIVE)
-SV_CVAR_DESCRIBE(sv_antiWallhack, "Enables serverside wallhack protection\n0: disabled\n1: players only\n2: items/structures only\n3: all")
-
-SV_CVAR(sv_sendNearbyEnts, "sv_sendNearbyEnts", "0", CVAR_ARCHIVE)
-SV_CVAR_DESCRIBE(sv_sendNearbyEnts, "Whether or not to send nearby entities regardless of pvs or anti wallhack.\nNOTE: range is specified by sv_sendNearbyEntsRange.")
-SV_CVAR(sv_sendNearbyEntsRange, "sv_sendNearbyEntsRange", "1500", CVAR_ARCHIVE)
-SV_CVAR_DESCRIBE(sv_sendNearbyEntsRange, "Specifies the range at which entities that fail the pvs check are sent to the client.")
-SV_CVAR_RANGE(sv_sendNearbyEntsRange, "0", NULL, CV_INTEGER)
 
 SV_CVAR(sv_filterCommands, "sv_filterCommands", "1", CVAR_ARCHIVE)
 SV_CVAR_DESCRIBE(sv_filterCommands, "Toggles whether or not to filter excessive client commands.\n0: only strip essentials\n1: strip \\n and \\r\n2: also strip ;")

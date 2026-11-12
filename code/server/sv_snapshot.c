@@ -437,30 +437,11 @@ SV_AddEntitiesVisibleFromPoint(const vec3_t origin, clientSnapshot_t *frame, sna
       continue;
     }
 
-    if (sv_novis->integer)
-    {
-      SV_AddIndexToSnapshot(svEnt, e, eNums);
-      continue;
-    }
-
     //broadcast entities are always sent
     if (ent->r.svFlags & SVF_BROADCAST)
     {
       SV_AddIndexToSnapshot(svEnt, e, eNums);
       continue;
-    }
-
-    if (sv_sendNearbyEnts->integer)
-    {
-      vec3_t range;
-
-      VectorSubtract(origin, ent->r.currentOrigin, range);
-
-      if (VectorLength(range) < sv_sendNearbyEntsRange->integer)
-      {
-        SV_AddIndexToSnapshot(svEnt, e, eNums);
-        continue;
-      }
     }
 
     //ignore if not touching a PV leaf
@@ -517,91 +498,6 @@ SV_AddEntitiesVisibleFromPoint(const vec3_t origin, clientSnapshot_t *frame, sna
       else
       {
         continue;
-      }
-    }
-
-    if (sv_antiWallhack->integer)
-    {
-      trace_t trace;
-      vec3_t corners;
-      vec3_t shift;
-      vec3_t viewpoint;
-      qbool visible;
-      unsigned vectors;
-      unsigned pass;
-      float delta = 0.25f;
-
-      visible = qfalse;
-
-      for(pass = 0;pass < 2;pass++)
-      {
-        if (visible)
-        {
-          break;
-        }
-
-        if (!pass)
-        {
-          VectorCopy(origin, viewpoint);
-          VectorClear(shift);
-        }
-        else
-        {
-          VectorMA(origin, delta, frame->ps.velocity, viewpoint);
-
-          if (ent->s.pos.trType != TR_STATIONARY)
-          {
-            VectorScale(ent->s.pos.trDelta, delta, shift);
-          }
-          else
-          {
-            VectorClear(shift);
-          }
-        }
-
-        for(vectors = 0;vectors < 8;vectors++)
-        {
-          corners[0] = ent->r.currentOrigin[0] + shift[0] + (vectors & 1 ? ent->r.maxs[0]:ent->r.mins[0]);
-          corners[1] = ent->r.currentOrigin[1] + shift[1] + (vectors & 2 ? ent->r.maxs[1]:ent->r.mins[1]);
-          corners[2] = ent->r.currentOrigin[2] + shift[2] + (vectors & 4 ? ent->r.maxs[2]:ent->r.mins[2]);
-
-          SV_Trace(&trace, viewpoint, NULL, NULL, corners, frame->ps.clientNum, CONTENTS_SOLID, TT_NONE);
-
-          if (trace.fraction == 1.0f || trace.entityNum == ent->s.number || (trace.contents & CONTENTS_TRANSLUCENT))
-          {
-            visible = qtrue;
-            break;
-          }
-        }
-      }
-
-      switch(sv_antiWallhack->integer)
-      {
-        case
-        1:
-          if (!visible && ent->s.eType == ET_PLAYER)
-          {
-            continue;
-          }
-
-          break;
-
-        case
-        2:
-          if (!visible && ent->s.eType != ET_PLAYER)
-          {
-            continue;
-          }
-
-          break;
-
-        default:
-          if (!visible)
-          {
-            continue;
-          }
-
-          break;
       }
     }
 

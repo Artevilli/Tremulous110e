@@ -253,7 +253,7 @@ typedef enum
 
   GAME_SHUTDOWN, // (qint restart);
 
-  GAME_CLIENT_CONNECT, // ( int clientNum, qbool firstTime );
+  GAME_CLIENT_CONNECT, // ( int clientNum, qbool firstTime, qbool isBot );
   // return NULL if the client is allowed to connect, otherwise return
   // a text string with the reason for denial
 
