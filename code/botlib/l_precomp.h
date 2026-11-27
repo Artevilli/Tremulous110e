@@ -109,8 +109,6 @@ typedef struct source_s
 
 //read a token from the source
 qint PC_ReadToken(source_t *source, token_t *token);
-//read enumerations
-qbool PC_ReadEnumeration(source_t *source);
 //expect a certain token
 qint PC_ExpectTokenString(source_t *source, qchar *string);
 //expect a certain token type
@@ -127,8 +125,6 @@ void PC_UnreadToken(source_t *source, token_t *token);
 qint PC_AddGlobalDefine(const qchar *string);
 //remove all globals defines
 void PC_RemoveAllGlobalDefines(void);
-//adds a define to the source
-qbool PC_AddDefineToSourceFromString(source_t *source, const qchar *string);
 #if 0
 //skip tokens until the given token string is read
 qint PC_SkipUntilString(source_t *source, qchar *string);

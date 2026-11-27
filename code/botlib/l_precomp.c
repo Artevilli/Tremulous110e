@@ -305,20 +305,13 @@ static qint PC_ReadSourceToken(source_t *source, token_t *token)
 {
 	token_t *t;
 	script_t *script;
-	qint type, skip, lines;
+	qint type, skip;
 
-	lines = 0;
 	//if there's no token already available
 	while(!source->tokens)
 	{
 		//if there's a token to read from the script
-		if (PS_ReadToken(source->scriptstack, token))
-		{
-			token->linescrossed += lines;
-			return qtrue;
-		}
-		// if lines were crossed before the end of the script, count them
-		lines += source->scriptstack->line - source->scriptstack->lastline;
+		if (PS_ReadToken(source->scriptstack, token)) return qtrue;
 		//if at the end of the script
 		if (EndOfScript(source->scriptstack))
 		{
@@ -1423,17 +1416,6 @@ qint PC_AddGlobalDefine(const qchar *string)
 	globaldefines = define;
 	return qtrue;
 } //end of the function PC_AddGlobalDefine
-//============================================================================
-//
-// Parameter:				-
-// Returns:					-
-// Changes Globals:		-
-//============================================================================
-qbool PC_AddDefineToSourceFromString(source_t *source, const qchar *string)
-{
-	PC_PushScript(source, LoadScriptMemory(string, strlen(string), "*extern"));
-	return PC_Directive_define(source);
-} //end of the function PC_AddDefineToSourceFromString
 #if 0
 //============================================================================
 // remove the given global define
@@ -2768,13 +2750,6 @@ qint PC_ReadToken(source_t *source, token_t *token)
 				continue;
 			} //end if
 		} //end if
-		// read enumerations
-		if (token->type == TT_NAME && Q_stricmp(token->string, "enum") == 0)
-		{
-			if (!PC_ReadEnumeration(source))
-				return qfalse;
-			continue;
-		} //end if
 		// recursively concatenate strings that are behind each other still resolving defines
 		if (token->type == TT_STRING)
 		{
@@ -2994,108 +2969,6 @@ void PC_UnreadToken(source_t *source, token_t *token)
 {
 	PC_UnreadSourceToken(source, token);
 } //end of the function PC_UnreadToken
-//============================================================================
-//
-// Parameter:				-
-// Returns:					-
-// Changes Globals:		-
-//============================================================================
-qbool PC_ReadEnumeration(source_t *source)
-{
-	token_t newtoken;
-	qint value;
-
-	if (!PC_ReadToken(source, &newtoken))
-		return qfalse;
-	if (newtoken.type != TT_PUNCTUATION || newtoken.subtype != P_BRACEOPEN)
-	{
-		SourceError(source, "Found %s when expecting {", newtoken.string);
-		return qfalse;
-	} //end if
-
-	for(value = 0;;value++)
-	{
-		token_t name;
-
-		// read the name
-		if (!PC_ReadToken(source, &name))
-			break;
-		// enumerations may end immediately
-		if (name.type == TT_PUNCTUATION && name.subtype == P_BRACECLOSE)
-		{
-			if (!PC_ReadToken(source, &name))
-				break;
-			// ignore trailing semicolon
-			if (name.type != TT_PUNCTUATION || name.subtype != P_SEMICOLON)
-				PC_UnreadToken(source, &name);
-			return qtrue;
-		} //end if
-		// enumerations may not do anything else afterwards
-		if (name.type != TT_NAME)
-		{
-			SourceError(source, "Found %s when expecting identifier", name.string);
-			return qfalse;
-		} //end if
-		if (!PC_ReadToken(source, &newtoken))
-			break;
-		if (newtoken.type != TT_PUNCTUATION)
-		{
-			SourceError(source, "Found %s when expecting , or = or }", newtoken.string);
-			return qfalse;
-		} //end if
-		if (newtoken.subtype == P_ASSIGN)
-		{
-			qint neg = 1;
-
-			if (!PC_ReadToken(source, &newtoken))
-				break;
-			// read negative numbers
-			if (newtoken.type == TT_PUNCTUATION && newtoken.subtype == P_SUB)
-			{
-				neg = -1;
-				if (!PC_ReadToken(source, &newtoken))
-					break;
-			} //end if
-			// check for integer
-			if (newtoken.type != TT_NUMBER || !(newtoken.subtype & TT_INTEGER))
-			{
-				SourceError(source, "Found %s when expecting integer", newtoken.string);
-				return qfalse;
-			} //end if
-			// check unsigned values
-			if (neg == -1 && (newtoken.subtype & TT_UNSIGNED))
-				SourceWarning(source, "Negative value in unsigned enumeration");
-
-			// set new define value
-			value = newtoken.intvalue * neg;
-
-			if (!PC_ReadToken(source, &newtoken))
-				break;
-		} //end if
-		if (newtoken.type != TT_PUNCTUATION || (newtoken.subtype != P_COMMA && newtoken.subtype != P_BRACECLOSE))
-		{
-			SourceError(source, "Found %s when expecting , or }", newtoken.string);
-			return qfalse;
-		} //end if
-		if (!PC_AddDefineToSourceFromString(source, va("%s %d\n", name.string, value)))
-		{
-			SourceWarning(source, "Couldn't add define to source: %s = %d", name.string, value);
-			return qfalse;
-		} //end if
-		if (newtoken.subtype == P_BRACECLOSE)
-		{
-			if (!PC_ReadToken(source, &name))
-				break;
-			// ignore trailing semicolon
-			if (name.type != TT_PUNCTUATION || name.subtype != P_SEMICOLON)
-				PC_UnreadToken(source, &name);
-			return qtrue;
-		} //end if
-	} //end for
-
-	// if PC_ReadToken returned qfalse
-	return qfalse;
-} //end of the function PC_ReadEnumeration
 #if 0
 //============================================================================
 //

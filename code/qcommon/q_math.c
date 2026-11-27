@@ -627,7 +627,6 @@ void VectorRotate( const vec3_t in, const vec3_t matrix[3], vec3_t out )
 #include <intrin.h>
 #endif
 
-#if !idppc
 /*
 ** float Q_rsqrt( float number )
 */
@@ -674,7 +673,6 @@ Q_fabs(float f)
   fi.i &= 0x7FFFFFFF;
   return fi.f;
 }
-#endif
 
 //============================================================
 
